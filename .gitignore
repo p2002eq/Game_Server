@@ -17,7 +17,12 @@
 *.out
 *.app
 
+# Clion
+.idea/*
+EQEmu.cbp
+
 # CMake
+cmake-build-debug/
 CMakeCache.txt
 CMakeFiles
 Makefile
@@ -35,3 +40,13 @@ Build_64/
 build_64/
 log/
 logs/
+!libcryptopp.a
+!libEQEmuAuthCrypto.a
+bin/*
+
+# VisualStudio files
+
+*.sln
+*.vcxproj*
+.vs/
+
