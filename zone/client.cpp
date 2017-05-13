@@ -7933,7 +7933,7 @@ void Client::SetFactionLevel(uint32 char_id, uint32 npc_id, uint8 char_class, ui
 		this_faction_max = std::max(0, this_faction_max);
 
 		// Get the characters current value with that faction
-		current_value = GetCharacterFactionLevel(faction_id[i]);
+		current_value = GetCharacterFactionLevel(faction_id[i], true);
 		faction_before_hit = current_value;
 
 		UpdatePersonalFaction(char_id, npc_value[i], faction_id[i], &current_value, temp[i], this_faction_min, this_faction_max);
@@ -7976,7 +7976,7 @@ void Client::SetFactionLevel2(uint32 char_id, int32 faction_id, uint8 char_class
 		this_faction_max = std::max(0, this_faction_max);
 
 		//Get the faction modifiers
-		current_value = GetCharacterFactionLevel(faction_id);
+		current_value = GetCharacterFactionLevel(faction_id, true);
 		faction_before_hit = current_value;
 
 		UpdatePersonalFaction(char_id, value, faction_id, &current_value, temp, this_faction_min, this_faction_max);
@@ -7989,15 +7989,23 @@ void Client::SetFactionLevel2(uint32 char_id, int32 faction_id, uint8 char_class
 	return;
 }
 
-int32 Client::GetCharacterFactionLevel(int32 faction_id)
+int32 Client::GetCharacterFactionLevel(int32 faction_id, bool updating)
 {
-	if (faction_id <= 0)
+	int32 faction = 0;
+	if (!updating && (faction_id <= 0 || GetRaceBitmask(GetRace()) == 0))
+	{
+		Log(Logs::Detail, Logs::Faction, "Race: %d is non base, ignoring character faction. This is %s.", GetRace(), updating ? "a save" : "not a save");
 		return 0;
+	}
+
 	faction_map::iterator res;
 	res = factionvalues.find(faction_id);
-	if (res == factionvalues.end())
+	if (res == factionvalues.end()) {
 		return 0;
-	return res->second;
+	}
+	faction = res->second;
+	Log(Logs::Detail, Logs::Faction, "%s has %d personal faction with %d This is %s.", GetName(), faction, faction_id, updating ? "a save" : "not a save");
+	return faction;
 }
 
 // Common code to set faction level.
@@ -8014,8 +8022,9 @@ void Client::UpdatePersonalFaction(int32 char_id, int32 npc_value, int32 faction
 	{
 		int faction_mod = itembonuses.HeroicCHA / 5;
 		// If our result isn't truncated, then just do that
-		if (npc_value * faction_mod / 100 != 0)
+		if (npc_value * faction_mod / 100 != 0) {
 			npc_value += npc_value * faction_mod / 100;
+		}
 		// If our result is truncated, then double a mob's value every once and a while to equal what they would have got
 		else
 		{
