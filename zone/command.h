@@ -156,6 +156,7 @@ void command_load_shared_memory(Client *c, const Seperator *sep);
 void command_loc(Client *c, const Seperator *sep);
 void command_lock(Client *c, const Seperator *sep);
 void command_logs(Client *c, const Seperator *sep);
+void command_undeletechar(Client *c, const Seperator *sep);
 void command_logtest(Client *c, const Seperator *sep);
 void command_makepet(Client *c, const Seperator *sep);
 void command_mana(Client *c, const Seperator *sep);

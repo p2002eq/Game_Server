@@ -350,6 +350,8 @@ public:
 	bool	StoreCharacter(uint32 account_id, PlayerProfile_Struct* pp, EQEmu::InventoryProfile* inv);
 	bool	UpdateName(const char* oldname, const char* newname);
 	bool	SaveCharacterBindPoint(uint32 character_id, const BindStruct &bind);
+	bool	MarkCharacterDeleted(char* name);
+	bool	UnDeleteCharacter(const char* name);
 
 	/* General Information Queries */
 
@@ -366,6 +368,7 @@ public:
 	uint32	GetCharacterID(const char *name);
 	uint32	GetCharacterInfo(const char* iName, uint32* oAccID = 0, uint32* oZoneID = 0, uint32* oInstanceID = 0, float* oX = 0, float* oY = 0, float* oZ = 0);
 	uint32	GetGuildIDByCharID(uint32 char_id);
+	uint32	GetLevelByChar(const char* charname);
 
 	void	GetAccountName(uint32 accountid, char* name, uint32* oLSAccountID = 0);
 	void	GetCharName(uint32 char_id, char* name);
@@ -461,6 +464,12 @@ public:
 	bool	CheckDatabaseConversions();
 	bool	CheckDatabaseConvertCorpseDeblob();
 	bool	CheckDatabaseConvertPPDeblob();
+
+	/*
+	* Database Setup for bootstraps only.
+	*/
+	bool DBSetup();
+	bool DBSetup_PlayerCorpseBackup();
 
 	/* Database Variables */
 

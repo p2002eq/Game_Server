@@ -8,6 +8,7 @@ SET(common_sources
 	crc16.cpp
 	crc32.cpp
 	database.cpp
+	database_updates.cpp
 	database_conversions.cpp
 	database_instances.cpp
 	dbcore.cpp
