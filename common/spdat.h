@@ -867,6 +867,7 @@ bool IsMezSpell(uint16 spell_id);
 bool IsStunSpell(uint16 spell_id);
 bool IsSlowSpell(uint16 spell_id);
 bool IsHasteSpell(uint16 spell_id);
+bool IsBindSightSpell(uint16 spell_id);
 bool IsHarmonySpell(uint16 spell_id);
 bool IsPercentalHealSpell(uint16 spell_id);
 bool IsGroupOnlySpell(uint16 spell_id);
