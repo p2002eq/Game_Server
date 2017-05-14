@@ -666,8 +666,10 @@ void Group::SplitExp(uint32 exp, Mob* other) {
 		isgreen = true;
 
 	//Give XP out to lower toons from NPCs that are green to the highest player.
-	if (isgreen && !RuleB(AlKabor, GreensGiveXPToGroup))
+	//No Exp for green cons.
+	if (isgreen) {
 		return;
+	}
 
 	// This loop uses the max player level we now have to determine who is in level range to gain XP. Anybody
 	// outside the range is subtracted from the player count and has their level removed from the weighted split.
@@ -700,36 +702,27 @@ void Group::SplitExp(uint32 exp, Mob* other) {
 	if (membercount <= 0 || close_membercount <= 0)
 		return;
 
-	// Count players out of range from the corpse but still in the zone towards the bonus.
-	if (!RuleB(AlKabor, OutOfRangeGroupXPBonus))
-		membercount = close_membercount;
-
 	float groupmod = 1.0;
-	if (membercount == 2)
-		groupmod += 0.20;
-	else if (membercount == 3)
-		groupmod += 0.40;
-	if (RuleB(AlKabor, GroupEXPBonuses)) {
-		// Use the "broken" bonuses on AK.
-		if (membercount == 4)
+
+	switch(membercount) {
+		case 2:
+			groupmod += 0.20;
+			break;
+		case 3:
+			groupmod += 0.40;
+			break;
+		case 4:
 			groupmod += 1.20;
-		else if (membercount > 4)
+			break;
+		case 5:
+		case 6:
 			groupmod += 1.60;
-	} else {
-		// Use the bonuses how they should have been.
-		if (membercount == 4)
-			groupmod += 0.60;
-		else if (membercount > 4)
-			groupmod += 0.80;
+			break;
 	}
+
+	Log(Logs::Detail, Logs::Group, "Group mod is %d", groupmod);
 
 	float groupexp = (static_cast<float>(exp) * groupmod) * RuleR(Character, GroupExpMultiplier);
-
-	// 6th member is free in the split.
-	if (!RuleB(AlKabor, Count6thGroupMember)) {
-		if (close_membercount == 6)
-			weighted_levels -= minlevel;
-	}
 
 	// This loop figures out the split, and sends XP for each player that qualifies. (NPC is not green to the player, player is in the
 	// zone where the kill occurred, is in range of the corpse, and is in level range with the rest of the group.)

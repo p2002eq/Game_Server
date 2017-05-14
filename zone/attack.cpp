@@ -2210,6 +2210,7 @@ bool NPC::Death(Mob* killer_mob, int32 damage, uint16 spell, EQEmu::skills::Skil
 					killer_mob->TrySpellOnKill(killed_level, spell);
 			}
 
+			kr->SplitExp(finalxp, this);
 			/* Send the EVENT_KILLED_MERIT event for all raid members */
 			for (int i = 0; i < MAX_RAID_MEMBERS; i++) {
 				if (kr->members[i].member != nullptr && kr->members[i].member->IsClient()) { // If Group Member is Client
@@ -2276,6 +2277,7 @@ bool NPC::Death(Mob* killer_mob, int32 damage, uint16 spell, EQEmu::skills::Skil
 					PlayerCount++;
 				}
 			}
+			kg->SplitExp(finalxp, this);
 
 			// QueryServ Logging - Group Kills
 			if (RuleB(QueryServ, PlayerLogNPCKills)) {
