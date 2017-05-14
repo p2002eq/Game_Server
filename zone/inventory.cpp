@@ -1062,9 +1062,34 @@ bool Client::AutoPutLootInInventory(EQEmu::ItemInstance& inst, bool try_worn, bo
 						}
 					}
 				}
+				if( i == EQEmu::inventory::slotPrimary && m_inv[EQEmu::inventory::slotSecondary] ) {
+					uint8 instrument = m_inv[MainSecondary]->GetItem()->ItemType;
+					if(
+							instrument == EQEmu::item::ItemTypeWindInstrument ||
+							instrument == EQEmu::item::ItemTypeStringedInstrument ||
+							instrument == EQEmu::item::ItemTypeBrassInstrument ||
+							instrument == EQEmu::item::ItemTypePercussionInstrument
+							) {
+						Log(Logs::Detail, Logs::Inventory, "Cannot equip a primary item with %s already in the secondary.", m_inv[MainSecondary]->GetItem()->Name);
+						continue; // Do not auto-equip Primary when instrument is in Secondary
+					}
+				}
 				if (i == EQEmu::inventory::slotSecondary && m_inv[EQEmu::inventory::slotPrimary]) { // check to see if primary slot is a two hander
-					if (m_inv[EQEmu::inventory::slotPrimary]->GetItem()->IsType2HWeapon())
+					uint8 instrument = inst.GetItem()->ItemType;
+					if(
+							instrument == EQEmu::item::ItemTypeWindInstrument ||
+							instrument == EQEmu::item::ItemTypeStringedInstrument ||
+							instrument == EQEmu::item::ItemTypeBrassInstrument ||
+							instrument == EQEmu::item::ItemTypePercussionInstrument
+							) {
+						Log(Logs::Detail, Logs::Inventory, "Cannot equip a secondary instrument with %s already in the primary.", m_inv[MainPrimary]->GetItem()->Name);
+						continue; // Do not auto-equip instrument in Secondary when Primary is equipped.
+					}
+
+					uint8 use = m_inv[MainPrimary]->GetItem()->ItemType;
+					if(use == EQEmu::item::ItemType2HSlash || use == EQEmu::item::ItemType2HBlunt || use == EQEmu::item::ItemType2HPiercing) {
 						continue;
+					}
 				}
 				if (i == EQEmu::inventory::slotSecondary && inst.IsWeapon() && !CanThisClassDualWield()) {
 					continue;
@@ -1077,7 +1102,7 @@ bool Client::AutoPutLootInInventory(EQEmu::ItemInstance& inst, bool try_worn, bo
 					if (worn_slot_material != EQEmu::textures::materialInvalid) {
 						SendWearChange(worn_slot_material);
 					}
-					
+
 					parse->EventItem(EVENT_EQUIP_ITEM, this, &inst, nullptr, "", i);
 					return true;
 				}
