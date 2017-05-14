@@ -163,6 +163,8 @@ public:
 	void Message_StringID(int type, int string_id, uint32 distance);
 	void Say(const char *message);
 	void QuestSay(Lua_Client client, const char *message);
+	void SetTimer(const char *timer, int time_ms);
+	void StopTimer(const char *timer);
 	void Shout(const char *message);
 	void Emote(const char *message);
 	void InterruptSpell();
@@ -380,8 +382,6 @@ public:
 	bool IsSilenced();
 	bool IsAmnesiad();
 	int32 GetMeleeMitigation();
-	void SetTimer(const char *timer, int time_ms);
-	void StopTimer(const char *timer);
 };
 
 #endif
