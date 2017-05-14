@@ -2190,7 +2190,7 @@ bool NPC::Death(Mob* killer_mob, int32 damage, uint16 spell, EQEmu::skills::Skil
 		Group *kg = entity_list.GetGroupByClient(give_exp_client);
 		Raid *kr = entity_list.GetRaidByClient(give_exp_client);
 
-		int32 finalxp = EXP_FORMULA;
+		int32 finalxp = static_cast<int32>(GetBaseEXP());
 		finalxp = give_exp_client->mod_client_xp(finalxp, this);
 
 		if (kr) {
@@ -2293,12 +2293,11 @@ bool NPC::Death(Mob* killer_mob, int32 damage, uint16 spell, EQEmu::skills::Skil
 		else {
 			if (!IsLdonTreasure && MerchantType == 0) {
 				int conlevel = give_exp->GetLevelCon(GetLevel());
-				if (conlevel != CON_GRAY) {
-					if (!GetOwner() || (GetOwner() && !GetOwner()->IsClient())) {
-						give_exp_client->AddEXP((finalxp), conlevel);
-						if (killer_mob && (killer_mob->GetID() == give_exp_client->GetID() || killer_mob->GetUltimateOwner()->GetID() == give_exp_client->GetID()))
-							killer_mob->TrySpellOnKill(killed_level, spell);
-					}
+				if (conlevel != CON_GREEN) {
+					give_exp_client->AddEXP((finalxp), conlevel);
+					if (killer_mob && (killer_mob->GetID() == give_exp_client->GetID() ||
+									   killer_mob->GetUltimateOwner()->GetID() == give_exp_client->GetID()))
+						killer_mob->TrySpellOnKill(killed_level, spell);
 				}
 			}
 
