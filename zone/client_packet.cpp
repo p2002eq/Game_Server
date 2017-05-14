@@ -875,6 +875,20 @@ void Client::CompleteConnect()
 
 	entity_list.RefreshClientXTargets(this);
 
+	uint16 level = GetLevel();
+	uint32 totalrequiredxp = GetEXPForLevel(level);
+	float currentxp = GetEXP();
+	uint32 currentaa = GetAAXP();
+
+	if(currentxp < totalrequiredxp)
+	{
+		Message(CC_Red, "Error: Your current XP (%0.2f) is lower than your current level (%i)! It needs to be at least %i", currentxp, level, totalrequiredxp);
+		SetEXP(totalrequiredxp, currentaa);
+		Save();
+		//SetLevel(level+1);
+		Kick();
+	}
+
 	worldserver.RequestTellQueue(GetName());
 }
 
@@ -1356,7 +1370,7 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 	/* Set Total Seconds Played */
 	TotalSecondsPlayed = m_pp.timePlayedMin * 60;
 	/* Set Max AA XP */
-	max_AAXP = RuleI(AA, ExpPerPoint);
+	max_AAXP = GetEXPForLevel(0, true);
 	/* If we can maintain intoxication across zones, check for it */
 	if (!RuleB(Character, MaintainIntoxicationAcrossZones))
 		m_pp.intoxication = 0;

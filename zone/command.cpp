@@ -67,6 +67,7 @@
 #include "titles.h"
 #include "water_map.h"
 #include "worldserver.h"
+#include "client.h"
 
 extern QueryServ* QServ;
 extern WorldServer worldserver;
@@ -399,6 +400,7 @@ int command_init(void)
 		command_add("wp", "[add/delete] [grid_num] [pause] [wp_num] [-h] - Add/delete a waypoint to/from a wandering grid", 170, command_wp) ||
 		command_add("wpadd", "[pause] [-h] - Add your current location as a waypoint to your NPC target's AI path", 170, command_wpadd) ||
 		command_add("wpinfo", "- Show waypoint info about your NPC target", 170, command_wpinfo) ||
+		command_add("xpinfo", "- Show XP info about your current target", 250, command_xpinfo) ||
 		command_add("xtargets",  "Show your targets Extended Targets and optionally set how many xtargets they can have.",  250, command_xtargets) ||
 		command_add("zclip", "[min] [max] - modifies and resends zhdr packet", 80, command_zclip) ||
 		command_add("zcolor", "[red] [green] [blue] - Change sky color", 80, command_zcolor) ||
@@ -4075,11 +4077,13 @@ void command_setxp(Client *c, const Seperator *sep)
 	if(c->GetTarget() && c->GetTarget()->IsClient())
 		t=c->GetTarget()->CastToClient();
 
+	uint32 currentaaXP = t->GetAAXP();
+
 	if (sep->IsNumber(1)) {
 		if (atoi(sep->arg[1]) > 9999999)
 			c->Message(0, "Error: Value too high.");
 		else
-			t->AddEXP(atoi(sep->arg[1]));
+			t->AddEXP(atoi(sep->arg[1]), currentaaXP);
 	}
 	else
 		c->Message(0, "Usage: #setxp number");
@@ -5672,9 +5676,6 @@ void command_setaaxp(Client *c, const Seperator *sep)
 
 	if (sep->IsNumber(1)) {
 		t->SetEXP(t->GetEXP(), atoi(sep->arg[1]), false);
-		if(sep->IsNumber(2) && sep->IsNumber(3)) {
-			t->SetLeadershipEXP(atoi(sep->arg[2]), atoi(sep->arg[3]));
-		}
 	} else
 		c->Message(0, "Usage: #setaaxp <new AA XP value> (<new Group AA XP value> <new Raid XP value>)");
 }
@@ -5694,12 +5695,10 @@ void command_setaapts(Client *c, const Seperator *sep)
 		t->GetPP().group_leadership_points = atoi(sep->arg[2]);
 		t->GetPP().group_leadership_exp = 0;
 		t->Message(MT_Experience, "Setting Group AA points to %u", t->GetPP().group_leadership_points);
-		t->SendLeadershipEXPUpdate();
 	} else if(!strcasecmp(sep->arg[1], "raid")) {
 		t->GetPP().raid_leadership_points = atoi(sep->arg[2]);
 		t->GetPP().raid_leadership_exp = 0;
 		t->Message(MT_Experience, "Setting Raid AA points to %u", t->GetPP().raid_leadership_points);
-		t->SendLeadershipEXPUpdate();
 	} else {
 		t->GetPP().aapoints = atoi(sep->arg[2]);
 		t->GetPP().expAA = 0;
@@ -10843,6 +10842,35 @@ void command_reloadperlexportsettings(Client *c, const Seperator *sep)
 	}
 }
 
+void command_xpinfo(Client *c, const Seperator *sep){
+
+	Client *t;
+
+	if (c->GetTarget() && c->GetTarget()->IsClient())
+		t = c->GetTarget()->CastToClient();
+	else
+		t = c;
+
+	uint16 level = t->GetLevel();
+	uint32 totalrequiredxp = t->GetEXPForLevel(level + 1);
+	uint32 currentxp = t->GetEXP();
+	float xpforlevel = totalrequiredxp - currentxp;
+	float totalxpforlevel = totalrequiredxp - t->GetEXPForLevel(level);
+	float xp_percent = 100.0 - ((xpforlevel/totalxpforlevel) * 100.0);
+
+	int exploss;
+	t->GetExpLoss(nullptr, 0, exploss);
+	float loss_percent = (exploss/totalxpforlevel) * 100.0;
+
+	float maxaa = t->GetEXPForLevel(0, true);
+	uint32 currentaaxp = t->GetAAXP();
+	float aa_percent = (currentaaxp/maxaa) * 100.0;
+
+	c->Message(CC_Yellow, "%s has %d of %d required XP.", t->GetName(), currentxp, totalrequiredxp);
+	c->Message(CC_Yellow, "They need %0.1f more to get to %d. They are %0.2f percent towards this level.", xpforlevel, level+1, xp_percent);
+	c->Message(CC_Yellow, "Their XP loss at this level is %d which is %0.2f percent of their current level.", exploss, loss_percent);
+	c->Message(CC_Yellow, "They have %d of %0.1f towards an AA point. They are %0.2f percent towards this point.", currentaaxp, maxaa, aa_percent);
+}
 
 // All new code added to command.cpp should be BEFORE this comment line. Do no append code to this file below the BOTS code block.
 #ifdef BOTS

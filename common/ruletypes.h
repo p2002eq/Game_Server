@@ -50,10 +50,12 @@ RULE_BOOL(Character, LeaveCorpses, true)
 RULE_BOOL(Character, LeaveNakedCorpses, false)
 RULE_INT(Character, MaxDraggedCorpses, 2)
 RULE_REAL(Character, DragCorpseDistance, 400) // If the corpse is <= this distance from the player, it won't move
-RULE_REAL(Character, ExpMultiplier, 0.5)
-RULE_REAL(Character, AAExpMultiplier, 0.5)
-RULE_REAL(Character, GroupExpMultiplier, 0.5)
+RULE_REAL(Character, ExpMultiplier, 1.0)
+RULE_REAL(Character, AAExpMultiplier, 1.0)
+RULE_REAL(Character, GroupExpMultiplier, 1.0)
 RULE_REAL(Character, RaidExpMultiplier, 0.2)
+RULE_BOOL ( Character, SmoothEXPLoss, true)
+RULE_REAL ( Character, EXPLossMultiplier, 1.0)
 RULE_BOOL(Character, UseXPConScaling, true)
 RULE_INT(Character, ShowExpValues, 0) //0 - normal, 1 - Show raw experience values, 2 - Show raw experience values AND percent.
 RULE_INT(Character, GreenModifier, 20)
@@ -68,6 +70,7 @@ RULE_INT(Character, ManaRegenMultiplier, 100)
 RULE_INT(Character, EnduranceRegenMultiplier, 100)
 RULE_INT(Character, ConsumptionMultiplier, 100) //item's hunger restored = this value * item's food level, 100 = normal, 50 = people eat 2x as fast, 200 = people eat 2x as slow
 RULE_BOOL(Character, HealOnLevel, false)
+RULE_BOOL(Character, ManaOnLevel, false)
 RULE_BOOL(Character, FeignKillsPet, false)
 RULE_INT(Character, ItemManaRegenCap, 15)
 RULE_INT(Character, ItemHealthRegenCap, 35)
@@ -101,7 +104,6 @@ RULE_INT(Character, MaxFearDurationForPlayerCharacter, 4) //4 tics, each tic cal
 RULE_INT(Character, MaxCharmDurationForPlayerCharacter, 15)
 RULE_INT(Character, BaseHPRegenBonusRaces, 4352)	//a bitmask of race(s) that receive the regen bonus. Iksar (4096) & Troll (256) = 4352. see common/races.h for the bitmask values
 RULE_BOOL(Character, SoDClientUseSoDHPManaEnd, false)	// Setting this to true will allow SoD clients to use the SoD HP/Mana/End formulas and previous clients will use the old formulas
-RULE_BOOL(Character, UseRaceClassExpBonuses, true)	// Setting this to true will enable Class and Racial experience rate bonuses
 RULE_BOOL(Character, UseOldRaceExpPenalties, false)	// Setting this to true will enable racial exp penalties for Iksar, Troll, Ogre, and Barbarian, as well as the bonus for Halflings
 RULE_BOOL(Character, UseOldClassExpPenalties, false)	// Setting this to true will enable old class exp penalties for Paladin, SK, Ranger, Bard, Monk, Wizard, Enchanter, Magician, and Necromancer, as well as the bonus for Rogues and Warriors
 RULE_BOOL(Character, RespawnFromHover, false)		// Use Respawn window, or not.
@@ -232,6 +234,7 @@ RULE_BOOL(World, StartZoneSameAsBindOnCreation, true) //Should the start zone AL
 RULE_CATEGORY_END()
 
 RULE_CATEGORY(Zone)
+RULE_REAL ( Zone, GroupEXPRange, 500 )
 RULE_INT(Zone, NPCPositonUpdateTicCount, 32) //ms between intervals of sending a position update to the entire zone.
 RULE_INT(Zone, ClientLinkdeadMS, 180000) //the time a client remains link dead on the server after a sudden disconnection
 RULE_INT(Zone, GraveyardTimeMS, 1200000) //ms time until a player corpse is moved to a zone's graveyard, if one is specified for the zone
@@ -252,7 +255,7 @@ RULE_INT(Zone, PEQZoneReuseTime, 900)	//How long, in seconds, until you can reus
 RULE_INT(Zone, PEQZoneDebuff1, 4454)		//First debuff casted by #peqzone Default is Cursed Keeper's Blight.
 RULE_INT(Zone, PEQZoneDebuff2, 2209)		//Second debuff casted by #peqzone Default is Tendrils of Apathy.
 RULE_BOOL(Zone, UsePEQZoneDebuffs, true)	//Will determine if #peqzone will debuff players or not when used.
-RULE_REAL(Zone, HotZoneBonus, 0.75)
+RULE_REAL(Zone, HotZoneBonus, 0.5)
 RULE_INT(Zone, ReservedInstances, 30) //Will reserve this many instance ids for globals... probably not a good idea to change this while a server is running.
 RULE_INT(Zone, EbonCrystalItemID, 40902)
 RULE_INT(Zone, RadiantCrystalItemID, 40903)
@@ -263,6 +266,17 @@ RULE_INT(Zone, MinOfflineTimeToReplenishments, 21600) // 21600 seconds is 6 Hour
 RULE_BOOL(Zone, UseZoneController, true) // Enables the ability to use persistent quest based zone controllers (zone_controller.pl/lua)
 RULE_BOOL(Zone, EnableZoneControllerGlobals, false) // Enables the ability to use quest globals with the zone controller NPC
 RULE_INT(Zone, GlobalLootMultiplier, 1) // Sets Global Loot drop multiplier for database based drops, useful for double, triple loot etc.
+RULE_CATEGORY_END()
+
+RULE_CATEGORY( AlKabor )
+RULE_BOOL( AlKabor, AllowTickSplit, false) //AK behavior is true
+RULE_BOOL ( AlKabor, StripBuffsOnLowHP, true) //AK behavior is true
+RULE_BOOL ( AlKabor, OutOfRangeGroupXPBonus, true) //AK behavior is true
+RULE_BOOL ( AlKabor, GroupEXPBonuses, false) //AK behavior is true
+RULE_BOOL ( AlKabor, Count6thGroupMember, false) //AK behavior is false
+RULE_BOOL ( AlKabor, GreensGiveXPToGroup, true) //AK behavior is true
+RULE_BOOL( AlKabor, AllowCharmPetRaidTanks, true) // AK behavior is true.  If false, NPCs will ignore charmed pets once MaxEntitiesCharmTanks players get on an NPC's hate list as per April 2003 patch.
+RULE_INT( AlKabor, MaxEntitiesCharmTanks, 8) // If AllowCharmPetRaidTanks is false, this is the max number of entities on an NPC's hate list before the NPC will ignore charmed pets.  April 2003 patch set this to 4 on Live.
 RULE_CATEGORY_END()
 
 RULE_CATEGORY(Map)
@@ -661,7 +675,7 @@ RULE_INT(Adventure, LDoNAdventureExpireTime, 1800) //30 minutes to expire
 RULE_CATEGORY_END()
 
 RULE_CATEGORY(AA)
-RULE_INT(AA, ExpPerPoint, 23976503)	//Amount of exp per AA. Is the same as the amount of exp to go from level 51 to level 52.
+RULE_INT (AA, ExpPerPoint, 23976496)
 RULE_BOOL(AA, Stacking, true) //Allow AA that belong to the same group to stack on SOF+ clients.
 RULE_CATEGORY_END()
 

@@ -221,7 +221,7 @@ enum {	//some random constants
 
 //the formula for experience for killing a mob.
 //level is the only valid variable to use
-#define EXP_FORMULA level*level*75*35/10
+#define EXP_FORMULA level*level
 
 #define HIGHEST_AA_VALUE 35
 

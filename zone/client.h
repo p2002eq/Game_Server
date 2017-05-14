@@ -570,8 +570,6 @@ public:
 	void AddCrystals(uint32 Radiant, uint32 Ebon);
 	void SendCrystalCounts();
 
-	void AddEXP(uint32 in_add_exp, uint8 conlevel = 0xFF, bool resexp = false);
-	uint32 CalcEXP(uint8 conlevel = 0xFF);
 	void SetEXP(uint32 set_exp, uint32 set_aaxp, bool resexp=false);
 	void AddLevelBasedExp(uint8 exp_percentage, uint8 max_level=0);
 	void SetLeadershipEXP(uint32 group_exp, uint32 raid_exp);
@@ -1258,6 +1256,15 @@ public:
 
 	void SendHPUpdateMarquee();
 
+	// exp.cpp
+	uint32 GetEXPForLevel(uint16 level, bool aa = false);
+	void AddEXP(uint32 in_add_exp, uint8 conlevel = 0xFF, bool resexp = false);
+	bool IsInRange(Mob* defender);
+	bool IsInLevelRange(uint8 maxlevel);
+	void AddQuestEXP(uint32 in_add_exp);
+	void AddEXPPercent(uint8 percent, uint8 level = 1);
+	void GetExpLoss(Mob* attacker, uint16 spell, int &exploss);
+
 	void CheckRegionTypeChanges();
 
 protected:
@@ -1419,7 +1426,6 @@ private:
 	InspectMessage_Struct m_inspect_message;
 
 	void NPCSpawn(const Seperator* sep);
-	uint32 GetEXPForLevel(uint16 level);
 
 	bool CanBeInZone();
 	void SendLogoutPackets();

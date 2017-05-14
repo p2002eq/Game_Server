@@ -731,8 +731,13 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial, int level_ove
 				snprintf(effect_desc, _EDLEN, "Charm: %+i (up to lvl %d)", effect_value, spell.max[i]);
 #endif
 
-				if (!caster)	// can't be someone's pet unless we know who that someone is
+				if (!caster) {    // can't be someone's pet unless we know who that someone is
 					break;
+				}
+
+				if(IsDireCharmSpell(spell_id)) {
+					dire_charmed = true;
+				}
 
 				if(IsNPC())
 				{
@@ -3958,6 +3963,7 @@ void Mob::BuffFadeBySlot(int slot, bool iRecalcBonuses)
 
 			case SE_Charm:
 			{
+				dire_charmed = false;
 				if(IsNPC())
 				{
 					CastToNPC()->RestoreGuardSpotCharm();

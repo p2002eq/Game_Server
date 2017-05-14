@@ -615,6 +615,16 @@ public:
 	bool HasProcs() const;
 	bool IsCombatProc(uint16 spell_id);
 
+	//exp
+	float  GetBaseEXP();
+
+
+	//Helpers
+	bool IsDireCharmed() { return dire_charmed; }
+	uint32 player_damage;
+	uint32 dire_pet_damage;
+	uint32 total_damage;
+
 	//More stuff to sort:
 	virtual bool IsRaidTarget() const { return false; };
 	virtual bool IsAttackAllowed(Mob *target, bool isSpellAttack = false);
@@ -1159,6 +1169,7 @@ protected:
 	int16 petpower;
 	uint32 follow;
 	uint32 follow_dist;
+	bool dire_charmed;
 	bool no_target_hotkey;
 
 	uint32 m_PlayerState;

@@ -4441,7 +4441,6 @@ void Client::UpdateGroupAAs(int32 points, uint32 type) {
 		case 0: { m_pp.group_leadership_points += points; break; }
 		case 1: { m_pp.raid_leadership_points += points; break; }
 	}
-	SendLeadershipEXPUpdate();
 }
 
 bool Client::IsLeadershipEXPOn() {
