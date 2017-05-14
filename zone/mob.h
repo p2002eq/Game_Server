@@ -1007,6 +1007,11 @@ public:
 	inline void SetEmoteID(uint16 emote) { emoteid = emote; }
 	inline uint16 GetEmoteID() { return emoteid; }
 
+	inline void SetCombatHPRegen(uint32 regen) { combat_hp_regen = regen; };
+	inline uint32 GetCombatHPRegen() { return combat_hp_regen; }
+	inline void SetCombatManaRegen(uint32 regen) { combat_mana_regen = regen; };
+	inline uint32 GetCombatManaRegen() { return combat_mana_regen; }
+
 	bool 	HasSpellEffect(int effectid);
 	int 	mod_effect_value(int effect_value, uint16 spell_id, int effect_type, Mob* caster, uint16 caster_id);
 	float 	mod_hit_chance(float chancetohit, EQEmu::skills::SkillType skillinuse, Mob* attacker);
@@ -1440,6 +1445,8 @@ protected:
 	int QGVarDuration(const char *fmt);
 	void InsertQuestGlobal(int charid, int npcid, int zoneid, const char *name, const char *value, int expdate);
 	uint16 emoteid;
+	uint32 combat_hp_regen;
+	uint32 combat_mana_regen;
 
 	SpecialAbility SpecialAbilities[MAX_SPECIAL_ATTACK];
 	bool bEnraged;

@@ -132,6 +132,8 @@ struct NPCType
 	uint8	handtexture;
 	uint8	legtexture;
 	uint8	feettexture;
+	uint32  combat_hp_regen;
+	uint32  combat_mana_regen;
 	bool	ignore_despawn;
 };
 

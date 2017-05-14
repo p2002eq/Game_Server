@@ -371,6 +371,8 @@ NPC::NPC(const NPCType* d, Spawn2* in_respawn, const glm::vec4& position, int if
 	reface_timer->Disable();
 	qGlobals = nullptr;
 	SetEmoteID(d->emoteid);
+	SetCombatHPRegen(d->combat_hp_regen);
+	SetCombatManaRegen(d->combat_mana_regen);
 	InitializeBuffSlots();
 	CalcBonuses();
 	raid_target = d->raid_target;
@@ -620,32 +622,13 @@ bool NPC::Process()
 		if (GetAppearance() == eaSitting)
 			bonus += 3;
 
-		int32 OOCRegen = 0;
-		if (oocregen > 0) { //should pull from Mob class
-			OOCRegen += GetMaxHP() * oocregen / 100;
+		// Hp regen
+		if(GetHP() < GetMaxHP()) {
+			SetHP(GetHP() + GetHPRegen());
 		}
-		//Lieka Edit:Fixing NPC regen.NPCs should regen to full during a set duration, not based on their HPs.Increase NPC's HPs by % of total HPs / tick.
-		if ((GetHP() < GetMaxHP()) && !IsPet()) {
-			if (!IsEngaged()) {//NPC out of combat
-				if (GetNPCHPRegen() > OOCRegen)
-					SetHP(GetHP() + GetNPCHPRegen());
-				else
-					SetHP(GetHP() + OOCRegen);
-			}
-			else
-				SetHP(GetHP() + GetNPCHPRegen());
-		}
-		else if (GetHP() < GetMaxHP() && GetOwnerID() != 0) {
-			if (!IsEngaged()) //pet
-				SetHP(GetHP() + GetNPCHPRegen() + bonus + (GetLevel() / 5));
-			else
-				SetHP(GetHP() + GetNPCHPRegen() + bonus);
-		}
-		else
-			SetHP(GetHP() + GetNPCHPRegen());
-
+		// mana regen
 		if (GetMana() < GetMaxMana()) {
-			SetMana(GetMana() + mana_regen + bonus);
+			SetMana(GetMana() + GetManaRegen());
 		}
 
 
@@ -2141,6 +2124,65 @@ void NPC::CalcNPCResists() {
 	if (!PhR)
 		PhR = 10;
 	return;
+}
+
+int32 NPC::GetHPRegen()
+{
+	uint32 bonus = 0;
+	if(GetAppearance() == eaSitting)
+		bonus+=3;
+
+	if((GetHP() < GetMaxHP()) && !IsPet())
+	{
+		// OOC
+		if(!IsEngaged())
+		{
+			return(GetNPCHPRegen() + bonus); // hp_regen + spell/item regen + sitting bonus
+			// In Combat
+		}
+		else
+			return(GetCombatHPRegen() + (GetNPCHPRegen() - hp_regen)); // combat_regen + spell/item regen
+	}
+		// Pet
+	else if(GetHP() < GetMaxHP() && GetOwnerID() !=0)
+	{
+		if(!IsEngaged())
+			return(GetNPCHPRegen() + bonus + (GetLevel()/5));
+		else
+			return(GetCombatHPRegen() + (GetNPCHPRegen() - hp_regen));
+	}
+	else
+		return 0;
+}
+
+int32 NPC::GetManaRegen()
+{
+	uint32 bonus = 0;
+	if(GetAppearance() == eaSitting)
+		bonus+=3;
+
+	// Non-Pet
+	if((GetMana() < GetMaxMana()) && !IsPet())
+	{
+		// OOC
+		if(!IsEngaged())
+		{
+			return(GetNPCManaRegen() + bonus); // mana_regen + spell/item regen + sitting bonus
+			// In Combat
+		}
+		else
+			return(GetCombatManaRegen() + (GetNPCManaRegen() - mana_regen)); // combat_regen + spell/item regen
+	}
+		// Pet
+	else if(GetMana() < GetMaxMana() && GetOwnerID() !=0)
+	{
+		if(!IsEngaged())
+			return(GetNPCManaRegen() + bonus + (GetLevel()/5));
+		else
+			return(GetCombatManaRegen() + (GetNPCManaRegen() - mana_regen));
+	}
+	else
+		return 0;
 }
 
 void NPC::CalcNPCRegen() {

@@ -1514,10 +1514,19 @@ void Mob::ShowStats(Client* client)
 		if (IsNPC()) {
 			NPC *n = CastToNPC();
 			uint32 spawngroupid = 0;
-			if(n->respawn2 != 0)
+			if(n->respawn2 != 0) {
 				spawngroupid = n->respawn2->SpawnGroupID();
-			client->Message(0, "  NPCID: %u  SpawnGroupID: %u Grid: %i LootTable: %u FactionID: %i SpellsID: %u ", GetNPCTypeID(),spawngroupid, n->GetGrid(), n->GetLoottableID(), n->GetNPCFactionID(), n->GetNPCSpellsID());
-			client->Message(0, "  Accuracy: %i MerchantID: %i EmoteID: %i Runspeed: %.3f Walkspeed: %.3f", n->GetAccuracyRating(), n->MerchantType, n->GetEmoteID(), static_cast<float>(0.025f * n->GetRunspeed()), static_cast<float>(0.025f * n->GetWalkspeed()));
+				client->Message(0, "  NPCID: %u  SpawnGroupID: %u Grid: %i LootTable: %u FactionID: %i SpellsID: %u ",
+								GetNPCTypeID(), spawngroupid, n->GetGrid(), n->GetLoottableID(), n->GetNPCFactionID(),
+								n->GetNPCSpellsID());
+				client->Message(0, "  HP Regen: %i Mana Regen: %i Magic Atk: %i Immune to Melee: %i", n->GetHPRegen(),
+								n->GetManaRegen(), GetSpecialAbility(SPECATK_MAGICAL),
+								GetSpecialAbility(IMMUNE_MELEE_NONMAGICAL));
+				client->Message(0, "  Accuracy: %i MerchantID: %i EmoteID: %i Runspeed: %.3f Walkspeed: %.3f",
+								n->GetAccuracyRating(), n->MerchantType, n->GetEmoteID(),
+								static_cast<float>(0.025f * n->GetRunspeed()),
+								static_cast<float>(0.025f * n->GetWalkspeed()));
+			}
 			n->QueryLoot(client);
 		}
 		if (IsAIControlled()) {
