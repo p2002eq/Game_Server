@@ -1507,25 +1507,30 @@ void Client::OPMoveCoin(const EQApplicationPacket* app)
 	SaveCurrency();
 }
 
-void Client::OPGMTraining(const EQApplicationPacket *app)
-{
+void Client::OPGMTraining(const EQApplicationPacket *app) {
 
 	EQApplicationPacket* outapp = app->Copy();
 	GMTrainee_Struct* gmtrain = (GMTrainee_Struct*) outapp->pBuffer;
 
 	Mob* pTrainer = entity_list.GetMob(gmtrain->npcid);
 
-	if(!pTrainer || !pTrainer->IsNPC() || pTrainer->GetClass() < WARRIORGM || pTrainer->GetClass() > BERSERKERGM)
+	if(!pTrainer || !pTrainer->IsNPC() || pTrainer->GetClass() < WARRIORGM || pTrainer->GetClass() > BERSERKERGM) {
+		safe_delete(outapp);
 		return;
+	}
 
 	//you can only use your own trainer, client enforces this, but why trust it
 	int trains_class = pTrainer->GetClass() - (WARRIORGM - WARRIOR);
-	if(GetClass() != trains_class)
+	if(GetClass() != trains_class) {
+		safe_delete(outapp);
 		return;
+	}
 
 	//you have to be somewhat close to a trainer to be properly using them
-	if(DistanceSquared(m_Position,pTrainer->GetPosition()) > USE_NPC_RANGE2)
+	if(DistanceSquared(m_Position,pTrainer->GetPosition()) > USE_NPC_RANGE2) {
+		safe_delete(outapp);
 		return;
+	}
 
 	// if this for-loop acts up again (crashes linux), try enabling the before and after #pragmas
 //#pragma GCC push_options
@@ -1614,7 +1619,7 @@ void Client::OPGMTrainSkill(const EQApplicationPacket *app)
 		// languages go here
 		if (gmskill->skill_id > 25)
 		{
-			std::cout << "Wrong Training Skill (languages)" << std::endl;
+			Log(Logs::Detail, Logs::Combat, "Wrong Training Skill (languages)");
 			DumpPacket(app);
 			return;
 		}
@@ -1629,7 +1634,7 @@ void Client::OPGMTrainSkill(const EQApplicationPacket *app)
 		// normal skills go here
 		if (gmskill->skill_id > EQEmu::skills::HIGHEST_SKILL)
 		{
-			std::cout << "Wrong Training Skill (abilities)" << std::endl;
+			Log(Logs::Detail, Logs::Combat, "Wrong Training Skill (abilities)" );
 			DumpPacket(app);
 			return;
 		}
@@ -1648,11 +1653,12 @@ void Client::OPGMTrainSkill(const EQApplicationPacket *app)
 
 		uint16 skilllevel = GetRawSkill(skill);
 
-		if(skilllevel == 0) {
+		if(skilllevel == 0 || (skilllevel == 254 && SkillTrainLevel(skill, GetClass()) <= GetLevel())) {
 			//this is a new skill..
 			uint16 t_level = SkillTrainLevel(skill, GetClass());
 			if (t_level == 0)
 			{
+				Log(Logs::Detail, Logs::Combat, "Tried to train a new skill %d which is invalid for this race/class.", skill);
 				return;
 			}
 
@@ -1672,6 +1678,7 @@ void Client::OPGMTrainSkill(const EQApplicationPacket *app)
 			case EQEmu::skills::SkillPottery:
 				if(skilllevel >= RuleI(Skills, MaxTrainTradeskills)) {
 					Message_StringID(13, MORE_SKILLED_THAN_I, pTrainer->GetCleanName());
+					SetSkill(skill, skilllevel);
 					return;
 				}
 				break;
@@ -1682,6 +1689,7 @@ void Client::OPGMTrainSkill(const EQApplicationPacket *app)
 			case EQEmu::skills::SkillSpecializeEvocation:
 				if(skilllevel >= RuleI(Skills, MaxTrainSpecializations)) {
 					Message_StringID(13, MORE_SKILLED_THAN_I, pTrainer->GetCleanName());
+					SetSkill(skill, skilllevel);
 					return;
 				}
 			default:
@@ -1693,6 +1701,7 @@ void Client::OPGMTrainSkill(const EQApplicationPacket *app)
 			{
 				// Don't allow training over max skill level
 				Message_StringID(13, MORE_SKILLED_THAN_I, pTrainer->GetCleanName());
+				SetSkill(skill, skilllevel);
 				return;
 			}
 
@@ -1703,6 +1712,7 @@ void Client::OPGMTrainSkill(const EQApplicationPacket *app)
 				{
 					// Restrict specialization training to follow the rules
 					Message_StringID(13, MORE_SKILLED_THAN_I, pTrainer->GetCleanName());
+					SetSkill(skill, skilllevel);
 					return;
 				}
 			}
