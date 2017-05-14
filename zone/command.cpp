@@ -556,14 +556,20 @@ int command_realdispatch(Client *c, const char *message)
 		return(-1);
 	}
 
-	/* QS: Player_Log_Issued_Commands */
-	if (RuleB(QueryServ, PlayerLogIssuedCommandes)){
-		std::string event_desc = StringFormat("Issued command :: '%s' in zoneid:%i instid:%i",  message, c->GetZoneID(), c->GetInstanceID());
-		QServ->PlayerLogEvent(Player_Log_Issued_Commands, c->CharacterID(), event_desc);
-	}
-
 	if(cur->access >= COMMANDS_LOGGING_MIN_STATUS) {
-		Log(Logs::General, Logs::Commands, "%s (%s) used command: %s (target=%s)",  c->GetName(), c->AccountName(), message, c->GetTarget()?c->GetTarget()->GetName():"NONE");
+		const char *targetType = "notarget";
+		if (c->GetTarget()) {
+			if (c->GetTarget()->IsClient()) targetType = "player";
+			else if (c->GetTarget()->IsPet()) targetType = "pet";
+			else if (c->GetTarget()->IsNPC()) targetType = "NPC";
+			else if (c->GetTarget()->IsCorpse()) targetType = "Corpse";
+			database.LogCommands(c->GetName(), c->AccountName(), c->GetY(), c->GetX(), c->GetZ(), message, targetType,
+								 c->GetTarget()->GetName(), c->GetTarget()->GetY(), c->GetTarget()->GetX(),
+								 c->GetTarget()->GetZ(), c->GetZoneID(), zone->GetShortName());
+		} else {
+			database.LogCommands(c->GetName(), c->AccountName(), c->GetY(), c->GetX(), c->GetZ(), message, targetType,
+								 targetType, 0, 0, 0, c->GetZoneID(), zone->GetShortName());
+		}
 	}
 
 	if(cur->function == nullptr) {

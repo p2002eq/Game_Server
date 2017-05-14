@@ -2987,6 +2987,75 @@ void ZoneDatabase::InsertDoor(uint32 ddoordbid, uint16 ddoorid, const char* ddoo
     QueryDatabase(query);
 }
 
+void ZoneDatabase::LogCommands(const char* char_name, const char* acct_name, float y, float x, float z, const char* command, const char* targetType, const char* target, float tar_y, float tar_x, float tar_z, uint32 zone_id, const char* zone_name)
+{
+
+	std::string new_char_name = std::string(char_name);
+	replace_all(new_char_name, "'", "_");
+	std::string new_target = std::string(target);
+	replace_all(new_target, "'", "_");
+
+	std::string rquery = StringFormat("SHOW TABLES LIKE 'commands_log'");
+	auto results = QueryDatabase(rquery);
+	if (results.RowCount() == 0){
+		rquery = StringFormat(
+				"CREATE TABLE	`commands_log` (								"
+						"`entry_id`		int(11) NOT NULL AUTO_INCREMENT,				"
+						"`char_name`	varchar(64) DEFAULT NULL,						"
+						"`acct_name`	varchar(64) DEFAULT NULL,						"
+						"`y`			float NOT NULL DEFAULT '0',						"
+						"`x`			float NOT NULL DEFAULT '0',						"
+						"`z`			float NOT NULL DEFAULT '0',						"
+						"`command`		varchar(100) DEFAULT NULL,						"
+						"`target_type`	varchar(30) DEFAULT NULL,						"
+						"`target`		varchar(64) DEFAULT NULL,						"
+						"`tar_y`		float NOT NULL DEFAULT '0',						"
+						"`tar_x`		float NOT NULL DEFAULT '0',						"
+						"`tar_z`		float NOT NULL DEFAULT '0',						"
+						"`zone_id`		int(11) DEFAULT NULL,							"
+						"`zone_name`	varchar(30) DEFAULT NULL,						"
+						"`time`			datetime DEFAULT NULL,							"
+						"PRIMARY KEY(`entry_id`)										"
+						") ENGINE = InnoDB AUTO_INCREMENT = 8 DEFAULT CHARSET = latin1;	"
+		);
+		auto results = QueryDatabase(rquery);
+	}
+	std::string query = StringFormat("INSERT INTO `commands_log` (char_name, acct_name, y, x, z, command, target_type, target, tar_y, tar_x, tar_z, zone_id, zone_name, time) "
+											 "VALUES('%s', '%s', '%f', '%f', '%f', '%s', '%s', '%s', '%f', '%f', '%f', '%i', '%s', now())",
+									 new_char_name.c_str(), acct_name, y, x, z, command, targetType, new_target.c_str(), tar_y, tar_x, tar_z, zone_id, zone_name, time);
+	auto log_results = QueryDatabase(query);
+	if (!log_results.Success())
+		Log(Logs::General, Logs::Error, "Error in LogCommands query '%s': %s", query.c_str(), results.ErrorMessage().c_str());
+}
+
+uint8 ZoneDatabase::GetCommandAccess(const char* command) {
+	std::string check_query = StringFormat("SELECT command FROM `commands` WHERE `command`='%s'", command);
+	auto check_results = QueryDatabase(check_query);
+	if (check_results.RowCount() == 0)
+	{
+		std::string insert_query = StringFormat("INSERT INTO `commands` (`command`, `access`) VALUES ('%s', %i)", command, 250);
+		auto insert_results = QueryDatabase(insert_query);
+		if (!insert_results.Success())
+		{
+			Log(Logs::Detail, Logs::Error, "Error creating command %s in commands table.", command);
+			return 250;
+		}
+	}
+
+	std::string query = StringFormat("SELECT access FROM commands WHERE command = '%s'", command);
+	auto results = QueryDatabase(query);
+	if (!results.Success()) {
+		return 250;
+	}
+
+	if (results.RowCount() != 1)
+		return 250;
+
+	auto row = results.begin();
+
+	return atoi(row[0]);
+}
+
 void ZoneDatabase::LoadAltCurrencyValues(uint32 char_id, std::map<uint32, uint32> &currency) {
 
 	std::string query = StringFormat("SELECT currency_id, amount "
