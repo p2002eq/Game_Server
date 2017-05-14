@@ -110,30 +110,34 @@ uint32 SharedDatabase::GetTotalTimeEntitledOnAccount(uint32 AccountID) {
 	return EntitledTime;
 }
 
-bool SharedDatabase::SaveCursor(uint32 char_id, std::list<EQEmu::ItemInstance*>::const_iterator &start, std::list<EQEmu::ItemInstance*>::const_iterator &end)
-{
+bool SharedDatabase::SaveCursor(uint32 char_id, std::list<EQEmu::ItemInstance*>::const_iterator &start, std::list<EQEmu::ItemInstance*>::const_iterator &end) {
 	// Delete cursor items
 	std::string query = StringFormat("DELETE FROM inventory WHERE charid = %i "
-                                    "AND ((slotid >= 8000 AND slotid <= 8999) "
-                                    "OR slotid = %i OR (slotid >= %i AND slotid <= %i) )",
-									char_id, EQEmu::inventory::slotCursor,
-									EQEmu::legacy::CURSOR_BAG_BEGIN, EQEmu::legacy::CURSOR_BAG_END);
-    auto results = QueryDatabase(query);
-    if (!results.Success()) {
-        std::cout << "Clearing cursor failed: " << results.ErrorMessage() << std::endl;
-        return false;
-    }
+											 "AND ((slotid >= %i AND slotid <= %i) "
+											 "OR slotid = %i OR (slotid >= %i AND slotid <= %i) )",
+									 char_id, EQEmu::legacy::CURSOR_QUEUE_BEGIN, EQEmu::legacy::CURSOR_QUEUE_END,
+									 EQEmu::inventory::slotCursor, EQEmu::legacy::CURSOR_BAG_BEGIN,
+									 EQEmu::legacy::CURSOR_BAG_END);
+	auto results = QueryDatabase(query);
+	if (!results.Success()) {
+		std::cout << "Clearing cursor failed: " << results.ErrorMessage() << std::endl;
+		return false;
+	}
 
-    int i = 8000;
-    for(auto it = start; it != end; ++it, i++) {
-		if (i > 8999) { break; } // shouldn't be anything in the queue that indexes this high
-        EQEmu::ItemInstance *inst = *it;
-		int16 use_slot = (i == 8000) ? EQEmu::inventory::slotCursor : i;
+	int i = EQEmu::legacy::CURSOR_QUEUE_BEGIN;
+	for (auto it = start; it != end; ++it, i++) {
+		EQEmu::ItemInstance *inst = *it;
+		int16 use_slot = (i == EQEmu::legacy::CURSOR_QUEUE_BEGIN) ? EQEmu::inventory::slotCursor : i;
+		if (inst)
+			Log(Logs::Moderate, Logs::Inventory, "SaveCursor: Attempting to save item %s for char %d in slot %d",
+				inst->GetItem()->Name, char_id, use_slot);
+		else
+			Log(Logs::Moderate, Logs::Inventory,
+				"SaveCursor: No inst found. This is either an error, or we've reached the end of the list.");
 		if (!SaveInventory(char_id, inst, use_slot)) {
 			return false;
 		}
-    }
-
+	}
 	return true;
 }
 
