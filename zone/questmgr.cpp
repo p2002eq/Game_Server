@@ -3031,6 +3031,25 @@ void QuestManager::WorldWideMarquee(uint32 Type, uint32 Priority, uint32 FadeIn,
 	safe_delete(pack);
 }
 
+void QuestManager::SendDebug(std::string message, int level)
+{
+	if (level > Logs::Detail)
+		return;
+
+	if (level == Logs::General)
+	{
+		Log(Logs::General, Logs::QuestDebug, message);
+	}
+	else if (level == Logs::Moderate)
+	{
+		Log(Logs::Moderate, Logs::QuestDebug, message);
+	}
+	else if (level == Logs::Detail)
+	{
+		Log(Logs::Detail, Logs::QuestDebug, message);
+	}
+}
+
 bool QuestManager::EnableRecipe(uint32 recipe_id)
 {
 	bool success = false;

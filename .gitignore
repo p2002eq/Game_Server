@@ -50,3 +50,5 @@ bin/*
 *.vcxproj*
 .vs/
 
+libs/format/FMT.cbp
+libs/libuv/libuv.cbp
