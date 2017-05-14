@@ -3923,7 +3923,7 @@ bool ZoneDatabase::LoadCharacterCorpseData(uint32 corpse_id, PlayerCorpse_Struct
 	pcs->itemcount = results.RowCount();
 	uint16 r = 0;
 	for (auto row = results.begin(); row != results.end(); ++row) {
-		memset(&pcs->items[i], 0, sizeof (player_lootitem::ServerLootItem_Struct));
+		memset(&pcs->items[i], 0, sizeof (ServerLootItem_Struct));
 		pcs->items[i].equip_slot = atoi(row[r++]);		// equip_slot,
 		pcs->items[i].item_id = atoul(row[r++]); 		// item_id,
 		pcs->items[i].charges = atoi(row[r++]); 		// charges,

@@ -76,7 +76,7 @@ void Corpse::SendLootReqErrorPacket(Client* client, LootResponse response) {
 Corpse* Corpse::LoadCharacterCorpseEntity(uint32 in_dbid, uint32 in_charid, std::string in_charname, const glm::vec4& position, std::string time_of_death, bool rezzed, bool was_at_graveyard) {
 	uint32 item_count = database.GetCharacterCorpseItemCount(in_dbid);
 	auto buffer =
-	    new char[sizeof(PlayerCorpse_Struct) + (item_count * sizeof(player_lootitem::ServerLootItem_Struct))];
+	    new char[sizeof(PlayerCorpse_Struct) + (item_count * sizeof(ServerLootItem_Struct))];
 	PlayerCorpse_Struct *pcs = (PlayerCorpse_Struct*)buffer;
 	database.LoadCharacterCorpseData(in_dbid, pcs);
 
@@ -85,7 +85,7 @@ Corpse* Corpse::LoadCharacterCorpseEntity(uint32 in_dbid, uint32 in_charid, std:
 	ServerLootItem_Struct* tmp = nullptr;
 	for (unsigned int i = 0; i < pcs->itemcount; i++) {
 		tmp = new ServerLootItem_Struct;
-		memcpy(tmp, &pcs->items[i], sizeof(player_lootitem::ServerLootItem_Struct));
+		memcpy(tmp, &pcs->items[i], sizeof(ServerLootItem_Struct));
 		itemlist.push_back(tmp);
 	}
 
@@ -564,7 +564,7 @@ bool Corpse::Save() {
 		return true;
 
 	uint32 tmp = this->CountItems();
-	uint32 tmpsize = sizeof(PlayerCorpse_Struct) + (tmp * sizeof(player_lootitem::ServerLootItem_Struct));
+	uint32 tmpsize = sizeof(PlayerCorpse_Struct) + (tmp * sizeof(ServerLootItem_Struct));
 
 	PlayerCorpse_Struct* dbpc = (PlayerCorpse_Struct*) new uchar[tmpsize];
 	memset(dbpc, 0, tmpsize);
