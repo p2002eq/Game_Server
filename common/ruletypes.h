@@ -395,6 +395,8 @@ RULE_BOOL(Spells, UseAdditiveFocusFromWornSlot, false) // Allows an additive foc
 RULE_BOOL(Spells, AlwaysSendTargetsBuffs, false) // ignore LAA level if true
 RULE_BOOL(Spells, FlatItemExtraSpellAmt, false) // allow SpellDmg stat to affect all spells, regardless of cast time/cooldown/etc
 RULE_BOOL(Spells, IgnoreSpellDmgLvlRestriction, false) // ignore the 5 level spread on applying SpellDmg
+RULE_REAL(Spells, BreakFeignDeathWhenCastOn, 50.0) // percentage that fd will break when you resist a spell
+RULE_REAL(Spells, BreakSneakWhenCastOn, 2.0) // percentage that sneak will break when you resist a spell
 RULE_BOOL(Spells, AllowItemTGB, false) // TGB doesn't work with items on live, custom servers want it though
 RULE_BOOL(Spells, NPCInnateProcOverride, true) //  NPC innate procs override the target type to single target.
 RULE_CATEGORY_END()
