@@ -44,7 +44,7 @@ void WorldDatabase::GetCharSelectInfo(uint32 accountID, EQApplicationPacket **ou
 
 	// Force Titanium clients to use '8'
 	if (client_version == EQEmu::versions::ClientVersion::Titanium)
-		character_limit = 8;
+		int character_limit = 8;
 	
 	/* Get Character Info */
 	std::string cquery = StringFormat(
