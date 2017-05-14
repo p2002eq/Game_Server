@@ -2639,3 +2639,37 @@ void NPC::DepopSwarmPets()
 		}
 	}
 }
+
+bool NPC::AddQuestLoot(int16 itemid)
+{
+	const EQEmu::ItemData* item = database.GetItem(itemid);
+	if(item)
+	{
+		AddLootDrop(item, &itemlist, 1, 1, 127, false, false, true);
+	}
+	else
+		return false;
+
+	return true;
+}
+
+void NPC::DeleteQuestLoot(int16 itemid1, int16 itemid2, int16 itemid3, int16 itemid4)
+{
+	int16 items = itemlist.size();
+	for (int i = 0; i < items; ++i)
+	{
+		if(itemid1 == 0)
+		{
+			if(!RemoveQuestLootItems(itemid1))
+				break;
+		}
+		else
+		{
+			if(!RemoveQuestLootItems(itemid1) && !RemoveQuestLootItems(itemid2) &&
+			   !RemoveQuestLootItems(itemid3) && !RemoveQuestLootItems(itemid4))
+			{
+				break;
+			}
+		}
+	}
+}

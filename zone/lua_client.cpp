@@ -692,7 +692,7 @@ void Lua_Client::DeleteItemInInventory(int slot_id, int quantity, bool update_cl
 
 void Lua_Client::SummonItem(uint32 item_id) {
 	Lua_Safe_Call_Void();
-	self->SummonItem(item_id);
+	self->SummonItem(item_id, 0, false, MainQuest);
 }
 
 void Lua_Client::SummonItem(uint32 item_id, int charges) {
