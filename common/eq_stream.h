@@ -5,6 +5,7 @@
 #include <map>
 #include <queue>
 #include <deque>
+#include <limits>
 
 #ifndef WIN32
 #include <netinet/in.h>
