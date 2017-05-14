@@ -512,6 +512,11 @@ int Mob::MonkSpecialAttack(Mob *other, uint8 unchecked_type)
 	// This can potentially stack with changes to kick damage
 	ht = ndamage = mod_monk_special_damage(ndamage, skill_type);
 
+	// aggro should never be negative else it does massive aggro
+	if (ht < 0)	{
+		ht = 0;
+	}
+
 	DoSpecialAttackDamage(other, skill_type, max_dmg, min_dmg, ht, reuse);
 
 	return reuse;
