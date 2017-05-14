@@ -4291,7 +4291,7 @@ bool Mob::TryFinishingBlow(Mob *defender, int &damage)
 		int ProcChance =
 			aabonuses.FinishingBlow[0] + spellbonuses.FinishingBlow[0] + spellbonuses.FinishingBlow[0];
 
-		if (FB_Level && FB_Dmg && (defender->GetLevel() <= FB_Level) &&
+		if (FB_Level && FB_Dmg && (defender->GetLevel() <= FB_Level) && defender->currently_fleeing &&
 			(ProcChance >= zone->random.Int(1, 1000))) {
 
 			/* Finishing Blow Critical Message */
