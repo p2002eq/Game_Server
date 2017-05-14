@@ -227,7 +227,7 @@ public:
 	void ProjectileAnimation(Mob* to, int item_id, bool IsArrow = false, float speed = 0,
 		float angle = 0, float tilt = 0, float arc = 0, const char *IDFile = nullptr, EQEmu::skills::SkillType skillInUse = EQEmu::skills::SkillArchery);
 	void ChangeSize(float in_size, bool bNoRestriction = false);
-	inline uint8 SeeInvisible() const { return see_invis; }
+	uint8 SeeInvisible();
 	inline bool SeeInvisibleUndead() const { return see_invis_undead; }
 	inline bool SeeHide() const { return see_hide; }
 	inline bool SeeImprovedHide() const { return see_improved_hide; }

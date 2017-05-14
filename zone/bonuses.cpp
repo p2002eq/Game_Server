@@ -3193,8 +3193,12 @@ void Mob::ApplySpellsBonuses(uint16 spell_id, uint8 casterlevel, StatBonuses *ne
 				if (new_bonus->FeignedCastOnChance < effect_value)
 					new_bonus->FeignedCastOnChance = effect_value;
 				break;
-		
-			//Special custom cases for loading effects on to NPC from 'npc_spels_effects' table
+
+			case SE_SeeInvis:
+				new_bonus->SeeInvis = spells[spell_id].base[i];
+				break;
+
+				//Special custom cases for loading effects on to NPC from 'npc_spels_effects' table
 			if (IsAISpellEffect) {
 
 				//Non-Focused Effect to modify incoming spell damage by resist type.

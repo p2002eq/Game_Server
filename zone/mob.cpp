@@ -26,6 +26,7 @@
 
 #include <limits.h>
 #include <math.h>
+#include <vector>
 #include <sstream>
 #include <algorithm>
 
@@ -551,12 +552,8 @@ bool Mob::IsInvisible(Mob* other) const
 	if(!other)
 		return(false);
 
-	uint8 SeeInvisBonus = 0;
-	if (IsClient())
-		SeeInvisBonus = aabonuses.SeeInvis;
-
 	//check regular invisibility
-	if (invisible && invisible > (other->SeeInvisible()))
+	if (invisible && invisible > other->SeeInvisible())
 		return true;
 
 	//check invis vs. undead
@@ -2335,6 +2332,15 @@ void Mob::ChangeSize(float in_size = 0, bool bNoRestriction) {
 	//End of Size Code
 	this->size = in_size;
 	SendAppearancePacket(AT_Size, (uint32) in_size);
+}
+
+uint8 Mob::SeeInvisible()
+{
+	// it's not clear how multiple sources of see invis should be handled - for now, simply taking a maximum of all sources
+	std::vector<uint8> v{ see_invis, aabonuses.SeeInvis, spellbonuses.SeeInvis, itembonuses.SeeInvis };
+	auto biggest = std::max_element(std::begin(v), std::end(v));
+
+	return *biggest;
 }
 
 Mob* Mob::GetOwnerOrSelf() {
