@@ -154,48 +154,46 @@ void NPC::PauseWandering(int pausetime)
 	return;
 }
 
-void NPC::MoveTo(const glm::vec4& position, bool saveguardspot)
-{	// makes mob walk to specified location
-	if (IsNPC() && GetGrid() != 0)
-	{	// he is on a grid
-		if (GetGrid() < 0)
-		{	// currently stopped by a quest command
-			SetGrid(0 - GetGrid());	// get him moving again
-			Log(Logs::Detail, Logs::AI, "MoveTo during quest wandering. Canceling quest wandering and going back to grid %d when MoveTo is done.", GetGrid());
+void NPC::MoveTo(const glm::vec4& position, bool saveguardspot) {    // makes mob walk to specified location
+	if (IsNPC() && GetGrid() != 0) {    // he is on a grid
+		if (GetGrid() < 0) {    // currently stopped by a quest command
+			SetGrid(0 - GetGrid());    // get him moving again
+			Log(Logs::Detail, Logs::AI,
+				"MoveTo during quest wandering. Canceling quest wandering and going back to grid %d when MoveTo is done.",
+				GetGrid());
 		}
-		AI_walking_timer->Disable();	// disable timer in case he is paused at a wp
-		if (cur_wp >= 0)
-		{	// we've not already done a MoveTo()
-			save_wp = cur_wp;	// save the current waypoint
-			cur_wp = -1;		// flag this move as quest controlled
+		AI_walking_timer->Disable();    // disable timer in case he is paused at a wp
+		if (cur_wp >= 0) {    // we've not already done a MoveTo()
+			save_wp = cur_wp;    // save the current waypoint
+			cur_wp = -1;        // flag this move as quest controlled
 		}
-		Log(Logs::Detail, Logs::AI, "MoveTo %s, pausing regular grid wandering. Grid %d, save_wp %d", to_string(static_cast<glm::vec3>(position)).c_str(), -GetGrid(), save_wp);
-	}
-	else
-	{	// not on a grid
+		Log(Logs::Detail, Logs::AI, "MoveTo %s, pausing regular grid wandering. Grid %d, save_wp %d",
+			to_string(static_cast<glm::vec3>(position)).c_str(), -GetGrid(), save_wp);
+	} else {    // not on a grid
 		roamer = true;
 		save_wp = 0;
-		cur_wp = -2;		// flag as quest controlled w/no grid
+		cur_wp = -2;        // flag as quest controlled w/no grid
 		Log(Logs::Detail, Logs::AI, "MoveTo %s without a grid.", to_string(static_cast<glm::vec3>(position)).c_str());
 	}
-	if (saveguardspot)
-	{
+	if (saveguardspot) {
 		m_GuardPoint = position;
 
 		if (m_GuardPoint.w == 0)
-			m_GuardPoint.w = 0.0001;		//hack to make IsGuarding simpler
+			m_GuardPoint.w = 0.0001;        //hack to make IsGuarding simpler
 
 		if (m_GuardPoint.w == -1)
 			m_GuardPoint.w = this->CalculateHeadingToTarget(position.x, position.y);
 
-		Log(Logs::Detail, Logs::AI, "Setting guard position to %s", to_string(static_cast<glm::vec3>(m_GuardPoint)).c_str());
+		Log(Logs::Detail, Logs::AI, "Setting guard position to %s",
+			to_string(static_cast<glm::vec3>(m_GuardPoint)).c_str());
 	}
 
 	m_CurrentWayPoint = position;
 	cur_wp_pause = 0;
 	pLastFightingDelayMoving = 0;
-	if (AI_walking_timer->Enabled())
-		AI_walking_timer->Start(100);
+	if (AI_walking_timer->Enabled()) {
+		AI_walking_timer->Disable();
+	}
 }
 
 void NPC::UpdateWaypoint(int wp_index)
