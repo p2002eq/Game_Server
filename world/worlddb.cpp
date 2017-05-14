@@ -71,7 +71,7 @@ void WorldDatabase::GetCharSelectInfo(uint32 accountID, EQApplicationPacket **ou
 		"zone_id		            "  // 19
 		"FROM                       "
 		"character_data             "
-		"WHERE `account_id` = %i ORDER BY `name` LIMIT %u", accountID, character_limit);
+		"WHERE `account_id` = %i AND is_deleted = 0 ORDER BY `name` LIMIT %u", accountID, character_limit);
 	auto results = database.QueryDatabase(cquery);
 
 	size_t character_count = results.RowCount();
