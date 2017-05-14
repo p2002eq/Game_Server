@@ -2859,7 +2859,7 @@ void Client::Handle_OP_ApplyPoison(const EQApplicationPacket *app)
 				AddProcToWeapon(PoisonItemInstance->GetItem()->Proc.Effect, false, (GetDEX() / 100) + 103);
 			}
 
-			DeleteItemInInventory(ApplyPoisonData->inventorySlot, 1, true);
+			DeleteItemInInventory(ApplyPoisonData->inventorySlot, 0, true);
 
 			Log(Logs::General, Logs::None, "Chance to Apply Poison was %f. Roll was %f. Result is %u.", SuccessChance, ChanceRoll, ApplyPoisonSuccessResult);
 		}

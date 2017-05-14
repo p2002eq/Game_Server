@@ -66,6 +66,23 @@ Copyright (C) 2001-2002 EQEMu Development Team (http://eqemu.org)
 	and not SpellFinished().
 */
 
+#include <ctype.h>
+#include <iomanip>
+#include <map>
+#include <mysqld_error.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#include "../common/unix.h"
+#include <netinet/in.h>
+#include <sys/time.h>
+
+#include "../common/database.h"
+#include "../common/eq_packet_structs.h"
+#include "../common/extprofile.h"
+#include "../common/string_util.h"
+
 #include "../common/bodytypes.h"
 #include "../common/classes.h"
 #include "../common/global_define.h"
@@ -85,6 +102,8 @@ Copyright (C) 2001-2002 EQEMu Development Team (http://eqemu.org)
 #include <assert.h>
 #include <math.h>
 #include <algorithm>
+#include <iostream>
+#include <vector>
 
 #ifndef WIN32
 	#include <stdlib.h>
@@ -2205,6 +2224,15 @@ bool Mob::SpellFinished(uint16 spell_id, Mob *spell_target, CastingSlot slot, ui
 			}
 			if (isproc) {
 				SpellOnTarget(spell_id, spell_target, false, true, resist_adjust, true, level_override);
+				// this list of poisons should get removed after first proc.  One shot poisons.
+				int poisons[] = {761, 1853, 1854, 1855, 762, 1856, 1857, 1875, 763, 1860, 1861, 1862, 1881, 760, 1851,
+								 1852, 1878, 1838, 1849, 1850, 1880, 832, 1839, 840, 766, 1868, 1869, 1882, 764, 1863,
+								 1864, 1876, 1837, 1847, 1848, 765, 1865, 1866, 1867, 767, 1870, 1871, 1836, 1858, 1859,
+								 1879, 1833, 1841, 1842, 1834, 1843, 1844, 1835, 1845, 1846, 768, 1872, 1873};
+				std::vector<float> poisons_v(poisons, poisons + sizeof(poisons) / sizeof(poisons[0]));
+				if (std::find(poisons_v.begin(), poisons_v.end(), spell_id) != poisons_v.end()) {
+					RemoveProcFromWeapon(spell_id, false);
+				}
 			} else {
 				if (spells[spell_id].targettype == ST_TargetOptional){
 					if (!TrySpellProjectile(spell_target, spell_id))
@@ -5325,13 +5353,34 @@ bool Mob::AddProcToWeapon(uint16 spell_id, bool bPerma, uint16 iChance, uint16 b
 		}
 		Log(Logs::Detail, Logs::Spells, "Too many perma procs for %s", GetName());
 	} else {
+		bool classicPoison = false;
+		// list of all classic poisons that shouldn't stack, and should be one shot poisons.
+		int poisons[] = {761, 1853, 1854, 1855, 762, 1856, 1857, 1875, 763, 1860, 1861, 1862, 1881, 760, 1851, 1852,
+						 1878, 1838, 1849, 1850, 1880, 832, 1839, 840, 766, 1868, 1869, 1882, 764, 1863, 1864, 1876,
+						 1837, 1847, 1848, 765, 1865, 1866, 1867, 767, 1870, 1871, 1836, 1858, 1859, 1879, 1833, 1841,
+						 1842, 1834, 1843, 1844, 1835, 1845, 1846, 768, 1872, 1873};
+		std::vector<float> poisons_v(poisons, poisons + sizeof(poisons) / sizeof(poisons[0]));
+		if (std::find(poisons_v.begin(), poisons_v.end(), spell_id) != poisons_v.end()) {
+			classicPoison = true;
+			for (int i = 0; i < MAX_PROCS; i++) {
+				if (std::find(poisons_v.begin(), poisons_v.end(), SpellProcs[i].spellID) != poisons_v.end()) {
+					RemoveProcFromWeapon(SpellProcs[i].spellID, false);
+				}
+			}
+		}
 		for (i = 0; i < MAX_PROCS; i++) {
 			if (SpellProcs[i].spellID == SPELL_UNKNOWN) {
 				SpellProcs[i].spellID = spell_id;
-				SpellProcs[i].chance = iChance;
+				if(classicPoison) {
+					SpellProcs[i].chance = 9999;		// classic poisons should proc on first hit every time. set this to max chance to proc.
+				}
+				else {
+					SpellProcs[i].chance = iChance;
+				}
 				SpellProcs[i].base_spellID = base_spell_id;;
 				SpellProcs[i].level_override = level_override;
-				Log(Logs::Detail, Logs::Spells, "Added spell-granted proc spell %d with chance %d to slot %d", spell_id, iChance, i);
+				Log(Logs::Detail, Logs::Spells, "Added spell-granted proc spell %d with chance %d to slot %d", spell_id,
+					iChance, i);
 				return true;
 			}
 		}
