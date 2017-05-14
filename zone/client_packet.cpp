@@ -8021,18 +8021,17 @@ void Client::Handle_OP_Hide(const EQApplicationPacket *app)
 	CheckIncreaseSkill(EQEmu::skills::SkillHide, nullptr, 5);
 	if (random < hidechance) {
 		auto outapp = new EQApplicationPacket(OP_SpawnAppearance, sizeof(SpawnAppearance_Struct));
-		SpawnAppearance_Struct* sa_out = (SpawnAppearance_Struct*)outapp->pBuffer;
+		SpawnAppearance_Struct *sa_out = (SpawnAppearance_Struct *) outapp->pBuffer;
 		sa_out->spawn_id = GetID();
 		sa_out->type = 0x03;
 		sa_out->parameter = 1;
 		entity_list.QueueClients(this, outapp, true);
 		safe_delete(outapp);
 		if (spellbonuses.ShroudofStealth || aabonuses.ShroudofStealth || itembonuses.ShroudofStealth) {
-			improved_hidden = true;
-			hidden = true;
+			SetInvisible(0, 4);
+		} else {
+			SetInvisible(0, 3);
 		}
-		else
-			hidden = true;
 		tmHidden = Timer::GetCurrentTime();
 	}
 	if (GetClass() == ROGUE) {

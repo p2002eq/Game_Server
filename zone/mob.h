@@ -232,7 +232,7 @@ public:
 	inline bool SeeHide() const { return see_hide; }
 	inline bool SeeImprovedHide() const { return see_improved_hide; }
 	bool IsInvisible(Mob* other = 0) const;
-	void SetInvisible(uint8 state);
+	void SetInvisible(uint8 state = 0, uint8 type = 0);
 	bool AttackAnimation(EQEmu::skills::SkillType &skillinuse, int Hand, const EQEmu::ItemInstance* weapon);
 
 	//Song
@@ -769,6 +769,7 @@ public:
 	virtual Mob* GetOwnerOrSelf();
 	Mob* GetUltimateOwner();
 	void SetPetID(uint16 NewPetID);
+	void RemovePet();
 	inline uint16 GetPetID() const { return petid; }
 	inline PetType GetPetType() const { return typeofpet; }
 	void SetPetType(PetType p) { typeofpet = p; }
