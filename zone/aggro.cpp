@@ -874,13 +874,23 @@ bool Mob::CombatRange(Mob* other)
 
 	// this could still use some work, but for now it's an improvement....
 
-	if (size_mod > 29)
+	if (size_mod > 29) {
 		size_mod *= size_mod;
-	else if (size_mod > 19)
+	} else if (size_mod > 19) {
 		size_mod *= size_mod * 2;
-	else
+	} else {
 		size_mod *= size_mod * 4;
+	}
 
+	if (other->GetRace() == 184)		// Lord Vyemm and other velious dragons
+	{
+		size_mod *= 1.75;
+	}
+	if (other->GetRace() == 122)		// Dracoliche in Fear.  Skeletal Dragon
+	{
+		size_mod *= 2.25;
+	}
+	size_mod *= RuleR(Combat,HitBoxMod);		// used for testing sizemods on different races.
 
 	// prevention of ridiculously sized hit boxes
 	if (size_mod > 10000)
