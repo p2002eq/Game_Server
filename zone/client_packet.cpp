@@ -4764,15 +4764,6 @@ void Client::Handle_OP_Consider(const EQApplicationPacket *app)
 		con->faction = 1;
 	con->level = GetLevelCon(tmob->GetLevel());
 
-	if (ClientVersion() <= EQEmu::versions::ClientVersion::Titanium) {
-		if (con->level == CON_GRAY)	{
-			con->level = CON_GREEN;
-		}
-		if (con->level == CON_WHITE) {
-			con->level = CON_WHITE_TITANIUM;
-		}
-	}
-
 	if (zone->IsPVPZone()) {
 		if (!tmob->IsNPC())
 			con->pvpcon = tmob->CastToClient()->GetPVP();
@@ -4834,9 +4825,6 @@ void Client::Handle_OP_Consider(const EQApplicationPacket *app)
 			break;
 		case CON_RED:
 			color = 13;
-			break;
-		case CON_GRAY:
-			color = 6;
 			break;
 		}
 

@@ -37,13 +37,15 @@
 extern QueryServ* QServ;
 
 
-float Mob::GetBaseEXP() {
+uint32 Mob::GetBaseEXP() {
 	float exp = EXP_FORMULA;
+	Log(Logs::General, Logs::Group, "base exp: %4.25f", exp);
 
 	float zemmod = 75.0;
 	if (zone->newzone_data.zone_exp_multiplier >= 0) {
 		zemmod = zone->newzone_data.zone_exp_multiplier * 100;
 	}
+	Log(Logs::General, Logs::Group, "zem: %4.25f", zemmod);
 	float totalmod = 1.0;
 	if (zone->IsHotzone()) {
 		totalmod += RuleR(Zone, HotZoneBonus);
@@ -51,14 +53,15 @@ float Mob::GetBaseEXP() {
 
 	// AK had a permanent 20% XP increase.
 	totalmod += 0.20;
+	Log(Logs::General, Logs::Group, "totalmod: %4.25f", totalmod);
 
-	float basexp = exp * zemmod * totalmod;
-	float logged_xp = basexp;
+	uint32 basexp = exp * zemmod * totalmod;
+	Log(Logs::General, Logs::Group, "baseexp: %d", basexp);
+	uint32 logged_xp = basexp;
 
 	if (player_damage == 0) {
 		basexp *= 0.25f;
-		Log(Logs::General, Logs::General, "%s was not damaged by a player. Full XP was: %0.2f Earned XP is: %0.2f",
-			GetName(), logged_xp, basexp);
+		Log(Logs::General, Logs::Group, "%s was not damaged by a player. Full XP was: %0.2f Earned XP is: %0.2f", GetName(), logged_xp, basexp);
 	} else if (dire_pet_damage > 0) {
 		float percentage = static_cast<float>(dire_pet_damage) / total_damage;
 		percentage *= 100.0f;
@@ -66,10 +69,11 @@ float Mob::GetBaseEXP() {
 			basexp *= 0.75f;
 		else if (percentage >= 75)
 			basexp *= 0.50f;
-		Log(Logs::General, Logs::General,
+		Log(Logs::General, Logs::Group,
 			"%s was %0.2f percent damaged by a dire charmed pet (%d/%d). Full XP was: %0.2f Earned XP is: %0.2f",
 			GetName(), percentage, dire_pet_damage, total_damage, logged_xp, basexp);
 	}
+	Log(Logs::General, Logs::Group, "baseexp final: %d", basexp);
 	return basexp;
 }
 
@@ -100,7 +104,7 @@ void Client::AddEXP(uint32 in_add_exp, uint8 conlevel, bool resexp) {
 
 		float totalmod = 1.0;
 		if (RuleR(Character, ExpMultiplier) >= 0) {
-			totalmod *= RuleR(Character, ExpMultiplier);
+			totalmod  = totalmod * RuleR(Character, ExpMultiplier);
 		}
 
 		add_exp = uint32(float(add_exp) * totalmod);
@@ -786,7 +790,7 @@ void Raid::SplitExp(uint32 exp, Mob* other) {
 	groupexp = (uint32)((float)groupexp * (1.0f-(RuleR(Character, RaidExpMultiplier))));
 
 	int conlevel = Mob::GetLevelCon(maxlevel, other->GetLevel());
-	if(conlevel == CON_GRAY)
+	if(conlevel == CON_GREEN)
 		return;	//no exp for greenies...
 
 	if (membercount == 0)

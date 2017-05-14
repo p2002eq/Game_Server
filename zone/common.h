@@ -35,7 +35,6 @@
 #define CON_WHITE_TITANIUM		20
 #define CON_YELLOW		15
 #define CON_RED			13
-#define CON_GRAY		6
 
 #define DMG_BLOCKED		-1
 #define DMG_PARRIED		-2

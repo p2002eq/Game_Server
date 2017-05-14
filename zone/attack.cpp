@@ -2190,12 +2190,11 @@ bool NPC::Death(Mob* killer_mob, int32 damage, uint16 spell, EQEmu::skills::Skil
 		Group *kg = entity_list.GetGroupByClient(give_exp_client);
 		Raid *kr = entity_list.GetRaidByClient(give_exp_client);
 
-		int32 finalxp = static_cast<int32>(GetBaseEXP());
-		finalxp = give_exp_client->mod_client_xp(finalxp, this);
+        uint32 finalxp = GetBaseEXP();
 
 		if (kr) {
 			if (!IsLdonTreasure && MerchantType == 0) {
-				kr->SplitExp((finalxp), this);
+                kr->SplitExp(finalxp, this);
 				if (killer_mob && (kr->IsRaidMember(killer_mob->GetName()) || kr->IsRaidMember(killer_mob->GetUltimateOwner()->GetName())))
 					killer_mob->TrySpellOnKill(killed_level, spell);
 			}
@@ -2243,7 +2242,7 @@ bool NPC::Death(Mob* killer_mob, int32 damage, uint16 spell, EQEmu::skills::Skil
 		}
 		else if (give_exp_client->IsGrouped() && kg != nullptr) {
 			if (!IsLdonTreasure && MerchantType == 0) {
-				kg->SplitExp((finalxp), this);
+                kg->SplitExp(finalxp, this);
 				if (killer_mob && (kg->IsGroupMember(killer_mob->GetName()) || kg->IsGroupMember(killer_mob->GetUltimateOwner()->GetName())))
 					killer_mob->TrySpellOnKill(killed_level, spell);
 			}
@@ -2292,9 +2291,9 @@ bool NPC::Death(Mob* killer_mob, int32 damage, uint16 spell, EQEmu::skills::Skil
 		}
 		else {
 			if (!IsLdonTreasure && MerchantType == 0) {
-				int conlevel = give_exp->GetLevelCon(GetLevel());
+                int conlevel = give_exp_client->GetLevelCon(GetLevel());
 				if (conlevel != CON_GREEN) {
-					give_exp_client->AddEXP((finalxp), conlevel);
+                    give_exp_client->AddEXP(finalxp, conlevel);
 					if (killer_mob && (killer_mob->GetID() == give_exp_client->GetID() ||
 									   killer_mob->GetUltimateOwner()->GetID() == give_exp_client->GetID()))
 						killer_mob->TrySpellOnKill(killed_level, spell);
@@ -3360,7 +3359,11 @@ void Mob::CommonDamage(Mob* attacker, int &damage, const uint16 spell_id, const 
 
 		//final damage has been determined.
 
-		SetHP(GetHP() - damage);
+        if(attacker->IsClient()) {
+            player_damage += damage;
+        }
+
+        SetHP(GetHP() - damage);
 
 		if (IsClient() && RuleB(Character, MarqueeHPUpdates))
 			this->CastToClient()->SendHPUpdateMarquee();

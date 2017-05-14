@@ -156,21 +156,10 @@ void NPC::DescribeAggro(Client *towho, Mob *mob, bool verbose) {
 		return;
 	}
 
-	if (RuleB(Aggro, UseLevelAggro))
-	{
-		if (GetLevel() < 18 && mob->GetLevelCon(GetLevel()) == CON_GRAY && GetBodyType() != 3)
-		{
-			towho->Message(0, "...%s is red to me (basically)", mob->GetName(),	dist2, iAggroRange2);
-			return;
-		}
-	}
-	else
-	{
-		if(GetINT() > RuleI(Aggro, IntAggroThreshold) && mob->GetLevelCon(GetLevel()) == CON_GRAY ) {
-			towho->Message(0, "...%s is red to me (basically)", mob->GetName(),
-			dist2, iAggroRange2);
-			return;
-		}
+	if(GetINT() > RuleI(Aggro, IntAggroThreshold) && mob->GetLevelCon(GetLevel()) == CON_GREEN ) {
+		towho->Message(0, "...%s is red to me (basically)", mob->GetName(),
+					   dist2, iAggroRange2);
+		return;
 	}
 
 	if(verbose) {
@@ -334,67 +323,32 @@ bool Mob::CheckWillAggro(Mob *mob) {
 		heroicCHA_mod = THREATENLY_ARRGO_CHANCE;
 	if (RuleB(Aggro, UseLevelAggro) &&
 	(
-	//old InZone check taken care of above by !mob->CastToClient()->Connected()
-	(
-		( GetLevel() >= 18 )
-		||(GetBodyType() == 3)
-		||( mob->IsClient() && mob->CastToClient()->IsSitting() )
-		||( mob->GetLevelCon(GetLevel()) != CON_GRAY)
-
-	)
-	&&
-	(
-		(
-			fv == FACTION_SCOWLS
-			||
-			(mob->GetPrimaryFaction() != GetPrimaryFaction() && mob->GetPrimaryFaction() == -4 && GetOwner() == nullptr)
-			||
+			//old InZone check taken care of above by !mob->CastToClient()->Connected()
 			(
-				fv == FACTION_THREATENLY
-				&& zone->random.Roll(THREATENLY_ARRGO_CHANCE - heroicCHA_mod)
+					( GetINT() <= RuleI(Aggro, IntAggroThreshold) )
+					||( mob->IsClient() && mob->CastToClient()->IsSitting() )
+					||( mob->GetLevelCon(GetLevel()) != CON_GREEN )
+
 			)
-		)
-	)
-	)
-	)
+			&&
+			(
+					(
+							fv == FACTION_SCOWLS
+							||
+							(mob->GetPrimaryFaction() != GetPrimaryFaction() && mob->GetPrimaryFaction() == -4 && GetOwner() == nullptr)
+							||
+							(
+									fv == FACTION_THREATENLY
+									&& zone->random.Roll(THREATENLY_ARRGO_CHANCE - heroicCHA_mod)
+							)
+					)
+			)
+	))
 	{
 		//FatherNiwtit: make sure we can see them. last since it is very expensive
 		if(CheckLosFN(mob)) {
 			Log(Logs::Detail, Logs::Aggro, "Check aggro for %s target %s.", GetName(), mob->GetName());
 			return( mod_will_aggro(mob, this) );
-		}
-	}
-	else
-	{
-		if
-		(
-		//old InZone check taken care of above by !mob->CastToClient()->Connected()
-		(
-			( GetINT() <= RuleI(Aggro, IntAggroThreshold) )
-			||( mob->IsClient() && mob->CastToClient()->IsSitting() )
-			||( mob->GetLevelCon(GetLevel()) != CON_GRAY)
-
-		)
-		&&
-		(
-			(
-				fv == FACTION_SCOWLS
-				||
-				(mob->GetPrimaryFaction() != GetPrimaryFaction() && mob->GetPrimaryFaction() == -4 && GetOwner() == nullptr)
-				||
-				(
-					fv == FACTION_THREATENLY
-					&& zone->random.Roll(THREATENLY_ARRGO_CHANCE - heroicCHA_mod)
-				)
-			)
-		)
-		)
-		{
-			//FatherNiwtit: make sure we can see them. last since it is very expensive
-			if(CheckLosFN(mob)) {
-				Log(Logs::Detail, Logs::Aggro, "Check aggro for %s target %s.", GetName(), mob->GetName());
-				return( mod_will_aggro(mob, this) );
-			}
 		}
 	}
 
@@ -406,6 +360,7 @@ bool Mob::CheckWillAggro(Mob *mob) {
 	Log(Logs::Detail, Logs::Aggro, "Con: %d\n", GetLevelCon(mob->GetLevel()));
 
 	return(false);
+
 }
 
 Mob* EntityList::AICheckNPCtoNPCAggro(Mob* sender, float iAggroRange, float iAssistRange) {
@@ -443,7 +398,7 @@ int EntityList::GetHatedCount(Mob *attacker, Mob *exclude)
 		if (mob->IsFeared() || mob->IsMezzed())
 			continue;
 
-		if (attacker->GetLevelCon(mob->GetLevel()) == CON_GRAY)
+		if (attacker->GetLevelCon(mob->GetLevel()) == CON_GREEN)
 			continue;
 
 		if (!mob->CheckAggro(attacker))
@@ -502,7 +457,7 @@ void EntityList::AIYellForHelp(Mob* sender, Mob* attacker) {
 		{
 			//if they are in range, make sure we are not green...
 			//then jump in if they are our friend
-			if(mob->GetLevel() >= 50 || attacker->GetLevelCon(mob->GetLevel()) != CON_GRAY)
+			if(mob->GetLevel() >= 50 || attacker->GetLevelCon(mob->GetLevel()) != CON_GREEN)
 			{
 				bool useprimfaction = false;
 				if(mob->GetPrimaryFaction() == sender->CastToNPC()->GetPrimaryFaction())
