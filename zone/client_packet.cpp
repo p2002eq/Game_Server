@@ -673,8 +673,7 @@ void Client::CompleteConnect()
 				break;
 			}
 			case SE_SummonHorse: {
-				SummonHorse(buffs[j1].spellid);
-				//hasmount = true;	//this was false, is that the correct thing?
+				BuffFadeByEffect(SE_SummonHorse);	// mounts should always wear off on zone.
 				break;
 			}
 			case SE_Silence:
