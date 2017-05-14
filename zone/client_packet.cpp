@@ -875,17 +875,7 @@ void Client::CompleteConnect()
 
 	entity_list.RefreshClientXTargets(this);
 
-	uint16 level = GetLevel();
-	uint32 totalrequiredxp = GetEXPForLevel(level);
-	float currentxp = GetEXP();
-	uint32 currentaa = GetAAXP();
-
-	if(currentxp < totalrequiredxp)
-	{
-		Message(CC_Red, "Error: Your current XP (%0.2f) is lower than your current level (%i)! It needs to be at least %i", currentxp, level, totalrequiredxp);
-		SetEXP(totalrequiredxp, currentaa);
-		Save();
-	}
+	FixClientXP();
 
 	worldserver.RequestTellQueue(GetName());
 }

@@ -1254,6 +1254,7 @@ public:
 
 	void ResetHPUpdateTimer() { hpupdate_timer.Start(); }
 
+	void FixClientXP();
 	void SendHPUpdateMarquee();
 
 	// exp.cpp
