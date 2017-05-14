@@ -2892,18 +2892,18 @@ void Client::Handle_OP_ApplyPoison(const EQApplicationPacket *app)
 	FastQueuePacket(&outapp);
 }
 
-void Client::Handle_OP_Assist(const EQApplicationPacket *app) {
+void Client::Handle_OP_Assist(const EQApplicationPacket *app)
+{
 	if (app->size != sizeof(EntityId_Struct)) {
-		Log(Logs::General, Logs::None, "Size mismatch in OP_Assist expected %i got %i", sizeof(EntityId_Struct),
-			app->size);
+		Log(Logs::General, Logs::None, "Size mismatch in OP_Assist expected %i got %i", sizeof(EntityId_Struct), app->size);
 		return;
 	}
 
-	EntityId_Struct *eid = (EntityId_Struct *) app->pBuffer;
-	Entity *entity = entity_list.GetID(eid->entity_id);
+	EntityId_Struct* eid = (EntityId_Struct*)app->pBuffer;
+	Entity* entity = entity_list.GetID(eid->entity_id);
 
-	EQApplicationPacket *outapp = app->Copy();
-	eid = (EntityId_Struct *) outapp->pBuffer;
+	EQApplicationPacket* outapp = app->Copy();
+	eid = (EntityId_Struct*)outapp->pBuffer;
 	if (RuleB(Combat, AssistNoTargetSelf))
 		eid->entity_id = GetID();
 	if (entity && entity->IsMob()) {
@@ -2911,13 +2911,15 @@ void Client::Handle_OP_Assist(const EQApplicationPacket *app) {
 		if (assistee->GetTarget()) {
 			Mob *new_target = assistee->GetTarget();
 			if (new_target && (GetGM() ||
-							   Distance(m_Position, assistee->GetPosition()) <= TARGETING_RANGE)) {
+				Distance(m_Position, assistee->GetPosition()) <= TARGETING_RANGE)) {
 				SetAssistExemption(true);
 				eid->entity_id = new_target->GetID();
-			} else {
+			}
+			else {
 				eid->entity_id = 0;
 			}
-		} else {
+		}
+		else {
 			eid->entity_id = 0;
 		}
 	}
@@ -2935,7 +2937,7 @@ void Client::Handle_OP_AssistGroup(const EQApplicationPacket *app)
 	QueuePacket(app);
 	return;
 }
-Fixing zonewide /assist bug
+
 void Client::Handle_OP_AugmentInfo(const EQApplicationPacket *app)
 {
 	// This packet is sent by the client when an Augment item information window is opened.
