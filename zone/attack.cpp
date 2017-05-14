@@ -3286,6 +3286,7 @@ void Mob::CommonDamage(Mob* attacker, int &damage, const uint16 spell_id, const 
 
 	if (damage > 0) {
 		//if there is some damage being done and theres an attacker involved
+		int previousHPRatio = GetHPRatio();	 	// store current hp ratio so we know when it drops below 16 for trydeathsave.
 		if (attacker) {
 			// if spell is lifetap add hp to the caster
 			if (spell_id != SPELL_UNKNOWN && IsLifetapSpell(spell_id)) {
@@ -3376,7 +3377,7 @@ void Mob::CommonDamage(Mob* attacker, int &damage, const uint16 spell_id, const 
 			}
 		}
 		else {
-			if (GetHPRatio() < 16)
+			if(GetHPRatio() < 16 and previousHPRatio >= 16)
 				TryDeathSave();
 		}
 
