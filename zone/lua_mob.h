@@ -340,7 +340,6 @@ public:
 	void SetFlurryChance(int value);
 	int GetFlurryChance();
 	int GetSkill(int skill_id);
-	void CalcBonuses();
 	int GetSpecialAbility(int ability);
 	int GetSpecialAbilityParam(int ability, int param);
 	void SetSpecialAbility(int ability, int level);
@@ -381,6 +380,8 @@ public:
 	bool IsSilenced();
 	bool IsAmnesiad();
 	int32 GetMeleeMitigation();
+	void SetTimer(const char *timer, int time_ms);
+	void StopTimer(const char *timer);
 };
 
 #endif

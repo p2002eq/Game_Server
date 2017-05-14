@@ -10,6 +10,7 @@
 #include "lua_mob.h"
 #include "lua_hate_list.h"
 #include "lua_client.h"
+#include "questmgr.h"
 
 struct SpecialAbilities { };
 
@@ -730,6 +731,14 @@ void Lua_Mob::Say(const char *message) {
 void Lua_Mob::QuestSay(Lua_Client client, const char *message) {
 	Lua_Safe_Call_Void();
 	self->QuestJournalledSay(client, message);
+}
+
+void Lua_Mob::SetTimer(const char *timer, int time_ms) {
+	quest_manager.settimerMS(timer, time_ms);
+}
+
+void Lua_Mob::StopTimer(const char *timer) {
+	quest_manager.stoptimer(timer);
 }
 
 void Lua_Mob::Shout(const char *message) {
@@ -2325,6 +2334,8 @@ luabind::scope lua_register_mob() {
 		.def("GetHerosForgeModel", (int32(Lua_Mob::*)(uint8))&Lua_Mob::GetHerosForgeModel)
 		.def("IsEliteMaterialItem", (uint32(Lua_Mob::*)(uint8))&Lua_Mob::IsEliteMaterialItem)
 		.def("GetBaseSize", (double(Lua_Mob::*)(void))&Lua_Mob::GetBaseSize)
+		.def("SetTimer", (void(Lua_Mob::*)(const char*, int))&Lua_Mob::SetTimer)
+		.def("StopTimer", (void(Lua_Mob::*)(const char*))&Lua_Mob::StopTimer)
 		.def("HasOwner", (bool(Lua_Mob::*)(void))&Lua_Mob::HasOwner)
 		.def("IsPet", (bool(Lua_Mob::*)(void))&Lua_Mob::IsPet)
 		.def("HasPet", (bool(Lua_Mob::*)(void))&Lua_Mob::HasPet)
