@@ -514,6 +514,7 @@ RULE_BOOL(Combat, UseRevampHandToHand, false) // use h2h revamped dmg/delays I b
 RULE_BOOL(Combat, ClassicMasterWu, false) // classic master wu uses a random special, modern doesn't
 RULE_INT(Combat, LevelToStopDamageCaps, 0) // 1 will effectively disable them, 20 should give basically same results as old incorrect system
 RULE_REAL(Combat, HitBoxMod, 1.00) // Added to test hit boxes.
+RULE_INT(Combat, RampageDistance, 100) // Distance a mob can Rampage
 RULE_CATEGORY_END()
 
 RULE_CATEGORY(NPC)
