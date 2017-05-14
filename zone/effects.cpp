@@ -362,21 +362,7 @@ int32 Client::GetActSpellCost(uint16 spell_id, int32 cost)
 	float SpecializeSkill = GetSpecializeSkillValue(spell_id);
 	float PercentManaReduction = SpecializeSkill / 20.0f;
 
-	float bonus = 1.0;
-	switch (GetAA(aaSpellCastingMastery))
-	{
-	case 1:
-		PercentManaReduction += 2.5;
-		break;
-	case 2:
-		PercentManaReduction += 5.0;
-		break;
-	case 3:
-		PercentManaReduction += 10.0;
-		break;
-	}
-
-	bonus += 0.05f * GetAA(aaAdvancedSpellCastingMastery);
+	// SCM effects count as an AA-based focus effect, so are rolled into the GetFocusEffect function
 
 	int16 focus_redux = GetFocusEffect(focusManaCost, spell_id);
 
