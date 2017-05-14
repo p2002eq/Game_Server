@@ -1001,21 +1001,27 @@ void Corpse::MakeLootRequestPackets(Client* client, const EQApplicationPacket* a
 		int corpselootlimit = EQEmu::inventory::Lookup(EQEmu::versions::ConvertClientVersionToMobVersion(client->ClientVersion()))->InventoryTypeSize[EQEmu::inventory::typeCorpse];
 
 		for(; cur != end; ++cur) {
-			ServerLootItem_Struct* item_data = *cur;
+			ServerLootItem_Struct *item_data = *cur;
 			item_data->lootslot = 0xFFFF;
 
 			// Dont display the item if it's in a bag
 
 			// Added cursor queue slots to corpse item visibility list. Nothing else should be making it to corpse.
-			if (!IsPlayerCorpse() || item_data->equip_slot <= EQEmu::inventory::slotCursor || item_data->equip_slot == EQEmu::inventory::slotPowerSource || Loot_Request_Type >= 3 ||
-				(item_data->equip_slot >= 8000 && item_data->equip_slot <= 8999)) {
-				if(i < corpselootlimit) {
+			if (!IsPlayerCorpse() || item_data->equip_slot <= EQEmu::inventory::slotCursor ||
+				item_data->equip_slot == EQEmu::inventory::slotPowerSource || Loot_Request_Type >= 3 ||
+				(item_data->equip_slot >= EQEmu::legacy::CURSOR_QUEUE_BEGIN &&
+				 item_data->equip_slot <= EQEmu::legacy::CURSOR_QUEUE_END)) {
+				if (i < corpselootlimit) {
 					item = database.GetItem(item_data->item_id);
-					if(client && item) {
-						EQEmu::ItemInstance* inst = database.CreateItem(item, item_data->charges, item_data->aug_1, item_data->aug_2, item_data->aug_3, item_data->aug_4, item_data->aug_5, item_data->aug_6, item_data->attuned);
-						if(inst) {
+					if (client && item) {
+						EQEmu::ItemInstance *inst = database.CreateItem(item, item_data->charges, item_data->aug_1,
+																		item_data->aug_2, item_data->aug_3,
+																		item_data->aug_4, item_data->aug_5,
+																		item_data->aug_6, item_data->attuned);
+						if (inst) {
 							if (item->RecastDelay)
-								inst->SetRecastTimestamp(timestamps.count(item->RecastType) ? timestamps.at(item->RecastType) : 0);
+								inst->SetRecastTimestamp(
+										timestamps.count(item->RecastType) ? timestamps.at(item->RecastType) : 0);
 							// SlotGeneral1 is the corpse inventory start offset for Ti(EMu) - CORPSE_END = SlotGeneral1 + SlotCursor
 							client->SendItemPacket(i + EQEmu::legacy::CORPSE_BEGIN, inst, ItemPacketLoot);
 							safe_delete(inst);
@@ -1024,7 +1030,6 @@ void Corpse::MakeLootRequestPackets(Client* client, const EQApplicationPacket* a
 						item_data->lootslot = i;
 					}
 				}
-
 				i++;
 			}
 		}

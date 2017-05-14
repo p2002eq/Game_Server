@@ -879,11 +879,17 @@ void command_npcloot(Client *c, const Seperator *sep)
 			uint32 item = atoi(sep->arg[2]);
 			if (database.GetItem(item))
 			{
-				if (sep->arg[3][0] != 0 && sep->IsNumber(3))
-					c->GetTarget()->CastToNPC()->AddItem(item, atoi(sep->arg[3]), 0);
-				else
-					c->GetTarget()->CastToNPC()->AddItem(item, 1, 0);
-				c->Message(0, "Added item(%i) to the %s's loot.",  item, c->GetTarget()->GetName());
+				bool quest = false;
+				if (sep->arg[4][0] != 0 && sep->IsNumber(4)) {
+					quest = atoi(sep->arg[4]);
+				}
+				if (sep->arg[3][0] != 0 && sep->IsNumber(3)) {
+					c->GetTarget()->CastToNPC()->AddItem(item, atoi(sep->arg[3]), 0, quest);
+				} else {
+					c->GetTarget()->CastToNPC()->AddItem(item, 1, 0, quest);
+				}
+				std::string isQuest = quest ? "true" : "false";
+				c->Message(0, "Added item(%i) to the %s's loot. isQuest: %s",  item, c->GetTarget()->GetName(), isQuest.c_str());
 			}
 			else
 				c->Message(0, "Error: #npcloot add: Item(%i) does not exist!",  item);
