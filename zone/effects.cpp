@@ -356,65 +356,32 @@ int32 Client::GetActSpellCost(uint16 spell_id, int32 cost)
 		cost -= mana_back;
 	}
 
-	// This formula was derived from the following resource:
-	// http://www.eqsummoners.com/eq1/specialization-library.html
-	// WildcardX
-	float PercentManaReduction = 0;
+	// Formula used from Graffe's testing
+	// https://www.graffe.com/forums/showthread.php?3471-Spell-Casting-Mastery-tests-(no-NOT-fury-mastery)
+	// Info in in-era for 2002
 	float SpecializeSkill = GetSpecializeSkillValue(spell_id);
-	int SuccessChance = zone->random.Int(0, 100);
+	float PercentManaReduction = SpecializeSkill / 20.0f;
 
 	float bonus = 1.0;
-	switch(GetAA(aaSpellCastingMastery))
+	switch (GetAA(aaSpellCastingMastery))
 	{
 	case 1:
-		bonus += 0.05;
+		PercentManaReduction += 2.5;
 		break;
 	case 2:
-		bonus += 0.15;
+		PercentManaReduction += 5.0;
 		break;
 	case 3:
-		bonus += 0.30;
+		PercentManaReduction += 10.0;
 		break;
 	}
 
 	bonus += 0.05f * GetAA(aaAdvancedSpellCastingMastery);
 
-	if(SuccessChance <= (SpecializeSkill * 0.3 * bonus))
-	{
-		PercentManaReduction = 1 + 0.05f * SpecializeSkill;
-		switch(GetAA(aaSpellCastingMastery))
-		{
-		case 1:
-			PercentManaReduction += 2.5;
-			break;
-		case 2:
-			PercentManaReduction += 5.0;
-			break;
-		case 3:
-			PercentManaReduction += 10.0;
-			break;
-		}
-
-		switch(GetAA(aaAdvancedSpellCastingMastery))
-		{
-		case 1:
-			PercentManaReduction += 2.5;
-			break;
-		case 2:
-			PercentManaReduction += 5.0;
-			break;
-		case 3:
-			PercentManaReduction += 10.0;
-			break;
-		}
-	}
-
 	int16 focus_redux = GetFocusEffect(focusManaCost, spell_id);
 
-	if(focus_redux > 0)
-	{
-		PercentManaReduction += zone->random.Real(1, (double)focus_redux);
-	}
+	// random roll of mana preservation effects handled inside GetFocusEffect function, no need to randomize here
+	PercentManaReduction += focus_redux;
 
 	cost -= (cost * (PercentManaReduction / 100));
 

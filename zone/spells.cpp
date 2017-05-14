@@ -239,6 +239,16 @@ bool Mob::CastSpell(uint16 spell_id, uint16 target_id, CastingSlot slot,
 	if (spellbonuses.NegateIfCombat)
 		BuffFadeByEffect(SE_NegateIfCombat);
 
+	// check line of sight to target if it's a detrimental spell
+	if (!spells[spell_id].npc_no_los && GetTarget() && IsDetrimentalSpell(spell_id) && !CheckLosFN(GetTarget()) && !IsHarmonySpell(spell_id) && spells[spell_id].targettype != ST_TargetOptional && !IsBindSightSpell(spell_id))
+	{
+		Log(Logs::Detail, Logs::Spells, "Spell %d: cannot see target %s", spell_id, GetTarget()->GetName());
+		Message_StringID(13, CANT_SEE_TARGET);
+		if (IsClient())
+			CastToClient()->SendSpellBarEnable(spell_id);
+		return(false);
+	}
+
 	if(IsClient() && GetTarget() && IsHarmonySpell(spell_id))
 	{
 		for(int i = 0; i < EFFECT_COUNT; i++) {
@@ -390,11 +400,11 @@ bool Mob::DoCastSpell(uint16 spell_id, uint16 target_id, CastingSlot slot,
 		entity_list.FilteredMessageClose_StringID(
 			this, /* Sender */
 			true, /* Skip Sender */
-			RuleI(Range, SpellMessages), 
+			RuleI(Range, SpellMessages),
 			MT_SpellFailure, /* Type: 289 */
 			(IsClient() ? FilterPCSpells : FilterNPCSpells), /* FilterType: 8 or 9 depending on client/npc */
-			(fizzle_msg == MISS_NOTE ? MISSED_NOTE_OTHER : SPELL_FIZZLE_OTHER), 
-			/* 
+			(fizzle_msg == MISS_NOTE ? MISSED_NOTE_OTHER : SPELL_FIZZLE_OTHER),
+			/*
 				MessageFormat: You miss a note, bringing your song to a close! (if missed note)
 				MessageFormat: A missed note brings %1's song to a close!
 				MessageFormat: %1's spell fizzles!
@@ -753,77 +763,83 @@ bool Client::CheckFizzle(uint16 spell_id)
 	//Live AA - Spell Casting Expertise, Mastery of the Past
 	no_fizzle_level = aabonuses.MasteryofPast + itembonuses.MasteryofPast + spellbonuses.MasteryofPast;
 
-	if (spells[spell_id].classes[GetClass()-1] < no_fizzle_level)
+	if (spells[spell_id].classes[GetClass()-1] < no_fizzle_level) {
 		return true;
+	}
 
-	//is there any sort of focus that affects fizzling?
+	// CALCULATE SPELL DIFFICULTY - THIS IS CAPPED AT 255
+	// calculates minimum level this spell is available - ensures similar casting difficulty for all classes
+	int minLvl = 255;
+	for (int a = 0; a < PLAYER_CLASS_COUNT; a = a + 1) {
+		int thisLvl = spells[spell_id].classes[a];
+		if (thisLvl < minLvl) {
+			minLvl = thisLvl;
+		}
+	}
 
-	int par_skill;
-	int act_skill;
+	int spellDifficulty = (minLvl * 5 < 255) ? minLvl * 5 : 255;
 
-	par_skill = spells[spell_id].classes[GetClass()-1] * 5 - 10;//IIRC even if you are lagging behind the skill levels you don't fizzle much
-	if (par_skill > 235)
-		par_skill = 235;
+	// CALCULATE EFFECTIVE CASTING SKILL WITH BONUSES
+	int bonusCastingLevel = itembonuses.effective_casting_level + spellbonuses.effective_casting_level + aabonuses.effective_casting_level;
+	int casterSkill = GetSkill(spells[spell_id].skill) + bonusCastingLevel * 5;
+	casterSkill = (casterSkill < 255) ? casterSkill : 255;
 
-	par_skill += spells[spell_id].classes[GetClass()-1]; // maximum of 270 for level 65 spell
-
-	act_skill = GetSkill(spells[spell_id].skill);
-	act_skill += GetLevel(); // maximum of whatever the client can cheat
-
-	//spell specialization
-	float specialize = GetSpecializeSkillValue(spell_id);
-	if(specialize > 0) {
-		switch(GetAA(aaSpellCastingMastery)){
+	// CALCULATE EFFECTIVE SPECIALIZATION SKILL VALUE
+	float specializeSkill = GetSpecializeSkillValue(spell_id);
+	switch (GetAA(aaSpellCastingMastery))
+	{
 		case 1:
-			specialize = specialize * 1.05;
+			specializeSkill = specializeSkill * 1.05;
 			break;
 		case 2:
-			specialize = specialize * 1.15;
+			specializeSkill = specializeSkill * 1.15;
 			break;
 		case 3:
-			specialize = specialize * 1.3;
+			specializeSkill = specializeSkill * 1.3;
 			break;
 		}
-		if(((specialize/6.0f) + 15.0f) < zone->random.Real(0, 100)) {
-			specialize *= SPECIALIZE_FIZZLE / 200.0f;
-		} else {
-			specialize = 0.0f;
-		}
-	}
 
-	// == 0 --> on par
-	// > 0 --> skill is lower, higher chance of fizzle
-	// < 0 --> skill is better, lower chance of fizzle
-	// the max that diff can be is +- 235
-	float diff = par_skill + static_cast<float>(spells[spell_id].basediff) - act_skill;
+	float specializeReduction = (specializeSkill > 50) ? (specializeSkill - 50) / 10 : 0.0f;
 
-	// if you have high int/wis you fizzle less, you fizzle more if you are stupid
-	if(GetClass() == BARD)
+	// CALCULATE EFFECTIVE CASTING STAT VALUE
+	float primeStatReduction = 0.0f;
+
+	if (GetCasterClass() == 'W')
 	{
-		diff -= (GetCHA() - 110) / 20.0;
-	}
-	else if (GetCasterClass() == 'W')
-	{
-		diff -= (GetWIS() - 125) / 20.0;
+		primeStatReduction = (GetWIS() - 75) / 10.0;
 	}
 	else if (GetCasterClass() == 'I')
 	{
-		diff -= (GetINT() - 125) / 20.0;
+		primeStatReduction = (GetINT() - 75) / 10.0;
+	}
+	// BARDS ARE SPECIAL - they add both CHA and DEX mods to get casting rates similar to full casters without spec skill
+	if (GetClass() == BARD)
+	{
+		primeStatReduction = (GetCHA() - 75 + GetDEX() - 75) / 10.0;
 	}
 
-	// base fizzlechance is lets say 5%, we can make it lower for AA skills or whatever
-	float basefizzle = 10;
-	float fizzlechance = basefizzle - specialize + diff / 5.0;
+	// GET SPELL-SPECIFIC FIZZLE CHANCE (note that specialization is only used to reduce the FizzleAdj!)
+	float spellFizzleAdj = static_cast<float>(spells[spell_id].basediff);
+	spellFizzleAdj = (spellFizzleAdj - specializeReduction > 0) ? spellFizzleAdj - specializeReduction : 0.0f;
 
-	// always at least 1% chance to fail or 5% to succeed
-	fizzlechance = fizzlechance < 1 ? 1 : (fizzlechance > 95 ? 95 : fizzlechance);
+	// CALCULATE FINAL FIZZLE CHANCE
+	float fizzleChance = spellDifficulty + spellFizzleAdj - casterSkill - primeStatReduction;
 
-	float fizzle_roll = zone->random.Real(0, 100);
+	if (fizzleChance > 95.0f) {
+		fizzleChance = 95.0f;
+	}
+	else if (fizzleChance < 2.0f) {
+		fizzleChance = 2.0f;
+	}
 
-	Log(Logs::Detail, Logs::Spells, "Check Fizzle %s  spell %d  fizzlechance: %0.2f%%   diff: %0.2f  roll: %0.2f", GetName(), spell_id, fizzlechance, diff, fizzle_roll);
+	float fizzleRoll = zone->random.Real(0, 100);
 
-	if(fizzle_roll > fizzlechance)
-		return(true);
+	Log(Logs::Detail, Logs::Spells, "Check Fizzle %s  spell: %d  fizzleChance: %0.2f%%  roll: %0.2f", GetName(), spell_id, fizzleChance, fizzleRoll);
+
+	if (fizzleRoll > fizzleChance) {
+		return (true);
+	}
+
 	return(false);
 }
 
@@ -2128,14 +2144,6 @@ bool Mob::SpellFinished(uint16 spell_id, Mob *spell_target, CastingSlot slot, ui
 		CastAction = AECaster;
 	}
 
-	// check line of sight to target if it's a detrimental spell
-	if(!spells[spell_id].npc_no_los && spell_target && IsDetrimentalSpell(spell_id) && !CheckLosFN(spell_target) && !IsHarmonySpell(spell_id) && spells[spell_id].targettype != ST_TargetOptional && !IsBindSightSpell(spell_id))
-	{
-		Log(Logs::Detail, Logs::Spells, "Spell %d: cannot see target %s", spell_id, spell_target->GetName());
-		Message_StringID(13,CANT_SEE_TARGET);
-		return false;
-	}
-
 	// check to see if target is a caster mob before performing a mana tap
 	if(spell_target && IsManaTapSpell(spell_id)) {
 		if(spell_target->GetCasterClass() == 'N') {
@@ -2557,13 +2565,14 @@ bool Mob::ApplyNextBardPulse(uint16 spell_id, Mob *spell_target, CastingSlot slo
 		SetMana(GetMana() - mana_used);
 	}
 
-	// check line of sight to target if it's a detrimental spell
-	if(spell_target && IsDetrimentalSpell(spell_id) && !CheckLosFN(spell_target) && !IsBindSightSpell(spell_id) && !IsHarmonySpell(spell_id))
-	{
-		Log(Logs::Detail, Logs::Spells, "Bard Song Pulse %d: cannot see target %s", spell_id, spell_target->GetName());
-		Message_StringID(13, CANT_SEE_TARGET);
-		return(false);
-	}
+	// COMMENTING OUT LOS CHECK ON PULSES - LOS CHECK SHOULD BE MADE AT INITIAL CAST ONLY AND IS HANDLED IN CASTSPELL()
+	//// check line of sight to target if it's a detrimental spell
+	//if(spell_target && IsDetrimentalSpell(spell_id) && !CheckLosFN(spell_target) && !IsBindSightSpell(spell_id) && !IsHarmonySpell(spell_id))
+	//{
+	//	Log.Out(Logs::Detail, Logs::Spells, "Bard Song Pulse %d: cannot see target %s", spell_id, spell_target->GetName());
+	//	Message_StringID(13, CANT_SEE_TARGET);
+	//	return(false);
+	//}
 
 	//range check our target, if we have one and it is not us
 	float range = 0.00f;
@@ -3455,7 +3464,7 @@ int Mob::CanBuffStack(uint16 spellid, uint8 caster_level, bool iFailIfOverwrite)
 				firstfree = i;
 		}
 		if(ret == -1) {
-			
+
 			Log(Logs::Detail, Logs::AI, "Buff %d would conflict with %d in slot %d, reporting stack failure", spellid, curbuf.spellid, i);
 			return -1;	// stop the spell, can't stack it
 		}
@@ -3582,7 +3591,7 @@ bool Mob::SpellOnTarget(uint16 spell_id, Mob *spelltar, bool reflect, bool use_r
 		spelltar, /* Sender */
 		action_packet, /* Packet */
 		true, /* Ignore Sender */
-		RuleI(Range, SpellMessages), 
+		RuleI(Range, SpellMessages),
 		this, /* Skip this Mob */
 		true, /* Packet ACK */
 		(spelltar->IsClient() ? FilterPCSpells : FilterNPCSpells) /* EQ Filter Type: (8 or 9) */
@@ -3908,7 +3917,7 @@ bool Mob::SpellOnTarget(uint16 spell_id, Mob *spelltar, bool reflect, bool use_r
 					spelltar->CastToClient()->BreakSneakWhenCastOn(this, true);
 					spelltar->CastToClient()->BreakFeignDeathWhenCastOn(true);
 				}
-				
+
 				spelltar->CheckNumHitsRemaining(NumHit::IncomingSpells);
 				CheckNumHitsRemaining(NumHit::OutgoingSpells);
 
@@ -4064,7 +4073,7 @@ bool Mob::SpellOnTarget(uint16 spell_id, Mob *spelltar, bool reflect, bool use_r
 			spelltar, /* Sender */
 			message_packet, /* Packet */
 			false, /* Ignore Sender */
-			RuleI(Range, SpellMessages), 
+			RuleI(Range, SpellMessages),
 			0, /* Skip this mob */
 			true, /* Packet ACK */
 			(spelltar->IsClient() ? FilterPCSpells : FilterNPCSpells) /* Message Filter Type: (8 or 9) */
@@ -4684,20 +4693,8 @@ float Mob::ResistSpell(uint8 resist_type, uint16 spell_id, Mob *caster, bool use
 
 	//Add our level, resist and -spell resist modifier to our roll chance
 	resist_chance += level_mod;
-	// 10/30/2016, softcap rule added for resists
-	int softCapLvlMod;
-	if (GetLevel() > 60) {
-		softCapLvlMod = (GetLevel() - 60) * 10;
-	}
-	if ((target_resist + resist_modifier) > (RuleI(Spells, SpellResistSoftCap) + softCapLvlMod)) {
-		resist_chance += RuleI(Spells, SpellResistSoftCap) + softCapLvlMod;
-	}
-	else {
-		resist_chance += target_resist + resist_modifier;
-	}
-
-	//resist_chance += resist_modifier;
-	//resist_chance += target_resist;
+	resist_chance += resist_modifier;
+	resist_chance += target_resist;
 
 	resist_chance = mod_spell_resist(resist_chance, level_mod, resist_modifier, target_resist, resist_type, spell_id, caster);
 
@@ -4732,7 +4729,7 @@ float Mob::ResistSpell(uint8 resist_type, uint16 spell_id, Mob *caster, bool use
 	}
 
 	//Finally our roll
-	int roll = zone->random.Int(0, RuleI(Spells, SpellResistSoftCap));
+	int roll = zone->random.Int(0, 200);
 	if(roll > resist_chance)
 	{
 		return 100;
@@ -5387,6 +5384,7 @@ bool Mob::AddProcToWeapon(uint16 spell_id, bool bPerma, uint16 iChance, uint16 b
 					SpellProcs[i].chance = 9999;		// classic poisons should proc on first hit every time. set this to max chance to proc.
 				}
 				else {
+
 					SpellProcs[i].chance = iChance;
 				}
 				SpellProcs[i].base_spellID = base_spell_id;;
@@ -5523,6 +5521,91 @@ void Mob::_StopSong()
 //Thus I use this in the buff process to update the correct duration once after casting
 //this allows AAs and focus effects that increase buff duration to work correctly, but could probably
 //be used for other things as well
+//void Client::SendBuffDurationPacket(Buffs_Struct &buff)
+//{
+//	EQApplicationPacket* outapp;
+//	outapp = new EQApplicationPacket(OP_Buff, sizeof(SpellBuffFade_Struct));
+//	SpellBuffFade_Struct* sbf = (SpellBuffFade_Struct*) outapp->pBuffer;
+//	int index;
+//
+//	sbf->entityid = GetID();
+//	sbf->slot = 0;
+//	sbf->spellid = buff.spellid;
+//	sbf->slotid = 0;
+//	sbf->level = buff.casterlevel > 0 ? buff.casterlevel : GetLevel();
+//
+//	// We really don't know what to send as sbf->effect.
+//	// The code used to send level (and still does for cases we don't know)
+//	//
+//	// The fixes below address known issues with sending level in this field.
+//	// Typically, when the packet is sent, or when the user
+//	// next does something on the UI that causes an update (like opening a
+//	// pack), the stats updated by the spell in question get corrupted.
+//	//
+//	// The values were determined by trial and error.  I could not find a
+//	// pattern or find a field in spells_new that would work.
+//
+//	sbf->effect=sbf->level;
+//
+//	if (IsEffectInSpell(buff.spellid, SE_TotalHP))
+//	{
+//		// If any of the lower 6 bits are set, the GUI changes MAX_HP AGAIN.
+//		// If its set to 0 the effect is cancelled.
+//		// 128 seems to work (ie: change only duration).
+//		sbf->effect = 128;
+//	}
+//	else if (IsEffectInSpell(buff.spellid, SE_CurrentHP))
+//	{
+//		// This is mostly a problem when we try and update duration on a
+//		// dot or a hp->mana conversion.  Zero cancels the effect
+//		// Sending teh actual change again seems to work.
+//		index = GetSpellEffectIndex(buff.spellid, SE_CurrentHP);
+//		sbf->effect = abs(spells[buff.spellid].base[index]);
+//	}
+//	else if (IsEffectInSpell(buff.spellid, SE_SeeInvis))
+//	{
+//		// 10 seems to not break SeeInvis spells.  Level,
+//		// which is what the old client sends breaks the client at at
+//		// least level 9, maybe more.
+//		sbf->effect = 10;
+//	}
+//	else if (IsEffectInSpell(buff.spellid, SE_ArmorClass) ||
+//			 IsEffectInSpell(buff.spellid, SE_ResistFire) ||
+//			 IsEffectInSpell(buff.spellid, SE_ResistCold) ||
+//			 IsEffectInSpell(buff.spellid, SE_ResistPoison) ||
+//			 IsEffectInSpell(buff.spellid, SE_ResistDisease) ||
+//			 IsEffectInSpell(buff.spellid, SE_ResistMagic) ||
+//			 IsEffectInSpell(buff.spellid, SE_STR) ||
+//			 IsEffectInSpell(buff.spellid, SE_STA) ||
+//			 IsEffectInSpell(buff.spellid, SE_DEX) ||
+//			 IsEffectInSpell(buff.spellid, SE_WIS) ||
+//			 IsEffectInSpell(buff.spellid, SE_INT) ||
+//			 IsEffectInSpell(buff.spellid, SE_AGI))
+//	{
+//		// This seems to work.	Previosly stats got corrupted when sending
+//		// level.
+//		sbf->effect = 46;
+//	}
+//	else if (IsEffectInSpell(buff.spellid, SE_CHA))
+//	{
+//		index = GetSpellEffectIndex(buff.spellid, SE_CHA);
+//		sbf->effect = abs(spells[buff.spellid].base[index]);
+//		// Only use this valie if its not a spacer.
+//		if (sbf->effect != 0)
+//		{
+//			// Same as other stats, need this to prevent a double update.
+//			sbf->effect = 46;
+//		}
+//	}
+//
+//	sbf->bufffade = 0;
+//	sbf->duration = buff.ticsremaining;
+//	sbf->num_hits = buff.numhits;
+//	FastQueuePacket(&outapp);
+//}
+
+// New packet structure ripped from Mike's new codebase (03/2017)
+
 void Client::SendBuffDurationPacket(Buffs_Struct &buff, int slot)
 {
 	EQApplicationPacket* outapp = nullptr;
