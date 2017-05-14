@@ -8,6 +8,7 @@
 #include "../common/eqemu_logsys.h"
 #include "aa_ability.h"
 #include "event_codes.h"
+#include "../common/database.h"
 
 class Client;
 class Corpse;
@@ -282,7 +283,6 @@ public:
 	bool	LoadCharacterLeadershipAA(uint32 character_id, PlayerProfile_Struct* pp);
 
 	/* Character Data Saves  */
-	bool	SaveCharacterBindPoint(uint32 character_id, const BindStruct &bind, uint32 bind_num);
 	bool	SaveCharacterCurrency(uint32 character_id, PlayerProfile_Struct* pp);
 	bool	SaveCharacterData(uint32 character_id, uint32 account_id, PlayerProfile_Struct* pp, ExtendedProfile_Struct* m_epp);
 	bool	SaveCharacterAA(uint32 character_id, uint32 aa_id, uint32 current_level, uint32 charges);

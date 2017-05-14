@@ -504,8 +504,8 @@ public:
 	void Warp(const glm::vec3& location);
 	inline bool IsMoving() const { return moving; }
 	virtual void SetMoving(bool move) { moving = move; m_Delta = glm::vec4(); }
-	virtual void GoToBind(uint8 bindnum = 0) { }
-	virtual void Gate(uint8 bindnum = 0);
+	virtual void GoToBind() { }
+	virtual void Gate();
 	int GetWalkspeed() const { return(_GetWalkSpeed()); }
 	int GetRunspeed() const { return(_GetRunSpeed()); }
 	void SetCurrentSpeed(int in);

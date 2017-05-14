@@ -1098,7 +1098,7 @@ XS(XS_Client_SetBindPoint)
 			new_z = (float)SvNV(ST(5));
 		}
 
-		THIS->SetBindPoint(0, to_zone, to_instance, glm::vec3(new_x, new_y, new_z));
+        THIS->SetBindPoint(to_zone, to_instance, glm::vec3(new_x, new_y, new_z));
 	}
 	XSRETURN_EMPTY;
 }

@@ -21,6 +21,7 @@
 #include "../common/shareddb.h"
 #include "../common/zone_numbers.h"
 #include "../common/eq_packet.h"
+#include "../common/database.h"
 
 struct PlayerProfile_Struct;
 struct CharCreate_Struct;

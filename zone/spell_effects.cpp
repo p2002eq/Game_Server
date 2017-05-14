@@ -930,7 +930,7 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial, int level_ove
 						if(caster && caster->IsClient() && caster != this)
 							caster->CastToClient()->QueuePacket(message_packet);
 
-						CastToClient()->SetBindPoint(spells[spell_id].base[i] - 1);
+						CastToClient()->SetBindPoint();
 						Save();
 						safe_delete(action_packet);
 						safe_delete(message_packet);
@@ -981,7 +981,7 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial, int level_ove
 								if(caster->IsClient() && caster != this)
 									caster->CastToClient()->QueuePacket(message_packet);
 
-								CastToClient()->SetBindPoint(spells[spell_id].base[i] - 1);
+								CastToClient()->SetBindPoint();
 								Save();
 								safe_delete(action_packet);
 								safe_delete(message_packet);
@@ -1019,7 +1019,7 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial, int level_ove
 							if(caster->IsClient() && caster != this)
 								caster->CastToClient()->QueuePacket(message_packet);
 
-							CastToClient()->SetBindPoint(spells[spell_id].base[i] - 1);
+							CastToClient()->SetBindPoint();
 							Save();
 							safe_delete(action_packet);
 							safe_delete(message_packet);
@@ -1029,17 +1029,17 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial, int level_ove
 				break;
 			}
 
-			case SE_Gate:
-			{
+			case SE_Gate: {
 #ifdef SPELL_EFFECT_SPAM
 				snprintf(effect_desc, _EDLEN, "Gate");
 #endif
-				if(!spellbonuses.AntiGate){
+				if (!spellbonuses.AntiGate) {
 
-					if(zone->random.Roll(effect_value))
-						Gate(spells[spell_id].base2[i] - 1);
-					else if (caster)
-						caster->Message_StringID(MT_SpellFailure,GATE_FAIL);
+					if (zone->random.Roll(effect_value)) {
+						Gate();
+					} else if (caster) {
+						caster->Message_StringID(MT_SpellFailure, GATE_FAIL);
+					}
 				}
 				break;
 			}
@@ -2491,13 +2491,6 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial, int level_ove
 				if(IsClient())
 					CastToClient()->SummonAndRezzAllCorpses();
 
-				break;
-			}
-
-			case SE_GateToHomeCity:
-			{
-				if(IsClient())
-					CastToClient()->GoToBind(4);
 				break;
 			}
 

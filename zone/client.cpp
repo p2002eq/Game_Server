@@ -605,9 +605,9 @@ bool Client::Save(uint8 iCommitNow) {
 	database.SaveCharacterCurrency(CharacterID(), &m_pp);
 
 	/* Save Current Bind Points */
-	for (int i = 0; i < 5; i++)
-		if (m_pp.binds[i].zoneId)
-			database.SaveCharacterBindPoint(CharacterID(), m_pp.binds[i], i);
+	if (m_pp.binds[0].zoneId) {
+		database.SaveCharacterBindPoint(CharacterID(), m_pp.binds[0]);
+	}
 
 	/* Save Character Buffs */
 	database.SaveBuffs(this);

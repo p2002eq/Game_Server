@@ -701,14 +701,13 @@ bool Database::CheckDatabaseConvertPPDeblob(){
 			rquery = StringFormat(
 				"CREATE TABLE `character_bind` (							   "
 				"`id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT,				   "
-				"`is_home` tinyint(11) UNSIGNED NOT NULL DEFAULT '0',		   "
 				"`zone_id` smallint(11) UNSIGNED NOT NULL DEFAULT '0',		   "
 				"`instance_id` mediumint(11) UNSIGNED NOT NULL DEFAULT '0',	   "
 				"`x` float NOT NULL DEFAULT '0',							   "
 				"`y` float NOT NULL DEFAULT '0',							   "
 				"`z` float NOT NULL DEFAULT '0',							   "
 				"`heading` float NOT NULL DEFAULT '0',						   "
-				"PRIMARY KEY(`id`, `is_home`),								   "
+				"PRIMARY KEY(`id`),								               "
 				"KEY `id` (`id`)											   "
 				") ENGINE = InnoDB DEFAULT CHARSET = latin1;"
 				);
@@ -1326,19 +1325,11 @@ bool Database::CheckDatabaseConvertPPDeblob(){
 				}
 				if (rquery != ""){ results = QueryDatabase(rquery); }
 
-				/* Run Bind Home Convert */
-				if (pp->binds[4].zoneId < 999 && !_ISNAN_(pp->binds[4].x) && !_ISNAN_(pp->binds[4].y) && !_ISNAN_(pp->binds[4].z) && !_ISNAN_(pp->binds[4].heading)) {
-					rquery = StringFormat("REPLACE INTO `character_bind` (id, zone_id, instance_id, x, y, z, heading, is_home)"
-						" VALUES (%u, %u, %u, %f, %f, %f, %f, 1)",
-						character_id, pp->binds[4].zoneId, 0, pp->binds[4].x, pp->binds[4].y, pp->binds[4].z, pp->binds[4].heading);
-					if (rquery != ""){ results = QueryDatabase(rquery); }
-				}
-
 				/* Run Bind Convert */
 				if (pp->binds[0].zoneId < 999 && !_ISNAN_(pp->binds[0].x) && !_ISNAN_(pp->binds[0].y) && !_ISNAN_(pp->binds[0].z) && !_ISNAN_(pp->binds[0].heading)) {
-					rquery = StringFormat("REPLACE INTO `character_bind` (id, zone_id, instance_id, x, y, z, heading, is_home)"
-						" VALUES (%u, %u, %u, %f, %f, %f, %f, 0)",
-						character_id, pp->binds[0].zoneId, 0, pp->binds[0].x, pp->binds[0].y, pp->binds[0].z, pp->binds[0].heading);
+					rquery = StringFormat("REPLACE INTO `character_bind` (id, zone_id, instance_id, x, y, z, heading)"
+												  " VALUES (%u, %u, %u, %f, %f, %f, %f)",
+										  character_id, pp->binds[0].zoneId, 0, pp->binds[0].x, pp->binds[0].y, pp->binds[0].z, pp->binds[0].heading);
 					if (rquery != ""){ results = QueryDatabase(rquery); }
 				}
 				/* Run Language Convert */

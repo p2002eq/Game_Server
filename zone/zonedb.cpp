@@ -4,6 +4,7 @@
 #include "../common/item_instance.h"
 #include "../common/rulesys.h"
 #include "../common/string_util.h"
+#include "../common/database.h"
 
 #include "client.h"
 #include "corpse.h"
@@ -1260,55 +1261,35 @@ bool ZoneDatabase::LoadCharacterPotions(uint32 character_id, PlayerProfile_Struc
 	return true;
 }
 
-bool ZoneDatabase::LoadCharacterBindPoint(uint32 character_id, PlayerProfile_Struct *pp)
-{
-	std::string query = StringFormat("SELECT `slot`, `zone_id`, `instance_id`, `x`, `y`, `z`, `heading` FROM "
-					 "`character_bind` WHERE `id` = %u LIMIT 5",
-					 character_id);
+bool ZoneDatabase::LoadCharacterBindPoint(uint32 character_id, PlayerProfile_Struct *pp) {
+	std::string query = StringFormat("SELECT `zone_id`, `instance_id`, `x`, `y`, `z`, `heading` FROM "
+											 "`%s` WHERE `id` = %u LIMIT 1",
+									 Database::CHARACTER_BIND_TABLE.c_str(), character_id);
 	auto results = database.QueryDatabase(query);
 
-	if (!results.RowCount()) // SHIT -- this actually isn't good
+	if (!results.RowCount()) {
 		return true;
-
-	for (auto row = results.begin(); row != results.end(); ++row) {
-		int index = atoi(row[0]);
-		if (index < 0 || index > 4)
-			continue;
-
-		pp->binds[index].zoneId = atoi(row[1]);
-		pp->binds[index].instance_id = atoi(row[2]);
-		pp->binds[index].x = atoi(row[3]);
-		pp->binds[index].y = atoi(row[4]);
-		pp->binds[index].z = atoi(row[5]);
-		pp->binds[index].heading = atoi(row[6]);
 	}
 
+	for (auto row = results.begin(); row != results.end(); ++row) {
+		pp->binds[0].zoneId = atoi(row[0]);
+		pp->binds[0].instance_id = atoi(row[1]);
+		pp->binds[0].x = atoi(row[2]);
+		pp->binds[0].y = atoi(row[3]);
+		pp->binds[0].z = atoi(row[4]);
+		pp->binds[0].heading = atoi(row[5]);
+	}
+
+	pp->binds[1] = pp->binds[0];
+	pp->binds[2] = pp->binds[0];
+	pp->binds[3] = pp->binds[0];
+	pp->binds[4] = pp->binds[0];
 	return true;
 }
 
 bool ZoneDatabase::SaveCharacterLanguage(uint32 character_id, uint32 lang_id, uint32 value){
 	std::string query = StringFormat("REPLACE INTO `character_languages` (id, lang_id, value) VALUES (%u, %u, %u)", character_id, lang_id, value); QueryDatabase(query);
 	Log(Logs::General, Logs::None, "ZoneDatabase::SaveCharacterLanguage for character ID: %i, lang_id:%u value:%u done", character_id, lang_id, value);
-	return true;
-}
-
-bool ZoneDatabase::SaveCharacterBindPoint(uint32 character_id, const BindStruct &bind, uint32 bind_num)
-{
-	/* Save Home Bind Point */
-	std::string query =
-	    StringFormat("REPLACE INTO `character_bind` (id, zone_id, instance_id, x, y, z, heading, slot) VALUES (%u, "
-			 "%u, %u, %f, %f, %f, %f, %i)",
-			 character_id, bind.zoneId, bind.instance_id, bind.x, bind.y, bind.z, bind.heading, bind_num);
-
-	Log(Logs::General, Logs::None, "ZoneDatabase::SaveCharacterBindPoint for character ID: %i zone_id: %u "
-					   "instance_id: %u position: %f %f %f %f bind_num: %u",
-		character_id, bind.zoneId, bind.instance_id, bind.x, bind.y, bind.z, bind.heading, bind_num);
-
-	auto results = QueryDatabase(query);
-	if (!results.RowsAffected())
-		Log(Logs::General, Logs::None, "ERROR Bind Home Save: %s. %s", results.ErrorMessage().c_str(),
-			query.c_str());
-
 	return true;
 }
 
