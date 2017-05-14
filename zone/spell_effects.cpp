@@ -55,6 +55,15 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial, int level_ove
 	char effect_desc[_EDLEN];
 #endif
 
+	if (spell_id == 2603) {
+		int buff_count = GetMaxTotalSlots();
+		for(int slot = 0; slot < buff_count; slot++) {
+			if (buffs[slot].spellid == 2603) {
+				BuffFadeBySlot(slot);
+			}
+		}
+	}
+
 	if(!IsValidSpell(spell_id))
 		return false;
 
