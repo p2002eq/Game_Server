@@ -12264,6 +12264,8 @@ void Client::Handle_OP_SetTitle(const EQApplicationPacket *app)
 
 void Client::Handle_OP_Shielding(const EQApplicationPacket *app)
 {
+	// Shield disabled for our era
+	return;
 	if (app->size != sizeof(Shielding_Struct)) {
 		Log(Logs::General, Logs::Error, "OP size error: OP_Shielding expected:%i got:%i", sizeof(Shielding_Struct), app->size);
 		return;
