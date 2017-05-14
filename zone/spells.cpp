@@ -2560,7 +2560,7 @@ bool Mob::ApplyNextBardPulse(uint16 spell_id, Mob *spell_target, CastingSlot slo
 	// check line of sight to target if it's a detrimental spell
 	if(spell_target && IsDetrimentalSpell(spell_id) && !CheckLosFN(spell_target) && !IsBindSightSpell(spell_id) && !IsHarmonySpell(spell_id))
 	{
-		Log(Logs::Detail, Logs::Spells, "Bard Song Pulse %d: cannot see target %s", spell_target->GetName());
+		Log(Logs::Detail, Logs::Spells, "Bard Song Pulse %d: cannot see target %s", spell_id, spell_target->GetName());
 		Message_StringID(13, CANT_SEE_TARGET);
 		return(false);
 	}
