@@ -530,7 +530,23 @@ void Client::CompleteConnect()
 	}
 	//SendAATable();
 
-	if (GetHideMe()) Message(13, "[GM] You are currently hidden to all clients");
+	if (GetGM() && (GetHideMe() || GetGMSpeed() || GetGMInvul() || flymode != 0))
+	{
+		std::string state = "currently ";
+
+		if (GetHideMe()) state += "hidden to all clients, ";
+		if (GetGMSpeed()) state += "running at GM speed, ";
+		if (GetGMInvul()) state += "invulnerable to all damage, ";
+		if (flymode == 1) state += "flying, ";
+		else if (flymode == 2) state += "levitating, ";
+
+		if (state.size () > 0)
+		{
+			//Remove last two characters from the string
+			state.resize (state.size () - 2);
+			Message(CC_Red, "[GM] You are %s.", state.c_str());
+		}
+	}
 
 	uint32 raidid = database.GetRaidID(GetName());
 	Raid *raid = nullptr;
@@ -1272,7 +1288,7 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 	database.LoadCharacterFactionValues(cid, factionvalues);
 
 	/* Load Character Account Data: Temp until I move */
-	query = StringFormat("SELECT `status`, `name`, `lsaccount_id`, `gmspeed`, `revoked`, `hideme`, `time_creation` FROM `account` WHERE `id` = %u", this->AccountID());
+	query = StringFormat("SELECT `status`, `name`, `lsaccount_id`, `gmspeed`, `revoked`, `hideme`, `time_creation`, `gminvul`, `flymode` FROM `account` WHERE `id` = %u", this->AccountID());
 	auto results = database.QueryDatabase(query);
 	for (auto row = results.begin(); row != results.end(); ++row) {
 		admin = atoi(row[0]);
@@ -1282,6 +1298,8 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 		revoked = atoi(row[4]);
 		gmhideme = atoi(row[5]);
 		account_creation = atoul(row[6]);
+		gminvul = atoi(row[7]);
+		flymode = atoi(row[8]);
 	}
 
 	/* Load Character Data */
@@ -1349,6 +1367,8 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 
 	/* If GM, not trackable */
 	if (gmhideme) { trackable = false; }
+	if (gminvul) { invulnerable = true; }
+	if (flymode > 0) { SendAppearancePacket(AT_Levitate, flymode); }
 	/* Set Con State for Reporting */
 	conn_state = PlayerProfileLoaded;
 

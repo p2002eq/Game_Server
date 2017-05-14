@@ -333,6 +333,7 @@ void command_zstats(Client *c, const Seperator *sep);
 void command_zunderworld(Client *c, const Seperator *sep);
 void command_zuwcoords(Client *c, const Seperator *sep);
 void command_xpinfo(Client *c, const Seperator *sep);
+void command_godmode(Client* c, const Seperator *sep);
 
 #ifdef BOTS
 #include "bot.h"

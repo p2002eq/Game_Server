@@ -216,6 +216,7 @@ int command_init(void)
 		command_add("globalview", "Lists all qglobals in cache if you were to do a quest with this target.", 80, command_globalview) ||
 		command_add("gm", "- Turn player target's or your GM flag on or off", 80, command_gm) ||
 		command_add("gmspeed", "[on/off] - Turn GM speed hack on/off for you or your player target", 100, command_gmspeed) ||
+		command_add("godmode", "[on/off] - Turns on/off hideme, gmspeed, invul, and flymode.", 200, command_godmode) ||
 		command_add("goto", "[x] [y] [z] - Teleport to the provided coordinates or to your target", 10, command_goto) ||
 		command_add("grid", "[add/delete] [grid_num] [wandertype] [pausetype] - Create/delete a wandering grid", 170, command_grid) ||
 		command_add("guild", "- Guild manipulation commands. Use argument help for more info.", 10, command_guild) ||
@@ -1399,6 +1400,8 @@ void command_invul(Client *c, const Seperator *sep)
 
 	if(sep->arg[1][0] != 0) {
 		t->SetInvul(state);
+		uint32 account = t->AccountID();
+		database.SetGMInvul(account, state);
 		c->Message(0, "%s is %s invulnerable from attack.",  t->GetName(), state?"now":"no longer");
 	}
 	else
@@ -2105,22 +2108,26 @@ void command_mana(Client *c, const Seperator *sep)
 		t->SetMana(t->CalcMaxMana());
 }
 
-void command_flymode(Client *c, const Seperator *sep)
-{
-	Client *t=c;
+void command_flymode(Client *c, const Seperator *sep) {
+	Client *t = c;
 
 	if (strlen(sep->arg[1]) == 1 && !(sep->arg[1][0] == '0' || sep->arg[1][0] == '1' || sep->arg[1][0] == '2'))
 		c->Message(0, "#flymode [0/1/2]");
 	else {
-		if(c->GetTarget() && c->GetTarget()->IsClient())
-			t=c->GetTarget()->CastToClient();
+		if (c->GetTarget() && c->GetTarget()->IsClient())
+			t = c->GetTarget()->CastToClient();
 		t->SendAppearancePacket(AT_Levitate, atoi(sep->arg[1]));
-		if (sep->arg[1][0] == '1')
-			c->Message(0, "Turning %s's Flymode ON",  t->GetName());
-		else if (sep->arg[1][0] == '2')
-			c->Message(0, "Turning %s's Flymode LEV",  t->GetName());
-		else
-			c->Message(0, "Turning %s's Flymode OFF",  t->GetName());
+		uint32 account = c->AccountID();
+		if (sep->arg[1][0] == '1') {
+			c->Message(0, "Turning %s's Flymode ON", t->GetName());
+			database.SetGMFlymode(account, 1);
+		} else if (sep->arg[1][0] == '2') {
+			c->Message(0, "Turning %s's Flymode LEV", t->GetName());
+			database.SetGMFlymode(account, 2);
+		} else {
+			c->Message(0, "Turning %s's Flymode OFF", t->GetName());
+			database.SetGMFlymode(account, 0);
+		}
 	}
 }
 
@@ -10883,6 +10890,24 @@ void command_xpinfo(Client *c, const Seperator *sep){
 	c->Message(CC_Yellow, "They need %0.1f more to get to %d. They are %0.2f percent towards this level.", xpforlevel, level+1, xp_percent);
 	c->Message(CC_Yellow, "Their XP loss at this level is %d which is %0.2f percent of their current level.", exploss, loss_percent);
 	c->Message(CC_Yellow, "They have %d of %0.1f towards an AA point. They are %0.2f percent towards this point.", currentaaxp, maxaa, aa_percent);
+}
+
+void command_godmode(Client *c, const Seperator *sep){
+	bool state = atobool(sep->arg[1]);
+	uint32 account = c->AccountID();
+
+	if (sep->arg[1][0] != 0)
+	{
+		c->SetInvul(state);
+		database.SetGMInvul(account, state);
+		database.SetGMSpeed(account, state ? 1 : 0);
+		c->SendAppearancePacket(AT_Levitate, state);
+		database.SetGMFlymode(account, state);
+		c->SetHideMe(state);
+		c->Message(CC_Default, "Turning GodMode %s for %s (zone for gmspeed to take effect)", state ? "On" : "Off", c->GetName());
+	}
+	else
+		c->Message(CC_Default, "Usage: #godmode [on/off]");
 }
 
 // All new code added to command.cpp should be BEFORE this comment line. Do no append code to this file below the BOTS code block.
