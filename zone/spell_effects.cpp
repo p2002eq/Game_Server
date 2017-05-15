@@ -282,11 +282,17 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial, int level_ove
 				int32 dmg = effect_value;
 				if (spell_id == 2751 && caster) //Manaburn
 				{
-					dmg = caster->GetMana()*-3;
+					int MBMult = zone->random.Int(150, 200); //Manaburn deals 150-200% of mana
+					int32 MBCap = 9492;  //Manaburn Damage Cap
+					dmg = caster->GetMana()*MBMult / 100;
+					if (dmg > MBCap)
+						dmg = MBCap;
+					dmg *= -1;	//Damage should be negative
+					Log(Logs::General, Logs::Spells, "MBMult %d, Mana %d, Damage %d", MBMult, caster->GetMana(), dmg);
 					caster->SetMana(0);
 				} else if (spell_id == 2755 && caster) //Lifeburn
 				{
-					dmg = caster->GetHP()*-15/10;
+					dmg = caster->GetHP()*(-1);
 					caster->SetHP(1);
 					if(caster->IsClient()){
 						caster->CastToClient()->SetFeigned(true);
