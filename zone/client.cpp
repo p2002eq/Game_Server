@@ -593,7 +593,7 @@ bool Client::Save(uint8 iCommitNow) {
 
 	/* Mana and HP */
 	// If the client is dead, HP, Mana and Endurance are fully restored.
-	if (GetHP() <= 0) {
+	if (dead && GetHP() <= 0) {
 		m_pp.cur_hp    = GetMaxHP();
 		m_pp.mana      = GetMaxMana();
 		m_pp.endurance = GetMaxEndurance();
