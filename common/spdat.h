@@ -32,6 +32,8 @@
 #define SPELL_IMP_HARM_TOUCH 2774
 #define SPELL_NPC_HARM_TOUCH 929
 
+// Some discipline IDs.
+#define DISC_UNHOLY_AURA 4520
 
 #define EFFECT_COUNT 12
 #define MAX_SPELL_TRIGGER 12	// One for each slot(only 6 for AA since AA use 2)

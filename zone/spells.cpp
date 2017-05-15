@@ -4474,6 +4474,13 @@ float Mob::ResistSpell(uint8 resist_type, uint16 spell_id, Mob *caster, bool use
 		return(0);
 	}
 
+	// Special case. If the caster has the Unholy Aura Discipline activated and the spell is HT,
+	// or improved HT then the resist type is disease.
+	if ((spell_id == SPELL_HARM_TOUCH || spell_id == SPELL_HARM_TOUCH2) && caster->IsClient() && caster->CastToClient()->FindBuff(DISC_UNHOLY_AURA))
+	{
+		resist_type = RESIST_DISEASE;
+	}
+
 	//Get resist modifier and adjust it based on focus 2 resist about eq to 1% resist chance
 	int resist_modifier = (use_resist_override) ? resist_override : spells[spell_id].ResistDiff;
 
