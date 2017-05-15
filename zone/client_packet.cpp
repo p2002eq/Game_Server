@@ -2871,7 +2871,9 @@ void Client::Handle_OP_ApplyPoison(const EQApplicationPacket *app)
 
 			CheckIncreaseSkill(EQEmu::skills::SkillApplyPoison, nullptr, 10);
 
-			if (ChanceRoll < SuccessChance) {
+			// If the player has a non null score in aaPoisonMastery, it means
+			// that he/she actually has the AA, so the ApplyPoison cannot fail.
+			if (ChanceRoll < SuccessChance || GetAA(aaPoisonMastery) > 0) {
 				ApplyPoisonSuccessResult = 1;
 				// NOTE: Someone may want to tweak the chance to proc the poison effect that is added to the weapon here.
 				// My thinking was that DEX should be apart of the calculation.
