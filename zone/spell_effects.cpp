@@ -1835,6 +1835,12 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial, int level_ove
 				snprintf(effect_desc, _EDLEN, "Weapon Proc: %s (id %d)", spells[effect_value].name, procid);
 #endif
 
+				// Special case for Vampiric Embrace. If this is a Shadow Knight, the proc is different.
+				if (procid == PI_VampEmbraceNecro && GetClass() == SHADOWKNIGHT)
+				{
+					procid = PI_VampEmbraceShadow;
+				}
+
 				if(spells[spell_id].base2[i] == 0)
 					AddProcToWeapon(procid, false, 100, spell_id, caster_level);
 				else
@@ -3838,6 +3844,13 @@ void Mob::BuffFadeBySlot(int slot, bool iRecalcBonuses)
 			case SE_WeaponProc:
 			{
 				uint16 procid = GetProcID(buffs[slot].spellid, i);
+
+				// Special case for Vampiric Embrace. If this is a Shadow Knight, the proc is different.
+				if (procid == PI_VampEmbraceNecro && GetClass() == SHADOWKNIGHT)
+				{
+					procid = PI_VampEmbraceShadow;
+				}
+
 				RemoveProcFromWeapon(procid, false);
 				break;
 			}
