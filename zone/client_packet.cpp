@@ -4178,7 +4178,7 @@ void Client::Handle_OP_CastSpell(const EQApplicationPacket *app)
 
 			// The Harm Touch reuse time depends on the rank of Touch of the Wicked.
 			// It is 12 minutes per rank.
-			int reduced_cooldown = HarmTouchReuseTime - GetAA(aaTouchoftheWicked) * 12;
+			int reduced_cooldown = HarmTouchReuseTime - GetAA(aaTouchoftheWicked) * 720;
 
 			p_timers.Start(pTimerHarmTouch, reduced_cooldown);
 

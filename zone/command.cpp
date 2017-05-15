@@ -379,6 +379,7 @@ int command_init(void)
 		command_add("texture", "[texture] [helmtexture] - Change your or your target's appearance, use 255 to show equipment", 10, command_texture) ||
 		command_add("time", "[HH] [MM] - Set EQ time", 90, command_time) ||
 		command_add("timers", "- Display persistent timers for target", 200, command_timers) ||
+		command_add("timers_clear", "Clear all the timers of the current target", 200, command_timers_clear) ||
 		command_add("timezone", "[HH] [MM] - Set timezone. Minutes are optional", 90, command_timezone) ||
 		command_add("title", "[text] [1 = create title table row] - Set your or your player target's title", 50, command_title) ||
 		command_add("titlesuffix", "[text] [1 = create title table row] - Set your or your player target's title suffix", 50, command_titlesuffix) ||
@@ -6047,6 +6048,18 @@ void command_timers(Client *c, const Seperator *sep) {
 	for(r = 0; r < l; r++) {
 		c->Message(0,"Timer %d: %d seconds remain.",  res[r].first, res[r].second->GetRemainingTime());
 	}
+}
+
+void command_timers_clear(Client* c, const Seperator* sep)
+{
+	if (!c->GetTarget() || !c->GetTarget()->IsClient())
+	{
+		c->Message(0, "Need a player target for timers_clear.");
+	}
+	Client* target = c->GetTarget()->CastToClient();
+	c->GetPTimers().Clear(&database);
+
+	c->Message(0, "Timers cleared for %s.", c->GetName());
 }
 
 void command_npcemote(Client *c, const Seperator *sep)

@@ -1139,25 +1139,25 @@ void Client::IncrementAlternateAdvancementRank(int rank_id) {
 
 void Client::ActivateAlternateAdvancementAbility(int rank_id, int target_id) {
 	AA::Rank *rank = zone->GetAlternateAdvancementRank(rank_id);
-	if(!rank) {
+	if (!rank) {
 		return;
 	}
 
 	AA::Ability *ability = rank->base_ability;
-	if(!ability) {
+	if (!ability) {
 		return;
 	}
 
-	if(!IsValidSpell(rank->spell)) {
+	if (!IsValidSpell(rank->spell)) {
 		return;
 	}
 
-	if(!CanUseAlternateAdvancementRank(rank)) {
+	if (!CanUseAlternateAdvancementRank(rank)) {
 		return;
 	}
 
 	//make sure it is not a passive
-	if(!rank->effects.empty()) {
+	if (!rank->effects.empty()) {
 		return;
 	}
 
@@ -1167,23 +1167,22 @@ void Client::ActivateAlternateAdvancementAbility(int rank_id, int target_id) {
 		return;
 
 	//if expendable make sure we have charges
-	if(ability->charges > 0 && charges < 1)
+	if (ability->charges > 0 && charges < 1)
 		return;
 
 	//check cooldown
-	if(!p_timers.Expired(&database, rank->spell_type + pTimerAAStart)) {
+	if (!p_timers.Expired(&database, rank->spell_type + pTimerAAStart)) {
 		uint32 aaremain = p_timers.GetRemainingTime(rank->spell_type + pTimerAAStart);
 		uint32 aaremain_hr = aaremain / (60 * 60);
 		uint32 aaremain_min = (aaremain / 60) % 60;
 		uint32 aaremain_sec = aaremain % 60;
 
-		if(aaremain_hr >= 1) {
+		if (aaremain_hr >= 1) {
 			Message(13, "You can use this ability again in %u hour(s) %u minute(s) %u seconds",
-			aaremain_hr, aaremain_min, aaremain_sec);
-		}
-		else {
+					aaremain_hr, aaremain_min, aaremain_sec);
+		} else {
 			Message(13, "You can use this ability again in %u minute(s) %u seconds",
-			aaremain_min, aaremain_sec);
+					aaremain_min, aaremain_sec);
 		}
 
 		return;
@@ -1191,7 +1190,7 @@ void Client::ActivateAlternateAdvancementAbility(int rank_id, int target_id) {
 
 	//calculate cooldown
 	int cooldown = rank->recast_time - GetAlternateAdvancementCooldownReduction(rank);
-	if(cooldown < 0) {
+	if (cooldown < 0) {
 		cooldown = 0;
 	}
 
@@ -1203,19 +1202,27 @@ void Client::ActivateAlternateAdvancementAbility(int rank_id, int target_id) {
 		return;
 	}
 	// Bards can cast instant cast AAs while they are casting another song
-	if(spells[rank->spell].cast_time == 0 && GetClass() == BARD && IsBardSong(casting_spell_id)) {
-		if(!SpellFinished(rank->spell, entity_list.GetMob(target_id), EQEmu::CastingSlot::AltAbility, spells[rank->spell].mana, -1, spells[rank->spell].ResistDiff, false)) {
+	if (spells[rank->spell].cast_time == 0 && GetClass() == BARD && IsBardSong(casting_spell_id)) {
+		if (!SpellFinished(rank->spell, entity_list.GetMob(target_id), EQEmu::CastingSlot::AltAbility,
+						   spells[rank->spell].mana, -1, spells[rank->spell].ResistDiff, false)) {
 			return;
 		}
 		ExpendAlternateAdvancementCharge(ability->id);
 	} else {
-		if(!CastSpell(rank->spell, target_id, EQEmu::CastingSlot::AltAbility, -1, -1, 0, -1, rank->spell_type + pTimerAAStart, cooldown, nullptr, rank->id)) {
+		if (!CastSpell(rank->spell, target_id, EQEmu::CastingSlot::AltAbility, -1, -1, 0, -1,
+					   rank->spell_type + pTimerAAStart, cooldown, nullptr, rank->id)) {
 			return;
 		}
 	}
 
 	CastToClient()->GetPTimers().Start(rank->spell_type + pTimerAAStart, cooldown);
 	SendAlternateAdvancementTimer(rank->spell_type, 0, 0);
+
+	// If the AA is Improved Harm Touch or Leech Touch, we need to
+	// synchronize the normal Harm Touch timer also.
+	if (rank_id == aaImprovedHarmTouch || rank_id == aaLeechTouch) {
+		p_timers.Start(pTimerHarmTouch, cooldown);
+	}
 }
 
 int Mob::GetAlternateAdvancementCooldownReduction(AA::Rank *rank_in) {
