@@ -4176,7 +4176,19 @@ void Client::Handle_OP_CastSpell(const EQApplicationPacket *app)
 			else
 				spell_to_cast = SPELL_HARM_TOUCH2;
 
-			p_timers.Start(pTimerHarmTouch, HarmTouchReuseTime);
+			// The Harm Touch reuse time depends on the rank of Touch of the Wicked.
+			// It is 12 minutes per rank.
+			int reduced_cooldown = HarmTouchReuseTime - GetAA(aaTouchoftheWicked) * 12;
+
+			p_timers.Start(pTimerHarmTouch, reduced_cooldown);
+
+			// We need also to synchronize the Improved Harm Touch and Leech Touch timers.
+			if (GetAA(aaImprovedHarmTouch) > 0 || GetAA(aaLeechTouch) > 0) {
+				AA::Rank *rank = zone->GetAlternateAdvancementRank(aaImprovedHarmTouch);
+
+				CastToClient()->GetPTimers().Start(rank->spell_type + pTimerAAStart, reduced_cooldown);
+				SendAlternateAdvancementTimer(rank->spell_type, 0, 0);
+			}
 		}
 
 		if (spell_to_cast > 0)	// if we've matched LoH or HT, cast now
