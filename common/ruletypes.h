@@ -441,13 +441,13 @@ RULE_REAL(Combat, HitFalloffModerate, 7.0) //hit will fall off up to 7% over the
 RULE_REAL(Combat, HitFalloffMajor, 50.0) //hit will fall off sharply if we're outside the minor and moderate range
 RULE_REAL(Combat, HitBonusPerLevel, 1.2) //You gain this % of hit for every level you are above your target
 RULE_REAL(Combat, WeaponSkillFalloff, 0.33) //For every weapon skill point that's not maxed you lose this % of hit
-RULE_REAL(Combat, ArcheryHitPenalty, 0.25) //Archery has a hit penalty to try to help balance it with the plethora of long term +hit modifiers for it
+RULE_REAL(Combat, ArcheryHitPenalty, 0) //Archery has a hit penalty to try to help balance it with the plethora of long term +hit modifiers for it
 RULE_REAL(Combat, AgiHitFactor, 0.01)
 RULE_REAL(Combat, MinChancetoHit, 5.0) //Minimum % chance to hit with regular melee/ranged
 RULE_REAL(Combat, MaxChancetoHit, 95.0) //Maximum % chance to hit with regular melee/ranged
 RULE_INT(Combat, MinRangedAttackDist, 25) //Minimum Distance to use Ranged Attacks
 RULE_BOOL(Combat, ArcheryBonusRequiresStationary, true) //does the 2x archery bonus chance require a stationary npc
-RULE_REAL(Combat, ArcheryBaseDamageBonus, 1) // % Modifier to Base Archery Damage (.5 = 50% base damage, 1 = 100%, 2 = 200%)
+RULE_REAL(Combat, ArcheryBaseDamageBonus, 0.75) // % Modifier to Base Archery Damage (.5 = 50% base damage, 1 = 100%, 2 = 200%)
 RULE_REAL(Combat, ArcheryNPCMultiplier, 1.0) // this is multiplied by the regular dmg to get the archery dmg
 RULE_BOOL(Combat, AssistNoTargetSelf, true) //when assisting a target that does not have a target: true = target self, false = leave target as was before assist (false = live like)
 RULE_INT(Combat, MaxRampageTargets, 3) //max number of people hit with rampage

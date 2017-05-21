@@ -202,6 +202,11 @@ int Mob::GetTotalToHit(EQEmu::skills::SkillType skill, int chance_mod)
 		itembonuses.HitChanceEffect[skill] +
 		aabonuses.HitChanceEffect[skill] +
 		spellbonuses.HitChanceEffect[skill];
+		
+	if(skill == EQEmu::skills::SkillArchery) 	{
+		hit_bonus += spellbonuses.increasearchery + aabonuses.increasearchery + itembonuses.increasearchery;
+		hit_bonus -= hit_bonus*RuleR(Combat, ArcheryHitPenalty);
+	}
 
 	accuracy = (accuracy * (100 + hit_bonus)) / 100;
 
@@ -4373,8 +4378,9 @@ void Mob::ApplyMeleeDamageMods(uint16 skill, int &damage, Mob *defender, ExtraAt
 		dmgbonusmod += opts->melee_damage_bonus_flat;
 
 	if (defender) {
-		if (defender->IsClient() && defender->GetClass() == WARRIOR)
-			dmgbonusmod -= 5;
+		// Innate Warrior Mitigation out of Era, implemented 2004
+		//if (defender->IsClient() && defender->GetClass() == WARRIOR)
+		//	dmgbonusmod -= 5;
 		// 168 defensive
 		dmgbonusmod += (defender->spellbonuses.MeleeMitigationEffect + itembonuses.MeleeMitigationEffect + aabonuses.MeleeMitigationEffect);
 	}
@@ -4556,9 +4562,10 @@ void Mob::ApplyDamageTable(DamageHitInfo &hit)
 	int extrapercent = zone->random.Roll0(basebonus);
 	int percent = std::min(100 + extrapercent, damage_table.max_extra);
 	hit.damage_done = (hit.damage_done * percent) / 100;
-
-	if (IsWarriorClass() && GetLevel() > 54)
-		hit.damage_done++;
+	
+	// Not sure why the block below was here.  Arbitrarily adds 1 damage.  Commented out.
+	//if (IsWarriorClass() && GetLevel() > 54)
+	//	hit.damage_done++;
 	Log(Logs::Detail, Logs::Attack, "Damage table applied %d (max %d)", percent, damage_table.max_extra);
 }
 
@@ -4882,11 +4889,15 @@ void Mob::CommonOutgoingHitSuccess(Mob* defender, DamageHitInfo &hit, ExtraAttac
 			hit.damage_done = headshot;
 		}
 		else if (GetClass() == RANGER && GetLevel() > 50) { // no double dmg on headshot
-			if (defender->IsNPC() && !defender->IsMoving() && !defender->IsRooted()) {
+			// Double Damage Bonus should apply to Permarooted mobs
+			if (defender->IsNPC() && !defender->IsMoving() && !(defender->IsRooted() && !defender->permarooted)) {
 				hit.damage_done *= 2;
 				Message_StringID(MT_CritMelee, BOW_DOUBLE_DAMAGE);
 			}
 		}
+		//Scale Factor for Archery Damage Tuning
+		Log(Logs::Detail, Logs::Attack, "ArcheryBaseDamageBonus %f", RuleR(Combat, ArcheryBaseDamageBonus));
+		hit.damage_done *= RuleR(Combat, ArcheryBaseDamageBonus);
 	}
 
 	int extra_mincap = 0;

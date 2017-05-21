@@ -50,6 +50,7 @@ int32 Mob::GetActSpellDamage(uint16 spell_id, int32 value, Mob* target) {
 	bool Critical = false;
 	int32 value_BaseEffect = 0;
 	int chance = 0;
+	int32 MBCap = 9492;  //Manaburn Damage Cap, same cap whether critical or normal
 
 	value_BaseEffect = value + (value*GetFocusEffect(focusFcBaseEffects, spell_id)/100);
 
@@ -122,6 +123,12 @@ int32 Mob::GetActSpellDamage(uint16 spell_id, int32 value, Mob* target) {
 			else if (IsNPC() && CastToNPC()->GetSpellScale())
 				value = int(static_cast<float>(value) * CastToNPC()->GetSpellScale() / 100.0f);
 
+			// Manaburn can crit, but is still held to the same cap
+			if (spell_id == 2751) {
+				if (value < -MBCap)
+					value = -MBCap;
+			}
+			
 			entity_list.MessageClose_StringID(this, true, 100, MT_SpellCrits,
 					OTHER_CRIT_BLAST, GetName(), itoa(-value));
 
@@ -158,6 +165,12 @@ int32 Mob::GetActSpellDamage(uint16 spell_id, int32 value, Mob* target) {
 	if (IsNPC() && CastToNPC()->GetSpellScale())
 		value = int(static_cast<float>(value) * CastToNPC()->GetSpellScale() / 100.0f);
 
+	// Apply Manaburn damage cap
+	if (spell_id == 2751) {
+		if (value < -MBCap)
+			value = -MBCap;
+	}
+	
 	return value;
 }
 

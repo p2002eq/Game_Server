@@ -283,11 +283,9 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial, int level_ove
 				if (spell_id == 2751 && caster) //Manaburn
 				{
 					int MBMult = zone->random.Int(150, 200); //Manaburn deals 150-200% of mana
-					int32 MBCap = 9492;  //Manaburn Damage Cap
 					dmg = caster->GetMana()*MBMult / 100;
-					if (dmg > MBCap)
-						dmg = MBCap;
 					dmg *= -1;	//Damage should be negative
+					dmg = caster->GetActSpellDamage(spell_id, dmg, this); // Spell can crit, so need this.  Damage cap handled in this function.
 					Log(Logs::General, Logs::Spells, "MBMult %d, Mana %d, Damage %d", MBMult, caster->GetMana(), dmg);
 					caster->SetMana(0);
 				} else if (spell_id == 2755 && caster) //Lifeburn
@@ -3051,6 +3049,7 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial, int level_ove
 			case SE_Sanctuary:
 			case SE_PetMeleeMitigation:
 			case SE_SkillProc:
+			case SE_IncreaseArchery:
 			case SE_SkillProcSuccess:
 			case SE_SpellResistReduction:
 			{
@@ -5345,10 +5344,10 @@ int16 Client::GetFocusEffect(focusType type, uint16 spell_id)
 	Log(Logs::Detail, Logs::Spells, "Looking for focus effect: %d for spell: %d", static_cast<int>(type), spell_id);
 	if (IsBardSong(spell_id) && type != focusFcBaseEffects && type != focusSpellDuration)
 		return 0;
-
+	
 	if (spells[spell_id].not_focusable)
 		return 0;
-
+	
 	int16 realTotal = 0;
 	int16 realTotal2 = 0;
 	int16 realTotal3 = 0;

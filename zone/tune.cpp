@@ -545,8 +545,9 @@ int32 Client::Tune_GetMeleeMitDmg(Mob* GM, Mob *attacker, int32 damage, int32 mi
 	float dmg_interval = (damage - minhit) / 19.0;
 	float dmg_bonus = minhit - dmg_interval;
 	float spellMeleeMit =  (spellbonuses.MeleeMitigationEffect + itembonuses.MeleeMitigationEffect + aabonuses.MeleeMitigationEffect) / 100.0;
-	if (GetClass() == WARRIOR)
-		spellMeleeMit += 0.05;
+	// Innate Warrior Mitigation out of Era, implemented 2004
+	//if (GetClass() == WARRIOR)
+	//	spellMeleeMit += 0.05;
 	dmg_bonus -= dmg_bonus * (itembonuses.MeleeMitigation / 100.0);
 	dmg_interval -= dmg_interval * spellMeleeMit;
 

@@ -1696,6 +1696,12 @@ void Mob::ApplySpellsBonuses(uint16 spell_id, uint8 casterlevel, StatBonuses *ne
 
 				break;
 			}
+			
+			case SE_IncreaseArchery:
+			{
+				new_bonus->increasearchery += effect_value;
+				break;	
+			}
 
 			case SE_TotalHP:
 			{
@@ -3653,6 +3659,14 @@ void Mob::NegateSpellsBonuses(uint16 spell_id)
 					aabonuses.inhibitmelee = effect_value;
 					itembonuses.inhibitmelee = effect_value;
 					break;
+
+					case SE_IncreaseArchery:
+				{
+					spellbonuses.increasearchery = effect_value;
+					aabonuses.increasearchery = effect_value;
+					itembonuses.increasearchery = effect_value;
+					break;
+				}
 
 				case SE_TotalHP:
 					spellbonuses.HP = effect_value;
