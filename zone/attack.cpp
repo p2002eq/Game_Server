@@ -957,7 +957,6 @@ int Mob::GetWeaponDamage(Mob *against, const EQEmu::ItemData *weapon_item) {
 		if (weapon_item && weapon_item->ElemDmgAmt) {
 			//we don't check resist for npcs here
 			eledmg = weapon_item->ElemDmgAmt;
-			dmg += eledmg;
 		}
 	}
 
@@ -979,7 +978,7 @@ int Mob::GetWeaponDamage(Mob *against, const EQEmu::ItemData *weapon_item) {
 				return 1;
 		}
 		else
-			dmg += banedmg;
+			dmg += (banedmg + eledmg);
 	}
 	else {
 		if (weapon_item) {
