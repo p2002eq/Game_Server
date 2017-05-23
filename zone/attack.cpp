@@ -2508,7 +2508,9 @@ void Mob::AddToHateList(Mob* other, uint32 hate /*= 0*/, int32 damage /*= 0*/, b
 			hate = ((hate * (hatemod)) / 100);
 		}
 		else {
-			hate += 100; // 100 bonus initial aggro
+			hate += RuleI(Aggro, InitialAggroBonus); // Bonus Initial Aggro
+			Log(Logs::Detail, Logs::Combat, "InitialAggroBonus: %d", RuleI(Aggro, InitialAggroBonus));
+			
 		}
 	}
 
