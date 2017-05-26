@@ -672,8 +672,6 @@ bool Group::DelMember(Mob* oldmember, bool ignoresender)
 	strcpy(gu->membername, oldmember->GetCleanName());
 	strcpy(gu->yourname, oldmember->GetCleanName());
 
-	gu->leader_aas = LeaderAbilities;
-
 	for (uint32 i = 0; i < MAX_GROUP_MEMBERS; i++) {
 		if (members[i] == nullptr) {
 			//if (DEBUG>=5) Log(Logs::Detail, Logs::Group, "Group::DelMember() null member at slot %i", i);
@@ -696,65 +694,16 @@ bool Group::DelMember(Mob* oldmember, bool ignoresender)
 			oldmember->CastToClient()->QueuePacket(outapp);
 	}
 
-	safe_delete(outapp);
-
 	if(oldmember->IsClient())
 	{
 		database.SetGroupID(oldmember->GetCleanName(), 0, oldmember->CastToClient()->CharacterID(), false);
 	}
 
-	if(oldmember->IsMerc())
-	{
-		Client* owner = oldmember->CastToMerc()->GetMercOwner();
-		if(owner)
-		{
-			database.SetGroupID(oldmember->GetCleanName(), 0, owner->CharacterID(), true);
-		}
-	}
-
 	oldmember->SetGrouped(false);
 	disbandcheck = true;
 
-	if(HasRole(oldmember, RoleTank))
-	{
-		SetGroupTankTarget(0);
-		UnDelegateMainTank(oldmember->GetCleanName());
-	}
-
-	if(HasRole(oldmember, RoleAssist))
-	{
-		SetGroupAssistTarget(0);
-		UnDelegateMainAssist(oldmember->GetCleanName());
-	}
-
-	if(HasRole(oldmember, RolePuller))
-	{
-		SetGroupPullerTarget(0);
-		UnDelegatePuller(oldmember->GetCleanName());
-	}
-
-	if (oldmember->GetName() == mentoree_name)
-		ClearGroupMentor();
-
-	if(oldmember->IsClient()) {
-		SendMarkedNPCsToMember(oldmember->CastToClient(), true);
-		oldmember->CastToClient()->LeaveGroupXTargets(this);
-	}
-
-	if(GroupCount() < 3)
-	{
-		UnDelegateMarkNPC(NPCMarkerName.c_str());
-		if (GetLeader() && GetLeader()->IsClient() && GetLeader()->CastToClient()->ClientVersion() < EQEmu::versions::ClientVersion::SoD) {
-			UnDelegateMainAssist(MainAssistName.c_str());
-		}
-		ClearAllNPCMarks();
-	}
-
-#ifdef BOTS
-		Bot::UpdateGroupCastingRoles(this);
-#endif
-
 	safe_delete(outapp);
+
 	return true;
 }
 
