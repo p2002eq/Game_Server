@@ -2228,17 +2228,15 @@ void Group::ChangeLeader(Mob* newleader)
 	// this changes the current group leader, notifies other members, and updates leadship AA
 
 	// if the new leader is invalid, do nothing
-	if (!newleader || !newleader->IsClient())
+	if (!newleader)
 		return;
-
-	Mob* oldleader = GetLeader();
 
 	auto outapp = new EQApplicationPacket(OP_GroupUpdate, sizeof(GroupJoin_Struct));
 	GroupJoin_Struct* gu = (GroupJoin_Struct*) outapp->pBuffer;
 	gu->action = groupActMakeLeader;
 
 	strcpy(gu->membername, newleader->GetName());
-	strcpy(gu->yourname, oldleader->GetName());
+	strcpy(gu->yourname, GetOldLeaderName());
 	SetLeader(newleader);
 	database.SetGroupLeaderName(GetID(), newleader->GetName());
 	UpdateGroupAAs();
@@ -2250,9 +2248,23 @@ void Group::ChangeLeader(Mob* newleader)
 				members[i]->CastToClient()->SendGroupLeaderChangePacket(newleader->GetName());
 
 			members[i]->CastToClient()->QueuePacket(outapp);
+			Log(Logs::Detail, Logs::Group, "ChangeLeader(): Local leader update packet sent to: %s .", members[i]->GetName());
 		}
 	}
 	safe_delete(outapp);
+
+	Log(Logs::Detail, Logs::Group, "ChangeLeader(): Old Leader is: %s New leader is: %s", GetOldLeaderName(), newleader->GetName());
+
+	ServerPacket* pack = new ServerPacket(ServerOP_ChangeGroupLeader, sizeof(ServerGroupLeader_Struct));
+	ServerGroupLeader_Struct* fgu = (ServerGroupLeader_Struct*)pack->pBuffer;
+	fgu->zoneid = zone->GetZoneID();
+	fgu->gid = GetID();
+	strcpy(fgu->leader_name, newleader->GetName());
+	strcpy(fgu->oldleader_name, GetOldLeaderName());
+	worldserver.SendPacket(pack);
+	//safe_delete(pack);
+
+	SetOldLeaderName(newleader->GetName());
 }
 
 const char *Group::GetClientNameByIndex(uint8 index)

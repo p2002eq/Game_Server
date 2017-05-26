@@ -427,6 +427,7 @@ public:
 	void	ForceGroupUpdate(uint32 gid);
 	void	SendGroupLeave(uint32 gid, const char *name, bool checkleader);
 	void	SendGroupJoin(uint32 gid, const char *name);
+	void	SendGroupLeader(uint32 gid, const char *lname, const char *oldlname);
 
 	void	SaveAllClientsTaskState();
 	void	ReloadAllClientsTaskState(int TaskID=0);

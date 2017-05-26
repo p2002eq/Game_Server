@@ -1055,12 +1055,23 @@ void WorldServer::HandleMessage(uint16 opcode, const EQ::Net::Packet &p)
 	}
 
 	case ServerOP_ForceGroupUpdate: {
-		ServerForceGroupUpdate_Struct* fgu = (ServerForceGroupUpdate_Struct*)pack->pBuffer;
+		ServerForceGroupUpdate_Struct *fgu = (ServerForceGroupUpdate_Struct *) pack->pBuffer;
 		if (zone) {
 			if (fgu->origZoneID == zone->GetZoneID() && fgu->instance_id == zone->GetInstanceID())
 				break;
 
 			entity_list.ForceGroupUpdate(fgu->gid);
+		}
+		break;
+	}
+
+	case ServerOP_ChangeGroupLeader: {
+		ServerGroupLeader_Struct* fgu = (ServerGroupLeader_Struct*)pack->pBuffer;
+		if(zone){
+			if(fgu->zoneid == zone->GetZoneID()) {
+				break;
+			}
+			entity_list.SendGroupLeader(fgu->gid, fgu->leader_name, fgu->oldleader_name);
 		}
 		break;
 	}
