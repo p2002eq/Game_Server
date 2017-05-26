@@ -828,7 +828,7 @@ void WorldServer::HandleMessage(uint16 opcode, const EQ::Net::Packet &p)
 			if (gl->zoneid == zone->GetZoneID() && gl->instance_id == zone->GetInstanceID())
 				break;
 
-			entity_list.SendGroupLeave(gl->gid, gl->member_name);
+			entity_list.SendGroupLeave(gl->gid, gl->member_name, gl->checkleader);
 		}
 		break;
 	}

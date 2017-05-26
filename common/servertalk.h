@@ -695,6 +695,7 @@ struct ServerGroupLeave_Struct {
 	uint16 instance_id;
 	uint32 gid;
 	char member_name[64];	//kick this member from the group
+	bool checkleader;
 };
 
 struct ServerGroupJoin_Struct {
@@ -708,6 +709,8 @@ struct ServerForceGroupUpdate_Struct {
 	uint32 origZoneID;
 	uint16 instance_id;
 	uint32 gid;
+	char leader_name[64];
+	char oldleader_name[64];
 };
 
 struct ServerGroupChannelMessage_Struct {

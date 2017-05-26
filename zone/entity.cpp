@@ -3850,7 +3850,7 @@ void EntityList::ForceGroupUpdate(uint32 gid)
 	}
 }
 
-void EntityList::SendGroupLeave(uint32 gid, const char *name)
+void EntityList::SendGroupLeave(uint32 gid, const char *name, bool checkleader)
 {
 	auto it = client_list.begin();
 	while (it != client_list.end()) {
@@ -3870,9 +3870,10 @@ void EntityList::SendGroupLeave(uint32 gid, const char *name)
 						Leader->CastToClient()->GetGroupAAs(&gj->leader_aas);
 					c->QueuePacket(outapp);
 					safe_delete(outapp);
-					g->DelMemberOOZ(name);
-					if (g->IsLeader(c) && c->IsLFP())
+					g->DelMemberOOZ(name, checkleader);
+					if (g->IsLeader(c) && c->IsLFP()) {
 						c->UpdateLFP();
+					}
 				}
 			}
 		}
