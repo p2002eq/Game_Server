@@ -573,26 +573,6 @@ bool Group::DelMemberOOZ(const char *Name, bool checkleader) {
 		{
 			// This shouldn't be called if the member is in this zone.
 			if(!members[i]) {
-				if(!strncmp(GetLeaderName(), Name, 64))
-				{
-					//TODO: Transfer leadership if leader disbands OOZ.
-					UpdateGroupAAs();
-				}
-
-				if(GroupCount() < 3)
-				{
-					UnDelegateMarkNPC(NPCMarkerName.c_str());
-					if (GetLeader() && GetLeader()->IsClient() && GetLeader()->CastToClient()->ClientVersion() < EQEmu::versions::ClientVersion::SoD) {
-						UnDelegateMainAssist(MainAssistName.c_str());
-					}
-					ClearAllNPCMarks();
-				}
-
-				if (Name == mentoree_name)
-				{
-					ClearGroupMentor();
-				}
-
 				memset(membername[i], 0, 64);
 				MemberRoles[i] = 0;
 				removed = true;
