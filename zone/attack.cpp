@@ -2328,8 +2328,7 @@ bool NPC::Death(Mob* killer_mob, int32 damage, uint16 spell, EQEmu::skills::Skil
 	if (!HasOwner() && !IsMerc() && class_ != MERCHANT && class_ != ADVENTUREMERCHANT && !GetSwarmInfo()
 		&& MerchantType == 0 && ((killer && (killer->IsClient() || (killer->HasOwner() && killer->GetUltimateOwner()->IsClient()) ||
 			(killer->IsNPC() && killer->CastToNPC()->GetSwarmInfo() && killer->CastToNPC()->GetSwarmInfo()->GetOwner() && killer->CastToNPC()->GetSwarmInfo()->GetOwner()->IsClient())))
-			|| (killer_mob && IsLdonTreasure)))
-	{
+			|| (killer_mob && IsLdonTreasure))) {
 		if (killer != 0) {
 			if (killer->GetOwner() != 0 && killer->GetOwner()->IsClient())
 				killer = killer->GetOwner();
@@ -2341,89 +2340,84 @@ bool NPC::Death(Mob* killer_mob, int32 damage, uint16 spell, EQEmu::skills::Skil
 		entity_list.RemoveFromAutoXTargets(this);
 		uint16 emoteid = this->GetEmoteID();
 		auto corpse = new Corpse(this, &itemlist, GetNPCTypeID(), &NPCTypedata,
-			level > 54 ? RuleI(NPC, MajorNPCCorpseDecayTimeMS)
-			: RuleI(NPC, MinorNPCCorpseDecayTimeMS));
+								 level > 54 ? RuleI(NPC, MajorNPCCorpseDecayTimeMS)
+											: RuleI(NPC, MinorNPCCorpseDecayTimeMS));
 		if (corpse) {
-		entity_list.LimitRemoveNPC(this);
-		entity_list.AddCorpse(corpse, GetID());
+			entity_list.LimitRemoveNPC(this);
+			entity_list.AddCorpse(corpse, GetID());
 
-		entity_list.UnMarkNPC(GetID());
-		entity_list.RemoveNPC(GetID());
-		this->SetID(0);
+			entity_list.UnMarkNPC(GetID());
+			entity_list.RemoveNPC(GetID());
+			this->SetID(0);
 
 			if (killer != 0 && emoteid != 0) {
 				corpse->CastToNPC()->DoNPCEmote(AFTERDEATH, emoteid);
 			}
-		if (killer != 0 && killer->IsClient()) {
-			corpse->AllowPlayerLoot(killer, 0);
-			if (killer->IsGrouped()) {
-				Group *group = entity_list.GetGroupByClient(killer->CastToClient());
-				if (group != 0) {
-					for (int i = 0; i < 6; i++) { // Doesnt work right, needs work
-						if (group->members[i] != nullptr) {
-							corpse->AllowPlayerLoot(group->members[i], i);
+			if (killer != 0 && killer->IsClient()) {
+				corpse->AllowPlayerLoot(killer, 0);
+				if (killer->IsGrouped()) {
+					Group *group = entity_list.GetGroupByClient(killer->CastToClient());
+					if (group != 0) {
+						for (int i = 0; i < 6; i++) { // Doesnt work right, needs work
+							if (group->members[i] != nullptr) {
+								corpse->AllowPlayerLoot(group->members[i], i);
+							}
+						}
+					}
+				} else if (killer->IsRaidGrouped()) {
+					Raid *r = entity_list.GetRaidByClient(killer->CastToClient());
+					if (r) {
+						int i = 0;
+						for (int x = 0; x < MAX_RAID_MEMBERS; x++) {
+							switch (r->GetLootType()) {
+								case 0:
+								case 1:
+									if (r->members[x].member && r->members[x].IsRaidLeader) {
+										corpse->AllowPlayerLoot(r->members[x].member, i);
+										i++;
+									}
+									break;
+								case 2:
+									if (r->members[x].member && r->members[x].IsRaidLeader) {
+										corpse->AllowPlayerLoot(r->members[x].member, i);
+										i++;
+									} else if (r->members[x].member && r->members[x].IsGroupLeader) {
+										corpse->AllowPlayerLoot(r->members[x].member, i);
+										i++;
+									}
+									break;
+								case 3:
+									if (r->members[x].member && r->members[x].IsLooter) {
+										corpse->AllowPlayerLoot(r->members[x].member, i);
+										i++;
+									}
+									break;
+								case 4:
+									if (r->members[x].member) {
+										corpse->AllowPlayerLoot(r->members[x].member, i);
+										i++;
+									}
+									break;
+							}
 						}
 					}
 				}
+			} else if (killer_mob && IsLdonTreasure) {
+				auto u_owner = killer_mob->GetUltimateOwner();
+				if (u_owner->IsClient())
+					corpse->AllowPlayerLoot(u_owner, 0);
 			}
-		}
-			else if (killer->IsRaidGrouped()) {
-				Raid* r = entity_list.GetRaidByClient(killer->CastToClient());
-				if (r) {
-					int i = 0;
-					for (int x = 0; x < MAX_RAID_MEMBERS; x++) {
-						switch (r->GetLootType()) {
-						case 0:
-						case 1:
-							if (r->members[x].member && r->members[x].IsRaidLeader) {
-								corpse->AllowPlayerLoot(r->members[x].member, i);
-								i++;
-							}
-							break;
-						case 2:
-							if (r->members[x].member && r->members[x].IsRaidLeader) {
-								corpse->AllowPlayerLoot(r->members[x].member, i);
-								i++;
-							}
-							else if (r->members[x].member && r->members[x].IsGroupLeader) {
-								corpse->AllowPlayerLoot(r->members[x].member, i);
-								i++;
-							}
-							break;
-						case 3:
-							if (r->members[x].member && r->members[x].IsLooter) {
-								corpse->AllowPlayerLoot(r->members[x].member, i);
-								i++;
-							}
-							break;
-						case 4:
-							if (r->members[x].member) {
-								corpse->AllowPlayerLoot(r->members[x].member, i);
-								i++;
-							}
-							break;
-						}
-					}
-				}
-			}
-		}
-		else if (killer_mob && IsLdonTreasure) {
-			auto u_owner = killer_mob->GetUltimateOwner();
-			if (u_owner->IsClient())
-				corpse->AllowPlayerLoot(u_owner, 0);
-		}
 
-		if (zone && zone->adv_data) {
-			ServerZoneAdventureDataReply_Struct *sr = (ServerZoneAdventureDataReply_Struct*)zone->adv_data;
-			if (sr->type == Adventure_Kill) {
-				zone->DoAdventureCountIncrease();
-			}
-			else if (sr->type == Adventure_Assassinate) {
-				if (sr->data_id == GetNPCTypeID()) {
+			if (zone && zone->adv_data) {
+				ServerZoneAdventureDataReply_Struct *sr = (ServerZoneAdventureDataReply_Struct *) zone->adv_data;
+				if (sr->type == Adventure_Kill) {
 					zone->DoAdventureCountIncrease();
-				}
-				else {
-					zone->DoAdventureAssassinationCountIncrease();
+				} else if (sr->type == Adventure_Assassinate) {
+					if (sr->data_id == GetNPCTypeID()) {
+						zone->DoAdventureCountIncrease();
+					} else {
+						zone->DoAdventureAssassinationCountIncrease();
+					}
 				}
 			}
 		}
