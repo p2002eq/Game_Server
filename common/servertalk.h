@@ -80,6 +80,7 @@
 #define ServerOP_GroupJoin			0x003e //for joining ooz folks
 #define ServerOP_UpdateSpawn		0x003f
 #define ServerOP_SpawnStatusChange	0x0040
+#define ServerOP_ChangeGroupLeader	0x0041
 #define ServerOP_ReloadTasks		0x0060
 #define ServerOP_DepopAllPlayersCorpses	0x0061
 #define ServerOP_ReloadTitles		0x0062
@@ -695,6 +696,7 @@ struct ServerGroupLeave_Struct {
 	uint16 instance_id;
 	uint32 gid;
 	char member_name[64];	//kick this member from the group
+	bool checkleader;
 };
 
 struct ServerGroupJoin_Struct {
@@ -704,10 +706,20 @@ struct ServerGroupJoin_Struct {
 	char member_name[64];	//this person is joining the group
 };
 
+struct ServerGroupLeader_Struct {
+	uint32 zoneid;
+	uint16 instance_id;
+	uint32 gid;
+	char leader_name[64];
+	char oldleader_name[64];
+};
+
 struct ServerForceGroupUpdate_Struct {
 	uint32 origZoneID;
 	uint16 instance_id;
 	uint32 gid;
+	char leader_name[64];
+	char oldleader_name[64];
 };
 
 struct ServerGroupChannelMessage_Struct {
