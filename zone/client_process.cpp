@@ -1466,7 +1466,9 @@ void Client::OPMoveCoin(const EQApplicationPacket* app)
 				if (from_bucket == &m_pp.platinum_shared)
 					amount_to_add = 0 - amount_to_take;
 
-				database.SetSharedPlatinum(AccountID(),amount_to_add);
+				database.SetSharedPlatinum(CharacterID(),amount_to_add);
+				this->Message(13, "::: WARNING! ::: SHARED BANK IS DISABLED AND YOUR PLATINUM MAY BE DESTROYED IF YOU PUT IT HERE");
+				this->Message(14, "::: WARNING! ::: SHARED BANK IS DISABLED AND YOUR PLATINUM MAY BE DESTROYED IF YOU PUT IT HERE");
 			}
 		}
 		else{
