@@ -3205,15 +3205,27 @@ bool Client::CheckDoubleAttack()
 // with varying triple attack skill (1-3% error at least)
 bool Client::CheckTripleAttack()
 {
-	int chance = GetSkill(EQEmu::skills::SkillTripleAttack);
+	//int chance = GetSkill(EQEmu::skills::SkillTripleAttack);
+	
+	// In era, Triple Attack was an innate skill.  Don't have exact data, but found one post suggesting when
+	// they implemented Triple Attack as a skill, that 200 may have been the cap for some classes (~20% in this code).
+	// Only Level 60 Warriors and Monks get it, and making their percentage (fixed) separate as a tuning variable.
+	int chance = 0;
+	
+	if (IsClient() && (GetLevel() == 60) && (GetClass() == WARRIOR))
+		chance = RuleI(Combat, TripleAttackChanceWarrior);
+	
+	if (IsClient() && (GetLevel() == 60) && (GetClass() == MONK))
+		chance = RuleI(Combat, TripleAttackChanceMonk);
+	
 	if (chance < 1)
 		return false;
 
 	int inc = aabonuses.TripleAttackChance + spellbonuses.TripleAttackChance + itembonuses.TripleAttackChance;
 	chance = static_cast<int>(chance * (1 + inc / 100.0f));
-	chance = (chance * 100) / (chance + 800);
-
-	return zone->random.Int(1, 100) <= chance;
+	//chance = (chance * 100) / (chance + 800);
+	
+	return zone->random.Int(1, 1000) <= chance;
 }
 
 bool Client::CheckDoubleRangedAttack() {
@@ -5175,7 +5187,7 @@ void Client::DoAttackRounds(Mob *target, int hand, bool IsFromSpell)
 			Attack(target, hand, false, false, IsFromSpell);
 			// you can only triple from the main hand
 			if (hand == EQEmu::inventory::slotPrimary && CanThisClassTripleAttack()) {
-				CheckIncreaseSkill(EQEmu::skills::SkillTripleAttack, target, -10);
+				//CheckIncreaseSkill(EQEmu::skills::SkillTripleAttack, target, -10);
 				if (CheckTripleAttack()) {
 					Attack(target, hand, false, false, IsFromSpell);
 					auto flurrychance = aabonuses.FlurryChance + spellbonuses.FlurryChance +

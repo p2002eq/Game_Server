@@ -515,6 +515,8 @@ RULE_BOOL(Combat, ClassicMasterWu, false) // classic master wu uses a random spe
 RULE_INT(Combat, LevelToStopDamageCaps, 0) // 1 will effectively disable them, 20 should give basically same results as old incorrect system
 RULE_REAL(Combat, HitBoxMod, 1.00) // Added to test hit boxes.
 RULE_INT(Combat, RampageDistance, 100) // Distance a mob can Rampage
+RULE_INT(Combat, TripleAttackChanceWarrior, 125) // Innate Chance for Warrior to Triple Attack after a Double Attack (125 = 12.5%). DEFAULT: 125
+RULE_INT(Combat, TripleAttackChanceMonk, 200) // Innate Chance for Monk to Triple Attack after a Double Attack (200 = 20%). DEFAULT: 200
 RULE_CATEGORY_END()
 
 RULE_CATEGORY(NPC)
