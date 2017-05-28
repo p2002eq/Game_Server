@@ -373,9 +373,9 @@ bool SharedDatabase::DeleteSharedBankSlot(uint32 char_id, int16 slot_id) {
 }
 
 
-int32 SharedDatabase::GetSharedPlatinum(uint32 account_id)
+int32 SharedDatabase::GetSharedPlatinum(uint32 CharacterID)
 {
-	std::string query = StringFormat("SELECT sharedplat FROM account WHERE id = '%i'", account_id);
+	std::string query = StringFormat("SELECT platinum_shared FROM character_currency WHERE id = '%i'", CharacterID);
     auto results = QueryDatabase(query);
     if (!results.Success()) {
 		return false;
@@ -389,8 +389,8 @@ int32 SharedDatabase::GetSharedPlatinum(uint32 account_id)
 	return atoi(row[0]);
 }
 
-bool SharedDatabase::SetSharedPlatinum(uint32 account_id, int32 amount_to_add) {
-	std::string query = StringFormat("UPDATE account SET sharedplat = sharedplat + %i WHERE id = %i", amount_to_add, account_id);
+bool SharedDatabase::SetSharedPlatinum(uint32 CharacterID, int32 amount_to_add) {
+	std::string query = StringFormat("UPDATE character_currency SET platinum_shared = platinum_shared + %i WHERE id = %i", amount_to_add, CharacterID);
 	auto results = QueryDatabase(query);
 	if (!results.Success()) {
 		return false;

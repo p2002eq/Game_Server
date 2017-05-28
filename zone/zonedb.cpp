@@ -1139,9 +1139,10 @@ bool ZoneDatabase::LoadCharacterCurrency(uint32 character_id, PlayerProfile_Stru
 		"radiant_crystals,       "
 		"career_radiant_crystals,"
 		"ebon_crystals,          "
-		"career_ebon_crystals    "
+		"career_ebon_crystals,   "
+		"platinum_shared         "
 		"FROM                    "
-		"character_currency      "
+		"character_currency       "
 		"WHERE `id` = %i         ", character_id);
 	auto results = database.QueryDatabase(query);
 	for (auto row = results.begin(); row != results.end(); ++row) {
@@ -1161,6 +1162,7 @@ bool ZoneDatabase::LoadCharacterCurrency(uint32 character_id, PlayerProfile_Stru
 		pp->careerRadCrystals = atoi(row[13]);
 		pp->currentEbonCrystals = atoi(row[14]);
 		pp->careerEbonCrystals = atoi(row[15]);
+		pp->platinum_shared = atoi(row[16]);
 	}
 	return true;
 }
@@ -1720,12 +1722,13 @@ bool ZoneDatabase::SaveCharacterCurrency(uint32 character_id, PlayerProfile_Stru
 	if (pp->gold_cursor < 0) { pp->gold_cursor = 0; }
 	if (pp->silver_cursor < 0) { pp->silver_cursor = 0; }
 	if (pp->copper_cursor < 0) { pp->copper_cursor = 0; }
+	if (pp->platinum_shared < 0) { pp->platinum_shared = 0; }
 	std::string query = StringFormat(
 		"REPLACE INTO `character_currency` (id, platinum, gold, silver, copper,"
 		"platinum_bank, gold_bank, silver_bank, copper_bank,"
 		"platinum_cursor, gold_cursor, silver_cursor, copper_cursor, "
-		"radiant_crystals, career_radiant_crystals, ebon_crystals, career_ebon_crystals)"
-		"VALUES (%u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %u)",
+		"radiant_crystals, career_radiant_crystals, ebon_crystals, career_ebon_crystals, platinum_shared)"
+		"VALUES (%u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %u)",
 		character_id,
 		pp->platinum,
 		pp->gold,
@@ -1742,7 +1745,8 @@ bool ZoneDatabase::SaveCharacterCurrency(uint32 character_id, PlayerProfile_Stru
 		pp->currentRadCrystals,
 		pp->careerRadCrystals,
 		pp->currentEbonCrystals,
-		pp->careerEbonCrystals);
+		pp->careerEbonCrystals,
+		pp->platinum_shared);
 	auto results = database.QueryDatabase(query);
 	Log(Logs::General, Logs::None, "Saving Currency for character ID: %i, done", character_id);
 	return true;

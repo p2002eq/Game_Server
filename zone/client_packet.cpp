@@ -1318,7 +1318,7 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 	}
 
 	if (RuleB(Character, SharedBankPlat))
-		m_pp.platinum_shared = database.GetSharedPlatinum(this->AccountID());
+		m_pp.platinum_shared = database.GetSharedPlatinum(this->CharacterID());
 
 	database.ClearOldRecastTimestamps(cid); /* Clear out our old recast timestamps to keep the DB clean */
 	loaditems = database.GetInventory(cid, &m_inv); /* Load Character Inventory */
