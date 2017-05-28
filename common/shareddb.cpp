@@ -390,7 +390,7 @@ int32 SharedDatabase::GetSharedPlatinum(uint32 CharacterID)
 }
 
 bool SharedDatabase::SetSharedPlatinum(uint32 CharacterID, int32 amount_to_add) {
-	std::string query = StringFormat("UPDATE account SET platinum_shared = platinum_shared + %i WHERE id = %i", amount_to_add, CharacterID);
+	std::string query = StringFormat("UPDATE character_currency SET platinum_shared = platinum_shared + %i WHERE id = %i", amount_to_add, CharacterID);
 	auto results = QueryDatabase(query);
 	if (!results.Success()) {
 		return false;
