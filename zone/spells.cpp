@@ -3789,6 +3789,11 @@ bool Mob::SpellOnTarget(uint16 spell_id, Mob *spelltar, bool reflect, bool use_r
 	// check immunities
 	if(spelltar->IsImmuneToSpell(spell_id, this))
 	{
+        // If we tried with Dire Charm, we need to reset the timer.
+        if (IsClient() && casting_spell_aa_id == aaDireCharm) {
+            StopCasting();
+        }
+
 		//the above call does the message to the client if needed
 		Log(Logs::Detail, Logs::Spells, "Spell %d can't take hold due to immunity %s -> %s", spell_id, GetName(), spelltar->GetName());
 		safe_delete(action_packet);
