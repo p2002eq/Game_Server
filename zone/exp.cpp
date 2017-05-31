@@ -143,6 +143,21 @@ void Client::AddEXP(uint32 in_add_exp, uint8 conlevel, bool resexp) {
 	}
 
 	//Message(CC_Yellow, "AddExp: XP awarded: %i (%i) Required XP is: %i Cap: %0.2f Race: %i Class: %i Zoneid: %i", add_exp, GetEXP() + add_exp, requiredxp, xp_cap, GetBaseRace(), GetClass(), zone->GetZoneID());
+	
+	// Check for Unused AA Cap.  If at or above cap, set AAs to cap, set aaexp to 0 and set aa percentage to 0.
+	// Doing this here means potentially one kill wasted worth of experience, but easiest to put it here than to rewrite this function.
+	if (m_pp.aapoints >= RuleI(Character, UnusedAAPointCap)) {
+		if (aaexp > 0) {
+			Message(15, "You have reached the Unused AA Point Cap (%d).  Please spend some AA Points before continuing.  Setting AA percentage to 0.", RuleI(Character, UnusedAAPointCap));
+			aaexp = 0;
+			m_epp.perAA = 0;
+		}
+		if (m_pp.aapoints > RuleI(Character, UnusedAAPointCap)) {
+			Message(15, "You have exceeded the Unused AA Point Cap (%d).  Unused AA Points reduced to %d.", RuleI(Character, UnusedAAPointCap), RuleI(Character, UnusedAAPointCap));
+			m_pp.aapoints = RuleI(Character, UnusedAAPointCap);
+		}
+	}	
+	
 	SetEXP(exp, aaexp, resexp);
 }
 
@@ -188,6 +203,20 @@ void Client::AddQuestEXP(uint32 in_add_exp) {
 		aaexp = had_aaexp;    //watch for wrap
 	}
 
+	// Check for Unused AA Cap.  If at or above cap, set AAs to cap, set aaexp to 0 and set aa percentage to 0.
+	// Doing this here means potentially one kill wasted worth of experience, but easiest to put it here than to rewrite this function.
+	if (m_pp.aapoints >= RuleI(Character, UnusedAAPointCap)) {
+		if (aaexp > 0) {
+			Message(15, "You have reached the Unused AA Point Cap (%d).  Please spend some AA Points before continuing.  Setting AA percentage to 0.", RuleI(Character, UnusedAAPointCap));
+			aaexp = 0;
+			m_epp.perAA = 0;
+		}
+		if (m_pp.aapoints > RuleI(Character, UnusedAAPointCap)) {
+			Message(15, "You have exceeded the Unused AA Point Cap (%d).  Unused AA Points reduced to %d.", RuleI(Character, UnusedAAPointCap), RuleI(Character, UnusedAAPointCap));
+			m_pp.aapoints = RuleI(Character, UnusedAAPointCap);
+		}
+	}
+	
 	SetEXP(exp, aaexp, false);
 }
 
