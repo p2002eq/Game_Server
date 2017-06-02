@@ -213,13 +213,13 @@ bool Client::SummonItem(uint32 item_id, int16 charges, uint32 aug1, uint32 aug2,
 		return false;
 	}
 	// check to make sure we are augmenting an augmentable item
-	else if (((!item->IsClassCommon()) || (item->AugType > 0)) && (aug1 | aug2 | aug3 | aug4 | aug5 | aug6)) {
-		Message(13, "You can not augment an augment or a non-common class item.");
-		Log(Logs::Detail, Logs::Inventory, "Player %s on account %s attempted to augment an augment or a non-common class item.\n(Item: %u, Aug1: %u, Aug2: %u, Aug3: %u, Aug4: %u, Aug5: %u, Aug5: %u)\n",
-			GetName(), account_name, item->ID, aug1, aug2, aug3, aug4, aug5, aug6);
+	//else if (((!item->IsClassCommon()) || (item->AugType > 0)) && (aug1 | aug2 | aug3 | aug4 | aug5 | aug6)) {
+	//	Message(13, "You can not augment an augment or a non-common class item.");
+	//	Log(Logs::Detail, Logs::Inventory, "Player %s on account %s attempted to augment an augment or a non-common class item.\n(Item: %u, Aug1: %u, Aug2: %u, Aug3: %u, Aug4: %u, Aug5: %u, Aug5: %u)\n",
+	//		GetName(), account_name, item->ID, aug1, aug2, aug3, aug4, aug5, aug6);
 
-		return false;
-	}
+	//	return false;
+	//}
 
 	// This code is ready to implement once the item load code is changed to process the 'minstatus' field.
 	// Checking #iteminfo in-game verfies that item->MinStatus is set to '0' regardless of field value.
