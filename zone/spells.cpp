@@ -3790,7 +3790,7 @@ bool Mob::SpellOnTarget(uint16 spell_id, Mob *spelltar, bool reflect, bool use_r
 	if(spelltar->IsImmuneToSpell(spell_id, this))
 	{
         // If we tried with Dire Charm, we need to reset the timer.
-        if (IsClient() && casting_spell_aa_id == aaDireCharm) {
+        if (IsClient() && (casting_spell_aa_id == aaDireCharm || casting_spell_aa_id == aaDireCharm2 || casting_spell_aa_id == aaDireCharm3)) {
             StopCasting();
         }
 
