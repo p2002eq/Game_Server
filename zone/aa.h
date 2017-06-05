@@ -324,7 +324,8 @@ typedef enum {	//AA IDs
 	aaUnholyTouch							=646,//untested
 	aaTotalDomination						=649,// Implemented
 	aaStalwartEndurance						=652,//implemented as bonus
-	aaQuickSummoning2						=655,//*not implemented - Liva AA that replaces prior version in later exp.
+	aaDireCharm2							=655,// Dire Charm for Druid
+	aaDireCharm3							=656,// Dire Charm for Necromancer
 	aaMentalClarity2						=658,//whats the difference?
 	aaInnateRegeneration2					=661,//whats the difference?
 	aaManaBurn2								=664,//whats the difference?
@@ -418,8 +419,7 @@ typedef enum {	//AA IDs
 	aaFuryoftheAges4						=949,//implemented as bonus
 	aaPlanarDurability2						=952,//whats the difference?
 	aaInnateEnlightenment2					=955,//whats the difference?
-	aaDireCharm2							=960,//whats the difference?
-	aaDireCharm3							=961,//whats the difference?
+	aaQuickSummoning2						=960,//whats the difference?
 	aaTouchoftheDivine2						=962,//whats the difference?
 	aaTouchofDecay							=967,
 	aaCalloftheAncients2					=970,//whats the difference?
