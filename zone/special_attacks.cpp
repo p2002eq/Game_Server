@@ -183,6 +183,40 @@ void Mob::DoSpecialAttackDamage(Mob *who, EQEmu::skills::SkillType skill, int32 
 	my_hit.offense = offense(my_hit.skill);
 	my_hit.tohit = GetTotalToHit(my_hit.skill, 0);
 
+	// Rogue Backstab Haste Correction
+	// Haste should only provide a max of a 2 s reduction to Backstab cooldown, but it seems that while BackstabReuseTimer can be reduced, there is another timer (repop on the button)
+	// that is controlling the actual cooldown.  I'm not sure how this is implemented, but it is impacted by spell haste (including bard v2 and v3), but not worn haste.
+	// This code applies an adjustment to backstab accuracy to compensate for this so that Rogue DPS doesn't significantly outclass other classes.
+	//Log(Logs::Detail, Logs::Attack, "RogueBackstabHasteCorrect: %d, skills: %d, GetHaste: %d", RuleB(Combat, RogueBackstabHasteCorrection), skill, GetHaste());
+	if (RuleB(Combat, RogueBackstabHasteCorrection) && (skill == EQEmu::skills::SkillBackstab) && (GetHaste() > 100)) {
+		int haste_spell = spellbonuses.haste - spellbonuses.inhibitmelee + spellbonuses.hastetype2 + spellbonuses.hastetype3;
+		int haste_worn = itembonuses.haste;
+		
+		// Compute Intended Cooldown.  100% Spell = 1 s reduction (max), 40% Worn = 1 s reduction (max).
+		int reduction_intended_spell = haste_spell > 100 ? 100 : haste_spell;
+		int reduction_intended_worn = 2.5 * (haste_worn > 40 ? 40 : haste_worn);
+		int16 intended_cooldown = 1000 - reduction_intended_spell - reduction_intended_worn;
+		
+		// Compute Actual Cooldown.  Actual only impacted by spell haste ( + v2 + v3), and is 10 s / (100 + haste)
+		auto actual_cooldown = 100000 / ( 100 + haste_spell );
+		
+		// Compute Accuracy Adjustment
+		auto backstab_accuracy_adjust = actual_cooldown * 1000 / intended_cooldown;
+		//auto orig_accuracy = my_hit.tohit;
+		auto adjusted_accuracy = my_hit.tohit * backstab_accuracy_adjust / 1000;
+		my_hit.tohit = adjusted_accuracy;
+		//Log(Logs::Detail, Logs::Attack, "haste_spell: %d, haste_worn: %d", haste_spell, haste_worn);
+		//Log(Logs::Detail, Logs::Attack, "reduction_intended_spell: %d, reduction_intended_worn: %d", reduction_intended_spell, reduction_intended_worn);
+		//Log(Logs::Detail, Logs::Attack, "intended_cooldown: %d, actual_cooldown: %d, backstab_accuracy_adjust: %d", intended_cooldown, actual_cooldown, backstab_accuracy_adjust);
+		//Log(Logs::Detail, Logs::Attack, "original accuracy: %d, adjusted accuracy: %d, my_hit.tohit: %d", orig_accuracy, adjusted_accuracy, my_hit.tohit);
+	}
+		
+		
+		
+			
+	
+	
+	
 	my_hit.hand = EQEmu::inventory::slotPrimary; // Avoid checks hand for throwing/archery exclusion, primary should
 						  // work for most
 	if (skill == EQEmu::skills::SkillThrowing || skill == EQEmu::skills::SkillArchery)
