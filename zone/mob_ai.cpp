@@ -127,7 +127,7 @@ bool NPC::AICastSpell(Mob* tar, uint8 iChance, uint32 iSpellTypes) {
 							&& rootee->DontRootMeBefore() < Timer::GetCurrentTime()
 							&& rootee->CanBuffStack(AIspells[i].spellid, GetLevel(), true) >= 0
 							) {
-							if(!checked_los) {
+							if(spells[AIspells[i].spellid].targettype != ST_AECaster && !checked_los) {
 								if(!CheckLosFN(rootee))
 									return(false);	//cannot see target... we assume that no spell is going to work since we will only be casting detrimental spells in this call
 								checked_los = true;
@@ -148,7 +148,7 @@ bool NPC::AICastSpell(Mob* tar, uint8 iChance, uint32 iSpellTypes) {
 							&& !(tar->IsPet() && tar->GetOwner()->IsClient() && this != tar)	//no buffing PC's pets, but they can buff themself
 							)
 						{
-							if(!checked_los) {
+							if(spells[AIspells[i].spellid].targettype != ST_AECaster && !checked_los) {
 								if(!CheckLosFN(tar))
 									return(false);
 								checked_los = true;
@@ -183,7 +183,7 @@ bool NPC::AICastSpell(Mob* tar, uint8 iChance, uint32 iSpellTypes) {
 						Mob * debuffee = GetHateRandom();
 						if (debuffee && manaR >= 10 && zone->random.Roll(70) &&
 								debuffee->CanBuffStack(AIspells[i].spellid, GetLevel(), true) >= 0) {
-							if (!checked_los) {
+							if (spells[AIspells[i].spellid].targettype != ST_AECaster && !checked_los) {
 								if (!CheckLosFN(debuffee))
 									return false;
 								checked_los = true;
@@ -198,7 +198,7 @@ bool NPC::AICastSpell(Mob* tar, uint8 iChance, uint32 iSpellTypes) {
 							manaR >= 10 && zone->random.Roll(70)
 							&& tar->CanBuffStack(AIspells[i].spellid, GetLevel(), true) >= 0
 							) {
-							if(!checked_los) {
+							if(spells[AIspells[i].spellid].targettype != ST_AECaster && !checked_los) {
 								if(!CheckLosFN(tar))
 									return(false);	//cannot see target... we assume that no spell is going to work since we will only be casting detrimental spells in this call
 								checked_los = true;
@@ -211,7 +211,7 @@ bool NPC::AICastSpell(Mob* tar, uint8 iChance, uint32 iSpellTypes) {
 					case SpellType_Dispel: {
 						if(zone->random.Roll(15))
 						{
-							if(!checked_los) {
+							if(spells[AIspells[i].spellid].targettype != ST_AECaster && !checked_los) {
 								if(!CheckLosFN(tar))
 									return(false);	//cannot see target... we assume that no spell is going to work since we will only be casting detrimental spells in this call
 								checked_los = true;
@@ -266,7 +266,7 @@ bool NPC::AICastSpell(Mob* tar, uint8 iChance, uint32 iSpellTypes) {
 							&& zone->random.Roll(50)
 							&& tar->CanBuffStack(AIspells[i].spellid, GetLevel(), true) >= 0
 							) {
-							if(!checked_los) {
+							if(spells[AIspells[i].spellid].targettype != ST_AECaster && !checked_los) {
 								if(!CheckLosFN(tar))
 									return(false);	//cannot see target... we assume that no spell is going to work since we will only be casting detrimental spells in this call
 								checked_los = true;
@@ -283,7 +283,7 @@ bool NPC::AICastSpell(Mob* tar, uint8 iChance, uint32 iSpellTypes) {
 							&& tar->DontSnareMeBefore() < Timer::GetCurrentTime()
 							&& tar->CanBuffStack(AIspells[i].spellid, GetLevel(), true) >= 0
 							) {
-							if(!checked_los) {
+							if(spells[AIspells[i].spellid].targettype != ST_AECaster && !checked_los) {
 								if(!CheckLosFN(tar))
 									return(false);	//cannot see target... we assume that no spell is going to work since we will only be casting detrimental spells in this call
 								checked_los = true;
@@ -301,7 +301,7 @@ bool NPC::AICastSpell(Mob* tar, uint8 iChance, uint32 iSpellTypes) {
 							&& tar->DontDotMeBefore() < Timer::GetCurrentTime()
 							&& tar->CanBuffStack(AIspells[i].spellid, GetLevel(), true) >= 0
 							) {
-							if(!checked_los) {
+							if(spells[AIspells[i].spellid].targettype != ST_AECaster && !checked_los) {
 								if(!CheckLosFN(tar))
 									return(false);	//cannot see target... we assume that no spell is going to work since we will only be casting detrimental spells in this call
 								checked_los = true;
