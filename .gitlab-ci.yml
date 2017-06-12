@@ -8,8 +8,4 @@ build1:
  script:
    - cmake -G "Unix Makefiles" -DEQEMU_BUILD_TESTS=ON -DEQEMU_BUILD_LOGIN=ON
    - make -j2
-   
-test1:
- stage: test
- script: 
    - ./bin/tests
