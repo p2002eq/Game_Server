@@ -4051,6 +4051,13 @@ void Client::Handle_OP_CastSpell(const EQApplicationPacket *app)
 	Log(Logs::General, Logs::Spells, "OP CastSpell: slot=%d, spell=%d, target=%d, inv=%lx", castspell->slot, castspell->spell_id, castspell->target_id, (unsigned long)castspell->inventoryslot);
 	CastingSlot slot = static_cast<CastingSlot>(castspell->slot);
 
+	// casting from slot 9, we disable cause not classic.
+	if(castspell->slot == 8) {
+		InterruptSpell(castspell->spell_id); 
+		Message(13, "Spell slot 9 is disabled.");
+		return;
+	}
+	
 	/* Memorized Spell */
 	if (m_pp.mem_spells[castspell->slot] && m_pp.mem_spells[castspell->slot] == castspell->spell_id) {
 		uint16 spell_to_cast = 0;
