@@ -2502,7 +2502,7 @@ void Mob::AddToHateList(Mob* other, uint32 hate /*= 0*/, int32 damage /*= 0*/, b
 		}
 		else {
 			hate += RuleI(Aggro, InitialAggroBonus); // Bonus Initial Aggro
-			Log(Logs::Detail, Logs::Combat, "InitialAggroBonus: %d", RuleI(Aggro, InitialAggroBonus));
+			//Log(Logs::Detail, Logs::Combat, "InitialAggroBonus: %d", RuleI(Aggro, InitialAggroBonus));
 			
 		}
 	}
@@ -3795,7 +3795,7 @@ void Mob::TryDefensiveProc(Mob *on, uint16 hand) {
 		float ProcChance, ProcBonus;
 		on->GetDefensiveProcChances(ProcBonus, ProcChance, hand, this);
 
-		if (hand != EQEmu::inventory::slotPrimary)
+		if (hand == EQEmu::inventory::slotSecondary)
 			ProcChance /= 2;
 
 		int level_penalty = 0;
@@ -3868,7 +3868,7 @@ void Mob::TryWeaponProc(const EQEmu::ItemInstance *inst, const EQEmu::ItemData *
 	ProcBonus += static_cast<float>(itembonuses.ProcChance) / 10.0f; // Combat Effects
 	float ProcChance = GetProcChances(ProcBonus, hand);
 
-	if (hand != EQEmu::inventory::slotPrimary) //Is Archery intened to proc at 50% rate?
+	if (hand == EQEmu::inventory::slotSecondary)
 		ProcChance /= 2;
 
 	// Try innate proc on weapon
@@ -3950,7 +3950,7 @@ void Mob::TrySpellProc(const EQEmu::ItemInstance *inst, const EQEmu::ItemData *w
 	float ProcChance = 0.0f;
 	ProcChance = GetProcChances(ProcBonus, hand);
 
-	if (hand != EQEmu::inventory::slotPrimary) //Is Archery intened to proc at 50% rate?
+	if (hand == EQEmu::inventory::slotSecondary)
 		ProcChance /= 2;
 
 	bool rangedattk = false;
@@ -4757,7 +4757,7 @@ float Mob::GetSkillProcChances(uint16 ReuseTime, uint16 hand) {
 	if (!ReuseTime && hand) {
 		weapon_speed = GetWeaponSpeedbyHand(hand);
 		ProcChance = static_cast<float>(weapon_speed) * (RuleR(Combat, AvgProcsPerMinute) / 60000.0f);
-		if (hand != EQEmu::inventory::slotPrimary)
+		if (hand == EQEmu::inventory::slotSecondary)
 			ProcChance /= 2;
 	}
 
@@ -4899,7 +4899,7 @@ void Mob::CommonOutgoingHitSuccess(Mob* defender, DamageHitInfo &hit, ExtraAttac
 			}
 		}
 		//Scale Factor for Archery Damage Tuning
-		Log(Logs::Detail, Logs::Attack, "ArcheryBaseDamageBonus %f", RuleR(Combat, ArcheryBaseDamageBonus));
+		//Log(Logs::Detail, Logs::Attack, "ArcheryBaseDamageBonus %f", RuleR(Combat, ArcheryBaseDamageBonus));
 		hit.damage_done *= RuleR(Combat, ArcheryBaseDamageBonus);
 	}
 

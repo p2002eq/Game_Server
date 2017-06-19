@@ -448,7 +448,7 @@ RULE_REAL(Combat, MinChancetoHit, 5.0) //Minimum % chance to hit with regular me
 RULE_REAL(Combat, MaxChancetoHit, 95.0) //Maximum % chance to hit with regular melee/ranged
 RULE_INT(Combat, MinRangedAttackDist, 25) //Minimum Distance to use Ranged Attacks
 RULE_BOOL(Combat, ArcheryBonusRequiresStationary, true) //does the 2x archery bonus chance require a stationary npc
-RULE_REAL(Combat, ArcheryBaseDamageBonus, 0.75) // % Modifier to Base Archery Damage (.5 = 50% base damage, 1 = 100%, 2 = 200%)
+RULE_REAL(Combat, ArcheryBaseDamageBonus, 0.85) // % Modifier to Base Archery Damage (.5 = 50% base damage, 1 = 100%, 2 = 200%)
 RULE_REAL(Combat, ArcheryNPCMultiplier, 1.0) // this is multiplied by the regular dmg to get the archery dmg
 RULE_BOOL(Combat, AssistNoTargetSelf, true) //when assisting a target that does not have a target: true = target self, false = leave target as was before assist (false = live like)
 RULE_INT(Combat, MaxRampageTargets, 3) //max number of people hit with rampage
@@ -516,9 +516,9 @@ RULE_BOOL(Combat, ClassicMasterWu, false) // classic master wu uses a random spe
 RULE_INT(Combat, LevelToStopDamageCaps, 0) // 1 will effectively disable them, 20 should give basically same results as old incorrect system
 RULE_REAL(Combat, HitBoxMod, 1.00) // Added to test hit boxes.
 RULE_INT(Combat, RampageDistance, 100) // Distance a mob can Rampage
-RULE_INT(Combat, TripleAttackChanceWarrior, 125) // Innate Chance for Warrior to Triple Attack after a Double Attack (125 = 12.5%). DEFAULT: 125
-RULE_INT(Combat, TripleAttackChanceMonk, 200) // Innate Chance for Monk to Triple Attack after a Double Attack (200 = 20%). DEFAULT: 200
-RULE_BOOL(Combat, RogueBackstabHasteCorrection, true) // Toggle to enable correction for Haste impacting Backstab DPS too much.  DEFAULT: true
+RULE_INT(Combat, TripleAttackChanceWarrior, 100) // Innate Chance for Warrior to Triple Attack after a Double Attack (100 = 10%). DEFAULT: 100
+RULE_INT(Combat, TripleAttackChanceMonk, 100) // Innate Chance for Monk to Triple Attack after a Double Attack (100 = 10%). DEFAULT: 100
+RULE_BOOL(Combat, RogueBackstabHasteCorrection, false) // Toggle to enable correction for Haste impacting Backstab DPS too much.  DEFAULT: false
 RULE_CATEGORY_END()
 
 RULE_CATEGORY(NPC)
