@@ -43,161 +43,161 @@ EQPacket::EQPacket(EmuOpcode op, const unsigned char *buf, uint32 len)
 }
 
 void EQPacket::build_raw_header_dump(char *buffer, uint16 seq) const {
-	BasePacket::build_raw_header_dump(buffer, seq);
-	buffer += strlen(buffer);
+	//BasePacket::build_raw_header_dump(buffer, seq);
+	//buffer += strlen(buffer);
 
-	buffer += sprintf(buffer, "[EmuOpCode 0x%04x Size=%u]\n", emu_opcode, size);
+	//buffer += sprintf(buffer, "[EmuOpCode 0x%04x Size=%u]\n", emu_opcode, size);
 }
 
 void EQPacket::DumpRawHeader(uint16 seq, FILE *to) const
 {
-	char buff[196];
-	build_raw_header_dump(buff, seq);
-	fprintf(to, "%s", buff);
+	//char buff[196];
+	//build_raw_header_dump(buff, seq);
+	//fprintf(to, "%s", buff);
 }
 
 void EQPacket::build_header_dump(char *buffer) const {
-	sprintf(buffer, "[EmuOpCode 0x%04x Size=%u]", emu_opcode, size);
+	//sprintf(buffer, "[EmuOpCode 0x%04x Size=%u]", emu_opcode, size);
 }
 
 void EQPacket::DumpRawHeaderNoTime(uint16 seq, FILE *to) const
 {
-	if (src_ip) {
-		std::string sIP,dIP;;
-		sIP=long2ip(src_ip);
-		dIP=long2ip(dst_ip);
-		fprintf(to, "[%s:%d->%s:%d] ",sIP.c_str(),src_port,dIP.c_str(),dst_port);
-	}
-	if (seq != 0xffff)
-		fprintf(to, "[Seq=%u] ",seq);
+	//if (src_ip) {
+	//std::string sIP,dIP;;
+	//sIP=long2ip(src_ip);
+	//dIP=long2ip(dst_ip);
+	//fprintf(to, "[%s:%d->%s:%d] ",sIP.c_str(),src_port,dIP.c_str(),dst_port);
+	//}
+	//if (seq != 0xffff)
+	//fprintf(to, "[Seq=%u] ",seq);
 
-	fprintf(to, "[EmuOpCode 0x%04x Size=%lu]\n",emu_opcode,(unsigned long)size);
+	//fprintf(to, "[EmuOpCode 0x%04x Size=%lu]\n",emu_opcode,(unsigned long)size);
 }
 
 void EQProtocolPacket::build_raw_header_dump(char *buffer, uint16 seq) const
 {
-	BasePacket::build_raw_header_dump(buffer, seq);
-	buffer += strlen(buffer);
+	//BasePacket::build_raw_header_dump(buffer, seq);
+	//buffer += strlen(buffer);
 
-	buffer += sprintf(buffer, "[ProtoOpCode 0x%04x Size=%u]\n",opcode,size);
+	//buffer += sprintf(buffer, "[ProtoOpCode 0x%04x Size=%u]\n",opcode,size);
 }
 
 void EQProtocolPacket::DumpRawHeader(uint16 seq, FILE *to) const
 {
-	char buff[196];
-	build_raw_header_dump(buff, seq);
-	fprintf(to, "%s", buff);
+	//char buff[196];
+	//build_raw_header_dump(buff, seq);
+	//fprintf(to, "%s", buff);
 }
 
 void EQProtocolPacket::build_header_dump(char *buffer) const
 {
-	sprintf(buffer, "[ProtoOpCode 0x%04x Size=%u]",opcode,size);
+	//sprintf(buffer, "[ProtoOpCode 0x%04x Size=%u]",opcode,size);
 }
 
 void EQProtocolPacket::DumpRawHeaderNoTime(uint16 seq, FILE *to) const
 {
-	if (src_ip) {
-		std::string sIP,dIP;;
-		sIP=long2ip(src_ip);
-		dIP=long2ip(dst_ip);
-		fprintf(to, "[%s:%d->%s:%d] ",sIP.c_str(),src_port,dIP.c_str(),dst_port);
-	}
-	if (seq != 0xffff)
-		fprintf(to, "[Seq=%u] ",seq);
+	//if (src_ip) {
+	//std::string sIP,dIP;;
+	//sIP=long2ip(src_ip);
+	//dIP=long2ip(dst_ip);
+	//fprintf(to, "[%s:%d->%s:%d] ",sIP.c_str(),src_port,dIP.c_str(),dst_port);
+	//}
+	//if (seq != 0xffff)
+	//fprintf(to, "[Seq=%u] ",seq);
 
-	fprintf(to, "[ProtoOpCode 0x%04x Size=%lu]\n",opcode,(unsigned long)size);
+	//fprintf(to, "[ProtoOpCode 0x%04x Size=%lu]\n",opcode,(unsigned long)size);
 }
 
 void EQApplicationPacket::build_raw_header_dump(char *buffer, uint16 seq) const
 {
-	BasePacket::build_raw_header_dump(buffer, seq);
-	buffer += strlen(buffer);
+	//BasePacket::build_raw_header_dump(buffer, seq);
+	//buffer += strlen(buffer);
 
-#ifdef STATIC_OPCODE
-	buffer += sprintf(buffer, "[OpCode 0x%04x Size=%u]\n", emu_opcode,size);
-#else
-	buffer += sprintf(buffer, "[OpCode %s Size=%u]\n",OpcodeManager::EmuToName(emu_opcode),size);
-#endif
+//#ifdef STATIC_OPCODE
+	//buffer += sprintf(buffer, "[OpCode 0x%04x Size=%u]\n", emu_opcode,size);
+//#else
+	//buffer += sprintf(buffer, "[OpCode %s Size=%u]\n",OpcodeManager::EmuToName(emu_opcode),size);
+//#endif
 }
 
 void EQApplicationPacket::DumpRawHeader(uint16 seq, FILE *to) const
 {
-	char buff[196];
-	build_raw_header_dump(buff, seq);
-	fprintf(to, "%s", buff);
+	//char buff[196];
+	//build_raw_header_dump(buff, seq);
+	//fprintf(to, "%s", buff);
 }
 
 void EQApplicationPacket::build_header_dump(char *buffer) const
 {
-#ifdef STATIC_OPCODE
-	sprintf(buffer, "[OpCode 0x%04x Size=%u]\n", emu_opcode,size);
-#else
-	sprintf(buffer, "[OpCode %s(0x%04x) Size=%u]",OpcodeManager::EmuToName(emu_opcode), GetProtocolOpcode(), size);
-#endif
+//#ifdef STATIC_OPCODE
+	//sprintf(buffer, "[OpCode 0x%04x Size=%u]\n", emu_opcode,size);
+//#else
+	//sprintf(buffer, "[OpCode %s(0x%04x) Size=%u]",OpcodeManager::EmuToName(emu_opcode), GetProtocolOpcode(), size);
+//#endif
 }
 
 void EQApplicationPacket::DumpRawHeaderNoTime(uint16 seq, FILE *to) const
 {
-	if (src_ip) {
-		std::string sIP,dIP;;
-		sIP=long2ip(src_ip);
-		dIP=long2ip(dst_ip);
-		fprintf(to, "[%s:%d->%s:%d] ",sIP.c_str(),src_port,dIP.c_str(),dst_port);
-	}
-	if (seq != 0xffff)
-		fprintf(to, "[Seq=%u] ",seq);
+	//if (src_ip) {
+	//std::string sIP,dIP;;
+	//sIP=long2ip(src_ip);
+	//dIP=long2ip(dst_ip);
+	//fprintf(to, "[%s:%d->%s:%d] ",sIP.c_str(),src_port,dIP.c_str(),dst_port);
+	//}
+	//if (seq != 0xffff)
+	//fprintf(to, "[Seq=%u] ",seq);
 
-#ifdef STATIC_OPCODE
-	fprintf(to, "[OpCode 0x%04x Size=%u]\n", emu_opcode,size);
-#else
-	fprintf(to, "[OpCode %s Size=%lu]\n",OpcodeManager::EmuToName(emu_opcode),(unsigned long)size);
-#endif
+//#ifdef STATIC_OPCODE
+	//fprintf(to, "[OpCode 0x%04x Size=%u]\n", emu_opcode,size);
+//#else
+	//fprintf(to, "[OpCode %s Size=%lu]\n",OpcodeManager::EmuToName(emu_opcode),(unsigned long)size);
+//#endif
 }
 
 void EQRawApplicationPacket::build_raw_header_dump(char *buffer, uint16 seq) const
 {
-	BasePacket::build_raw_header_dump(buffer, seq);
-	buffer += strlen(buffer);
+	//BasePacket::build_raw_header_dump(buffer, seq);
+	//buffer += strlen(buffer);
 
-#ifdef STATIC_OPCODE
-	buffer += sprintf(buffer, "[OpCode 0x%04x (0x%04x) Size=%u]\n", emu_opcode, opcode,size);
-#else
-	buffer += sprintf(buffer, "[OpCode %s (0x%04x) Size=%u]\n", OpcodeManager::EmuToName(emu_opcode), opcode,size);
-#endif
+//#ifdef STATIC_OPCODE
+	//buffer += sprintf(buffer, "[OpCode 0x%04x (0x%04x) Size=%u]\n", emu_opcode, opcode,size);
+//#else
+	//buffer += sprintf(buffer, "[OpCode %s (0x%04x) Size=%u]\n", OpcodeManager::EmuToName(emu_opcode), opcode,size);
+//#endif
 }
 
 void EQRawApplicationPacket::DumpRawHeader(uint16 seq, FILE *to) const
 {
-	char buff[196];
-	build_raw_header_dump(buff, seq);
-	fprintf(to, "%s", buff);
+	//char buff[196];
+	//build_raw_header_dump(buff, seq);
+	//fprintf(to, "%s", buff);
 }
 
 void EQRawApplicationPacket::build_header_dump(char *buffer) const
 {
-#ifdef STATIC_OPCODE
-	sprintf(buffer, "[OpCode 0x%04x (0x%04x) Size=%u]\n", emu_opcode, opcode,size);
-#else
-	sprintf(buffer, "[OpCode %s (0x%04x) Size=%u]", OpcodeManager::EmuToName(emu_opcode), opcode,size);
-#endif
+//#ifdef STATIC_OPCODE
+	//sprintf(buffer, "[OpCode 0x%04x (0x%04x) Size=%u]\n", emu_opcode, opcode,size);
+//#else
+	//sprintf(buffer, "[OpCode %s (0x%04x) Size=%u]", OpcodeManager::EmuToName(emu_opcode), opcode,size);
+//#endif
 }
 
 void EQRawApplicationPacket::DumpRawHeaderNoTime(uint16 seq, FILE *to) const
 {
-	if (src_ip) {
-		std::string sIP,dIP;;
-		sIP=long2ip(src_ip);
-		dIP=long2ip(dst_ip);
-		fprintf(to, "[%s:%d->%s:%d] ",sIP.c_str(),src_port,dIP.c_str(),dst_port);
-	}
-	if (seq != 0xffff)
-		fprintf(to, "[Seq=%u] ",seq);
+	//if (src_ip) {
+	//std::string sIP,dIP;;
+	//sIP=long2ip(src_ip);
+	//dIP=long2ip(dst_ip);
+	//fprintf(to, "[%s:%d->%s:%d] ",sIP.c_str(),src_port,dIP.c_str(),dst_port);
+	//}
+	//if (seq != 0xffff)
+	//fprintf(to, "[Seq=%u] ",seq);
 
-#ifdef STATIC_OPCODE
-	fprintf(to, "[OpCode 0x%04x (0x%04x) Size=%u]\n", emu_opcode, opcode,size);
-#else
-	fprintf(to, "[OpCode %s (0x%04x) Size=%lu]\n", OpcodeManager::EmuToName(emu_opcode), opcode,(unsigned long)size);
-#endif
+//#ifdef STATIC_OPCODE
+	//fprintf(to, "[OpCode 0x%04x (0x%04x) Size=%u]\n", emu_opcode, opcode,size);
+//#else
+	//fprintf(to, "[OpCode %s (0x%04x) Size=%lu]\n", OpcodeManager::EmuToName(emu_opcode), opcode,(unsigned long)size);
+//#endif
 }
 
 uint32 EQProtocolPacket::serialize(unsigned char *dest) const

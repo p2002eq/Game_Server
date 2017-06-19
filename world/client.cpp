@@ -515,6 +515,16 @@ bool Client::HandleNameApprovalPacket(const EQApplicationPacket *app)
 	uchar race = app->pBuffer[64];
 	uchar clas = app->pBuffer[68];
 
+	if (race < 0 || race > 255) {
+		Log(Logs::Detail, Logs::World_Server, "Client::HandleNameApprovalPacket Race was less then zero or over 255");
+		return false;
+	}
+
+	if (clas < 0 || clas > 255) {
+		Log(Logs::Detail, Logs::World_Server, "Client::HandleNameApprovalPacket Class was less then zero or over 255");
+		return false;
+	}
+
 	Log(Logs::Detail, Logs::World_Server, "Name approval request. Name=%s, race=%s, class=%s", char_name, GetRaceIDName(race), GetClassIDName(clas));
 
 	EQApplicationPacket *outapp;
@@ -746,69 +756,20 @@ bool Client::HandleEnterWorldPacket(const EQApplicationPacket *app) {
 	// (This is a literal translation of the original process..I don't see why it can't be changed to a single-target query over account iteration)
 	if (!is_player_zoning) {
 		size_t character_limit = EQEmu::constants::Lookup(eqs->ClientVersion())->CharacterCreationLimit;
-		if (character_limit > EQEmu::constants::CharacterCreationMax) { character_limit = EQEmu::constants::CharacterCreationMax; }
+		if (character_limit >
+			EQEmu::constants::CharacterCreationMax) { character_limit = EQEmu::constants::CharacterCreationMax; }
 		if (eqs->ClientVersion() == EQEmu::versions::ClientVersion::Titanium) { character_limit = 8; }
 
 		std::string tgh_query = StringFormat(
-			"SELECT                     "
-			"`id`,                      "
-			"name,                      "
-			"`level`,                   "
-			"last_login                 "
-			"FROM                       "
-			"character_data             "
-			"WHERE `account_id` = %i ORDER BY `name` LIMIT %u", GetAccountID(), character_limit);
+				"SELECT                     "
+						"`id`,                      "
+						"name,                      "
+						"`level`,                   "
+						"last_login                 "
+						"FROM                       "
+						"character_data             "
+						"WHERE `account_id` = %i ORDER BY `name` LIMIT %u", GetAccountID(), character_limit);
 		auto tgh_results = database.QueryDatabase(tgh_query);
-
-		/* Check GoHome */
-		if (ew->return_home && !ew->tutorial) {
-			bool home_enabled = false;
-			for (auto row = tgh_results.begin(); row != tgh_results.end(); ++row) {
-				if (strcasecmp(row[1], char_name) == 0) {
-					if (RuleB(World, EnableReturnHomeButton)) {
-						int now = time(nullptr);
-						if ((now - atoi(row[3])) >= RuleI(World, MinOfflineTimeToReturnHome)) {
-							home_enabled = true;
-							break;
-						}
-					}
-				}
-			}
-
-			if (home_enabled) {
-				zone_id = database.MoveCharacterToBind(charid, 4);
-			}
-			else {
-				Log(Logs::Detail, Logs::World_Server, "'%s' is trying to go home before they're able...", char_name);
-				database.SetHackerFlag(GetAccountName(), char_name, "MQGoHome: player tried to go home before they were able.");
-				eqs->Close();
-				return true;
-			}
-		}
-
-		/* Check Tutorial*/
-		if (RuleB(World, EnableTutorialButton) && (ew->tutorial || StartInTutorial)) {
-			bool tutorial_enabled = false;
-			for (auto row = tgh_results.begin(); row != tgh_results.end(); ++row) {
-				if (strcasecmp(row[1], char_name) == 0) {
-					if (RuleB(World, EnableTutorialButton) && ((uint8)atoi(row[2]) <= RuleI(World, MaxLevelForTutorial))) {
-						tutorial_enabled = true;
-						break;
-					}
-				}
-			}
-
-			if (tutorial_enabled) {
-				zone_id = RuleI(World, TutorialZoneID);
-				database.MoveCharacterToZone(charid, database.GetZoneName(zone_id));
-			}
-			else {
-				Log(Logs::Detail, Logs::World_Server, "'%s' is trying to go to tutorial but are not allowed...", char_name);
-				database.SetHackerFlag(GetAccountName(), char_name, "MQTutorial: player tried to enter the tutorial without having tutorial enabled for this character.");
-				eqs->Close();
-				return true;
-			}
-		}
 	}
 
 	if (zone_id == 0 || !database.GetZoneName(zone_id)) {
@@ -927,12 +888,16 @@ bool Client::HandleEnterWorldPacket(const EQApplicationPacket *app) {
 bool Client::HandleDeleteCharacterPacket(const EQApplicationPacket *app) {
 
 	uint32 char_acct_id = database.GetAccountIDByChar((char*)app->pBuffer);
+	uint32 level = database.GetLevelByChar((char*)app->pBuffer);
 	if(char_acct_id == GetAccountID()) {
-		Log(Logs::Detail, Logs::World_Server,"Delete character: %s",app->pBuffer);
-		database.DeleteCharacter((char *)app->pBuffer);
+		Log(Logs::Detail, Logs::World_Server, "Delete character: %s", app->pBuffer);
+		if (level >= 30) {
+			database.MarkCharacterDeleted((char *) app->pBuffer);
+		} else {
+			database.DeleteCharacter((char *) app->pBuffer);
+		}
 		SendCharInfo();
 	}
-
 	return true;
 }
 
@@ -1531,12 +1496,6 @@ bool Client::OPCharCreate(char *name, CharCreate_Struct *cc)
 	pp.binds[4].y = pp.y;
 	pp.binds[4].z = pp.z;
 	pp.binds[4].heading = pp.heading;
-
-	/* Overrides if we have the tutorial flag set! */
-	if (cc->tutorial && RuleB(World, EnableTutorialButton)) {
-		pp.zone_id = RuleI(World, TutorialZoneID);
-		database.GetSafePoints(pp.zone_id, 0, &pp.x, &pp.y, &pp.z);
-	}
 
 	/*  Will either be the same as home or tutorial if enabled. */
 	if(RuleB(World, StartZoneSameAsBindOnCreation))	{

@@ -271,12 +271,12 @@ ENDIF(EQEMU_ENABLE_BOTS)
 
 #What to build
 OPTION(EQEMU_BUILD_SERVER "Build the game server." ON)
-OPTION(EQEMU_BUILD_LOGIN "Build the login server." OFF)
+OPTION(EQEMU_BUILD_LOGIN "Build the login server." ON)
 OPTION(EQEMU_BUILD_HC "Build the headless client." OFF)
 OPTION(EQEMU_BUILD_TESTS "Build utility tests." OFF)
 OPTION(EQEMU_BUILD_PERL "Build Perl parser." ON)
 OPTION(EQEMU_BUILD_LUA "Build Lua parser." ON)
-OPTION(EQEMU_BUILD_CLIENT_FILES "Build Client Import/Export Data Programs." ON)
+OPTION(EQEMU_BUILD_CLIENT_FILES "Build Client Import/Export Data Programs." OFF)
 
 #C++11 stuff
 IF(NOT MSVC)

@@ -645,12 +645,17 @@ void QuestManager::depop_withtimer(int npc_type) {
 }
 
 void QuestManager::depopall(int npc_type) {
-	QuestManagerCurrentQuestVars();
-	if(owner && owner->IsNPC() && (npc_type > 0)) {
+	if (npc_type > 0) {
+		QuestManagerCurrentQuestVars();
 		entity_list.DepopAll(npc_type);
-	}
-	else {
-		Log(Logs::General, Logs::Quests, "QuestManager::depopall called with nullptr owner, non-NPC owner, or invalid NPC Type ID. Probably syntax error in quest file.");
+	} else {
+		QuestManagerCurrentQuestVars();
+		if (owner && owner->IsNPC() && (npc_type > 0)) {
+			entity_list.DepopAll(npc_type);
+		} else {
+			Log(Logs::General, Logs::Quests,
+				"QuestManager::depopall called with nullptr owner, non-NPC owner, or invalid NPC Type ID. Probably syntax error in quest file.");
+		}
 	}
 }
 
@@ -1567,7 +1572,7 @@ void QuestManager::ding() {
 void QuestManager::rebind(int zoneid, const glm::vec3& location) {
 	QuestManagerCurrentQuestVars();
 	if(initiator && initiator->IsClient()) {
-		initiator->SetBindPoint(0, zoneid, 0, location);
+		initiator->SetBindPoint(zoneid, 0, location);
 	}
 }
 
@@ -3029,6 +3034,25 @@ void QuestManager::WorldWideMarquee(uint32 Type, uint32 Priority, uint32 FadeIn,
 	strn0cpy(WWMS->Message, Message, 512);
 	worldserver.SendPacket(pack);
 	safe_delete(pack);
+}
+
+void QuestManager::SendDebug(std::string message, int level)
+{
+	if (level > Logs::Detail)
+		return;
+
+	if (level == Logs::General)
+	{
+		Log(Logs::General, Logs::QuestDebug, message);
+	}
+	else if (level == Logs::Moderate)
+	{
+		Log(Logs::Moderate, Logs::QuestDebug, message);
+	}
+	else if (level == Logs::Detail)
+	{
+		Log(Logs::Detail, Logs::QuestDebug, message);
+	}
 }
 
 bool QuestManager::EnableRecipe(uint32 recipe_id)

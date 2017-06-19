@@ -2101,6 +2101,44 @@ bool PlayerAppearance::IsValidTexture(uint16 race_id, uint8 gender_id, uint8 tex
 	}
 }
 
+uint32 GetArrayRace(uint16 race) {
+	switch(race) {
+		case HUMAN:
+			return PLAYER_RACE_HUMAN;
+		case BARBARIAN:
+			return PLAYER_RACE_BARBARIAN;
+		case ERUDITE:
+			return PLAYER_RACE_ERUDITE;
+		case WOOD_ELF:
+			return PLAYER_RACE_WOOD_ELF;
+		case HIGH_ELF:
+			return PLAYER_RACE_HIGH_ELF;
+		case DARK_ELF:
+			return PLAYER_RACE_DARK_ELF;
+		case HALF_ELF:
+			return PLAYER_RACE_HALF_ELF;
+		case DWARF:
+			return PLAYER_RACE_DWARF;
+		case TROLL:
+			return PLAYER_RACE_TROLL;
+		case OGRE:
+			return PLAYER_RACE_OGRE;
+		case HALFLING:
+			return PLAYER_RACE_HALFLING;
+		case GNOME:
+			return PLAYER_RACE_GNOME;
+		case IKSAR:
+			return PLAYER_RACE_IKSAR;
+		case VAHSHIR:
+			return PLAYER_RACE_VAHSHIR;
+		case FROGLOK:
+		case FROGLOK2:
+			return PLAYER_RACE_FROGLOK;
+		default:
+			return PLAYER_RACE_UNKNOWN;
+	}
+}
+
 bool PlayerAppearance::IsValidWoad(uint16 race_id, uint8 gender_id, uint8 woad_value, bool use_luclin)
 {
 	if (woad_value == 0xFF)

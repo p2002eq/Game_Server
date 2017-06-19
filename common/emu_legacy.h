@@ -137,6 +137,8 @@ namespace EQEmu
 		static const int16 CURSOR_BAG_BEGIN = 331;
 		static const int16 CURSOR_BAG_END_OFFSET = 9;
 		static const int16 CURSOR_BAG_END = CURSOR_BAG_BEGIN + CURSOR_BAG_END_OFFSET;
+		static const int16 CURSOR_QUEUE_BEGIN = 8000;
+		static const int16 CURSOR_QUEUE_END = 8999;
 
 		static const int16 BANK_BEGIN = 2000;
 		static const int16 BANK_END = 2023;

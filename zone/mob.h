@@ -227,12 +227,13 @@ public:
 	void ProjectileAnimation(Mob* to, int item_id, bool IsArrow = false, float speed = 0,
 		float angle = 0, float tilt = 0, float arc = 0, const char *IDFile = nullptr, EQEmu::skills::SkillType skillInUse = EQEmu::skills::SkillArchery);
 	void ChangeSize(float in_size, bool bNoRestriction = false);
-	inline uint8 SeeInvisible() const { return see_invis; }
+	uint8 SeeInvisible();
 	inline bool SeeInvisibleUndead() const { return see_invis_undead; }
 	inline bool SeeHide() const { return see_hide; }
 	inline bool SeeImprovedHide() const { return see_improved_hide; }
+	inline bool GetSeeInvisible(uint8 see_invis);
 	bool IsInvisible(Mob* other = 0) const;
-	void SetInvisible(uint8 state);
+	void SetInvisible(uint8 state = 0, uint8 type = 0);
 	bool AttackAnimation(EQEmu::skills::SkillType &skillinuse, int Hand, const EQEmu::ItemInstance* weapon);
 
 	//Song
@@ -504,8 +505,8 @@ public:
 	void Warp(const glm::vec3& location);
 	inline bool IsMoving() const { return moving; }
 	virtual void SetMoving(bool move) { moving = move; m_Delta = glm::vec4(); }
-	virtual void GoToBind(uint8 bindnum = 0) { }
-	virtual void Gate(uint8 bindnum = 0);
+	virtual void GoToBind() { }
+	virtual void Gate();
 	int GetWalkspeed() const { return(_GetWalkSpeed()); }
 	int GetRunspeed() const { return(_GetRunSpeed()); }
 	void SetCurrentSpeed(int in);
@@ -531,7 +532,7 @@ public:
 	//AI
 	static uint32 GetLevelCon(uint8 mylevel, uint8 iOtherLevel);
 	inline uint32 GetLevelCon(uint8 iOtherLevel) const {
-		return this ? GetLevelCon(GetLevel(), iOtherLevel) : CON_GRAY; }
+		return this ? GetLevelCon(GetLevel(), iOtherLevel) : CON_GREEN; }
 	virtual void AddToHateList(Mob* other, uint32 hate = 0, int32 damage = 0, bool iYellForHelp = true,
 		bool bFrenzy = false, bool iBuffTic = false, uint16 spell_id = SPELL_UNKNOWN, bool pet_comand = false);
 	bool RemoveFromHateList(Mob* mob);
@@ -614,6 +615,15 @@ public:
 	bool RemoveProcFromWeapon(uint16 spell_id, bool bAll = false);
 	bool HasProcs() const;
 	bool IsCombatProc(uint16 spell_id);
+
+	//exp
+	uint32  GetBaseEXP();
+
+	//Helpers
+	bool IsDireCharmed() { return dire_charmed; }
+	uint32 player_damage;
+	uint32 dire_pet_damage;
+	uint32 total_damage;
 
 	//More stuff to sort:
 	virtual bool IsRaidTarget() const { return false; };
@@ -760,6 +770,7 @@ public:
 	virtual Mob* GetOwnerOrSelf();
 	Mob* GetUltimateOwner();
 	void SetPetID(uint16 NewPetID);
+	void RemovePet();
 	inline uint16 GetPetID() const { return petid; }
 	inline PetType GetPetType() const { return typeofpet; }
 	void SetPetType(PetType p) { typeofpet = p; }
@@ -1007,6 +1018,11 @@ public:
 	inline void SetEmoteID(uint16 emote) { emoteid = emote; }
 	inline uint16 GetEmoteID() { return emoteid; }
 
+	inline void SetCombatHPRegen(uint32 regen) { combat_hp_regen = regen; };
+	inline uint32 GetCombatHPRegen() { return combat_hp_regen; }
+	inline void SetCombatManaRegen(uint32 regen) { combat_mana_regen = regen; };
+	inline uint32 GetCombatManaRegen() { return combat_mana_regen; }
+
 	bool 	HasSpellEffect(int effectid);
 	int 	mod_effect_value(int effect_value, uint16 spell_id, int effect_type, Mob* caster, uint16 caster_id);
 	float 	mod_hit_chance(float chancetohit, EQEmu::skills::SkillType skillinuse, Mob* attacker);
@@ -1154,6 +1170,7 @@ protected:
 	int16 petpower;
 	uint32 follow;
 	uint32 follow_dist;
+	bool dire_charmed;
 	bool no_target_hotkey;
 
 	uint32 m_PlayerState;
@@ -1440,6 +1457,8 @@ protected:
 	int QGVarDuration(const char *fmt);
 	void InsertQuestGlobal(int charid, int npcid, int zoneid, const char *name, const char *value, int expdate);
 	uint16 emoteid;
+	uint32 combat_hp_regen;
+	uint32 combat_mana_regen;
 
 	SpecialAbility SpecialAbilities[MAX_SPECIAL_ATTACK];
 	bool bEnraged;

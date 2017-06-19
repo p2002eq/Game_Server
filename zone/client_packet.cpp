@@ -530,7 +530,23 @@ void Client::CompleteConnect()
 	}
 	//SendAATable();
 
-	if (GetHideMe()) Message(13, "[GM] You are currently hidden to all clients");
+	if (GetGM() && (GetHideMe() || GetGMSpeed() || GetGMInvul() || flymode != 0))
+	{
+		std::string state = "currently ";
+
+		if (GetHideMe()) state += "hidden to all clients, ";
+		if (GetGMSpeed()) state += "running at GM speed, ";
+		if (GetGMInvul()) state += "invulnerable to all damage, ";
+		if (flymode == 1) state += "flying, ";
+		else if (flymode == 2) state += "levitating, ";
+
+		if (state.size () > 0)
+		{
+			//Remove last two characters from the string
+			state.resize (state.size () - 2);
+			Message(CC_Red, "[GM] You are %s.", state.c_str());
+		}
+	}
 
 	uint32 raidid = database.GetRaidID(GetName());
 	Raid *raid = nullptr;
@@ -657,8 +673,7 @@ void Client::CompleteConnect()
 				break;
 			}
 			case SE_SummonHorse: {
-				SummonHorse(buffs[j1].spellid);
-				//hasmount = true;	//this was false, is that the correct thing?
+				BuffFadeByEffect(SE_SummonHorse);	// mounts should always wear off on zone.
 				break;
 			}
 			case SE_Silence:
@@ -874,6 +889,8 @@ void Client::CompleteConnect()
 	}
 
 	entity_list.RefreshClientXTargets(this);
+
+	FixClientXP();
 
 	worldserver.RequestTellQueue(GetName());
 }
@@ -1270,7 +1287,7 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 	database.LoadCharacterFactionValues(cid, factionvalues);
 
 	/* Load Character Account Data: Temp until I move */
-	query = StringFormat("SELECT `status`, `name`, `lsaccount_id`, `gmspeed`, `revoked`, `hideme`, `time_creation` FROM `account` WHERE `id` = %u", this->AccountID());
+	query = StringFormat("SELECT `status`, `name`, `lsaccount_id`, `gmspeed`, `revoked`, `hideme`, `time_creation`, `gminvul`, `flymode` FROM `account` WHERE `id` = %u", this->AccountID());
 	auto results = database.QueryDatabase(query);
 	for (auto row = results.begin(); row != results.end(); ++row) {
 		admin = atoi(row[0]);
@@ -1280,6 +1297,8 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 		revoked = atoi(row[4]);
 		gmhideme = atoi(row[5]);
 		account_creation = atoul(row[6]);
+		gminvul = atoi(row[7]);
+		flymode = atoi(row[8]);
 	}
 
 	/* Load Character Data */
@@ -1299,7 +1318,7 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 	}
 
 	if (RuleB(Character, SharedBankPlat))
-		m_pp.platinum_shared = database.GetSharedPlatinum(this->AccountID());
+		m_pp.platinum_shared = database.GetSharedPlatinum(this->CharacterID());
 
 	database.ClearOldRecastTimestamps(cid); /* Clear out our old recast timestamps to keep the DB clean */
 	loaditems = database.GetInventory(cid, &m_inv); /* Load Character Inventory */
@@ -1347,6 +1366,8 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 
 	/* If GM, not trackable */
 	if (gmhideme) { trackable = false; }
+	if (gminvul) { invulnerable = true; }
+	if (flymode > 0) { SendAppearancePacket(AT_Levitate, flymode); }
 	/* Set Con State for Reporting */
 	conn_state = PlayerProfileLoaded;
 
@@ -1356,7 +1377,7 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 	/* Set Total Seconds Played */
 	TotalSecondsPlayed = m_pp.timePlayedMin * 60;
 	/* Set Max AA XP */
-	max_AAXP = RuleI(AA, ExpPerPoint);
+	max_AAXP = GetEXPForLevel(0, true);
 	/* If we can maintain intoxication across zones, check for it */
 	if (!RuleB(Character, MaintainIntoxicationAcrossZones))
 		m_pp.intoxication = 0;
@@ -1650,23 +1671,6 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 
 	if (m_pp.RestTimer)
 		rest_timer.Start(m_pp.RestTimer * 1000);
-
-	/* Load Pet */
-	database.LoadPetInfo(this);
-	if (m_petinfo.SpellID > 1 && !GetPet() && m_petinfo.SpellID <= SPDAT_RECORDS) {
-		MakePoweredPet(m_petinfo.SpellID, spells[m_petinfo.SpellID].teleport_zone, m_petinfo.petpower, m_petinfo.Name, m_petinfo.size);
-		if (GetPet() && GetPet()->IsNPC()) {
-			NPC *pet = GetPet()->CastToNPC();
-			pet->SetPetState(m_petinfo.Buffs, m_petinfo.Items);
-			pet->CalcBonuses();
-			pet->SetHP(m_petinfo.HP);
-			pet->SetMana(m_petinfo.Mana);
-		}
-		m_petinfo.SpellID = 0;
-	}
-	/* Moved here so it's after where we load the pet data. */
-	if (!GetAA(aaPersistentMinion))
-		memset(&m_suspendedminion, 0, sizeof(PetInfo));
 
 	/* Server Zone Entry Packet */
 	outapp = new EQApplicationPacket(OP_ZoneEntry, sizeof(ServerZoneEntry_Struct));
@@ -2867,14 +2871,16 @@ void Client::Handle_OP_ApplyPoison(const EQApplicationPacket *app)
 
 			CheckIncreaseSkill(EQEmu::skills::SkillApplyPoison, nullptr, 10);
 
-			if (ChanceRoll < SuccessChance) {
+			// If the player has a non null score in aaPoisonMastery, it means
+			// that he/she actually has the AA, so the ApplyPoison cannot fail.
+			if (ChanceRoll < SuccessChance || GetAA(aaPoisonMastery) > 0) {
 				ApplyPoisonSuccessResult = 1;
 				// NOTE: Someone may want to tweak the chance to proc the poison effect that is added to the weapon here.
 				// My thinking was that DEX should be apart of the calculation.
 				AddProcToWeapon(PoisonItemInstance->GetItem()->Proc.Effect, false, (GetDEX() / 100) + 103);
 			}
 
-			DeleteItemInInventory(ApplyPoisonData->inventorySlot, 1, true);
+			DeleteItemInInventory(ApplyPoisonData->inventorySlot, 0, true);
 
 			Log(Logs::General, Logs::None, "Chance to Apply Poison was %f. Roll was %f. Result is %u.", SuccessChance, ChanceRoll, ApplyPoisonSuccessResult);
 		}
@@ -2911,6 +2917,12 @@ void Client::Handle_OP_Assist(const EQApplicationPacket *app)
 				SetAssistExemption(true);
 				eid->entity_id = new_target->GetID();
 			}
+			else {
+				eid->entity_id = 0;
+			}
+		}
+		else {
+			eid->entity_id = 0;
 		}
 	}
 
@@ -4039,6 +4051,13 @@ void Client::Handle_OP_CastSpell(const EQApplicationPacket *app)
 	Log(Logs::General, Logs::Spells, "OP CastSpell: slot=%d, spell=%d, target=%d, inv=%lx", castspell->slot, castspell->spell_id, castspell->target_id, (unsigned long)castspell->inventoryslot);
 	CastingSlot slot = static_cast<CastingSlot>(castspell->slot);
 
+	// casting from slot 9, we disable cause not classic.
+	if(castspell->slot == 8) {
+		InterruptSpell(castspell->spell_id); 
+		Message(13, "Spell slot 9 is disabled.");
+		return;
+	}
+	
 	/* Memorized Spell */
 	if (m_pp.mem_spells[castspell->slot] && m_pp.mem_spells[castspell->slot] == castspell->spell_id) {
 		uint16 spell_to_cast = 0;
@@ -4164,7 +4183,19 @@ void Client::Handle_OP_CastSpell(const EQApplicationPacket *app)
 			else
 				spell_to_cast = SPELL_HARM_TOUCH2;
 
-			p_timers.Start(pTimerHarmTouch, HarmTouchReuseTime);
+			// The Harm Touch reuse time depends on the rank of Touch of the Wicked.
+			// It is 12 minutes per rank.
+			int reduced_cooldown = HarmTouchReuseTime - GetAA(aaTouchoftheWicked) * 720;
+
+			p_timers.Start(pTimerHarmTouch, reduced_cooldown);
+
+			// We need also to synchronize the Improved Harm Touch and Leech Touch timers.
+			if (GetAA(aaImprovedHarmTouch) > 0 || GetAA(aaLeechTouch) > 0) {
+				AA::Rank *rank = zone->GetAlternateAdvancementRank(aaImprovedHarmTouch);
+
+				CastToClient()->GetPTimers().Start(rank->spell_type + pTimerAAStart, reduced_cooldown);
+				SendAlternateAdvancementTimer(rank->spell_type, 0, 0);
+			}
 		}
 
 		if (spell_to_cast > 0)	// if we've matched LoH or HT, cast now
@@ -4580,8 +4611,12 @@ void Client::Handle_OP_ClientUpdate(const EQApplicationPacket *app)
 			CheckIncreaseSkill(EQEmu::skills::SkillTracking, nullptr, -20);
 	}
 
-	// Break Hide if moving without sneaking and set rewind timer if moved
 	if (ppu->y_pos != m_Position.y || ppu->x_pos != m_Position.x) {
+		// End trader mode if we move
+		if(Trader) {
+			Trader_EndTrader();
+		}
+		// Break Hide if moving without sneaking and set rewind timer if moved
 		if ((hidden || improved_hidden) && !sneaking) {
 			hidden = false;
 			improved_hidden = false;
@@ -4775,15 +4810,6 @@ void Client::Handle_OP_Consider(const EQApplicationPacket *app)
 		con->faction = 1;
 	con->level = GetLevelCon(tmob->GetLevel());
 
-	if (ClientVersion() <= EQEmu::versions::ClientVersion::Titanium) {
-		if (con->level == CON_GRAY)	{
-			con->level = CON_GREEN;
-		}
-		if (con->level == CON_WHITE) {
-			con->level = CON_WHITE_TITANIUM;
-		}
-	}
-
 	if (zone->IsPVPZone()) {
 		if (!tmob->IsNPC())
 			con->pvpcon = tmob->CastToClient()->GetPVP();
@@ -4845,9 +4871,6 @@ void Client::Handle_OP_Consider(const EQApplicationPacket *app)
 			break;
 		case CON_RED:
 			color = 13;
-			break;
-		case CON_GRAY:
-			color = 6;
 			break;
 		}
 
@@ -8019,18 +8042,17 @@ void Client::Handle_OP_Hide(const EQApplicationPacket *app)
 	CheckIncreaseSkill(EQEmu::skills::SkillHide, nullptr, 5);
 	if (random < hidechance) {
 		auto outapp = new EQApplicationPacket(OP_SpawnAppearance, sizeof(SpawnAppearance_Struct));
-		SpawnAppearance_Struct* sa_out = (SpawnAppearance_Struct*)outapp->pBuffer;
+		SpawnAppearance_Struct *sa_out = (SpawnAppearance_Struct *) outapp->pBuffer;
 		sa_out->spawn_id = GetID();
 		sa_out->type = 0x03;
 		sa_out->parameter = 1;
 		entity_list.QueueClients(this, outapp, true);
 		safe_delete(outapp);
 		if (spellbonuses.ShroudofStealth || aabonuses.ShroudofStealth || itembonuses.ShroudofStealth) {
-			improved_hidden = true;
-			hidden = true;
+			SetInvisible(0, 4);
+		} else {
+			SetInvisible(0, 3);
 		}
-		else
-			hidden = true;
 		tmHidden = Timer::GetCurrentTime();
 	}
 	if (GetClass() == ROGUE) {
@@ -12287,6 +12309,8 @@ void Client::Handle_OP_SetTitle(const EQApplicationPacket *app)
 
 void Client::Handle_OP_Shielding(const EQApplicationPacket *app)
 {
+	// Shield disabled for our era
+	return;
 	if (app->size != sizeof(Shielding_Struct)) {
 		Log(Logs::General, Logs::Error, "OP size error: OP_Shielding expected:%i got:%i", sizeof(Shielding_Struct), app->size);
 		return;
@@ -12920,8 +12944,10 @@ void Client::Handle_OP_ShopRequest(const EQApplicationPacket *app)
 	return;
 }
 
-void Client::Handle_OP_Sneak(const EQApplicationPacket *app)
-{
+void Client::Handle_OP_Sneak(const EQApplicationPacket *app) {
+	// A flag to check if the player is underwater.
+	bool is_underwater = (zone->watermap && zone->watermap->InLiquid(glm::vec3(m_Position)));
+
 	if (!HasSkill(EQEmu::skills::SkillSneak) && GetSkill(EQEmu::skills::SkillSneak) == 0) {
 		return; //You cannot sneak if you do not have sneak
 	}
@@ -12938,23 +12964,29 @@ void Client::Handle_OP_Sneak(const EQApplicationPacket *app)
 		hidden = false;
 		improved_hidden = false;
 		auto outapp = new EQApplicationPacket(OP_SpawnAppearance, sizeof(SpawnAppearance_Struct));
-		SpawnAppearance_Struct* sa_out = (SpawnAppearance_Struct*)outapp->pBuffer;
+		SpawnAppearance_Struct *sa_out = (SpawnAppearance_Struct *) outapp->pBuffer;
 		sa_out->spawn_id = GetID();
 		sa_out->type = 0x03;
 		sa_out->parameter = 0;
 		entity_list.QueueClients(this, outapp, true);
 		safe_delete(outapp);
-	}
-	else {
-		CheckIncreaseSkill(EQEmu::skills::SkillSneak, nullptr, 5);
+	} else {
+		// Only possible if not underwater.
+		if (!is_underwater) {
+			CheckIncreaseSkill(EQEmu::skills::SkillSneak, nullptr, 5);
+		} else {
+			Message(0, "You cannot start sneaking underwater.");
+			return;
+		}
 	}
 	float hidechance = ((GetSkill(EQEmu::skills::SkillSneak) / 300.0f) + .25) * 100;
 	float random = zone->random.Real(0, 99);
-	if (!was && random < hidechance) {
+	// If we are underwater, we cannot start sneaking.
+	if (!is_underwater && !was && random < hidechance) {
 		sneaking = true;
 	}
 	auto outapp = new EQApplicationPacket(OP_SpawnAppearance, sizeof(SpawnAppearance_Struct));
-	SpawnAppearance_Struct* sa_out = (SpawnAppearance_Struct*)outapp->pBuffer;
+	SpawnAppearance_Struct *sa_out = (SpawnAppearance_Struct *) outapp->pBuffer;
 	sa_out->spawn_id = GetID();
 	sa_out->type = 0x0F;
 	sa_out->parameter = sneaking;
@@ -12962,12 +12994,11 @@ void Client::Handle_OP_Sneak(const EQApplicationPacket *app)
 	safe_delete(outapp);
 	if (GetClass() == ROGUE) {
 		outapp = new EQApplicationPacket(OP_SimpleMessage, 12);
-		SimpleMessage_Struct *msg = (SimpleMessage_Struct *)outapp->pBuffer;
+		SimpleMessage_Struct *msg = (SimpleMessage_Struct *) outapp->pBuffer;
 		msg->color = 0x010E;
 		if (sneaking) {
 			msg->string_id = 347;
-		}
-		else {
+		} else {
 			msg->string_id = 348;
 		}
 		FastQueuePacket(&outapp);
@@ -13982,20 +14013,29 @@ void Client::Handle_OP_TradeRequest(const EQApplicationPacket *app)
 #ifndef BOTS
 	else if (tradee && tradee->IsNPC()) {
 #else
-	else if (tradee && (tradee->IsNPC() || tradee->IsBot())) {
+		else if (tradee && (tradee->IsNPC() || tradee->IsBot())) {
 #endif
-		//npcs always accept
-		trade->Start(msg->to_mob_id);
+		// If the NPC is engaged, we cannot trade with it.
+		// Note that this work as intended, if the NPC is charmed
+		// you can still trade with it.
+		if (tradee->IsEngaged()) {
+			Message(0, "Your target cannot trade with you at this moment.");
+		}
+			// If it not engaged, it will automatically accept the trade.
+		else {
+			//npcs always accept
+			trade->Start(msg->to_mob_id);
 
-		auto outapp = new EQApplicationPacket(OP_TradeRequestAck, sizeof(TradeRequest_Struct));
-		TradeRequest_Struct* acc = (TradeRequest_Struct*)outapp->pBuffer;
-		acc->from_mob_id = msg->to_mob_id;
-		acc->to_mob_id = msg->from_mob_id;
-		FastQueuePacket(&outapp);
-		safe_delete(outapp);
+			EQApplicationPacket *outapp = new EQApplicationPacket(OP_TradeRequestAck, sizeof(TradeRequest_Struct));
+			TradeRequest_Struct *acc = (TradeRequest_Struct *) outapp->pBuffer;
+			acc->from_mob_id = msg->to_mob_id;
+			acc->to_mob_id = msg->from_mob_id;
+			FastQueuePacket(&outapp);
+			safe_delete(outapp);
+		}
 	}
 	return;
-	}
+}
 
 void Client::Handle_OP_TradeRequestAck(const EQApplicationPacket *app)
 {

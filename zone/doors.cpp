@@ -54,6 +54,7 @@ m_Destination(door->dest_x, door->dest_y, door->dest_z, door->dest_heading)
 	guild_id = door->guild_id;
 	lockpick = door->lock_pick;
 	keyitem = door->keyitem;
+	altkeyitem = door->altkeyitem;
 	nokeyring = door->nokeyring;
 	trigger_door = door->trigger_door;
 	trigger_type = door->trigger_type;
@@ -88,6 +89,7 @@ m_Destination(glm::vec4())
 	guild_id = 0;
 	lockpick = 0;
 	keyitem = 0;
+	altkeyitem = 0;
 	nokeyring = 0;
 	trigger_door = 0;
 	trigger_type = 0;
@@ -138,7 +140,7 @@ void Doors::HandleClick(Client* sender, uint8 trigger)
 {
 	//door debugging info dump
 	Log(Logs::Detail, Logs::Doors, "%s clicked door %s (dbid %d, eqid %d) at %s", sender->GetName(), door_name, db_id, door_id, to_string(m_Position).c_str());
-	Log(Logs::Detail, Logs::Doors, "  incline %d, opentype %d, lockpick %d, key %d, nokeyring %d, trigger %d type %d, param %d", incline, opentype, lockpick, keyitem, nokeyring, trigger_door, trigger_type, door_param);
+	Log(Logs::Detail, Logs::Doors, "  incline %d, opentype %d, lockpick %d, keys %d %d, nokeyring %d, trigger %d type %d, param %d", incline, opentype, lockpick, keyitem, altkeyitem, nokeyring, trigger_door, trigger_type, door_param);
 	Log(Logs::Detail, Logs::Doors, "  disable_timer '%s',size %d, invert %d, dest: %s %s", (disable_timer?"true":"false"), size, invert_state, dest_zone, to_string(m_Destination).c_str());
 
 	auto outapp = new EQApplicationPacket(OP_MoveDoor, sizeof(MoveDoor_Struct));
@@ -189,16 +191,20 @@ void Doors::HandleClick(Client* sender, uint8 trigger)
 	}
 
 	uint32 keyneeded = GetKeyItem();
+	uint32 altkey = GetAltKeyItem();
 	uint8 keepoffkeyring = GetNoKeyring();
 	uint32 haskey = 0;
+	uint32 hasaltkey = 0;
 	uint32 playerkey = 0;
 	const EQEmu::ItemInstance *lockpicks = sender->GetInv().GetItem(EQEmu::inventory::slotCursor);
 
 	haskey = sender->GetInv().HasItem(keyneeded, 1);
+	hasaltkey = sender->GetInv().HasItem(altkey, 1);
 
-	if (haskey != INVALID_INDEX)
-	{
+	if (haskey != INVALID_INDEX) {
 		playerkey = keyneeded;
+	} else if (hasaltkey != INVALID_INDEX) {
+		playerkey = altkey;
 	}
 
 	if(GetTriggerType() == 255)
@@ -222,7 +228,7 @@ void Doors::HandleClick(Client* sender, uint8 trigger)
 	}
 
 	// guild doors
-	if(((keyneeded == 0) && (GetLockpick() == 0) && (guild_id == 0)) ||
+	if(((keyneeded == 0 && altkey == 0) && (GetLockpick() == 0) && (guild_id == 0)) ||
 		(IsDoorOpen() && (opentype == 58)) ||
 		((guild_id > 0) && (guild_id == sender->GuildID())))
 	{	//door not locked
@@ -269,7 +275,7 @@ void Doors::HandleClick(Client* sender, uint8 trigger)
 		}
 		else if(playerkey)
 		{	// they have something they are trying to open it with
-			if(keyneeded && (keyneeded == playerkey))
+			if(keyneeded && (keyneeded == playerkey) || (altkey && (altkey == playerkey)))
 			{	// key required and client is using the right key
 				if(!keepoffkeyring)
 				{
@@ -418,7 +424,7 @@ void Doors::HandleClick(Client* sender, uint8 trigger)
 			}
 			sender->MovePC(zone->GetZoneID(), zone->GetInstanceID(), m_Destination.x, m_Destination.y, m_Destination.z, m_Destination.w);
 		}
-		else if (( !IsDoorOpen() || opentype == 58 ) && (keyneeded && ((keyneeded == playerkey) || sender->GetGM())))
+		else if (( !IsDoorOpen() || opentype == 58 ) && (keyneeded && ((keyneeded == playerkey) || (altkey && (altkey == playerkey)) ||sender->GetGM())))
 		{
 			if(!keepoffkeyring)
 			{
@@ -649,7 +655,7 @@ bool ZoneDatabase::LoadDoors(int32 iDoorCount, Door *into, const char *zone_name
 	std::string query = StringFormat("SELECT id, doorid, zone, name, pos_x, pos_y, pos_z, heading, "
 		"opentype, guild, lockpick, keyitem, nokeyring, triggerdoor, triggertype, "
 		"dest_zone, dest_instance, dest_x, dest_y, dest_z, dest_heading, "
-		"door_param, invert_state, incline, size, is_ldon_door, client_version_mask, disable_timer "
+		"door_param, invert_state, incline, size, is_ldon_door, client_version_mask, disable_timer, altkeyitem "
 		"FROM doors WHERE zone = '%s' AND (version = %u OR version = -1) "
 		"ORDER BY doorid asc", zone_name, version);
 	auto results = QueryDatabase(query);
@@ -698,6 +704,7 @@ bool ZoneDatabase::LoadDoors(int32 iDoorCount, Door *into, const char *zone_name
 		into[rowIndex].is_ldon_door = atoi(row[25]);
 		into[rowIndex].client_version_mask = (uint32)strtoul(row[26], nullptr, 10);
 		into[rowIndex].disable_timer = atoi(row[27]);
+		into[rowIndex].altkeyitem = atoi(row[28]);
 
 		Log(Logs::Detail, Logs::Doors, "Door Load: db id: %u, door_id %u disable_timer: %i",
 			into[rowIndex].db_id,

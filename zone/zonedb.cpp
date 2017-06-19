@@ -4,6 +4,7 @@
 #include "../common/item_instance.h"
 #include "../common/rulesys.h"
 #include "../common/string_util.h"
+#include "../common/database.h"
 
 #include "client.h"
 #include "corpse.h"
@@ -1138,9 +1139,10 @@ bool ZoneDatabase::LoadCharacterCurrency(uint32 character_id, PlayerProfile_Stru
 		"radiant_crystals,       "
 		"career_radiant_crystals,"
 		"ebon_crystals,          "
-		"career_ebon_crystals    "
+		"career_ebon_crystals,   "
+		"platinum_shared         "
 		"FROM                    "
-		"character_currency      "
+		"character_currency       "
 		"WHERE `id` = %i         ", character_id);
 	auto results = database.QueryDatabase(query);
 	for (auto row = results.begin(); row != results.end(); ++row) {
@@ -1160,6 +1162,7 @@ bool ZoneDatabase::LoadCharacterCurrency(uint32 character_id, PlayerProfile_Stru
 		pp->careerRadCrystals = atoi(row[13]);
 		pp->currentEbonCrystals = atoi(row[14]);
 		pp->careerEbonCrystals = atoi(row[15]);
+		pp->platinum_shared = atoi(row[16]);
 	}
 	return true;
 }
@@ -1260,55 +1263,35 @@ bool ZoneDatabase::LoadCharacterPotions(uint32 character_id, PlayerProfile_Struc
 	return true;
 }
 
-bool ZoneDatabase::LoadCharacterBindPoint(uint32 character_id, PlayerProfile_Struct *pp)
-{
-	std::string query = StringFormat("SELECT `slot`, `zone_id`, `instance_id`, `x`, `y`, `z`, `heading` FROM "
-					 "`character_bind` WHERE `id` = %u LIMIT 5",
-					 character_id);
+bool ZoneDatabase::LoadCharacterBindPoint(uint32 character_id, PlayerProfile_Struct *pp) {
+	std::string query = StringFormat("SELECT `zone_id`, `instance_id`, `x`, `y`, `z`, `heading` FROM "
+											 "`%s` WHERE `id` = %u LIMIT 1",
+									 Database::CHARACTER_BIND_TABLE.c_str(), character_id);
 	auto results = database.QueryDatabase(query);
 
-	if (!results.RowCount()) // SHIT -- this actually isn't good
+	if (!results.RowCount()) {
 		return true;
-
-	for (auto row = results.begin(); row != results.end(); ++row) {
-		int index = atoi(row[0]);
-		if (index < 0 || index > 4)
-			continue;
-
-		pp->binds[index].zoneId = atoi(row[1]);
-		pp->binds[index].instance_id = atoi(row[2]);
-		pp->binds[index].x = atoi(row[3]);
-		pp->binds[index].y = atoi(row[4]);
-		pp->binds[index].z = atoi(row[5]);
-		pp->binds[index].heading = atoi(row[6]);
 	}
 
+	for (auto row = results.begin(); row != results.end(); ++row) {
+		pp->binds[0].zoneId = atoi(row[0]);
+		pp->binds[0].instance_id = atoi(row[1]);
+		pp->binds[0].x = atoi(row[2]);
+		pp->binds[0].y = atoi(row[3]);
+		pp->binds[0].z = atoi(row[4]);
+		pp->binds[0].heading = atoi(row[5]);
+	}
+
+	pp->binds[1] = pp->binds[0];
+	pp->binds[2] = pp->binds[0];
+	pp->binds[3] = pp->binds[0];
+	pp->binds[4] = pp->binds[0];
 	return true;
 }
 
 bool ZoneDatabase::SaveCharacterLanguage(uint32 character_id, uint32 lang_id, uint32 value){
 	std::string query = StringFormat("REPLACE INTO `character_languages` (id, lang_id, value) VALUES (%u, %u, %u)", character_id, lang_id, value); QueryDatabase(query);
 	Log(Logs::General, Logs::None, "ZoneDatabase::SaveCharacterLanguage for character ID: %i, lang_id:%u value:%u done", character_id, lang_id, value);
-	return true;
-}
-
-bool ZoneDatabase::SaveCharacterBindPoint(uint32 character_id, const BindStruct &bind, uint32 bind_num)
-{
-	/* Save Home Bind Point */
-	std::string query =
-	    StringFormat("REPLACE INTO `character_bind` (id, zone_id, instance_id, x, y, z, heading, slot) VALUES (%u, "
-			 "%u, %u, %f, %f, %f, %f, %i)",
-			 character_id, bind.zoneId, bind.instance_id, bind.x, bind.y, bind.z, bind.heading, bind_num);
-
-	Log(Logs::General, Logs::None, "ZoneDatabase::SaveCharacterBindPoint for character ID: %i zone_id: %u "
-					   "instance_id: %u position: %f %f %f %f bind_num: %u",
-		character_id, bind.zoneId, bind.instance_id, bind.x, bind.y, bind.z, bind.heading, bind_num);
-
-	auto results = QueryDatabase(query);
-	if (!results.RowsAffected())
-		Log(Logs::General, Logs::None, "ERROR Bind Home Save: %s. %s", results.ErrorMessage().c_str(),
-			query.c_str());
-
 	return true;
 }
 
@@ -1739,12 +1722,13 @@ bool ZoneDatabase::SaveCharacterCurrency(uint32 character_id, PlayerProfile_Stru
 	if (pp->gold_cursor < 0) { pp->gold_cursor = 0; }
 	if (pp->silver_cursor < 0) { pp->silver_cursor = 0; }
 	if (pp->copper_cursor < 0) { pp->copper_cursor = 0; }
+	if (pp->platinum_shared < 0) { pp->platinum_shared = 0; }
 	std::string query = StringFormat(
 		"REPLACE INTO `character_currency` (id, platinum, gold, silver, copper,"
 		"platinum_bank, gold_bank, silver_bank, copper_bank,"
 		"platinum_cursor, gold_cursor, silver_cursor, copper_cursor, "
-		"radiant_crystals, career_radiant_crystals, ebon_crystals, career_ebon_crystals)"
-		"VALUES (%u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %u)",
+		"radiant_crystals, career_radiant_crystals, ebon_crystals, career_ebon_crystals, platinum_shared)"
+		"VALUES (%u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %u, %u)",
 		character_id,
 		pp->platinum,
 		pp->gold,
@@ -1761,7 +1745,8 @@ bool ZoneDatabase::SaveCharacterCurrency(uint32 character_id, PlayerProfile_Stru
 		pp->currentRadCrystals,
 		pp->careerRadCrystals,
 		pp->currentEbonCrystals,
-		pp->careerEbonCrystals);
+		pp->careerEbonCrystals,
+		pp->platinum_shared);
 	auto results = database.QueryDatabase(query);
 	Log(Logs::General, Logs::None, "Saving Currency for character ID: %i, done", character_id);
 	return true;
@@ -1967,6 +1952,8 @@ const NPCType* ZoneDatabase::LoadNPCTypesData(uint32 npc_type_id, bool bulk_load
 		"npc_types.handtexture, "
 		"npc_types.legtexture, "
 		"npc_types.feettexture, "
+		"npc_types.combat_hp_regen, "
+		"npc_types.combat_mana_regen, "
 		"npc_types.ignore_despawn "
 		"FROM npc_types %s",
 		where_condition.c_str()
@@ -2142,7 +2129,9 @@ const NPCType* ZoneDatabase::LoadNPCTypesData(uint32 npc_type_id, bool bulk_load
 		temp_npctype_data->handtexture = atoi(row[94]);
 		temp_npctype_data->legtexture = atoi(row[95]);
 		temp_npctype_data->feettexture = atoi(row[96]);
-		temp_npctype_data->ignore_despawn = atoi(row[97]) == 1 ? true : false;
+		temp_npctype_data->combat_hp_regen = atoi(row[97]);
+		temp_npctype_data->combat_mana_regen = atoi(row[98]);
+		temp_npctype_data->ignore_despawn = atoi(row[99]) == 1 ? true : false;
 
 		// If NPC with duplicate NPC id already in table,
 		// free item we attempted to add.
@@ -3000,6 +2989,75 @@ void ZoneDatabase::InsertDoor(uint32 ddoordbid, uint16 ddoorid, const char* ddoo
                                     ddoor_name, position.x, position.y, position.z, position.w,
 									dopentype, dguildid, dlockpick, dkeyitem, (ddisabletimer ? 1 : 0), ddoor_param, dinvert, dincline, dsize);
     QueryDatabase(query);
+}
+
+void ZoneDatabase::LogCommands(const char* char_name, const char* acct_name, float y, float x, float z, const char* command, const char* targetType, const char* target, float tar_y, float tar_x, float tar_z, uint32 zone_id, const char* zone_name)
+{
+
+	std::string new_char_name = std::string(char_name);
+	replace_all(new_char_name, "'", "_");
+	std::string new_target = std::string(target);
+	replace_all(new_target, "'", "_");
+
+	std::string rquery = StringFormat("SHOW TABLES LIKE 'commands_log'");
+	auto results = QueryDatabase(rquery);
+	if (results.RowCount() == 0){
+		rquery = StringFormat(
+				"CREATE TABLE	`commands_log` (								"
+						"`entry_id`		int(11) NOT NULL AUTO_INCREMENT,				"
+						"`char_name`	varchar(64) DEFAULT NULL,						"
+						"`acct_name`	varchar(64) DEFAULT NULL,						"
+						"`y`			float NOT NULL DEFAULT '0',						"
+						"`x`			float NOT NULL DEFAULT '0',						"
+						"`z`			float NOT NULL DEFAULT '0',						"
+						"`command`		varchar(100) DEFAULT NULL,						"
+						"`target_type`	varchar(30) DEFAULT NULL,						"
+						"`target`		varchar(64) DEFAULT NULL,						"
+						"`tar_y`		float NOT NULL DEFAULT '0',						"
+						"`tar_x`		float NOT NULL DEFAULT '0',						"
+						"`tar_z`		float NOT NULL DEFAULT '0',						"
+						"`zone_id`		int(11) DEFAULT NULL,							"
+						"`zone_name`	varchar(30) DEFAULT NULL,						"
+						"`time`			datetime DEFAULT NULL,							"
+						"PRIMARY KEY(`entry_id`)										"
+						") ENGINE = InnoDB AUTO_INCREMENT = 8 DEFAULT CHARSET = latin1;	"
+		);
+		auto results = QueryDatabase(rquery);
+	}
+	std::string query = StringFormat("INSERT INTO `commands_log` (char_name, acct_name, y, x, z, command, target_type, target, tar_y, tar_x, tar_z, zone_id, zone_name, time) "
+											 "VALUES('%s', '%s', '%f', '%f', '%f', '%s', '%s', '%s', '%f', '%f', '%f', '%i', '%s', now())",
+									 new_char_name.c_str(), acct_name, y, x, z, command, targetType, new_target.c_str(), tar_y, tar_x, tar_z, zone_id, zone_name, time);
+	auto log_results = QueryDatabase(query);
+	if (!log_results.Success())
+		Log(Logs::General, Logs::Error, "Error in LogCommands query '%s': %s", query.c_str(), results.ErrorMessage().c_str());
+}
+
+uint8 ZoneDatabase::GetCommandAccess(const char* command) {
+	std::string check_query = StringFormat("SELECT command FROM `commands` WHERE `command`='%s'", command);
+	auto check_results = QueryDatabase(check_query);
+	if (check_results.RowCount() == 0)
+	{
+		std::string insert_query = StringFormat("INSERT INTO `commands` (`command`, `access`) VALUES ('%s', %i)", command, 250);
+		auto insert_results = QueryDatabase(insert_query);
+		if (!insert_results.Success())
+		{
+			Log(Logs::Detail, Logs::Error, "Error creating command %s in commands table.", command);
+			return 250;
+		}
+	}
+
+	std::string query = StringFormat("SELECT access FROM commands WHERE command = '%s'", command);
+	auto results = QueryDatabase(query);
+	if (!results.Success()) {
+		return 250;
+	}
+
+	if (results.RowCount() != 1)
+		return 250;
+
+	auto row = results.begin();
+
+	return atoi(row[0]);
 }
 
 void ZoneDatabase::LoadAltCurrencyValues(uint32 char_id, std::map<uint32, uint32> &currency) {
@@ -3938,7 +3996,7 @@ bool ZoneDatabase::LoadCharacterCorpseData(uint32 corpse_id, PlayerCorpse_Struct
 	pcs->itemcount = results.RowCount();
 	uint16 r = 0;
 	for (auto row = results.begin(); row != results.end(); ++row) {
-		memset(&pcs->items[i], 0, sizeof (player_lootitem::ServerLootItem_Struct));
+		memset(&pcs->items[i], 0, sizeof (ServerLootItem_Struct));
 		pcs->items[i].equip_slot = atoi(row[r++]);		// equip_slot,
 		pcs->items[i].item_id = atoul(row[r++]); 		// item_id,
 		pcs->items[i].charges = atoi(row[r++]); 		// charges,

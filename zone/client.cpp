@@ -200,6 +200,7 @@ Client::Client(EQStreamInterface* ieqs)
 	LFGComments[0] = '\0';
 	LFP = false;
 	gmspeed = 0;
+	gminvul = false;
 	playeraction = 0;
 	SetTarget(0);
 	auto_attack = false;
@@ -591,23 +592,24 @@ bool Client::Save(uint8 iCommitNow) {
 	m_pp.heading = m_Position.w;
 
 	/* Mana and HP */
-	if (GetHP() <= 0) {
-		m_pp.cur_hp = GetMaxHP();
+	// If the client is dead, HP, Mana and Endurance are fully restored.
+	if (dead && GetHP() <= 0) {
+		m_pp.cur_hp    = GetMaxHP();
+		m_pp.mana      = GetMaxMana();
+		m_pp.endurance = GetMaxEndurance();
+	} else { 	// Otherwise, no changes.
+		m_pp.cur_hp    = GetHP();
+		m_pp.mana      = cur_mana;
+		m_pp.endurance = cur_end;
 	}
-	else {
-		m_pp.cur_hp = GetHP();
-	}
-
-	m_pp.mana = cur_mana;
-	m_pp.endurance = cur_end;
 
 	/* Save Character Currency */
 	database.SaveCharacterCurrency(CharacterID(), &m_pp);
 
 	/* Save Current Bind Points */
-	for (int i = 0; i < 5; i++)
-		if (m_pp.binds[i].zoneId)
-			database.SaveCharacterBindPoint(CharacterID(), m_pp.binds[i], i);
+	if (m_pp.binds[0].zoneId) {
+		database.SaveCharacterBindPoint(CharacterID(), m_pp.binds[0]);
+	}
 
 	/* Save Character Buffs */
 	database.SaveBuffs(this);
@@ -2341,7 +2343,7 @@ bool Client::CheckIncreaseSkill(EQEmu::skills::SkillType skillid, Mob *against_w
 	if(against_who)
 	{
 		if(against_who->GetSpecialAbility(IMMUNE_AGGRO) || against_who->IsClient() ||
-			GetLevelCon(against_who->GetLevel()) == CON_GRAY)
+			GetLevelCon(against_who->GetLevel()) == CON_GREEN)
 		{
 			//false by default
 			if( !mod_can_increase_skill(skillid, against_who) ) { return(false); }
@@ -3998,6 +4000,29 @@ void Client::SendWindow(uint32 PopupID, uint32 NegativeID, uint32 Buttons, const
 	FastQueuePacket(&app);
 }
 
+void Client::FixClientXP()
+{
+	//This is only necessary when the XP formula changes. However, it should be left for toons that have not been converted.
+
+	uint16 level = GetLevel();
+	uint32 totalrequiredxp = GetEXPForLevel(level);
+	float currentxp = GetEXP();
+	uint32 currentaa = GetAAXP();
+
+	if(currentxp < totalrequiredxp)
+	{
+		if(Admin() == 0 && level > 1)
+		{
+			Message(CC_Red, "Error: Your current XP (%0.2f) is lower than your current level (%i)! It needs to be at least %i", currentxp, level, totalrequiredxp);
+			SetEXP(totalrequiredxp, currentaa);
+			Save();
+			Kick();
+		}
+		else if(Admin() > 0 && level > 1)
+			Message(CC_Red, "Error: Your current XP (%0.2f) is lower than your current level (%i)! It needs to be at least %i. Use #level or #addxp to correct it and logout!", currentxp, level, totalrequiredxp);
+	}
+}
+
 void Client::KeyRingLoad()
 {
 	std::string query = StringFormat("SELECT item_id FROM keyring "
@@ -4441,7 +4466,6 @@ void Client::UpdateGroupAAs(int32 points, uint32 type) {
 		case 0: { m_pp.group_leadership_points += points; break; }
 		case 1: { m_pp.raid_leadership_points += points; break; }
 	}
-	SendLeadershipEXPUpdate();
 }
 
 bool Client::IsLeadershipEXPOn() {
@@ -7006,7 +7030,7 @@ void Client::SendStatsWindow(Client* client, bool use_window)
 		client->Message(0, " Mana: %i/%i  Mana Regen: %i/%i", GetMana(), GetMaxMana(), CalcManaRegen(), CalcManaRegenCap());
 	client->Message(0, " End.: %i/%i  End. Regen: %i/%i",GetEndurance(), GetMaxEndurance(), CalcEnduranceRegen(), CalcEnduranceRegenCap());
 	client->Message(0, " ATK: %i  Worn/Spell ATK %i/%i  Server Side ATK: %i", GetTotalATK(), RuleI(Character, ItemATKCap), GetATKBonus(), GetATK());
-	client->Message(0, " Haste: %i / %i (Item: %i + Spell: %i + Over: %i)", GetHaste(), RuleI(Character, HasteCap), itembonuses.haste, spellbonuses.haste + spellbonuses.hastetype2, spellbonuses.hastetype3 + ExtraHaste);
+	client->Message(0, " Haste: %i / %i (Item: %i + Spell: %i + Over: %i) Run speed: %i", GetHaste(), RuleI(Character, HasteCap), itembonuses.haste, spellbonuses.haste + spellbonuses.hastetype2, spellbonuses.hastetype3 + ExtraHaste, GetRunspeed());
 	client->Message(0, " STR: %i  STA: %i  DEX: %i  AGI: %i  INT: %i  WIS: %i  CHA: %i", GetSTR(), GetSTA(), GetDEX(), GetAGI(), GetINT(), GetWIS(), GetCHA());
 	client->Message(0, " hSTR: %i  hSTA: %i  hDEX: %i  hAGI: %i  hINT: %i  hWIS: %i  hCHA: %i", GetHeroicSTR(), GetHeroicSTA(), GetHeroicDEX(), GetHeroicAGI(), GetHeroicINT(), GetHeroicWIS(), GetHeroicCHA());
 	client->Message(0, " MR: %i  PR: %i  FR: %i  CR: %i  DR: %i Corruption: %i PhR: %i", GetMR(), GetPR(), GetFR(), GetCR(), GetDR(), GetCorrup(), GetPhR());
@@ -7933,7 +7957,7 @@ void Client::SetFactionLevel(uint32 char_id, uint32 npc_id, uint8 char_class, ui
 		this_faction_max = std::max(0, this_faction_max);
 
 		// Get the characters current value with that faction
-		current_value = GetCharacterFactionLevel(faction_id[i]);
+		current_value = GetCharacterFactionLevel(faction_id[i], true);
 		faction_before_hit = current_value;
 
 		UpdatePersonalFaction(char_id, npc_value[i], faction_id[i], &current_value, temp[i], this_faction_min, this_faction_max);
@@ -7976,7 +8000,7 @@ void Client::SetFactionLevel2(uint32 char_id, int32 faction_id, uint8 char_class
 		this_faction_max = std::max(0, this_faction_max);
 
 		//Get the faction modifiers
-		current_value = GetCharacterFactionLevel(faction_id);
+		current_value = GetCharacterFactionLevel(faction_id, true);
 		faction_before_hit = current_value;
 
 		UpdatePersonalFaction(char_id, value, faction_id, &current_value, temp, this_faction_min, this_faction_max);
@@ -7989,15 +8013,23 @@ void Client::SetFactionLevel2(uint32 char_id, int32 faction_id, uint8 char_class
 	return;
 }
 
-int32 Client::GetCharacterFactionLevel(int32 faction_id)
+int32 Client::GetCharacterFactionLevel(int32 faction_id, bool updating)
 {
-	if (faction_id <= 0)
+	int32 faction = 0;
+	if (!updating && (faction_id <= 0 || GetRaceBitmask(GetRace()) == 0))
+	{
+		Log(Logs::Detail, Logs::Faction, "Race: %d is non base, ignoring character faction. This is %s.", GetRace(), updating ? "a save" : "not a save");
 		return 0;
+	}
+
 	faction_map::iterator res;
 	res = factionvalues.find(faction_id);
-	if (res == factionvalues.end())
+	if (res == factionvalues.end()) {
 		return 0;
-	return res->second;
+	}
+	faction = res->second;
+	Log(Logs::Detail, Logs::Faction, "%s has %d personal faction with %d This is %s.", GetName(), faction, faction_id, updating ? "a save" : "not a save");
+	return faction;
 }
 
 // Common code to set faction level.
@@ -8014,8 +8046,9 @@ void Client::UpdatePersonalFaction(int32 char_id, int32 npc_value, int32 faction
 	{
 		int faction_mod = itembonuses.HeroicCHA / 5;
 		// If our result isn't truncated, then just do that
-		if (npc_value * faction_mod / 100 != 0)
+		if (npc_value * faction_mod / 100 != 0) {
 			npc_value += npc_value * faction_mod / 100;
+		}
 		// If our result is truncated, then double a mob's value every once and a while to equal what they would have got
 		else
 		{

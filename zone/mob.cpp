@@ -26,6 +26,7 @@
 
 #include <limits.h>
 #include <math.h>
+#include <vector>
 #include <sstream>
 #include <algorithm>
 
@@ -393,10 +394,16 @@ Mob::Mob(const char* in_name,
 	pStandingPetOrder = SPO_Follow;
 	pseudo_rooted = false;
 
-	see_invis = in_see_invis;
-	see_invis_undead = in_see_invis_undead != 0;
-	see_hide = in_see_hide != 0;
-	see_improved_hide = in_see_improved_hide != 0;
+	//see_invis = in_see_invis;
+	//see_invis_undead = in_see_invis_undead != 0;
+	//see_hide = in_see_hide != 0;
+	//see_improved_hide = in_see_improved_hide != 0;
+
+	see_invis = GetSeeInvisible(in_see_invis);
+	see_invis_undead = GetSeeInvisible(in_see_invis_undead);
+	see_hide = GetSeeInvisible(in_see_hide);
+	see_improved_hide = GetSeeInvisible(in_see_improved_hide);
+
 	qglobal = in_qglobal != 0;
 
 	// Bind wound
@@ -443,6 +450,10 @@ Mob::Mob(const char* in_name,
 	PrimaryAggro = false;
 	AssistAggro = false;
 	npc_assist_cap = 0;
+	dire_charmed = false;
+	player_damage = 0;
+	dire_pet_damage = 0;
+	total_damage = 0;
 }
 
 Mob::~Mob()
@@ -511,15 +522,34 @@ uint32 Mob::GetAppearanceValue(EmuAppearance iAppearance) {
 	return(ANIM_STAND);
 }
 
-void Mob::SetInvisible(uint8 state)
+// Generalized SetInvis function, handles ITU/IVA/Hide along with regular invis
+// type 0 = normal invis
+// type 1 = Invis to undead
+// type 2 = Invis vs Animals
+// type 3 = hide
+// type 4 = improved hide
+void Mob::SetInvisible(uint8 state /* = 0*/, uint8 type /*= 0*/)
 {
+	if (type == 0) {
 	invisible = state;
 	SendAppearancePacket(AT_Invis, invisible);
-	// Invis and hide breaks charms
+	}
+	else if (type == 1) {
+		invisible_undead = true;
+	}
+	else if (type == 2) {
+		invisible_animals = true;
+	}
+	else if (type == 3) {
+		hidden = true;
+	}
+	else if (type == 4) {
+		improved_hidden = true;
+		hidden = true;
+	}
 
-	auto formerpet = GetPet();
-	if (formerpet && formerpet->GetPetType() == petCharmed && (invisible || hidden || improved_hidden))
-		formerpet->BuffFadeByEffect(SE_Charm);
+	// All types of invis and hide depops summoned pets and breaks charms
+	CastToMob()->RemovePet();
 }
 
 //check to see if `this` is invisible to `other`
@@ -528,12 +558,8 @@ bool Mob::IsInvisible(Mob* other) const
 	if(!other)
 		return(false);
 
-	uint8 SeeInvisBonus = 0;
-	if (IsClient())
-		SeeInvisBonus = aabonuses.SeeInvis;
-
 	//check regular invisibility
-	if (invisible && invisible > (other->SeeInvisible()))
+	if (invisible && invisible > other->SeeInvisible())
 		return true;
 
 	//check invis vs. undead
@@ -1514,10 +1540,19 @@ void Mob::ShowStats(Client* client)
 		if (IsNPC()) {
 			NPC *n = CastToNPC();
 			uint32 spawngroupid = 0;
-			if(n->respawn2 != 0)
+			if(n->respawn2 != 0) {
 				spawngroupid = n->respawn2->SpawnGroupID();
-			client->Message(0, "  NPCID: %u  SpawnGroupID: %u Grid: %i LootTable: %u FactionID: %i SpellsID: %u ", GetNPCTypeID(),spawngroupid, n->GetGrid(), n->GetLoottableID(), n->GetNPCFactionID(), n->GetNPCSpellsID());
-			client->Message(0, "  Accuracy: %i MerchantID: %i EmoteID: %i Runspeed: %.3f Walkspeed: %.3f", n->GetAccuracyRating(), n->MerchantType, n->GetEmoteID(), static_cast<float>(0.025f * n->GetRunspeed()), static_cast<float>(0.025f * n->GetWalkspeed()));
+				client->Message(0, "  NPCID: %u  SpawnGroupID: %u Grid: %i LootTable: %u FactionID: %i SpellsID: %u ",
+								GetNPCTypeID(), spawngroupid, n->GetGrid(), n->GetLoottableID(), n->GetNPCFactionID(),
+								n->GetNPCSpellsID());
+				client->Message(0, "  HP Regen: %i Mana Regen: %i Magic Atk: %i Immune to Melee: %i", n->GetHPRegen(),
+								n->GetManaRegen(), GetSpecialAbility(SPECATK_MAGICAL),
+								GetSpecialAbility(IMMUNE_MELEE_NONMAGICAL));
+				client->Message(0, "  Accuracy: %i MerchantID: %i EmoteID: %i Runspeed: %.3f Walkspeed: %.3f",
+								n->GetAccuracyRating(), n->MerchantType, n->GetEmoteID(),
+								static_cast<float>(0.025f * n->GetRunspeed()),
+								static_cast<float>(0.025f * n->GetWalkspeed()));
+			}
 			n->QueryLoot(client);
 		}
 		if (IsAIControlled()) {
@@ -2305,6 +2340,15 @@ void Mob::ChangeSize(float in_size = 0, bool bNoRestriction) {
 	SendAppearancePacket(AT_Size, (uint32) in_size);
 }
 
+uint8 Mob::SeeInvisible()
+{
+	// it's not clear how multiple sources of see invis should be handled - for now, simply taking a maximum of all sources
+	std::vector<uint8> v{ see_invis, aabonuses.SeeInvis, spellbonuses.SeeInvis, itembonuses.SeeInvis };
+	auto biggest = std::max_element(std::begin(v), std::end(v));
+
+	return *biggest;
+}
+
 Mob* Mob::GetOwnerOrSelf() {
 	if (!GetOwnerID())
 		return this;
@@ -2460,7 +2504,9 @@ bool Mob::CanThisClassTripleAttack() const
 	if (!IsClient())
 		return false; // When they added the real triple attack skill, mobs lost the ability to triple
 	else
-		return CastToClient()->HasSkill(EQEmu::skills::SkillTripleAttack);
+	// Innate Triple Attack only for Level 60 Monks and Warriors in our era	
+	return (GetLevel() == 60 && (GetClass() == WARRIOR || GetClass() == MONK));
+		//return CastToClient()->HasSkill(EQEmu::skills::SkillTripleAttack);
 }
 
 bool Mob::IsWarriorClass(void) const
@@ -5578,6 +5624,21 @@ float Mob::HeadingAngleToMob(Mob *other)
 		return angle * 511.5f * 0.0027777778f;
 	else
 		return (90.0f - angle + 270.0f) * 511.5f * 0.0027777778f;
+}
+
+bool Mob::GetSeeInvisible(uint8 see_invis)
+{
+	if(see_invis > 0)
+	{
+		if(see_invis == 1)
+			return true;
+		else
+		{
+			if (zone->random.Int(0, 99) < see_invis)
+				return true;
+		}
+	}
+	return false;
 }
 
 int32 Mob::GetSpellStat(uint32 spell_id, const char *identifier, uint8 slot)

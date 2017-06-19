@@ -202,6 +202,11 @@ int Mob::GetTotalToHit(EQEmu::skills::SkillType skill, int chance_mod)
 		itembonuses.HitChanceEffect[skill] +
 		aabonuses.HitChanceEffect[skill] +
 		spellbonuses.HitChanceEffect[skill];
+		
+	if(skill == EQEmu::skills::SkillArchery) 	{
+		hit_bonus += spellbonuses.increasearchery + aabonuses.increasearchery + itembonuses.increasearchery;
+		hit_bonus -= hit_bonus*RuleR(Combat, ArcheryHitPenalty);
+	}
 
 	accuracy = (accuracy * (100 + hit_bonus)) / 100;
 
@@ -952,7 +957,6 @@ int Mob::GetWeaponDamage(Mob *against, const EQEmu::ItemData *weapon_item) {
 		if (weapon_item && weapon_item->ElemDmgAmt) {
 			//we don't check resist for npcs here
 			eledmg = weapon_item->ElemDmgAmt;
-			dmg += eledmg;
 		}
 	}
 
@@ -974,7 +978,7 @@ int Mob::GetWeaponDamage(Mob *against, const EQEmu::ItemData *weapon_item) {
 				return 1;
 		}
 		else
-			dmg += banedmg;
+			dmg += (banedmg + eledmg);
 	}
 	else {
 		if (weapon_item) {
@@ -2045,6 +2049,14 @@ void NPC::Damage(Mob* other, int32 damage, uint16 spell_id, EQEmu::skills::Skill
 
 bool NPC::Death(Mob* killer_mob, int32 damage, uint16 spell, EQEmu::skills::SkillType attack_skill)
 {
+	bool charmedNoXp = false;	// using if charmed pet dies, shouldn't give player experience.
+	if (HasOwner()) {
+		Mob *clientOwner = GetOwnerOrSelf();
+		if (clientOwner->IsClient()) {
+			charmedNoXp = true;
+		}
+	}
+
 	Log(Logs::Detail, Logs::Combat, "Fatal blow dealt by %s with %d damage, spell %d, skill %d",
 		((killer_mob) ? (killer_mob->GetName()) : ("[nullptr]")), damage, spell, attack_skill);
 
@@ -2146,11 +2158,11 @@ bool NPC::Death(Mob* killer_mob, int32 damage, uint16 spell, EQEmu::skills::Skil
 
 	Mob *give_exp = hate_list.GetDamageTopOnHateList(this);
 
-	if (give_exp == nullptr)
+	if (give_exp == nullptr) {
 		give_exp = killer;
+	}
 
 	if (give_exp && give_exp->HasOwner()) {
-
 		bool ownerInGroup = false;
 		if ((give_exp->HasGroup() && give_exp->GetGroup()->IsGroupMember(give_exp->GetUltimateOwner()))
 			|| (give_exp->IsPet() && (give_exp->GetOwner()->IsClient()
@@ -2168,38 +2180,41 @@ bool NPC::Death(Mob* killer_mob, int32 damage, uint16 spell, EQEmu::skills::Skil
 
 	if (give_exp && give_exp->IsTempPet() && give_exp->IsPetOwnerClient()) {
 		if (give_exp->IsNPC() && give_exp->CastToNPC()->GetSwarmOwner()) {
-			Mob* temp_owner = entity_list.GetMobID(give_exp->CastToNPC()->GetSwarmOwner());
-			if (temp_owner)
+			Mob *temp_owner = entity_list.GetMobID(give_exp->CastToNPC()->GetSwarmOwner());
+			if (temp_owner) {
 				give_exp = temp_owner;
+			}
 		}
 	}
 
 	int PlayerCount = 0; // QueryServ Player Counting
 
 	Client *give_exp_client = nullptr;
-	if (give_exp && give_exp->IsClient())
+	if (give_exp && give_exp->IsClient()) {
 		give_exp_client = give_exp->CastToClient();
+	}
 
 	//do faction hits even if we are a merchant, so long as a player killed us
-	if (give_exp_client && !RuleB(NPC, EnableMeritBasedFaction))
+	if (give_exp_client && !RuleB(NPC, EnableMeritBasedFaction) && !charmedNoXp) {
 		hate_list.DoFactionHits(GetNPCFactionID());
+	}
 
 	bool IsLdonTreasure = (this->GetClass() == LDON_TREASURE);
 
-	if (give_exp_client && !IsCorpse()) {
+	if (give_exp_client && !IsCorpse() && !charmedNoXp) {
 		Group *kg = entity_list.GetGroupByClient(give_exp_client);
 		Raid *kr = entity_list.GetRaidByClient(give_exp_client);
 
-		int32 finalxp = EXP_FORMULA;
-		finalxp = give_exp_client->mod_client_xp(finalxp, this);
+        uint32 finalxp = GetBaseEXP();
 
 		if (kr) {
 			if (!IsLdonTreasure && MerchantType == 0) {
-				kr->SplitExp((finalxp), this);
+                kr->SplitExp(finalxp, this);
 				if (killer_mob && (kr->IsRaidMember(killer_mob->GetName()) || kr->IsRaidMember(killer_mob->GetUltimateOwner()->GetName())))
 					killer_mob->TrySpellOnKill(killed_level, spell);
 			}
 
+			kr->SplitExp(finalxp, this);
 			/* Send the EVENT_KILLED_MERIT event for all raid members */
 			for (int i = 0; i < MAX_RAID_MEMBERS; i++) {
 				if (kr->members[i].member != nullptr && kr->members[i].member->IsClient()) { // If Group Member is Client
@@ -2243,7 +2258,7 @@ bool NPC::Death(Mob* killer_mob, int32 damage, uint16 spell, EQEmu::skills::Skil
 		}
 		else if (give_exp_client->IsGrouped() && kg != nullptr) {
 			if (!IsLdonTreasure && MerchantType == 0) {
-				kg->SplitExp((finalxp), this);
+                kg->SplitExp(finalxp, this);
 				if (killer_mob && (kg->IsGroupMember(killer_mob->GetName()) || kg->IsGroupMember(killer_mob->GetUltimateOwner()->GetName())))
 					killer_mob->TrySpellOnKill(killed_level, spell);
 			}
@@ -2266,39 +2281,16 @@ bool NPC::Death(Mob* killer_mob, int32 damage, uint16 spell, EQEmu::skills::Skil
 					PlayerCount++;
 				}
 			}
-
-			// QueryServ Logging - Group Kills
-			if (RuleB(QueryServ, PlayerLogNPCKills)) {
-				auto pack =
-					new ServerPacket(ServerOP_QSPlayerLogNPCKills,
-						sizeof(QSPlayerLogNPCKill_Struct) +
-						(sizeof(QSPlayerLogNPCKillsPlayers_Struct) * PlayerCount));
-				PlayerCount = 0;
-				QSPlayerLogNPCKill_Struct* QS = (QSPlayerLogNPCKill_Struct*)pack->pBuffer;
-				QS->s1.NPCID = this->GetNPCTypeID();
-				QS->s1.ZoneID = this->GetZoneID();
-				QS->s1.Type = 1; // Group Fight
-				for (int i = 0; i < MAX_GROUP_MEMBERS; i++) {
-					if (kg->members[i] != nullptr && kg->members[i]->IsClient()) { // If Group Member is Client
-						Client *c = kg->members[i]->CastToClient();
-						QS->Chars[PlayerCount].char_id = c->CharacterID();
-						PlayerCount++;
-					}
-				}
-				worldserver.SendPacket(pack); // Send Packet to World
-				safe_delete(pack);
-			}
-			// End QueryServ Logging
+			kg->SplitExp(finalxp, this);
 		}
 		else {
 			if (!IsLdonTreasure && MerchantType == 0) {
-				int conlevel = give_exp->GetLevelCon(GetLevel());
-				if (conlevel != CON_GRAY) {
-					if (!GetOwner() || (GetOwner() && !GetOwner()->IsClient())) {
-						give_exp_client->AddEXP((finalxp), conlevel);
-						if (killer_mob && (killer_mob->GetID() == give_exp_client->GetID() || killer_mob->GetUltimateOwner()->GetID() == give_exp_client->GetID()))
-							killer_mob->TrySpellOnKill(killed_level, spell);
-					}
+                int conlevel = give_exp_client->GetLevelCon(GetLevel());
+				if (conlevel != CON_GREEN) {
+                    give_exp_client->AddEXP(finalxp, conlevel);
+					if (killer_mob && (killer_mob->GetID() == give_exp_client->GetID() ||
+									   killer_mob->GetUltimateOwner()->GetID() == give_exp_client->GetID()))
+						killer_mob->TrySpellOnKill(killed_level, spell);
 				}
 			}
 
@@ -2336,8 +2328,7 @@ bool NPC::Death(Mob* killer_mob, int32 damage, uint16 spell, EQEmu::skills::Skil
 	if (!HasOwner() && !IsMerc() && class_ != MERCHANT && class_ != ADVENTUREMERCHANT && !GetSwarmInfo()
 		&& MerchantType == 0 && ((killer && (killer->IsClient() || (killer->HasOwner() && killer->GetUltimateOwner()->IsClient()) ||
 			(killer->IsNPC() && killer->CastToNPC()->GetSwarmInfo() && killer->CastToNPC()->GetSwarmInfo()->GetOwner() && killer->CastToNPC()->GetSwarmInfo()->GetOwner()->IsClient())))
-			|| (killer_mob && IsLdonTreasure)))
-	{
+			|| (killer_mob && IsLdonTreasure))) {
 		if (killer != 0) {
 			if (killer->GetOwner() != 0 && killer->GetOwner()->IsClient())
 				killer = killer->GetOwner();
@@ -2349,86 +2340,84 @@ bool NPC::Death(Mob* killer_mob, int32 damage, uint16 spell, EQEmu::skills::Skil
 		entity_list.RemoveFromAutoXTargets(this);
 		uint16 emoteid = this->GetEmoteID();
 		auto corpse = new Corpse(this, &itemlist, GetNPCTypeID(), &NPCTypedata,
-			level > 54 ? RuleI(NPC, MajorNPCCorpseDecayTimeMS)
-			: RuleI(NPC, MinorNPCCorpseDecayTimeMS));
-		entity_list.LimitRemoveNPC(this);
-		entity_list.AddCorpse(corpse, GetID());
+								 level > 54 ? RuleI(NPC, MajorNPCCorpseDecayTimeMS)
+											: RuleI(NPC, MinorNPCCorpseDecayTimeMS));
+		if (corpse) {
+			entity_list.LimitRemoveNPC(this);
+			entity_list.AddCorpse(corpse, GetID());
 
-		entity_list.UnMarkNPC(GetID());
-		entity_list.RemoveNPC(GetID());
-		this->SetID(0);
+			entity_list.UnMarkNPC(GetID());
+			entity_list.RemoveNPC(GetID());
+			this->SetID(0);
 
-		if (killer != 0 && emoteid != 0)
-			corpse->CastToNPC()->DoNPCEmote(AFTERDEATH, emoteid);
-		if (killer != 0 && killer->IsClient()) {
-			corpse->AllowPlayerLoot(killer, 0);
-			if (killer->IsGrouped()) {
-				Group* group = entity_list.GetGroupByClient(killer->CastToClient());
-				if (group != 0) {
-					for (int i = 0; i<6; i++) { // Doesnt work right, needs work
-						if (group->members[i] != nullptr) {
-							corpse->AllowPlayerLoot(group->members[i], i);
+			if (killer != 0 && emoteid != 0) {
+				corpse->CastToNPC()->DoNPCEmote(AFTERDEATH, emoteid);
+			}
+			if (killer != 0 && killer->IsClient()) {
+				corpse->AllowPlayerLoot(killer, 0);
+				if (killer->IsGrouped()) {
+					Group *group = entity_list.GetGroupByClient(killer->CastToClient());
+					if (group != 0) {
+						for (int i = 0; i < 6; i++) { // Doesnt work right, needs work
+							if (group->members[i] != nullptr) {
+								corpse->AllowPlayerLoot(group->members[i], i);
+							}
+						}
+					}
+				} else if (killer->IsRaidGrouped()) {
+					Raid *r = entity_list.GetRaidByClient(killer->CastToClient());
+					if (r) {
+						int i = 0;
+						for (int x = 0; x < MAX_RAID_MEMBERS; x++) {
+							switch (r->GetLootType()) {
+								case 0:
+								case 1:
+									if (r->members[x].member && r->members[x].IsRaidLeader) {
+										corpse->AllowPlayerLoot(r->members[x].member, i);
+										i++;
+									}
+									break;
+								case 2:
+									if (r->members[x].member && r->members[x].IsRaidLeader) {
+										corpse->AllowPlayerLoot(r->members[x].member, i);
+										i++;
+									} else if (r->members[x].member && r->members[x].IsGroupLeader) {
+										corpse->AllowPlayerLoot(r->members[x].member, i);
+										i++;
+									}
+									break;
+								case 3:
+									if (r->members[x].member && r->members[x].IsLooter) {
+										corpse->AllowPlayerLoot(r->members[x].member, i);
+										i++;
+									}
+									break;
+								case 4:
+									if (r->members[x].member) {
+										corpse->AllowPlayerLoot(r->members[x].member, i);
+										i++;
+									}
+									break;
+							}
 						}
 					}
 				}
+			} else if (killer_mob && IsLdonTreasure) {
+				auto u_owner = killer_mob->GetUltimateOwner();
+				if (u_owner->IsClient())
+					corpse->AllowPlayerLoot(u_owner, 0);
 			}
-			else if (killer->IsRaidGrouped()) {
-				Raid* r = entity_list.GetRaidByClient(killer->CastToClient());
-				if (r) {
-					int i = 0;
-					for (int x = 0; x < MAX_RAID_MEMBERS; x++) {
-						switch (r->GetLootType()) {
-						case 0:
-						case 1:
-							if (r->members[x].member && r->members[x].IsRaidLeader) {
-								corpse->AllowPlayerLoot(r->members[x].member, i);
-								i++;
-							}
-							break;
-						case 2:
-							if (r->members[x].member && r->members[x].IsRaidLeader) {
-								corpse->AllowPlayerLoot(r->members[x].member, i);
-								i++;
-							}
-							else if (r->members[x].member && r->members[x].IsGroupLeader) {
-								corpse->AllowPlayerLoot(r->members[x].member, i);
-								i++;
-							}
-							break;
-						case 3:
-							if (r->members[x].member && r->members[x].IsLooter) {
-								corpse->AllowPlayerLoot(r->members[x].member, i);
-								i++;
-							}
-							break;
-						case 4:
-							if (r->members[x].member) {
-								corpse->AllowPlayerLoot(r->members[x].member, i);
-								i++;
-							}
-							break;
-						}
-					}
-				}
-			}
-		}
-		else if (killer_mob && IsLdonTreasure) {
-			auto u_owner = killer_mob->GetUltimateOwner();
-			if (u_owner->IsClient())
-				corpse->AllowPlayerLoot(u_owner, 0);
-		}
 
-		if (zone && zone->adv_data) {
-			ServerZoneAdventureDataReply_Struct *sr = (ServerZoneAdventureDataReply_Struct*)zone->adv_data;
-			if (sr->type == Adventure_Kill) {
-				zone->DoAdventureCountIncrease();
-			}
-			else if (sr->type == Adventure_Assassinate) {
-				if (sr->data_id == GetNPCTypeID()) {
+			if (zone && zone->adv_data) {
+				ServerZoneAdventureDataReply_Struct *sr = (ServerZoneAdventureDataReply_Struct *) zone->adv_data;
+				if (sr->type == Adventure_Kill) {
 					zone->DoAdventureCountIncrease();
-				}
-				else {
-					zone->DoAdventureAssassinationCountIncrease();
+				} else if (sr->type == Adventure_Assassinate) {
+					if (sr->data_id == GetNPCTypeID()) {
+						zone->DoAdventureCountIncrease();
+					} else {
+						zone->DoAdventureAssassinationCountIncrease();
+					}
 				}
 			}
 		}
@@ -2512,7 +2501,9 @@ void Mob::AddToHateList(Mob* other, uint32 hate /*= 0*/, int32 damage /*= 0*/, b
 			hate = ((hate * (hatemod)) / 100);
 		}
 		else {
-			hate += 100; // 100 bonus initial aggro
+			hate += RuleI(Aggro, InitialAggroBonus); // Bonus Initial Aggro
+			//Log(Logs::Detail, Logs::Combat, "InitialAggroBonus: %d", RuleI(Aggro, InitialAggroBonus));
+			
 		}
 	}
 
@@ -3214,15 +3205,27 @@ bool Client::CheckDoubleAttack()
 // with varying triple attack skill (1-3% error at least)
 bool Client::CheckTripleAttack()
 {
-	int chance = GetSkill(EQEmu::skills::SkillTripleAttack);
+	//int chance = GetSkill(EQEmu::skills::SkillTripleAttack);
+	
+	// In era, Triple Attack was an innate skill.  Don't have exact data, but found one post suggesting when
+	// they implemented Triple Attack as a skill, that 200 may have been the cap for some classes (~20% in this code).
+	// Only Level 60 Warriors and Monks get it, and making their percentage (fixed) separate as a tuning variable.
+	int chance = 0;
+	
+	if (IsClient() && (GetLevel() == 60) && (GetClass() == WARRIOR))
+		chance = RuleI(Combat, TripleAttackChanceWarrior);
+	
+	if (IsClient() && (GetLevel() == 60) && (GetClass() == MONK))
+		chance = RuleI(Combat, TripleAttackChanceMonk);
+	
 	if (chance < 1)
 		return false;
 
 	int inc = aabonuses.TripleAttackChance + spellbonuses.TripleAttackChance + itembonuses.TripleAttackChance;
 	chance = static_cast<int>(chance * (1 + inc / 100.0f));
-	chance = (chance * 100) / (chance + 800);
-
-	return zone->random.Int(1, 100) <= chance;
+	//chance = (chance * 100) / (chance + 800);
+	
+	return zone->random.Int(1, 1000) <= chance;
 }
 
 bool Client::CheckDoubleRangedAttack() {
@@ -3295,6 +3298,7 @@ void Mob::CommonDamage(Mob* attacker, int &damage, const uint16 spell_id, const 
 
 	if (damage > 0) {
 		//if there is some damage being done and theres an attacker involved
+		int previousHPRatio = GetHPRatio();	 	// store current hp ratio so we know when it drops below 16 for trydeathsave.
 		if (attacker) {
 			// if spell is lifetap add hp to the caster
 			if (spell_id != SPELL_UNKNOWN && IsLifetapSpell(spell_id)) {
@@ -3361,7 +3365,11 @@ void Mob::CommonDamage(Mob* attacker, int &damage, const uint16 spell_id, const 
 
 		//final damage has been determined.
 
-		SetHP(GetHP() - damage);
+        if(attacker->IsClient()) {
+            player_damage += damage;
+        }
+
+        SetHP(GetHP() - damage);
 
 		if (IsClient() && RuleB(Character, MarqueeHPUpdates))
 			this->CastToClient()->SendHPUpdateMarquee();
@@ -3381,7 +3389,7 @@ void Mob::CommonDamage(Mob* attacker, int &damage, const uint16 spell_id, const 
 			}
 		}
 		else {
-			if (GetHPRatio() < 16)
+			if(GetHPRatio() < 16 and previousHPRatio >= 16)
 				TryDeathSave();
 		}
 
@@ -3787,7 +3795,7 @@ void Mob::TryDefensiveProc(Mob *on, uint16 hand) {
 		float ProcChance, ProcBonus;
 		on->GetDefensiveProcChances(ProcBonus, ProcChance, hand, this);
 
-		if (hand != EQEmu::inventory::slotPrimary)
+		if (hand == EQEmu::inventory::slotSecondary)
 			ProcChance /= 2;
 
 		int level_penalty = 0;
@@ -3860,7 +3868,7 @@ void Mob::TryWeaponProc(const EQEmu::ItemInstance *inst, const EQEmu::ItemData *
 	ProcBonus += static_cast<float>(itembonuses.ProcChance) / 10.0f; // Combat Effects
 	float ProcChance = GetProcChances(ProcBonus, hand);
 
-	if (hand != EQEmu::inventory::slotPrimary) //Is Archery intened to proc at 50% rate?
+	if (hand == EQEmu::inventory::slotSecondary)
 		ProcChance /= 2;
 
 	// Try innate proc on weapon
@@ -3942,7 +3950,7 @@ void Mob::TrySpellProc(const EQEmu::ItemInstance *inst, const EQEmu::ItemData *w
 	float ProcChance = 0.0f;
 	ProcChance = GetProcChances(ProcBonus, hand);
 
-	if (hand != EQEmu::inventory::slotPrimary) //Is Archery intened to proc at 50% rate?
+	if (hand == EQEmu::inventory::slotSecondary)
 		ProcChance /= 2;
 
 	bool rangedattk = false;
@@ -4105,50 +4113,7 @@ void Mob::TryCriticalHit(Mob *defender, DamageHitInfo &hit, ExtraAttackOptions *
 	if (IsNPC() && !RuleB(Combat, NPCCanCrit))
 		return;
 
-	// 1: Try Slay Undead
-	if (defender->GetBodyType() == BT_Undead || defender->GetBodyType() == BT_SummonedUndead ||
-		defender->GetBodyType() == BT_Vampire) {
-		int SlayRateBonus = aabonuses.SlayUndead[0] + itembonuses.SlayUndead[0] + spellbonuses.SlayUndead[0];
-		if (SlayRateBonus) {
-			float slayChance = static_cast<float>(SlayRateBonus) / 10000.0f;
-			if (zone->random.Roll(slayChance)) {
-				int SlayDmgBonus = std::max(
-				{ aabonuses.SlayUndead[1], itembonuses.SlayUndead[1], spellbonuses.SlayUndead[1] });
-				hit.damage_done = std::max(hit.damage_done, hit.base_damage) + 5;
-				hit.damage_done = (hit.damage_done * SlayDmgBonus) / 100;
-
-				/* Female */
-				if (GetGender() == 1) {
-					entity_list.FilteredMessageClose_StringID(
-						this, /* Sender */
-						false, /* Skip Sender */
-						RuleI(Range, CriticalDamage),
-						MT_CritMelee, /* Type: 301 */
-						FilterMeleeCrits, /* FilterType: 12 */
-						FEMALE_SLAYUNDEAD, /* MessageFormat: %1's holy blade cleanses her target!(%2) */
-						GetCleanName(), /* Message1 */
-						itoa(hit.damage_done + hit.min_damage) /* Message2 */
-						);
-				}
-				/* Males and Neuter */
-				else {
-					entity_list.FilteredMessageClose_StringID(
-						this, /* Sender */
-						false, /* Skip Sender */
-						RuleI(Range, CriticalDamage),
-						MT_CritMelee, /* Type: 301 */
-						FilterMeleeCrits, /* FilterType: 12 */
-						MALE_SLAYUNDEAD, /* MessageFormat: %1's holy blade cleanses his target!(%2)  */
-						GetCleanName(), /* Message1 */
-						itoa(hit.damage_done + hit.min_damage) /* Message2 */
-						);
-				}
-				return;
-			}
-		}
-	}
-
-	// 2: Try Melee Critical
+	// Try Melee Critical
 	// a lot of good info: http://giline.versus.jp/shiden/damage_e.htm, http://giline.versus.jp/shiden/su.htm
 
 	// We either require an innate crit chance or some SPA 169 to crit
@@ -4177,7 +4142,7 @@ void Mob::TryCriticalHit(Mob *defender, DamageHitInfo &hit, ExtraAttackOptions *
 			dex_bonus = 255 + ((dex_bonus - 255) / 5);
 		dex_bonus += 45; // chances did not match live without a small boost
 
-						 // so if we have an innate crit we have a better chance, except for ber throwing
+		// so if we have an innate crit we have a better chance, except for ber throwing
 		if (!innate_crit || (GetClass() == BERSERKER && hit.skill == EQEmu::skills::SkillThrowing))
 			dex_bonus = dex_bonus * 3 / 5;
 
@@ -4186,18 +4151,58 @@ void Mob::TryCriticalHit(Mob *defender, DamageHitInfo &hit, ExtraAttackOptions *
 
 		// check if we crited
 		if (roll < dex_bonus) {
-			// step 1: check for finishing blow
-			if (TryFinishingBlow(defender, hit.damage_done))
-				return;
 
+		int crit_mod = 170 + GetCritDmgMob(hit.skill);
+		
+			// 1: Try Slay Undead - On P2002 Slay Undead is a critical conversion, not a flat chance per hit
+			if (defender && (defender->GetBodyType() == BT_Undead || defender->GetBodyType() == BT_SummonedUndead ||
+				defender->GetBodyType() == BT_Vampire)) {
+				int SlayRateBonus = aabonuses.SlayUndead[0] + itembonuses.SlayUndead[0] + spellbonuses.SlayUndead[0];
+				if (SlayRateBonus) {
+					float slayChance = static_cast<float>(SlayRateBonus) / 100.0f;
+					if (zone->random.Roll(slayChance)) {
+						int SlayDmgBonus = std::max(
+						{ aabonuses.SlayUndead[1], itembonuses.SlayUndead[1], spellbonuses.SlayUndead[1] });
+						hit.damage_done = std::max(hit.damage_done, hit.base_damage) + 5;
+						hit.damage_done = (hit.damage_done * SlayDmgBonus * crit_mod) / 100;
+
+						/* Female */
+						if (GetGender() == 1) {
+							entity_list.FilteredMessageClose_StringID(
+								this, /* Sender */
+								false, /* Skip Sender */
+								RuleI(Range, CriticalDamage),
+								MT_CritMelee, /* Type: 301 */
+								FilterMeleeCrits, /* FilterType: 12 */
+								FEMALE_SLAYUNDEAD, /* MessageFormat: %1's holy blade cleanses her target!(%2) */
+								GetCleanName(), /* Message1 */
+								itoa(hit.damage_done) /* Message2 */
+								);
+						}
+						/* Males and Neuter */
+						else {
+							entity_list.FilteredMessageClose_StringID(
+								this, /* Sender */
+								false, /* Skip Sender */
+								RuleI(Range, CriticalDamage),
+								MT_CritMelee, /* Type: 301 */
+								FilterMeleeCrits, /* FilterType: 12 */
+								MALE_SLAYUNDEAD, /* MessageFormat: %1's holy blade cleanses his target!(%2)  */
+								GetCleanName(), /* Message1 */
+								itoa(hit.damage_done) /* Message2 */
+								);
+						}
+						return;
+					}
+				}
+			}
+			
 			// step 2: calculate damage
 			hit.damage_done = std::max(hit.damage_done, hit.base_damage) + 5;
 			int og_damage = hit.damage_done;
-			int crit_mod = 170 + GetCritDmgMob(hit.skill);
 			hit.damage_done = hit.damage_done * crit_mod / 100;
 			Log(Logs::Detail, Logs::Combat,
-				"Crit success roll %d dex chance %d og dmg %d crit_mod %d new dmg %d", roll, dex_bonus,
-				og_damage, crit_mod, hit.damage_done);
+				"Crit success roll %d dex chance %d og dmg %d crit_mod %d new dmg %d", roll, dex_bonus, og_damage, crit_mod, hit.damage_done);
 
 			// step 3: check deadly strike
 			if (GetClass() == ROGUE && hit.skill == EQEmu::skills::SkillThrowing) {
@@ -4220,7 +4225,7 @@ void Mob::TryCriticalHit(Mob *defender, DamageHitInfo &hit, ExtraAttackOptions *
 							FilterMeleeCrits, /* FilterType: 12 */
 							DEADLY_STRIKE, /* MessageFormat: %1 scores a Deadly Strike!(%2) */
 							GetCleanName(), /* Message1 */
-							itoa(hit.damage_done + hit.min_damage) /* Message2 */
+							itoa(hit.damage_done) /* Message2 */
 							);
 						return;
 					}
@@ -4233,7 +4238,7 @@ void Mob::TryCriticalHit(Mob *defender, DamageHitInfo &hit, ExtraAttackOptions *
 			if (!berserk) {
 				if (zone->random.Roll(GetCrippBlowChance())) {
 					berserk = true;
-				} // TODO: Holyforge is suppose to have an innate extra undead chance? 1/5 which matches the SPA crip though ...
+				} 
 			}
 
 			if (IsBerserk() || berserk) {
@@ -4248,7 +4253,7 @@ void Mob::TryCriticalHit(Mob *defender, DamageHitInfo &hit, ExtraAttackOptions *
 					FilterMeleeCrits, /* FilterType: 12 */
 					CRIPPLING_BLOW, /* MessageFormat: %1 lands a Crippling Blow!(%2) */
 					GetCleanName(), /* Message1 */
-					itoa(hit.damage_done + hit.min_damage) /* Message2 */
+					itoa(hit.damage_done) /* Message2 */
 					);
 
 				// Crippling blows also have a chance to stun
@@ -4270,7 +4275,7 @@ void Mob::TryCriticalHit(Mob *defender, DamageHitInfo &hit, ExtraAttackOptions *
 				FilterMeleeCrits, /* FilterType: 12 */
 				CRITICAL_HIT, /* MessageFormat: %1 scores a critical hit! (%2) */
 				GetCleanName(), /* Message1 */
-				itoa(hit.damage_done + hit.min_damage) /* Message2 */
+				itoa(hit.damage_done) /* Message2 */
 				);
 		}
 	}
@@ -4291,12 +4296,11 @@ bool Mob::TryFinishingBlow(Mob *defender, int &damage)
 		else if (FB_Level < itembonuses.FinishingBlowLvl[0])
 			FB_Level = itembonuses.FinishingBlowLvl[0];
 
-		// modern AA description says rank 1 (500) is 50% chance
+		// With our code, 500 = 5%.
 		int ProcChance =
-			aabonuses.FinishingBlow[0] + spellbonuses.FinishingBlow[0] + spellbonuses.FinishingBlow[0];
+			(aabonuses.FinishingBlow[0] + spellbonuses.FinishingBlow[0] + spellbonuses.FinishingBlow[0])/10;
 
-		if (FB_Level && FB_Dmg && (defender->GetLevel() <= FB_Level) &&
-			(ProcChance >= zone->random.Int(1, 1000))) {
+		if (FB_Level && FB_Dmg && (defender->GetLevel() <= FB_Level) && defender->currently_fleeing && defender->flee_mode && (ProcChance >= zone->random.Int(1, 1000))) {
 
 			/* Finishing Blow Critical Message */
 			entity_list.FilteredMessageClose_StringID(
@@ -4377,8 +4381,9 @@ void Mob::ApplyMeleeDamageMods(uint16 skill, int &damage, Mob *defender, ExtraAt
 		dmgbonusmod += opts->melee_damage_bonus_flat;
 
 	if (defender) {
-		if (defender->IsClient() && defender->GetClass() == WARRIOR)
-			dmgbonusmod -= 5;
+		// Innate Warrior Mitigation out of Era, implemented 2004
+		//if (defender->IsClient() && defender->GetClass() == WARRIOR)
+		//	dmgbonusmod -= 5;
 		// 168 defensive
 		dmgbonusmod += (defender->spellbonuses.MeleeMitigationEffect + itembonuses.MeleeMitigationEffect + aabonuses.MeleeMitigationEffect);
 	}
@@ -4560,9 +4565,10 @@ void Mob::ApplyDamageTable(DamageHitInfo &hit)
 	int extrapercent = zone->random.Roll0(basebonus);
 	int percent = std::min(100 + extrapercent, damage_table.max_extra);
 	hit.damage_done = (hit.damage_done * percent) / 100;
-
-	if (IsWarriorClass() && GetLevel() > 54)
-		hit.damage_done++;
+	
+	// Not sure why the block below was here.  Arbitrarily adds 1 damage.  Commented out.
+	//if (IsWarriorClass() && GetLevel() > 54)
+	//	hit.damage_done++;
 	Log(Logs::Detail, Logs::Attack, "Damage table applied %d (max %d)", percent, damage_table.max_extra);
 }
 
@@ -4751,7 +4757,7 @@ float Mob::GetSkillProcChances(uint16 ReuseTime, uint16 hand) {
 	if (!ReuseTime && hand) {
 		weapon_speed = GetWeaponSpeedbyHand(hand);
 		ProcChance = static_cast<float>(weapon_speed) * (RuleR(Combat, AvgProcsPerMinute) / 60000.0f);
-		if (hand != EQEmu::inventory::slotPrimary)
+		if (hand == EQEmu::inventory::slotSecondary)
 			ProcChance /= 2;
 	}
 
@@ -4886,11 +4892,15 @@ void Mob::CommonOutgoingHitSuccess(Mob* defender, DamageHitInfo &hit, ExtraAttac
 			hit.damage_done = headshot;
 		}
 		else if (GetClass() == RANGER && GetLevel() > 50) { // no double dmg on headshot
-			if (defender->IsNPC() && !defender->IsMoving() && !defender->IsRooted()) {
+			// Double Damage Bonus should apply to Permarooted mobs
+			if (defender->IsNPC() && !defender->IsMoving() && !(defender->IsRooted() && !defender->permarooted)) {
 				hit.damage_done *= 2;
 				Message_StringID(MT_CritMelee, BOW_DOUBLE_DAMAGE);
 			}
 		}
+		//Scale Factor for Archery Damage Tuning
+		//Log(Logs::Detail, Logs::Attack, "ArcheryBaseDamageBonus %f", RuleR(Combat, ArcheryBaseDamageBonus));
+		hit.damage_done *= RuleR(Combat, ArcheryBaseDamageBonus);
 	}
 
 	int extra_mincap = 0;
@@ -4929,9 +4939,23 @@ void Mob::CommonOutgoingHitSuccess(Mob* defender, DamageHitInfo &hit, ExtraAttac
 	if (min_mod && hit.damage_done < min_mod) // SPA 186
 		hit.damage_done = min_mod;
 
-	TryCriticalHit(defender, hit, opts);
-
+	// In Era, Finishing Blow isn't a Critical Conversion, but need to be able to crit still
+	bool innate_crit = false;
+	int crit_chance = GetCriticalChanceBonus(hit.skill);
+	if ((GetClass() == WARRIOR || GetClass() == BERSERKER) && GetLevel() >= 12)
+		innate_crit = true;
+	else if (GetClass() == RANGER && GetLevel() >= 12 && hit.skill == EQEmu::skills::SkillArchery)
+		innate_crit = true;
+	else if (GetClass() == ROGUE && GetLevel() >= 12 && hit.skill == EQEmu::skills::SkillThrowing)
+		innate_crit = true;	
+	if (innate_crit || crit_chance)
+		if (TryFinishingBlow(defender, hit.damage_done))
+			return;	
+	
 	hit.damage_done += hit.min_damage;
+	
+	TryCriticalHit(defender, hit, opts);
+	
 	if (IsClient()) {
 		int extra = 0;
 		switch (hit.skill) {
@@ -5173,7 +5197,7 @@ void Client::DoAttackRounds(Mob *target, int hand, bool IsFromSpell)
 			Attack(target, hand, false, false, IsFromSpell);
 			// you can only triple from the main hand
 			if (hand == EQEmu::inventory::slotPrimary && CanThisClassTripleAttack()) {
-				CheckIncreaseSkill(EQEmu::skills::SkillTripleAttack, target, -10);
+				//CheckIncreaseSkill(EQEmu::skills::SkillTripleAttack, target, -10);
 				if (CheckTripleAttack()) {
 					Attack(target, hand, false, false, IsFromSpell);
 					auto flurrychance = aabonuses.FlurryChance + spellbonuses.FlurryChance +

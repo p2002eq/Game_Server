@@ -213,13 +213,13 @@ bool Client::SummonItem(uint32 item_id, int16 charges, uint32 aug1, uint32 aug2,
 		return false;
 	}
 	// check to make sure we are augmenting an augmentable item
-	else if (((!item->IsClassCommon()) || (item->AugType > 0)) && (aug1 | aug2 | aug3 | aug4 | aug5 | aug6)) {
-		Message(13, "You can not augment an augment or a non-common class item.");
-		Log(Logs::Detail, Logs::Inventory, "Player %s on account %s attempted to augment an augment or a non-common class item.\n(Item: %u, Aug1: %u, Aug2: %u, Aug3: %u, Aug4: %u, Aug5: %u, Aug5: %u)\n",
-			GetName(), account_name, item->ID, aug1, aug2, aug3, aug4, aug5, aug6);
+	//else if (((!item->IsClassCommon()) || (item->AugType > 0)) && (aug1 | aug2 | aug3 | aug4 | aug5 | aug6)) {
+	//	Message(13, "You can not augment an augment or a non-common class item.");
+	//	Log(Logs::Detail, Logs::Inventory, "Player %s on account %s attempted to augment an augment or a non-common class item.\n(Item: %u, Aug1: %u, Aug2: %u, Aug3: %u, Aug4: %u, Aug5: %u, Aug5: %u)\n",
+	//		GetName(), account_name, item->ID, aug1, aug2, aug3, aug4, aug5, aug6);
 
-		return false;
-	}
+	//	return false;
+	//}
 
 	// This code is ready to implement once the item load code is changed to process the 'minstatus' field.
 	// Checking #iteminfo in-game verfies that item->MinStatus is set to '0' regardless of field value.
@@ -267,13 +267,13 @@ bool Client::SummonItem(uint32 item_id, int16 charges, uint32 aug1, uint32 aug2,
 				return false;
 			}
 			// check that augment is an actual augment
-			else if(augtest->AugType == 0) {
-				Message(13, "%s (%u) (Aug%i) is not an actual augment.", augtest->Name, augtest->ID, iter + 1);
-				Log(Logs::Detail, Logs::Inventory, "Player %s on account %s attempted to use a non-augment item (Aug%i) as an augment.\n(Item: %u, Aug1: %u, Aug2: %u, Aug3: %u, Aug4: %u, Aug5: %u, Aug6: %u)\n",
-					GetName(), account_name, item->ID, (iter + 1), aug1, aug2, aug3, aug4, aug5, aug6);
+			//else if(augtest->AugType == 0) {
+			//	Message(13, "%s (%u) (Aug%i) is not an actual augment.", augtest->Name, augtest->ID, iter + 1);
+			//	Log(Logs::Detail, Logs::Inventory, "Player %s on account %s attempted to use a non-augment item (Aug%i) as an augment.\n(Item: %u, Aug1: %u, Aug2: %u, Aug3: %u, Aug4: %u, Aug5: %u, Aug6: %u)\n",
+			//		GetName(), account_name, item->ID, (iter + 1), aug1, aug2, aug3, aug4, aug5, aug6);
 				
-				return false;
-			}
+			//	return false;
+			//}
 
 			// Same as GM check above
 
@@ -519,12 +519,12 @@ bool Client::SummonItem(uint32 item_id, int16 charges, uint32 aug1, uint32 aug2,
 
 	// if the item is stackable and the charge amount is -1 or 0 then set to 1 charge.
 	// removed && item->MaxCharges == 0 if -1 or 0 was passed max charges is irrelevant 
-	if(charges <= 0 && item->Stackable)
+	if(charges <= 0 && item->Stackable) {
 		charges = 1;
-
-	// if the charges is -1, then no charge value was passed in set to max charges
-	else if(charges == -1)
+	} else if((charges <= 0 && !item->Stackable) || charges == -1) {
 		charges = item->MaxCharges;
+	}
+
 
 	// in any other situation just use charges as passed
 
@@ -1062,9 +1062,34 @@ bool Client::AutoPutLootInInventory(EQEmu::ItemInstance& inst, bool try_worn, bo
 						}
 					}
 				}
+				if( i == EQEmu::inventory::slotPrimary && m_inv[EQEmu::inventory::slotSecondary] ) {
+					uint8 instrument = m_inv[MainSecondary]->GetItem()->ItemType;
+					if(
+							instrument == EQEmu::item::ItemTypeWindInstrument ||
+							instrument == EQEmu::item::ItemTypeStringedInstrument ||
+							instrument == EQEmu::item::ItemTypeBrassInstrument ||
+							instrument == EQEmu::item::ItemTypePercussionInstrument
+							) {
+						Log(Logs::Detail, Logs::Inventory, "Cannot equip a primary item with %s already in the secondary.", m_inv[MainSecondary]->GetItem()->Name);
+						continue; // Do not auto-equip Primary when instrument is in Secondary
+					}
+				}
 				if (i == EQEmu::inventory::slotSecondary && m_inv[EQEmu::inventory::slotPrimary]) { // check to see if primary slot is a two hander
-					if (m_inv[EQEmu::inventory::slotPrimary]->GetItem()->IsType2HWeapon())
+					uint8 instrument = inst.GetItem()->ItemType;
+					if(
+							instrument == EQEmu::item::ItemTypeWindInstrument ||
+							instrument == EQEmu::item::ItemTypeStringedInstrument ||
+							instrument == EQEmu::item::ItemTypeBrassInstrument ||
+							instrument == EQEmu::item::ItemTypePercussionInstrument
+							) {
+						Log(Logs::Detail, Logs::Inventory, "Cannot equip a secondary instrument with %s already in the primary.", m_inv[MainPrimary]->GetItem()->Name);
+						continue; // Do not auto-equip instrument in Secondary when Primary is equipped.
+					}
+
+					uint8 use = m_inv[MainPrimary]->GetItem()->ItemType;
+					if(use == EQEmu::item::ItemType2HSlash || use == EQEmu::item::ItemType2HBlunt || use == EQEmu::item::ItemType2HPiercing) {
 						continue;
+					}
 				}
 				if (i == EQEmu::inventory::slotSecondary && inst.IsWeapon() && !CanThisClassDualWield()) {
 					continue;
@@ -1077,7 +1102,7 @@ bool Client::AutoPutLootInInventory(EQEmu::ItemInstance& inst, bool try_worn, bo
 					if (worn_slot_material != EQEmu::textures::materialInvalid) {
 						SendWearChange(worn_slot_material);
 					}
-					
+
 					parse->EventItem(EVENT_EQUIP_ITEM, this, &inst, nullptr, "", i);
 					return true;
 				}

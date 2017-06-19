@@ -132,26 +132,10 @@ struct NPCType
 	uint8	handtexture;
 	uint8	legtexture;
 	uint8	feettexture;
+	uint32  combat_hp_regen;
+	uint32  combat_mana_regen;
 	bool	ignore_despawn;
 };
-
-namespace player_lootitem {
-	struct ServerLootItem_Struct {
-		uint32	item_id;
-		int16	equip_slot;
-		uint16	charges;
-		uint16	lootslot;
-		uint32	aug_1;
-		uint32	aug_2;
-		uint32	aug_3;
-		uint32	aug_4;
-		uint32	aug_5;
-		uint32	aug_6;
-		int8	attuned;
-		uint8	min_level;		  // 
-		uint8	max_level;		  // 
-	};
-}
 
 struct PlayerCorpse_Struct {
 	uint32	crc;
@@ -181,7 +165,7 @@ struct PlayerCorpse_Struct {
 	uint32 drakkin_heritage;
 	uint32 drakkin_tattoo;
 	uint32 drakkin_details;
-	player_lootitem::ServerLootItem_Struct	items[0];
+	ServerLootItem_Struct	items[0];
 	//std::list<player_lootitem::ServerLootItem_Struct*> items;
 };
 
@@ -214,6 +198,7 @@ struct Door {
 	float	dest_heading;
 	uint8	is_ldon_door;
 	uint32	client_version_mask;
+	uint32  altkeyitem;
 };
 
 #pragma pack()

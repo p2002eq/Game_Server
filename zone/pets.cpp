@@ -232,8 +232,11 @@ void Mob::MakePoweredPet(uint16 spell_id, const char* pettype, int16 petpower,
 	int16 act_power = 0; // The actual pet power we'll use.
 	if (petpower == -1) {
 		if (this->IsClient()) {
-			act_power = CastToClient()->GetFocusEffect(focusPetPower, spell_id);//Client only
-			act_power = CastToClient()->mod_pet_power(act_power, spell_id);
+			Log(Logs::Detail, Logs::Spells, "Looking for pet focus");
+				act_power = CastToClient()->GetFocusEffect(focusPetPower, spell_id);//Client only
+				act_power = CastToClient()->mod_pet_power(act_power, spell_id);
+			Log(Logs::Detail, Logs::Spells, "Pet act_power: %d", act_power);
+
 		}
 #ifdef BOTS
 		else if (this->IsBot())
@@ -571,6 +574,16 @@ void Mob::SetPetID(uint16 NewPetID) {
 		Mob* NewPet = entity_list.GetMob(NewPetID);
 		CastToClient()->UpdateXTargetType(MyPet, NewPet);
 	}
+}
+
+void Mob::RemovePet() {
+	Mob* mypet = this->GetPet();
+	if (!mypet)
+		;
+	else if (mypet->Charmed())
+		mypet->BuffFadeByEffect(SE_Charm);
+	else
+		mypet->CastToNPC()->Depop();
 }
 
 void NPC::GetPetState(SpellBuff_Struct *pet_buffs, uint32 *items, char *name) {

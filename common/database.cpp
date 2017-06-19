@@ -55,6 +55,240 @@ Database::Database () {
 Establish a connection to a mysql database with the supplied parameters
 */
 
+const std::string Database::BANNED_IPS_TABLE = "Banned_IPs";
+const std::string Database::AA_ABILITY_TABLE = "aa_ability";
+const std::string Database::AA_RANK_EFFECTS_TABLE = "aa_rank_effects";
+const std::string Database::AA_RANK_PREREQS_TABLE = "aa_rank_prereqs";
+const std::string Database::AA_RANKS_TABLE = "aa_ranks";
+const std::string Database::AA_TIMERS_TABLE = "aa_timers";
+const std::string Database::ACCOUNT_TABLE = "account";
+const std::string Database::ACCOUNT_FLAGS_TABLE = "account_flags";
+const std::string Database::ACCOUNT_IP_TABLE = "account_ip";
+const std::string Database::ACCOUNT_REWARDS_TABLE = "account_rewards";
+const std::string Database::ACTIVITIES_TABLE = "activities";
+const std::string Database::ADVENTURE_DETAILS_TABLE = "adventure_details";
+const std::string Database::ADVENTURE_MEMBERS_TABLE = "adventure_members";
+const std::string Database::ADVENTURE_STATS_TABLE = "adventure_stats";
+const std::string Database::ADVENTURE_TEMPLATE_TABLE = "adventure_template";
+const std::string Database::ADVENTURE_TEMPLATE_ENTRY_TABLE = "adventure_template_entry";
+const std::string Database::ADVENTURE_TEMPLATE_ENTRY_FLAVOR_TABLE = "adventure_template_entry_flavor";
+const std::string Database::ALTADV_VARS_TABLE = "altadv_vars";
+const std::string Database::ALTERNATE_CURRENCY_TABLE = "alternate_currency";
+const std::string Database::BASE_DATA_TABLE = "base_data";
+const std::string Database::BLOCKED_SPELLS_TABLE = "blocked_spells";
+const std::string Database::BOOKS_TABLE = "books";
+const std::string Database::BUGS_TABLE = "bugs";
+const std::string Database::BUYER_TABLE = "buyer";
+const std::string Database::CHAR_CREATE_COMBINATIONS_TABLE = "char_create_combinations";
+const std::string Database::CHAR_CREATE_POINT_ALLOCATIONS_TABLE = "char_create_point_allocations";
+const std::string Database::CHAR_RECIPE_LIST_TABLE = "char_recipe_list";
+const std::string Database::CHARACTER_ACTIVITIES_TABLE = "character_activities";
+const std::string Database::CHARACTER_ALT_CURRENCY_TABLE = "character_alt_currency";
+const std::string Database::CHARACTER_ALTERNATE_ABILITIES_TABLE = "character_alternate_abilities";
+const std::string Database::CHARACTER_BACKUP_TABLE = "character_backup";
+const std::string Database::CHARACTER_BANDOLIER_TABLE = "character_bandolier";
+const std::string Database::CHARACTER_BIND_TABLE = "character_bind";
+const std::string Database::CHARACTER_BUFFS_TABLE = "character_buffs";
+const std::string Database::CHARACTER_CONSENT_TABLE = "character_consent";
+const std::string Database::CHARACTER_CORPSE_ITEMS_TABLE = "character_corpse_items";
+const std::string Database::CHARACTER_CORPSE_ITEMS_BACKUP_TABLE = "character_corpse_items_backup";
+const std::string Database::CHARACTER_CORPSES_TABLE = "character_corpses";
+const std::string Database::CHARACTER_CORPSES_BACKUP_TABLE = "character_corpses_backup";
+const std::string Database::CHARACTER_CURRENCY_TABLE = "character_currency";
+const std::string Database::CHARACTER_DATA_TABLE = "character_data";
+const std::string Database::CHARACTER_DISCIPLINES_TABLE = "character_disciplines";
+const std::string Database::CHARACTER_ENABLEDTASKS_TABLE = "character_enabledtasks";
+const std::string Database::CHARACTER_INSPECT_MESSAGES_TABLE = "character_inspect_messages";
+const std::string Database::CHARACTER_ITEM_RECAST_TABLE = "character_item_recast";
+const std::string Database::CHARACTER_KEYRING_TABLE = "character_keyring";
+const std::string Database::CHARACTER_LANGUAGES_TABLE = "character_languages";
+const std::string Database::CHARACTER_LEADERSHIP_ABILITIES_TABLE = "character_leadership_abilities";
+const std::string Database::CHARACTER_LOOKUP_TABLE = "character_lookup";
+const std::string Database::CHARACTER_MATERIAL_TABLE = "character_material";
+const std::string Database::CHARACTER_MEMMED_SPELLS_TABLE = "character_memmed_spells";
+const std::string Database::CHARACTER_PET_BUFFS_TABLE = "character_pet_buffs";
+const std::string Database::CHARACTER_PET_INFO_TABLE = "character_pet_info";
+const std::string Database::CHARACTER_PET_INVENTORY_TABLE = "character_pet_inventory";
+const std::string Database::CHARACTER_POTIONBELT_TABLE = "character_potionbelt";
+const std::string Database::CHARACTER_SKILLS_TABLE = "character_skills";
+const std::string Database::CHARACTER_SOULMARKS_TABLE = "character_soulmarks";
+const std::string Database::CHARACTER_SPELLS_TABLE = "character_spells";
+const std::string Database::CHARACTER_TASKS_TABLE = "character_tasks";
+const std::string Database::CHARACTER_TRIBUTE_TABLE = "character_tribute";
+const std::string Database::CHATCHANNELS_TABLE = "chatchannels";
+const std::string Database::CLASS_SKILL_TABLE = "class_skill";
+const std::string Database::COMMAND_SETTINGS_TABLE = "command_settings";
+const std::string Database::COMMANDS_TABLE = "commands";
+const std::string Database::COMMANDS_LOG_TABLE = "commands_log";
+const std::string Database::COMMANDS_OLD_TABLE = "commands_old";
+const std::string Database::COMPLETED_TASKS_TABLE = "completed_tasks";
+const std::string Database::DAMAGESHIELDTYPES_TABLE = "damageshieldtypes";
+const std::string Database::DB_STR_TABLE = "db_str";
+const std::string Database::DB_VERSION_TABLE = "db_version";
+const std::string Database::DISCOVERED_ITEMS_TABLE = "discovered_items";
+const std::string Database::DOORS_TABLE = "doors";
+const std::string Database::EQTIME_TABLE = "eqtime";
+const std::string Database::EVENTLOG_TABLE = "eventlog";
+const std::string Database::FACTION_LIST_TABLE = "faction_list";
+const std::string Database::FACTION_LIST_MOD_TABLE = "faction_list_mod";
+const std::string Database::FACTION_VALUES_TABLE = "faction_values";
+const std::string Database::FEAR_HINTS_TABLE = "fear_hints";
+const std::string Database::FEEDBACK_TABLE = "feedback";
+const std::string Database::FISHING_TABLE = "fishing";
+const std::string Database::FORAGE_TABLE = "forage";
+const std::string Database::FRIENDS_TABLE = "friends";
+const std::string Database::GM_IPS_TABLE = "gm_ips";
+const std::string Database::GOALLISTS_TABLE = "goallists";
+const std::string Database::GRAVEYARD_TABLE = "graveyard";
+const std::string Database::GRID_TABLE = "grid";
+const std::string Database::GRID_ENTRIES_TABLE = "grid_entries";
+const std::string Database::GROUND_SPAWNS_TABLE = "ground_spawns";
+const std::string Database::GROUP_ID_TABLE = "group_id";
+const std::string Database::GROUP_LEADERS_TABLE = "group_leaders";
+const std::string Database::GUILD_BANK_TABLE = "guild_bank";
+const std::string Database::GUILD_MEMBERS_TABLE = "guild_members";
+const std::string Database::GUILD_RANKS_TABLE = "guild_ranks";
+const std::string Database::GUILD_RELATIONS_TABLE = "guild_relations";
+const std::string Database::GUILDS_TABLE = "guilds";
+const std::string Database::HACKERS_TABLE = "hackers";
+const std::string Database::HORSES_TABLE = "horses";
+const std::string Database::INSTANCE_LIST_TABLE = "instance_list";
+const std::string Database::INSTANCE_LIST_PLAYER_TABLE = "instance_list_player";
+const std::string Database::INVENTORY_TABLE = "inventory";
+const std::string Database::INVENTORY_SNAPSHOTS_TABLE = "inventory_snapshots";
+const std::string Database::ITEM_TICK_TABLE = "item_tick";
+const std::string Database::ITEMS_TABLE = "items";
+const std::string Database::KEYRING_TABLE = "keyring";
+const std::string Database::LAUNCHER_TABLE = "launcher";
+const std::string Database::LAUNCHER_ZONES_TABLE = "launcher_zones";
+const std::string Database::LDON_TRAP_ENTRIES_TABLE = "ldon_trap_entries";
+const std::string Database::LDON_TRAP_TEMPLATES_TABLE = "ldon_trap_templates";
+const std::string Database::LEVEL_EXP_MODS_TABLE = "level_exp_mods";
+const std::string Database::LFGUILD_TABLE = "lfguild";
+const std::string Database::LOGSYS_CATEGORIES_TABLE = "logsys_categories";
+const std::string Database::LOOTDROP_TABLE = "lootdrop";
+const std::string Database::LOOTDROP_ENTRIES_TABLE = "lootdrop_entries";
+const std::string Database::LOOTTABLE_TABLE = "loottable";
+const std::string Database::LOOTTABLE_ENTRIES_TABLE = "loottable_entries";
+const std::string Database::MAIL_TABLE = "mail";
+const std::string Database::MB_MESSAGES_TABLE = "mb_messages";
+const std::string Database::MERC_ARMORINFO_TABLE = "merc_armorinfo";
+const std::string Database::MERC_BUFFS_TABLE = "merc_buffs";
+const std::string Database::MERC_INVENTORY_TABLE = "merc_inventory";
+const std::string Database::MERC_MERCHANT_ENTRIES_TABLE = "merc_merchant_entries";
+const std::string Database::MERC_MERCHANT_TEMPLATE_ENTRIES_TABLE = "merc_merchant_template_entries";
+const std::string Database::MERC_MERCHANT_TEMPLATES_TABLE = "merc_merchant_templates";
+const std::string Database::MERC_NAME_TYPES_TABLE = "merc_name_types";
+const std::string Database::MERC_NPC_TYPES_TABLE = "merc_npc_types";
+const std::string Database::MERC_SPELL_LIST_ENTRIES_TABLE = "merc_spell_list_entries";
+const std::string Database::MERC_SPELL_LISTS_TABLE = "merc_spell_lists";
+const std::string Database::MERC_STANCE_ENTRIES_TABLE = "merc_stance_entries";
+const std::string Database::MERC_STATS_TABLE = "merc_stats";
+const std::string Database::MERC_SUBTYPES_TABLE = "merc_subtypes";
+const std::string Database::MERC_TEMPLATES_TABLE = "merc_templates";
+const std::string Database::MERC_TYPES_TABLE = "merc_types";
+const std::string Database::MERC_WEAPONINFO_TABLE = "merc_weaponinfo";
+const std::string Database::MERCHANTLIST_TABLE = "merchantlist";
+const std::string Database::MERCHANTLIST_TEMP_TABLE = "merchantlist_temp";
+const std::string Database::MERCS_TABLE = "mercs";
+const std::string Database::NAME_FILTER_TABLE = "name_filter";
+const std::string Database::NPC_EMOTES_TABLE = "npc_emotes";
+const std::string Database::NPC_FACTION_TABLE = "npc_faction";
+const std::string Database::NPC_FACTION_ENTRIES_TABLE = "npc_faction_entries";
+const std::string Database::NPC_SPELLS_TABLE = "npc_spells";
+const std::string Database::NPC_SPELLS_EFFECTS_TABLE = "npc_spells_effects";
+const std::string Database::NPC_SPELLS_EFFECTS_ENTRIES_TABLE = "npc_spells_effects_entries";
+const std::string Database::NPC_SPELLS_ENTRIES_TABLE = "npc_spells_entries";
+const std::string Database::NPC_TYPES_TABLE = "npc_types";
+const std::string Database::NPC_TYPES_METADATA_TABLE = "npc_types_metadata";
+const std::string Database::NPC_TYPES_TINT_TABLE = "npc_types_tint";
+const std::string Database::OBJECT_TABLE = "object";
+const std::string Database::OBJECT_CONTENTS_TABLE = "object_contents";
+const std::string Database::PEQ_ADMIN_TABLE = "peq_admin";
+const std::string Database::PERL_EVENT_EXPORT_SETTINGS_TABLE = "perl_event_export_settings";
+const std::string Database::PETITIONS_TABLE = "petitions";
+const std::string Database::PETS_TABLE = "pets";
+const std::string Database::PETS_EQUIPMENTSET_TABLE = "pets_equipmentset";
+const std::string Database::PETS_EQUIPMENTSET_ENTRIES_TABLE = "pets_equipmentset_entries";
+const std::string Database::PLAYER_TITLESETS_TABLE = "player_titlesets";
+const std::string Database::PROXIMITIES_TABLE = "proximities";
+const std::string Database::QS_MERCHANT_TRANSACTION_LOG_TABLE = "qs_merchant_transaction_log";
+const std::string Database::QS_MERCHANT_TRANSACTION_RECORD_TABLE = "qs_merchant_transaction_record";
+const std::string Database::QS_MERCHANT_TRANSACTION_RECORD_ENTRIES_TABLE = "qs_merchant_transaction_record_entries";
+const std::string Database::QS_PLAYER_AA_PURCHASE_LOG_TABLE = "qs_player_aa_purchase_log";
+const std::string Database::QS_PLAYER_AA_RATE_HOURLY_TABLE = "qs_player_aa_rate_hourly";
+const std::string Database::QS_PLAYER_DELETE_RECORD_TABLE = "qs_player_delete_record";
+const std::string Database::QS_PLAYER_DELETE_RECORD_ENTRIES_TABLE = "qs_player_delete_record_entries";
+const std::string Database::QS_PLAYER_EVENTS_TABLE = "qs_player_events";
+const std::string Database::QS_PLAYER_HANDIN_LOG_TABLE = "qs_player_handin_log";
+const std::string Database::QS_PLAYER_HANDIN_RECORD_TABLE = "qs_player_handin_record";
+const std::string Database::QS_PLAYER_HANDIN_RECORD_ENTRIES_TABLE = "qs_player_handin_record_entries";
+const std::string Database::QS_PLAYER_ITEM_DELETE_LOG_TABLE = "qs_player_item_delete_log";
+const std::string Database::QS_PLAYER_ITEM_MOVE_LOG_TABLE = "qs_player_item_move_log";
+const std::string Database::QS_PLAYER_KILLED_BY_LOG_TABLE = "qs_player_killed_by_log";
+const std::string Database::QS_PLAYER_LOOT_RECORDS_LOG_TABLE = "qs_player_loot_records_log";
+const std::string Database::QS_PLAYER_MOVE_RECORD_TABLE = "qs_player_move_record";
+const std::string Database::QS_PLAYER_MOVE_RECORD_ENTRIES_TABLE = "qs_player_move_record_entries";
+const std::string Database::QS_PLAYER_NPC_KILL_LOG_TABLE = "qs_player_npc_kill_log";
+const std::string Database::QS_PLAYER_NPC_KILL_RECORD_TABLE = "qs_player_npc_kill_record";
+const std::string Database::QS_PLAYER_NPC_KILL_RECORD_ENTRIES_TABLE = "qs_player_npc_kill_record_entries";
+const std::string Database::QS_PLAYER_QGLOBAL_UPDATES_LOG_TABLE = "qs_player_qglobal_updates_log";
+const std::string Database::QS_PLAYER_SPEECH_TABLE = "qs_player_speech";
+const std::string Database::QS_PLAYER_TRADE_LOG_TABLE = "qs_player_trade_log";
+const std::string Database::QS_PLAYER_TRADE_RECORD_TABLE = "qs_player_trade_record";
+const std::string Database::QS_PLAYER_TRADE_RECORD_ENTRIES_TABLE = "qs_player_trade_record_entries";
+const std::string Database::QS_PLAYER_TS_EVENT_LOG_TABLE = "qs_player_ts_event_log";
+const std::string Database::QUEST_GLOBALS_TABLE = "quest_globals";
+const std::string Database::RACES_TABLE = "races";
+const std::string Database::RAID_DETAILS_TABLE = "raid_details";
+const std::string Database::RAID_LEADERS_TABLE = "raid_leaders";
+const std::string Database::RAID_MEMBERS_TABLE = "raid_members";
+const std::string Database::REPORTS_TABLE = "reports";
+const std::string Database::RESPAWN_TIMES_TABLE = "respawn_times";
+const std::string Database::RULE_SETS_TABLE = "rule_sets";
+const std::string Database::RULE_VALUES_TABLE = "rule_values";
+const std::string Database::SAYLINK_TABLE = "saylink";
+const std::string Database::SHAREDBANK_TABLE = "sharedbank";
+const std::string Database::SKILL_CAPS_TABLE = "skill_caps";
+const std::string Database::SKILL_DIFFICULTY_TABLE = "skill_difficulty";
+const std::string Database::SPAWN2_TABLE = "spawn2";
+const std::string Database::SPAWN_CONDITION_VALUES_TABLE = "spawn_condition_values";
+const std::string Database::SPAWN_CONDITIONS_TABLE = "spawn_conditions";
+const std::string Database::SPAWN_EVENTS_TABLE = "spawn_events";
+const std::string Database::SPAWNENTRY_TABLE = "spawnentry";
+const std::string Database::SPAWNGROUP_TABLE = "spawngroup";
+const std::string Database::SPELL_GLOBALS_TABLE = "spell_globals";
+const std::string Database::SPELLS_NEW_TABLE = "spells_new";
+const std::string Database::START_ZONES_TABLE = "start_zones";
+const std::string Database::STARTING_ITEMS_TABLE = "starting_items";
+const std::string Database::TASKS_TABLE = "tasks";
+const std::string Database::TASKSETS_TABLE = "tasksets";
+const std::string Database::TBLLOGINSERVERACCOUNTS_TABLE = "tblLoginServerAccounts";
+const std::string Database::TBLSERVERADMINREGISTRATION_TABLE = "tblServerAdminRegistration";
+const std::string Database::TBLSERVERLISTTYPE_TABLE = "tblServerListType";
+const std::string Database::TBLWORLDSERVERREGISTRATION_TABLE = "tblWorldServerRegistration";
+const std::string Database::TBLACCOUNTACCESSLOG_TABLE = "tblaccountaccesslog";
+const std::string Database::TBLLOGINSERVERSETTINGS_TABLE = "tblloginserversettings";
+const std::string Database::TIMERS_TABLE = "timers";
+const std::string Database::TITLES_TABLE = "titles";
+const std::string Database::TRADER_TABLE = "trader";
+const std::string Database::TRADER_AUDIT_TABLE = "trader_audit";
+const std::string Database::TRADESKILL_RECIPE_TABLE = "tradeskill_recipe";
+const std::string Database::TRADESKILL_RECIPE_ENTRIES_TABLE = "tradeskill_recipe_entries";
+const std::string Database::TRAPS_TABLE = "traps";
+const std::string Database::TRIBUTE_LEVELS_TABLE = "tribute_levels";
+const std::string Database::TRIBUTES_TABLE = "tributes";
+const std::string Database::VARIABLES_TABLE = "variables";
+const std::string Database::VETERAN_REWARD_TEMPLATES_TABLE = "veteran_reward_templates";
+const std::string Database::WEBDATA_CHARACTER_TABLE = "webdata_character";
+const std::string Database::WEBDATA_SERVERS_TABLE = "webdata_servers";
+const std::string Database::ZONE_TABLE = "zone";
+const std::string Database::ZONE_FLAGS_TABLE = "zone_flags";
+const std::string Database::ZONE_POINTS_TABLE = "zone_points";
+const std::string Database::ZONE_SERVER_TABLE = "zone_server";
+const std::string Database::ZONE_STATE_DUMP_TABLE = "zone_state_dump";
+const std::string Database::ZONESERVER_AUTH_TABLE = "zoneserver_auth";
+
 Database::Database(const char* host, const char* user, const char* passwd, const char* database, uint32 port)
 {
 	Connect(host, user, passwd, database, port);
@@ -97,8 +331,8 @@ uint32 Database::CheckLogin(const char* name, const char* password, int16* oStat
 	DoEscapeString(tmpUN, name, strlen(name));
 	DoEscapeString(tmpPW, password, strlen(password));
 
-	std::string query = StringFormat("SELECT id, status FROM account WHERE name='%s' AND password is not null "
-		"and length(password) > 0 and (password='%s' or password=MD5('%s'))",
+	std::string query = StringFormat("SELECT id, status FROM %s WHERE name='%s' AND password is not null "
+											 "and length(password) > 0 and (password='%s' or password=MD5('%s'))", ACCOUNT_TABLE.c_str(),
 		tmpUN, tmpPW, tmpPW);
 	auto results = QueryDatabase(query);
 
@@ -139,7 +373,7 @@ bool Database::CheckBannedIPs(const char* loginIP)
 }
 
 bool Database::AddBannedIP(char* bannedIP, const char* notes) {
-	std::string query = StringFormat("INSERT into Banned_IPs SET ip_address='%s', notes='%s'", bannedIP, notes); 
+	std::string query = StringFormat("INSERT into %s SET ip_address='%s', notes='%s'", BANNED_IPS_TABLE.c_str(), bannedIP, notes);
 	auto results = QueryDatabase(query); 
 	if (!results.Success()) {
 		return false;
@@ -148,7 +382,7 @@ bool Database::AddBannedIP(char* bannedIP, const char* notes) {
 }
 
  bool Database::CheckGMIPs(const char* ip_address, uint32 account_id) {
-	std::string query = StringFormat("SELECT * FROM `gm_ips` WHERE `ip_address` = '%s' AND `account_id` = %i", ip_address, account_id); 
+	 std::string query = StringFormat("SELECT * FROM %s WHERE `ip_address` = '%s' AND `account_id` = %i", GM_IPS_TABLE.c_str(), ip_address, account_id);
 	auto results = QueryDatabase(query);
 
 	if (!results.Success())
@@ -161,19 +395,19 @@ bool Database::AddBannedIP(char* bannedIP, const char* notes) {
 }
 
 bool Database::AddGMIP(char* ip_address, char* name) {
-	std::string query = StringFormat("INSERT into `gm_ips` SET `ip_address` = '%s', `name` = '%s'", ip_address, name); 
+	std::string query = StringFormat("INSERT into `%s` SET `ip_address` = '%s', `name` = '%s'", GM_IPS_TABLE.c_str(), ip_address, name);
 	auto results = QueryDatabase(query); 
 	return results.Success();
 }
 
 void Database::LoginIP(uint32 AccountID, const char* LoginIP) {
-	std::string query = StringFormat("INSERT INTO account_ip SET accid=%i, ip='%s' ON DUPLICATE KEY UPDATE count=count+1, lastused=now()", AccountID, LoginIP); 
+	std::string query = StringFormat("INSERT INTO %s SET accid=%i, ip='%s' ON DUPLICATE KEY UPDATE count=count+1, lastused=now()", ACCOUNT_IP_TABLE.c_str(), AccountID, LoginIP);
 	QueryDatabase(query); 
 }
 
 int16 Database::CheckStatus(uint32 account_id) {
 	std::string query = StringFormat("SELECT `status`, UNIX_TIMESTAMP(`suspendeduntil`) as `suspendeduntil`, UNIX_TIMESTAMP() as `current`"
-							" FROM `account` WHERE `id` = %i", account_id);
+											 " FROM `%s` WHERE `id` = %i", ACCOUNT_TABLE.c_str(), account_id);
 
 	auto results = QueryDatabase(query); 
 	if (!results.Success()) {
@@ -204,9 +438,9 @@ uint32 Database::CreateAccount(const char* name, const char* password, int16 sta
 	std::string query;
 
 	if (password)
-		query = StringFormat("INSERT INTO account SET name='%s', password='%s', status=%i, lsaccount_id=%i, time_creation=UNIX_TIMESTAMP();",name,password,status, lsaccount_id);
+		query = StringFormat("INSERT INTO %s SET name='%s', password='%s', status=%i, lsaccount_id=%i, time_creation=UNIX_TIMESTAMP();", ACCOUNT_TABLE.c_str(), name,password,status, lsaccount_id);
 	else
-		query = StringFormat("INSERT INTO account SET name='%s', status=%i, lsaccount_id=%i, time_creation=UNIX_TIMESTAMP();",name, status, lsaccount_id);
+		query = StringFormat("INSERT INTO %s SET name='%s', status=%i, lsaccount_id=%i, time_creation=UNIX_TIMESTAMP();", ACCOUNT_TABLE.c_str(),name, status, lsaccount_id);
 
 	Log(Logs::General, Logs::World_Server, "Account Attempting to be created: '%s' status: %i", name, status);
 	auto results = QueryDatabase(query);
@@ -224,7 +458,7 @@ uint32 Database::CreateAccount(const char* name, const char* password, int16 sta
 }
 
 bool Database::DeleteAccount(const char* name) {
-	std::string query = StringFormat("DELETE FROM account WHERE name='%s';",name); 
+	std::string query = StringFormat("DELETE FROM %s WHERE name='%s';", ACCOUNT_TABLE.c_str(), name);
 	Log(Logs::General, Logs::World_Server, "Account Attempting to be deleted:'%s'", name);
 
 	auto results = QueryDatabase(query); 
@@ -236,7 +470,7 @@ bool Database::DeleteAccount(const char* name) {
 }
 
 bool Database::SetLocalPassword(uint32 accid, const char* password) {
-	std::string query = StringFormat("UPDATE account SET password=MD5('%s') where id=%i;", EscapeString(password).c_str(), accid);
+	std::string query = StringFormat("UPDATE %s SET password=MD5('%s') where id=%i;", ACCOUNT_TABLE.c_str(), EscapeString(password).c_str(), accid);
 
 	auto results = QueryDatabase(query);
 
@@ -248,7 +482,7 @@ bool Database::SetLocalPassword(uint32 accid, const char* password) {
 }
 
 bool Database::SetAccountStatus(const char* name, int16 status) {
-	std::string query = StringFormat("UPDATE account SET status=%i WHERE name='%s';", status, name);
+	std::string query = StringFormat("UPDATE %s SET status=%i WHERE name='%s';", ACCOUNT_TABLE.c_str(), status, name);
 
 	std::cout << "Account being GM Flagged:" << name << ", Level: " << (int16) status << std::endl;
 
@@ -268,7 +502,7 @@ bool Database::SetAccountStatus(const char* name, int16 status) {
 
 /* This initially creates the character during character create */
 bool Database::ReserveName(uint32 account_id, char* name) {
-	std::string query = StringFormat("SELECT `account_id`, `name` FROM `character_data` WHERE `name` = '%s'", name);
+	std::string query = StringFormat("SELECT `account_id`, `name` FROM `%s` WHERE `name` = '%s'", CHARACTER_DATA_TABLE.c_str(), name);
 	auto results = QueryDatabase(query);
 	for (auto row = results.begin(); row != results.end(); ++row) {
 		if (row[0] && atoi(row[0]) > 0){
@@ -277,9 +511,41 @@ bool Database::ReserveName(uint32 account_id, char* name) {
 		}
 	}
 
-	query = StringFormat("INSERT INTO `character_data` SET `account_id` = %i, `name` = '%s'", account_id, name); 
+	query = StringFormat("INSERT INTO `%s` SET `account_id` = %i, `name` = '%s'", CHARACTER_DATA_TABLE.c_str(), account_id, name);
 	results = QueryDatabase(query);
 	if (!results.Success() || results.ErrorMessage() != ""){ return false; } 
+	return true;
+}
+
+bool Database::MarkCharacterDeleted(char *name) {
+	std::string query = StringFormat("UPDATE character_data SET is_deleted = 1 where name='%s'", EscapeString(name).c_str());
+
+	auto results = QueryDatabase(query);
+
+	if (!results.Success()) {
+		return false;
+	}
+
+	if (results.RowsAffected() == 0) {
+		return false;
+	}
+
+	return true;
+}
+
+bool Database::UnDeleteCharacter(const char *name) {
+	std::string query = StringFormat("UPDATE character_data SET is_deleted = 0 where name='%s'", EscapeString(name).c_str());
+
+	auto results = QueryDatabase(query);
+
+	if (!results.Success()) {
+		return false;
+	}
+
+	if (results.RowsAffected() == 0) {
+		return false;
+	}
+
 	return true;
 }
 
@@ -296,7 +562,7 @@ bool Database::DeleteCharacter(char *name) {
 	Log(Logs::General, Logs::World_Server, "Database::DeleteCharacter name : '%s'", name);
 
 	/* Get id from character_data before deleting record so we can clean up the rest of the tables */
-	std::string query = StringFormat("SELECT `id` from `character_data` WHERE `name` = '%s'", name);
+	std::string query = StringFormat("SELECT `id` from `%s` WHERE `name` = '%s'", CHARACTER_DATA_TABLE.c_str(), name);
 	auto results = QueryDatabase(query);
 	for (auto row = results.begin(); row != results.end(); ++row) { charid = atoi(row[0]); }
 	if (charid <= 0){ 
@@ -304,29 +570,26 @@ bool Database::DeleteCharacter(char *name) {
 		return false; 
 	}
 
-	query = StringFormat("DELETE FROM `quest_globals` WHERE `charid` = '%d'", charid); QueryDatabase(query);
-	query = StringFormat("DELETE FROM `character_activities` WHERE `charid` = '%d'", charid); QueryDatabase(query);
-	query = StringFormat("DELETE FROM `character_enabledtasks` WHERE `charid` = '%d'", charid); QueryDatabase(query);
-	query = StringFormat("DELETE FROM `character_tasks` WHERE `charid` = '%d'", charid); QueryDatabase(query);
-	query = StringFormat("DELETE FROM `completed_tasks` WHERE `charid` = '%d'", charid); QueryDatabase(query);
-	query = StringFormat("DELETE FROM `friends` WHERE `charid` = '%d'", charid); QueryDatabase(query);
-	query = StringFormat("DELETE FROM `mail` WHERE `charid` = '%d'", charid); QueryDatabase(query);
-	query = StringFormat("DELETE FROM `timers` WHERE `char_id` = '%d'", charid); QueryDatabase(query);
-	query = StringFormat("DELETE FROM `inventory` WHERE `charid` = '%d'", charid); QueryDatabase(query);
-	query = StringFormat("DELETE FROM `char_recipe_list` WHERE `char_id` = '%d'", charid); QueryDatabase(query);
-	query = StringFormat("DELETE FROM `adventure_stats` WHERE `player_id` ='%d'", charid); QueryDatabase(query);
-	query = StringFormat("DELETE FROM `zone_flags` WHERE `charID` = '%d'", charid); QueryDatabase(query);
-	query = StringFormat("DELETE FROM `titles` WHERE `char_id` = '%d'", charid); QueryDatabase(query);
-	query = StringFormat("DELETE FROM `player_titlesets` WHERE `char_id` = '%d'", charid); QueryDatabase(query);
-	query = StringFormat("DELETE FROM `keyring` WHERE `char_id` = '%d'", charid); QueryDatabase(query);
-	query = StringFormat("DELETE FROM `faction_values` WHERE `char_id` = '%d'", charid); QueryDatabase(query);
-	query = StringFormat("DELETE FROM `instance_list_player` WHERE `charid` = '%d'", charid); QueryDatabase(query);
-	query = StringFormat("DELETE FROM `character_data` WHERE `id` = '%d'", charid); QueryDatabase(query);
-	query = StringFormat("DELETE FROM `character_skills` WHERE `id` = %u", charid); QueryDatabase(query);
-	query = StringFormat("DELETE FROM `character_languages` WHERE `id` = %u", charid); QueryDatabase(query);
-	query = StringFormat("DELETE FROM `character_bind` WHERE `id` = %u", charid); QueryDatabase(query);
-	query = StringFormat("DELETE FROM `character_alternate_abilities` WHERE `id` = %u", charid); QueryDatabase(query);
-	query = StringFormat("DELETE FROM `character_currency` WHERE `id` = %u", charid); QueryDatabase(query);
+	query = StringFormat("DELETE FROM `%s` WHERE `charid` = '%d'", QUEST_GLOBALS_TABLE.c_str(), charid); QueryDatabase(query);
+	query = StringFormat("DELETE FROM `%s` WHERE `charid` = '%d'", CHARACTER_ACTIVITIES_TABLE.c_str(), charid); QueryDatabase(query);
+	query = StringFormat("DELETE FROM `%s` WHERE `charid` = '%d'", FRIENDS_TABLE.c_str(), charid); QueryDatabase(query);
+	query = StringFormat("DELETE FROM `%s` WHERE `charid` = '%d'", MAIL_TABLE.c_str(), charid); QueryDatabase(query);
+	query = StringFormat("DELETE FROM `%s` WHERE `char_id` = '%d'", TIMERS_TABLE.c_str(), charid); QueryDatabase(query);
+	query = StringFormat("DELETE FROM `%s` WHERE `charid` = '%d'", INVENTORY_TABLE.c_str(), charid); QueryDatabase(query);
+	query = StringFormat("DELETE FROM `%s` WHERE `char_id` = '%d'", CHAR_RECIPE_LIST_TABLE.c_str(), charid); QueryDatabase(query);
+	query = StringFormat("DELETE FROM `%s` WHERE `charID` = '%d'", ZONE_FLAGS_TABLE.c_str(), charid); QueryDatabase(query);
+	query = StringFormat("DELETE FROM `%s` WHERE `char_id` = '%d'", TITLES_TABLE.c_str(), charid); QueryDatabase(query);
+	query = StringFormat("DELETE FROM `%s` WHERE `char_id` = '%d'", PLAYER_TITLESETS_TABLE.c_str(), charid); QueryDatabase(query);
+	query = StringFormat("DELETE FROM `%s` WHERE `char_id` = '%d'", KEYRING_TABLE.c_str(), charid); QueryDatabase(query);
+	query = StringFormat("DELETE FROM `%s` WHERE `char_id` = '%d'", FACTION_VALUES_TABLE.c_str(), charid); QueryDatabase(query);
+	query = StringFormat("DELETE FROM `%s` WHERE `charid` = '%d'", INSTANCE_LIST_PLAYER_TABLE.c_str(), charid); QueryDatabase(query);
+	query = StringFormat("DELETE FROM `%s` WHERE `id` = '%d'", CHARACTER_DATA_TABLE.c_str(), charid); QueryDatabase(query);
+	query = StringFormat("DELETE FROM `%s` WHERE `id` = %u", CHARACTER_SKILLS_TABLE.c_str(), charid); QueryDatabase(query);
+	query = StringFormat("DELETE FROM `%s` WHERE `id` = %u", CHARACTER_LANGUAGES_TABLE.c_str(), charid); QueryDatabase(query);
+	query = StringFormat("DELETE FROM `%s` WHERE `id` = %u", CHARACTER_BIND_TABLE.c_str(), charid); QueryDatabase(query);
+	query = StringFormat("DELETE FROM `%s` WHERE `id` = %u", CHARACTER_ALTERNATE_ABILITIES_TABLE.c_str(), charid); QueryDatabase(query);
+	query = StringFormat("DELETE FROM `%s` WHERE `id` = %u", CHARACTER_CURRENCY_TABLE.c_str(), charid); QueryDatabase(query);
+	// Left off db constant conversion
 	query = StringFormat("DELETE FROM `character_data` WHERE `id` = %u", charid); QueryDatabase(query);
 	query = StringFormat("DELETE FROM `character_spells` WHERE `id` = %u", charid); QueryDatabase(query);
 	query = StringFormat("DELETE FROM `character_memmed_spells` WHERE `id` = %u", charid); QueryDatabase(query);
@@ -350,7 +613,7 @@ bool Database::DeleteCharacter(char *name) {
 
 bool Database::SaveCharacterCreate(uint32 character_id, uint32 account_id, PlayerProfile_Struct* pp){
 	std::string query = StringFormat(
-		"REPLACE INTO `character_data` ("
+		"REPLACE INTO `%s` ("
 		"id,"
 		"account_id,"
 		"`name`,"
@@ -533,6 +796,7 @@ bool Database::SaveCharacterCreate(uint32 character_id, uint32 account_id, Playe
 		"%u,"  // guild_auto_consent	
 		"%u"  // RestTimer				
 		")",
+		CHARACTER_DATA_TABLE.c_str(),
 		character_id,					  // " id,                        "
 		account_id,						  // " account_id,                "
 		EscapeString(pp->name).c_str(),	  // " `name`,                    "
@@ -626,17 +890,8 @@ bool Database::SaveCharacterCreate(uint32 character_id, uint32 account_id, Playe
 	);
 	auto results = QueryDatabase(query);
 	/* Save Bind Points */
-	query = StringFormat("REPLACE INTO `character_bind` (id, zone_id, instance_id, x, y, z, heading, slot)"
-		" VALUES (%u, %u, %u, %f, %f, %f, %f, %i), "
-		"(%u, %u, %u, %f, %f, %f, %f, %i), "
-		"(%u, %u, %u, %f, %f, %f, %f, %i), "
-		"(%u, %u, %u, %f, %f, %f, %f, %i), "
-		"(%u, %u, %u, %f, %f, %f, %f, %i)",
-		character_id, pp->binds[0].zoneId, 0, pp->binds[0].x, pp->binds[0].y, pp->binds[0].z, pp->binds[0].heading, 0,
-		character_id, pp->binds[1].zoneId, 0, pp->binds[1].x, pp->binds[1].y, pp->binds[1].z, pp->binds[1].heading, 1,
-		character_id, pp->binds[2].zoneId, 0, pp->binds[2].x, pp->binds[2].y, pp->binds[2].z, pp->binds[2].heading, 2,
-		character_id, pp->binds[3].zoneId, 0, pp->binds[3].x, pp->binds[3].y, pp->binds[3].z, pp->binds[3].heading, 3,
-		character_id, pp->binds[4].zoneId, 0, pp->binds[4].x, pp->binds[4].y, pp->binds[4].z, pp->binds[4].heading, 4
+	query = StringFormat("REPLACE INTO `%s` (id, zone_id, instance_id, x, y, z, heading) VALUES (%u, %u, %u, %f, %f, %f, %f, %i)",
+						 CHARACTER_BIND_TABLE.c_str(), character_id, pp->binds[0].zoneId, 0, pp->binds[0].x, pp->binds[0].y, pp->binds[0].z, pp->binds[0].heading
 	); results = QueryDatabase(query);
 
         /* HoTT Ability */
@@ -679,6 +934,25 @@ bool Database::SaveCharacterCreate(uint32 character_id, uint32 account_id, Playe
 	return true;
 }
 
+bool Database::SaveCharacterBindPoint(uint32 character_id, const BindStruct &bind)
+{
+	/* Save Home Bind Point */
+	std::string query =
+			StringFormat("REPLACE INTO `%s` (id, zone_id, instance_id, x, y, z, heading)"
+								 "VALUES (%u, %u, %u, %f, %f, %f, %f)",
+						 CHARACTER_BIND_TABLE.c_str(), character_id, bind.zoneId, bind.instance_id, bind.x, bind.y, bind.z, bind.heading);
+
+	Log(Logs::General, Logs::None, "ZoneDatabase::SaveCharacterBindPoint for character ID: %i zone_id: %u instance_id: %u position: %f %f %f %f",
+			character_id, bind.zoneId, bind.instance_id, bind.x, bind.y, bind.z, bind.heading);
+
+	auto results = QueryDatabase(query);
+	if (!results.RowsAffected())
+		Log(Logs::General, Logs::None, "ERROR Bind Home Save: %s. %s", results.ErrorMessage().c_str(),
+				query.c_str());
+
+	return true;
+}
+
 /* This only for new Character creation storing */
 bool Database::StoreCharacter(uint32 account_id, PlayerProfile_Struct* pp, EQEmu::InventoryProfile* inv) {
 	uint32 charid = 0; 
@@ -711,9 +985,9 @@ bool Database::StoreCharacter(uint32 account_id, PlayerProfile_Struct* pp, EQEmu
 	for (int16 i = EQEmu::legacy::EQUIPMENT_BEGIN; i <= EQEmu::legacy::BANK_BAGS_END;) {
 		const EQEmu::ItemInstance* newinv = inv->GetItem(i);
 		if (newinv) {
-			invquery = StringFormat("INSERT INTO `inventory` (charid, slotid, itemid, charges, color) VALUES (%u, %i, %u, %i, %u)",
-				charid, i, newinv->GetItem()->ID, newinv->GetCharges(), newinv->GetColor()); 
-			
+			invquery = StringFormat("INSERT INTO `%s` (charid, slotid, itemid, charges, color) VALUES (%u, %i, %u, %i, %u)",
+									INVENTORY_TABLE.c_str(), charid, i, newinv->GetItem()->ID, newinv->GetCharges(), newinv->GetColor());
+
 			auto results = QueryDatabase(invquery); 
 		}
 
@@ -785,6 +1059,20 @@ uint32 Database::GetAccountIDByChar(uint32 char_id) {
 		return 0;
 
 	auto row = results.begin(); 
+	return atoi(row[0]);
+}
+
+uint32 Database::GetLevelByChar(const char* charname) {
+	std::string query = StringFormat("SELECT `level` FROM `character_data` WHERE name='%s'", EscapeString(charname).c_str());
+	auto results = QueryDatabase(query);
+	if (!results.Success()) {
+		return 0;
+	}
+
+	if (results.RowCount() != 1)
+		return 0;
+
+	auto row = results.begin();
 	return atoi(row[0]);
 }
 

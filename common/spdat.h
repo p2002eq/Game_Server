@@ -32,6 +32,8 @@
 #define SPELL_IMP_HARM_TOUCH 2774
 #define SPELL_NPC_HARM_TOUCH 929
 
+// Some discipline IDs.
+#define DISC_UNHOLY_AURA 4520
 
 #define EFFECT_COUNT 12
 #define MAX_SPELL_TRIGGER 12	// One for each slot(only 6 for AA since AA use 2)
@@ -321,7 +323,7 @@ typedef enum {
 #define SE_AlterNPCLevel				107	// implemented - not used on live
 #define SE_Familiar						108	// implemented
 #define SE_SummonItemIntoBag			109	// implemented - summons stuff into container
-//#define SE_IncreaseArchery			110	// not used
+#define SE_IncreaseArchery				110	// implemented
 #define SE_ResistAll					111	// implemented - Note: Physical Resists are not modified by this effect.
 #define SE_CastingLevel					112	// implemented
 #define	SE_SummonHorse					113	// implemented
@@ -699,6 +701,10 @@ typedef enum {
 //
 #define SPELL_LOAD_FIELD_COUNT 236
 
+// Vampiric Embrace procs ID.
+#define PI_VampEmbraceNecro 821
+#define PI_VampEmbraceShadow 822
+
 struct SPDat_Spell_Struct
 {
 /* 000 */	int id;	// not used -- SPELLINDEX
@@ -867,6 +873,7 @@ bool IsMezSpell(uint16 spell_id);
 bool IsStunSpell(uint16 spell_id);
 bool IsSlowSpell(uint16 spell_id);
 bool IsHasteSpell(uint16 spell_id);
+bool IsBindSightSpell(uint16 spell_id);
 bool IsHarmonySpell(uint16 spell_id);
 bool IsPercentalHealSpell(uint16 spell_id);
 bool IsGroupOnlySpell(uint16 spell_id);
@@ -881,6 +888,7 @@ bool IsSummonSkeletonSpell(uint16 spell_id);
 bool IsSummonPetSpell(uint16 spell_id);
 bool IsSummonPCSpell(uint16 spell_id);
 bool IsCharmSpell(uint16 spell_id);
+bool IsDireCharmSpell(uint16 spell_id);
 bool IsBlindSpell(uint16 spell_id);
 bool IsEffectHitpointsSpell(uint16 spell_id);
 bool IsReduceCastTimeSpell(uint16 spell_id);

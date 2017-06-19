@@ -70,7 +70,7 @@ namespace EQEmu
 			slotGeneral6,
 			slotGeneral7,
 			slotGeneral8,
-			slotCursor, // 30
+			slotCursor = 30, // 30
 			slotCount
 		};
 

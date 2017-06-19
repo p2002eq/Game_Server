@@ -570,8 +570,6 @@ public:
 	void AddCrystals(uint32 Radiant, uint32 Ebon);
 	void SendCrystalCounts();
 
-	void AddEXP(uint32 in_add_exp, uint8 conlevel = 0xFF, bool resexp = false);
-	uint32 CalcEXP(uint8 conlevel = 0xFF);
 	void SetEXP(uint32 set_exp, uint32 set_aaxp, bool resexp=false);
 	void AddLevelBasedExp(uint8 exp_percentage, uint8 max_level=0);
 	void SetLeadershipEXP(uint32 group_exp, uint32 raid_exp);
@@ -594,10 +592,10 @@ public:
 	uint32 GetTotalSecondsPlayed() { return(TotalSecondsPlayed); }
 	virtual void SetLevel(uint8 set_level, bool command = false);
 
-	void GoToBind(uint8 bindnum = 0);
+	void GoToBind();
 	void GoToSafeCoords(uint16 zone_id, uint16 instance_id);
-	void Gate(uint8 bindnum = 0);
-	void SetBindPoint(int bind_num = 0, int to_zone = -1, int to_instance = 0, const glm::vec3& location = glm::vec3());
+	void Gate();
+	void SetBindPoint(int to_zone = -1, int to_instance = 0, const glm::vec3& location = glm::vec3());
 	void SetStartZone(uint32 zoneid, float x = 0.0f, float y =0.0f, float z = 0.0f);
 	uint32 GetStartZone(void);
 	void MovePC(const char* zonename, float x, float y, float z, float heading, uint8 ignorerestrictions = 0, ZoneMode zm = ZoneSolicited);
@@ -620,7 +618,7 @@ public:
 
 	FACTION_VALUE GetReverseFactionCon(Mob* iOther);
 	FACTION_VALUE GetFactionLevel(uint32 char_id, uint32 npc_id, uint32 p_race, uint32 p_class, uint32 p_deity, int32 pFaction, Mob* tnpc);
-	int32 GetCharacterFactionLevel(int32 faction_id);
+	int32 GetCharacterFactionLevel(int32 faction_id, bool updating = false);
 	int32 GetModCharacterFactionLevel(int32 faction_id);
 	void MerchantRejectMessage(Mob *merchant, int primaryfaction);
 	void SendFactionMessage(int32 tmpvalue, int32 faction_id, int32 faction_before_hit, int32 totalvalue, uint8 temp,  int32 this_faction_min, int32 this_faction_max);
@@ -928,6 +926,7 @@ public:
 	const bool IsSenseExempted() const { return m_SenseExemption; }
 	const bool IsAssistExempted() const { return m_AssistExemption; }
 	const bool GetGMSpeed() const { return (gmspeed > 0); }
+	const bool GetGMInvul() const { return gminvul; }
 	void CheatDetected(CheatTypes CheatType, float x, float y, float z);
 	const bool IsMQExemptedArea(uint32 zoneID, float x, float y, float z) const;
 	bool CanUseReport;
@@ -1256,7 +1255,17 @@ public:
 
 	void ResetHPUpdateTimer() { hpupdate_timer.Start(); }
 
+	void FixClientXP();
 	void SendHPUpdateMarquee();
+
+	// exp.cpp
+	uint32 GetEXPForLevel(uint16 level, bool aa = false);
+	void AddEXP(uint32 in_add_exp, uint8 conlevel = 0xFF, bool resexp = false);
+	bool IsInRange(Mob* defender);
+	bool IsInLevelRange(uint8 maxlevel);
+	void AddQuestEXP(uint32 in_add_exp);
+	void AddEXPPercent(uint8 percent, uint8 level = 1);
+	void GetExpLoss(Mob* attacker, uint16 spell, int &exploss);
 
 	void CheckRegionTypeChanges();
 
@@ -1384,6 +1393,7 @@ private:
 	bool auto_fire;
 	bool runmode;
 	uint8 gmspeed;
+	bool gminvul;
 	bool medding;
 	uint16 horseId;
 	bool revoked;
@@ -1419,7 +1429,6 @@ private:
 	InspectMessage_Struct m_inspect_message;
 
 	void NPCSpawn(const Seperator* sep);
-	uint32 GetEXPForLevel(uint16 level);
 
 	bool CanBeInZone();
 	void SendLogoutPackets();

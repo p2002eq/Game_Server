@@ -1,0 +1,11 @@
+image: ubuntu:trusty
+
+before_script:
+   - apt-get update -qq && apt-get install -y -qq gcc-4.8 g++-4.8 libmysqlclient-dev libperl-dev libboost-dev liblua5.1-0-dev zlib1g-dev uuid-dev libssl-dev build-essential make cmake
+   
+build1:
+ stage: build
+ script:
+   - cmake -G "Unix Makefiles" -DEQEMU_BUILD_TESTS=ON -DEQEMU_BUILD_LOGIN=ON
+   - make -j2
+   - ./bin/tests

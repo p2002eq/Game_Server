@@ -72,9 +72,6 @@ void Mob::CheckFlee() {
 	float run_ratio;
 	switch(con) {
 		//these values are not 100% researched
-		case CON_GRAY:
-			run_ratio = fleeratio;
-			break;
 		case CON_GREEN:
 			run_ratio = fleeratio * 9 / 10;
 			break;

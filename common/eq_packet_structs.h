@@ -5295,6 +5295,7 @@ struct ServerLootItem_Struct {
 	uint8	attuned;
 	uint8	min_level;
 	uint8	max_level;
+	uint8 quest; // is item in the quest loot table
 };
 
 //Found in client near a ref to the string:

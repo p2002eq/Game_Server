@@ -209,8 +209,8 @@ enum {	//some random constants
 #define MAX_NPC_FACTIONS 20
 
 //individual faction pool
-#define MAX_PERSONAL_FACTION 2000
-#define MIN_PERSONAL_FACTION -2000
+#define MAX_PERSONAL_FACTION 2100
+#define MIN_PERSONAL_FACTION -3000
 
 //The Level Cap:
 //#define LEVEL_CAP RuleI(Character, MaxLevel)	//hard cap is 127
@@ -221,7 +221,7 @@ enum {	//some random constants
 
 //the formula for experience for killing a mob.
 //level is the only valid variable to use
-#define EXP_FORMULA level*level*75*35/10
+#define EXP_FORMULA level*level
 
 #define HIGHEST_AA_VALUE 35
 

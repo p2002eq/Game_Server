@@ -72,8 +72,10 @@ class SharedDatabase : public Database
 		void	SaveCharacterInspectMessage(uint32 character_id, const InspectMessage_Struct* message);
 		bool	GetCommandSettings(std::map<std::string, std::pair<uint8, std::vector<std::string>>> &command_settings);
 		uint32	GetTotalTimeEntitledOnAccount(uint32 AccountID);
+		bool	SetGMInvul(uint32 account_id, bool gminvul);
+		bool	SetGMFlymode(uint32 account_id, uint8 flymode);
 
-		/*
+	/*
 		    Character InventoryProfile
 		*/
 		bool	SaveCursor(uint32 char_id, std::list<EQEmu::ItemInstance*>::const_iterator &start, std::list<EQEmu::ItemInstance*>::const_iterator &end);

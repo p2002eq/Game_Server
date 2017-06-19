@@ -455,6 +455,13 @@ void Object::HandleAutoCombine(Client* user, const RecipeAutoCombine_Struct* rac
 	outp->recipe_id = rac->recipe_id;
 	outp->reply_code = 0xFFFFFFF5;	//default fail.
 
+	// shutting autocombine feature off, not in era.
+	if (1==1)	{
+		user->Message(4, "This is out of era, use classic combine.");
+		user->QueuePacket(outapp);
+		safe_delete(outapp);
+		return;
+	}
 
 	//ask the database for the recipe to make sure it exists...
 	DBTradeskillRecipe_Struct spec;

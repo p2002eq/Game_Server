@@ -48,6 +48,7 @@ enum LogCategory {
 	Client_Server_Packet,
 	Combat,
 	Commands,
+	Faction,
 	Crash,
 	Debug,
 	Doors,
@@ -84,6 +85,7 @@ enum LogCategory {
 	Server_Client_Packet_With_Dump,
 	Client_Server_Packet_With_Dump,
 	Login_Server,
+	Group,
 	Client_Login,
 	Headless_Client,
 	MaxCategoryID	/* Don't Remove this*/
@@ -99,6 +101,7 @@ static const char* LogCategoryName[LogCategory::MaxCategoryID] = {
 	"Packet :: Client -> Server",
 	"Combat",
 	"Commands",
+	"Faction",
 	"Crash",
 	"Debug",
 	"Doors",
@@ -135,6 +138,7 @@ static const char* LogCategoryName[LogCategory::MaxCategoryID] = {
 	"Packet :: Server -> Client (Dump)",
 	"Packet :: Client -> Server (Dump)",
 	"Login Server",
+	"Group",
 	"Client Login"
 };
 }

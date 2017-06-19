@@ -52,5 +52,6 @@ uint32 hextoi(const char* num);
 uint64 hextoi64(const char* num);
 void MakeLowerString(const char *source, char *target);
 void RemoveApostrophes(std::string &s);
+void replace_all(std::string& in, std::string old, std::string repl);
 
 #endif

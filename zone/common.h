@@ -35,7 +35,6 @@
 #define CON_WHITE_TITANIUM		20
 #define CON_YELLOW		15
 #define CON_RED			13
-#define CON_GRAY		6
 
 #define DMG_BLOCKED		-1
 #define DMG_PARRIED		-2
@@ -336,6 +335,7 @@ struct StatBonuses {
 	int32	hastetype2;
 	int32	hastetype3;
 	int32	inhibitmelee;
+	int32	increasearchery;
 	float	AggroRange;							// when calculate just replace original value with this
 	float	AssistRange;
 	int32	skillmod[EQEmu::skills::HIGHEST_SKILL + 1];

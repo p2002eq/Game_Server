@@ -156,6 +156,7 @@ void command_load_shared_memory(Client *c, const Seperator *sep);
 void command_loc(Client *c, const Seperator *sep);
 void command_lock(Client *c, const Seperator *sep);
 void command_logs(Client *c, const Seperator *sep);
+void command_undeletechar(Client *c, const Seperator *sep);
 void command_logtest(Client *c, const Seperator *sep);
 void command_makepet(Client *c, const Seperator *sep);
 void command_mana(Client *c, const Seperator *sep);
@@ -290,6 +291,7 @@ void command_testspawnkill(Client *c, const Seperator *sep);
 void command_texture(Client *c, const Seperator *sep);
 void command_time(Client *c, const Seperator *sep);
 void command_timers(Client *c, const Seperator *sep);
+void command_timers_clear(Client *c, const Seperator *sep);
 void command_timezone(Client *c, const Seperator *sep);
 void command_title(Client *c, const Seperator *sep);
 void command_titlesuffix(Client *c, const Seperator *sep);
@@ -331,6 +333,8 @@ void command_zsky(Client *c, const Seperator *sep);
 void command_zstats(Client *c, const Seperator *sep);
 void command_zunderworld(Client *c, const Seperator *sep);
 void command_zuwcoords(Client *c, const Seperator *sep);
+void command_xpinfo(Client *c, const Seperator *sep);
+void command_godmode(Client* c, const Seperator *sep);
 
 #ifdef BOTS
 #include "bot.h"

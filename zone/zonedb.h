@@ -8,6 +8,7 @@
 #include "../common/eqemu_logsys.h"
 #include "aa_ability.h"
 #include "event_codes.h"
+#include "../common/database.h"
 
 class Client;
 class Corpse;
@@ -258,6 +259,9 @@ public:
 	bool	SetServerFilters(char* name, ServerSideFilters_Struct *ssfs);
 	uint32	GetServerFilters(char* name, ServerSideFilters_Struct *ssfs);
 
+	void LogCommands(const char* char_name, const char* acct_name, float y, float x, float z, const char* command, const char* targetType, const char* target, float tar_y, float tar_x, float tar_z, uint32 zone_id, const char* zone_name);
+	uint8 GetCommandAccess(const char* command);
+
 	void SaveBuffs(Client *c);
 	void LoadBuffs(Client *c);
 	void LoadPetInfo(Client *c);
@@ -282,7 +286,6 @@ public:
 	bool	LoadCharacterLeadershipAA(uint32 character_id, PlayerProfile_Struct* pp);
 
 	/* Character Data Saves  */
-	bool	SaveCharacterBindPoint(uint32 character_id, const BindStruct &bind, uint32 bind_num);
 	bool	SaveCharacterCurrency(uint32 character_id, PlayerProfile_Struct* pp);
 	bool	SaveCharacterData(uint32 character_id, uint32 account_id, PlayerProfile_Struct* pp, ExtendedProfile_Struct* m_epp);
 	bool	SaveCharacterAA(uint32 character_id, uint32 aa_id, uint32 current_level, uint32 charges);

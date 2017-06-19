@@ -44,7 +44,7 @@ void WorldDatabase::GetCharSelectInfo(uint32 accountID, EQApplicationPacket **ou
 
 	// Force Titanium clients to use '8'
 	if (client_version == EQEmu::versions::ClientVersion::Titanium)
-		character_limit = 8;
+		int character_limit = 8;
 	
 	/* Get Character Info */
 	std::string cquery = StringFormat(
@@ -71,7 +71,7 @@ void WorldDatabase::GetCharSelectInfo(uint32 accountID, EQApplicationPacket **ou
 		"zone_id		            "  // 19
 		"FROM                       "
 		"character_data             "
-		"WHERE `account_id` = %i ORDER BY `name` LIMIT %u", accountID, character_limit);
+		"WHERE `account_id` = %i AND is_deleted = 0 ORDER BY `name` LIMIT %u", accountID, character_limit);
 	auto results = database.QueryDatabase(cquery);
 
 	size_t character_count = results.RowCount();
@@ -98,7 +98,6 @@ void WorldDatabase::GetCharSelectInfo(uint32 accountID, EQApplicationPacket **ou
 		PlayerProfile_Struct pp;
 		EQEmu::InventoryProfile inv;
 		uint32 character_id = (uint32)atoi(row[0]);
-		uint8 has_home = 0;
 		uint8 has_bind = 0;
 
 		memset(&pp, 0, sizeof(PlayerProfile_Struct));
@@ -147,86 +146,53 @@ void WorldDatabase::GetCharSelectInfo(uint32 accountID, EQApplicationPacket **ou
 		cse->Unknown2 = 0;
 		/* Fill End */
 
-		if (RuleB(World, EnableReturnHomeButton)) {
-			int now = time(nullptr);
-			if ((now - atoi(row[7])) >= RuleI(World, MinOfflineTimeToReturnHome))
-				cse->GoHome = 1;
-		}
-
-		if (RuleB(World, EnableTutorialButton) && (cse->Level <= RuleI(World, MaxLevelForTutorial))) {
-			cse->Tutorial = 1;
-		}
-
 		/* Set Bind Point Data for any character that may possibly be missing it for any reason */
-		cquery = StringFormat("SELECT `zone_id`, `instance_id`, `x`, `y`, `z`, `heading`, `slot` FROM `character_bind`  WHERE `id` = %i LIMIT 5", character_id);
+		cquery = StringFormat("SELECT `zone_id`, `instance_id`, `x`, `y`, `z`, `heading` FROM `character_bind`  WHERE `id` = %i LIMIT 5", character_id);
 		auto results_bind = database.QueryDatabase(cquery);
 		auto bind_count = results_bind.RowCount();
 		for (auto row_b = results_bind.begin(); row_b != results_bind.end(); ++row_b) {
-			if (row_b[6] && atoi(row_b[6]) == 4) {
-				has_home = 1;
-				// If our bind count is less than 5, we need to actually make use of this data so lets parse it
-				if (bind_count < 5) {
-					pp.binds[4].zoneId = atoi(row_b[0]);
-					pp.binds[4].instance_id = atoi(row_b[1]);
-					pp.binds[4].x = atof(row_b[2]);
-					pp.binds[4].y = atof(row_b[3]);
-					pp.binds[4].z = atof(row_b[4]);
-					pp.binds[4].heading = atof(row_b[5]);
-				}
+			if(bind_count > 0) {
+				pp.binds[0].zoneId = atoi(row_b[0]);
+				pp.binds[0].instance_id = atoi(row_b[1]);
+				pp.binds[0].x = atof(row_b[2]);
+				pp.binds[0].y = atof(row_b[3]);
+				pp.binds[0].z = atof(row_b[4]);
+				pp.binds[0].heading = atof(row_b[5]);
+				has_bind = 1;
 			}
-			if (row_b[6] && atoi(row_b[6]) == 0){ has_bind = 1; }
 		}
 
-		if (has_home == 0 || has_bind == 0) {
+		if (has_bind == 0) {
 			cquery = StringFormat("SELECT `zone_id`, `bind_id`, `x`, `y`, `z` FROM `start_zones` WHERE `player_class` = %i AND `player_deity` = %i AND `player_race` = %i",
 				cse->Class, cse->Deity, cse->Race);
 			auto results_bind = database.QueryDatabase(cquery);
 			for (auto row_d = results_bind.begin(); row_d != results_bind.end(); ++row_d) {
 				/* If a bind_id is specified, make them start there */
 				if (atoi(row_d[1]) != 0) {
-					pp.binds[4].zoneId = (uint32)atoi(row_d[1]);
-					GetSafePoints(pp.binds[4].zoneId, 0, &pp.binds[4].x, &pp.binds[4].y, &pp.binds[4].z);
+					pp.binds[0].zoneId = (uint32) atoi(row_d[1]);
+					GetSafePoints(pp.binds[0].zoneId, 0, &pp.binds[0].x, &pp.binds[0].y, &pp.binds[0].z);
 				}
-				/* Otherwise, use the zone and coordinates given */
+					/* Otherwise, use the zone and coordinates given */
 				else {
-					pp.binds[4].zoneId = (uint32)atoi(row_d[0]);
+					pp.binds[0].zoneId = (uint32) atoi(row_d[0]);
 					float x = atof(row_d[2]);
 					float y = atof(row_d[3]);
 					float z = atof(row_d[4]);
-					if (x == 0 && y == 0 && z == 0){ GetSafePoints(pp.binds[4].zoneId, 0, &x, &y, &z); }
-					pp.binds[4].x = x; pp.binds[4].y = y; pp.binds[4].z = z;
+					if (x == 0 && y == 0 && z == 0) { GetSafePoints(pp.binds[4].zoneId, 0, &x, &y, &z); }
+					pp.binds[0].x = x;
+					pp.binds[0].y = y;
+					pp.binds[0].z = z;
 				}
-			}
-			pp.binds[0] = pp.binds[4];
-			/* If no home bind set, set it */
-			if (has_home == 0) {
-				std::string query = StringFormat("REPLACE INTO `character_bind` (id, zone_id, instance_id, x, y, z, heading, slot)"
-					" VALUES (%u, %u, %u, %f, %f, %f, %f, %i)",
-					character_id, pp.binds[4].zoneId, 0, pp.binds[4].x, pp.binds[4].y, pp.binds[4].z, pp.binds[4].heading, 4);
-				auto results_bset = QueryDatabase(query);
 			}
 			/* If no regular bind set, set it */
 			if (has_bind == 0) {
-				std::string query = StringFormat("REPLACE INTO `character_bind` (id, zone_id, instance_id, x, y, z, heading, slot)"
-					" VALUES (%u, %u, %u, %f, %f, %f, %f, %i)",
-					character_id, pp.binds[0].zoneId, 0, pp.binds[0].x, pp.binds[0].y, pp.binds[0].z, pp.binds[0].heading, 0);
-				auto results_bset = QueryDatabase(query);
+				database.SaveCharacterBindPoint(character_id, pp.binds[0]);
 			}
 		}
-		/* If our bind count is less than 5, then we have null data that needs to be filled in. */
-		if (bind_count < 5) {
-			// we know that home and main bind must be valid here, so we don't check those
-			// we also use home to fill in the null data like live does.
-			for (int i = 1; i < 4;  i++) {
-				if (pp.binds[i].zoneId != 0) // we assume 0 is the only invalid one ...
-					continue;
-
-				std::string query = StringFormat("REPLACE INTO `character_bind` (id, zone_id, instance_id, x, y, z, heading, slot)"
-					" VALUES (%u, %u, %u, %f, %f, %f, %f, %i)",
-					character_id, pp.binds[4].zoneId, 0, pp.binds[4].x, pp.binds[4].y, pp.binds[4].z, pp.binds[4].heading, i);
-				auto results_bset = QueryDatabase(query);
-			}
-		}
+		pp.binds[1] = pp.binds[0];
+		pp.binds[2] = pp.binds[0];
+		pp.binds[3] = pp.binds[0];
+		pp.binds[4] = pp.binds[0];
 		/* Bind End */
 
 		/* Load Character Material Data for Char Select */

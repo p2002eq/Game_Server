@@ -1598,7 +1598,7 @@ void Client::BuyTraderItem(TraderBuy_Struct* tbs, Client* Trader, const EQApplic
 		return;
 	}
 
-	tbs->Price = BuyItem->GetPrice();
+	//tbs->Price = BuyItem->GetPrice();
 
 	Log(Logs::Detail, Logs::Trading, "Buyitem: Name: %s, IsStackable: %i, Requested Quantity: %i, Charges on Item %i",
 					BuyItem->GetItem()->Name, BuyItem->IsStackable(), tbs->Quantity, BuyItem->GetCharges());

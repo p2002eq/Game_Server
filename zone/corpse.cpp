@@ -76,7 +76,7 @@ void Corpse::SendLootReqErrorPacket(Client* client, LootResponse response) {
 Corpse* Corpse::LoadCharacterCorpseEntity(uint32 in_dbid, uint32 in_charid, std::string in_charname, const glm::vec4& position, std::string time_of_death, bool rezzed, bool was_at_graveyard) {
 	uint32 item_count = database.GetCharacterCorpseItemCount(in_dbid);
 	auto buffer =
-	    new char[sizeof(PlayerCorpse_Struct) + (item_count * sizeof(player_lootitem::ServerLootItem_Struct))];
+	    new char[sizeof(PlayerCorpse_Struct) + (item_count * sizeof(ServerLootItem_Struct))];
 	PlayerCorpse_Struct *pcs = (PlayerCorpse_Struct*)buffer;
 	database.LoadCharacterCorpseData(in_dbid, pcs);
 
@@ -85,7 +85,7 @@ Corpse* Corpse::LoadCharacterCorpseEntity(uint32 in_dbid, uint32 in_charid, std:
 	ServerLootItem_Struct* tmp = nullptr;
 	for (unsigned int i = 0; i < pcs->itemcount; i++) {
 		tmp = new ServerLootItem_Struct;
-		memcpy(tmp, &pcs->items[i], sizeof(player_lootitem::ServerLootItem_Struct));
+		memcpy(tmp, &pcs->items[i], sizeof(ServerLootItem_Struct));
 		itemlist.push_back(tmp);
 	}
 
@@ -564,7 +564,7 @@ bool Corpse::Save() {
 		return true;
 
 	uint32 tmp = this->CountItems();
-	uint32 tmpsize = sizeof(PlayerCorpse_Struct) + (tmp * sizeof(player_lootitem::ServerLootItem_Struct));
+	uint32 tmpsize = sizeof(PlayerCorpse_Struct) + (tmp * sizeof(ServerLootItem_Struct));
 
 	PlayerCorpse_Struct* dbpc = (PlayerCorpse_Struct*) new uchar[tmpsize];
 	memset(dbpc, 0, tmpsize);
@@ -1001,21 +1001,27 @@ void Corpse::MakeLootRequestPackets(Client* client, const EQApplicationPacket* a
 		int corpselootlimit = EQEmu::inventory::Lookup(EQEmu::versions::ConvertClientVersionToMobVersion(client->ClientVersion()))->InventoryTypeSize[EQEmu::inventory::typeCorpse];
 
 		for(; cur != end; ++cur) {
-			ServerLootItem_Struct* item_data = *cur;
+			ServerLootItem_Struct *item_data = *cur;
 			item_data->lootslot = 0xFFFF;
 
 			// Dont display the item if it's in a bag
 
 			// Added cursor queue slots to corpse item visibility list. Nothing else should be making it to corpse.
-			if (!IsPlayerCorpse() || item_data->equip_slot <= EQEmu::inventory::slotCursor || item_data->equip_slot == EQEmu::inventory::slotPowerSource || Loot_Request_Type >= 3 ||
-				(item_data->equip_slot >= 8000 && item_data->equip_slot <= 8999)) {
-				if(i < corpselootlimit) {
+			if (!IsPlayerCorpse() || item_data->equip_slot <= EQEmu::inventory::slotCursor ||
+				item_data->equip_slot == EQEmu::inventory::slotPowerSource || Loot_Request_Type >= 3 ||
+				(item_data->equip_slot >= EQEmu::legacy::CURSOR_QUEUE_BEGIN &&
+				 item_data->equip_slot <= EQEmu::legacy::CURSOR_QUEUE_END)) {
+				if (i < corpselootlimit) {
 					item = database.GetItem(item_data->item_id);
-					if(client && item) {
-						EQEmu::ItemInstance* inst = database.CreateItem(item, item_data->charges, item_data->aug_1, item_data->aug_2, item_data->aug_3, item_data->aug_4, item_data->aug_5, item_data->aug_6, item_data->attuned);
-						if(inst) {
+					if (client && item) {
+						EQEmu::ItemInstance *inst = database.CreateItem(item, item_data->charges, item_data->aug_1,
+																		item_data->aug_2, item_data->aug_3,
+																		item_data->aug_4, item_data->aug_5,
+																		item_data->aug_6, item_data->attuned);
+						if (inst) {
 							if (item->RecastDelay)
-								inst->SetRecastTimestamp(timestamps.count(item->RecastType) ? timestamps.at(item->RecastType) : 0);
+								inst->SetRecastTimestamp(
+										timestamps.count(item->RecastType) ? timestamps.at(item->RecastType) : 0);
 							// SlotGeneral1 is the corpse inventory start offset for Ti(EMu) - CORPSE_END = SlotGeneral1 + SlotCursor
 							client->SendItemPacket(i + EQEmu::legacy::CORPSE_BEGIN, inst, ItemPacketLoot);
 							safe_delete(inst);
@@ -1024,7 +1030,6 @@ void Corpse::MakeLootRequestPackets(Client* client, const EQApplicationPacket* a
 						item_data->lootslot = i;
 					}
 				}
-
 				i++;
 			}
 		}

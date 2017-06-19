@@ -29,6 +29,8 @@
 #include <iomanip>
 #include <vector>
 #include <algorithm>
+#include <cstdint>
+#include <limits>
 
 #ifdef _WINDOWS
 	#include <time.h>
@@ -110,7 +112,12 @@ EQProtocolPacket *EQStream::MakeProtocolPacket(const unsigned char *buf, uint32 
 
 	//advance over opcode.
 	buf += 2;
-	len -= 2;
+	// Prevent uint_32 overflow
+	if (len >= 2) {
+		len -= 2;
+	} else {
+		len = 0;
+	}
 
 	return(new EQProtocolPacket(proto_opcode, buf, len));
 }
@@ -152,19 +159,22 @@ void EQStream::ProcessPacket(EQProtocolPacket *p)
 		break;
 
 		case OP_AppCombined: {
-			processed=0;
-			while(processed<p->size) {
-				EQRawApplicationPacket *ap=nullptr;
-				if ((subpacket_length=(unsigned char)*(p->pBuffer+processed))!=0xff) {
-					Log(Logs::Detail, Logs::Netcode, _L "Extracting combined app packet of length %d, short len" __L, subpacket_length);
-					ap=MakeApplicationPacket(p->pBuffer+processed+1,subpacket_length);
-					processed+=subpacket_length+1;
-				} else {
-					subpacket_length=ntohs(*(uint16 *)(p->pBuffer+processed+1));
-					Log(Logs::Detail, Logs::Netcode, _L "Extracting combined app packet of length %d, short len" __L, subpacket_length);
-					ap=MakeApplicationPacket(p->pBuffer+processed+3,subpacket_length);
-					processed+=subpacket_length+3;
+			processed = 0;
+			while ((processed + 3) <= p->size) {
+				EQRawApplicationPacket *ap = NULL;
+				subpacket_length = (unsigned char) *(p->pBuffer + processed);
+				processed++;
+
+				if (subpacket_length == 0xFF) {
+					if ((processed + 4) > p->size) break;
+					subpacket_length = ntohs(*(uint16 *) (p->pBuffer + processed));
+					processed += 2;
 				}
+				if (subpacket_length < 2 || subpacket_length > (p->size - processed)) break;
+
+				ap = MakeApplicationPacket(p->pBuffer + processed, subpacket_length);
+				processed += subpacket_length;
+
 				if (ap) {
 					ap->copyInfo(p);
 					InboundQueuePush(ap);

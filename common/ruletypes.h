@@ -50,10 +50,12 @@ RULE_BOOL(Character, LeaveCorpses, true)
 RULE_BOOL(Character, LeaveNakedCorpses, false)
 RULE_INT(Character, MaxDraggedCorpses, 2)
 RULE_REAL(Character, DragCorpseDistance, 400) // If the corpse is <= this distance from the player, it won't move
-RULE_REAL(Character, ExpMultiplier, 0.5)
-RULE_REAL(Character, AAExpMultiplier, 0.5)
-RULE_REAL(Character, GroupExpMultiplier, 0.5)
+RULE_REAL(Character, ExpMultiplier, 1.0)
+RULE_REAL(Character, AAExpMultiplier, 1.0)
+RULE_REAL(Character, GroupExpMultiplier, 1.0)
 RULE_REAL(Character, RaidExpMultiplier, 0.2)
+RULE_BOOL ( Character, SmoothEXPLoss, true)
+RULE_REAL ( Character, EXPLossMultiplier, 1.0)
 RULE_BOOL(Character, UseXPConScaling, true)
 RULE_INT(Character, ShowExpValues, 0) //0 - normal, 1 - Show raw experience values, 2 - Show raw experience values AND percent.
 RULE_INT(Character, GreenModifier, 20)
@@ -68,6 +70,7 @@ RULE_INT(Character, ManaRegenMultiplier, 100)
 RULE_INT(Character, EnduranceRegenMultiplier, 100)
 RULE_INT(Character, ConsumptionMultiplier, 100) //item's hunger restored = this value * item's food level, 100 = normal, 50 = people eat 2x as fast, 200 = people eat 2x as slow
 RULE_BOOL(Character, HealOnLevel, false)
+RULE_BOOL(Character, ManaOnLevel, false)
 RULE_BOOL(Character, FeignKillsPet, false)
 RULE_INT(Character, ItemManaRegenCap, 15)
 RULE_INT(Character, ItemHealthRegenCap, 35)
@@ -101,7 +104,6 @@ RULE_INT(Character, MaxFearDurationForPlayerCharacter, 4) //4 tics, each tic cal
 RULE_INT(Character, MaxCharmDurationForPlayerCharacter, 15)
 RULE_INT(Character, BaseHPRegenBonusRaces, 4352)	//a bitmask of race(s) that receive the regen bonus. Iksar (4096) & Troll (256) = 4352. see common/races.h for the bitmask values
 RULE_BOOL(Character, SoDClientUseSoDHPManaEnd, false)	// Setting this to true will allow SoD clients to use the SoD HP/Mana/End formulas and previous clients will use the old formulas
-RULE_BOOL(Character, UseRaceClassExpBonuses, true)	// Setting this to true will enable Class and Racial experience rate bonuses
 RULE_BOOL(Character, UseOldRaceExpPenalties, false)	// Setting this to true will enable racial exp penalties for Iksar, Troll, Ogre, and Barbarian, as well as the bonus for Halflings
 RULE_BOOL(Character, UseOldClassExpPenalties, false)	// Setting this to true will enable old class exp penalties for Paladin, SK, Ranger, Bard, Monk, Wizard, Enchanter, Magician, and Necromancer, as well as the bonus for Rogues and Warriors
 RULE_BOOL(Character, RespawnFromHover, false)		// Use Respawn window, or not.
@@ -151,6 +153,7 @@ RULE_BOOL(Character, AllowMQTarget, false) // Disables putting players in the 'h
 RULE_BOOL(Character, UseOldBindWound, false) // Uses the original bind wound behavior
 RULE_BOOL(Character, GrantHoTTOnCreate, false) // Grant Health of Target's Target leadership AA on character creation
 RULE_BOOL(Character, UseOldConSystem, false) // Grant Health of Target's Target leadership AA on character creation
+RULE_INT(Character, UnusedAAPointCap, 30) // Cap for Unused AA Points.  Default: 30.  NOTE: DO NOT LOWER THIS WITHOUT KNOWING WHAT YOU ARE DOING.  MAY RESULT IN PLAYERS LOSING AAs.
 RULE_CATEGORY_END()
 
 RULE_CATEGORY(Mercs)
@@ -203,9 +206,6 @@ RULE_CATEGORY(World)
 RULE_INT(World, ZoneAutobootTimeoutMS, 60000)
 RULE_INT(World, ClientKeepaliveTimeoutMS, 65000)
 RULE_BOOL(World, UseBannedIPsTable, false) // Toggle whether or not to check incoming client connections against the Banned_IPs table. Set this value to false to disable this feature.
-RULE_BOOL(World, EnableTutorialButton, true)
-RULE_BOOL(World, EnableReturnHomeButton, true)
-RULE_INT(World, MaxLevelForTutorial, 10)
 RULE_INT(World, TutorialZoneID, 189)
 RULE_INT(World, GuildBankZoneID, 345)
 RULE_INT(World, MinOfflineTimeToReturnHome, 21600) // 21600 seconds is 6 Hours
@@ -235,6 +235,7 @@ RULE_BOOL(World, StartZoneSameAsBindOnCreation, true) //Should the start zone AL
 RULE_CATEGORY_END()
 
 RULE_CATEGORY(Zone)
+RULE_REAL ( Zone, GroupEXPRange, 500 )
 RULE_INT(Zone, NPCPositonUpdateTicCount, 32) //ms between intervals of sending a position update to the entire zone.
 RULE_INT(Zone, ClientLinkdeadMS, 180000) //the time a client remains link dead on the server after a sudden disconnection
 RULE_INT(Zone, GraveyardTimeMS, 1200000) //ms time until a player corpse is moved to a zone's graveyard, if one is specified for the zone
@@ -255,7 +256,7 @@ RULE_INT(Zone, PEQZoneReuseTime, 900)	//How long, in seconds, until you can reus
 RULE_INT(Zone, PEQZoneDebuff1, 4454)		//First debuff casted by #peqzone Default is Cursed Keeper's Blight.
 RULE_INT(Zone, PEQZoneDebuff2, 2209)		//Second debuff casted by #peqzone Default is Tendrils of Apathy.
 RULE_BOOL(Zone, UsePEQZoneDebuffs, true)	//Will determine if #peqzone will debuff players or not when used.
-RULE_REAL(Zone, HotZoneBonus, 0.75)
+RULE_REAL(Zone, HotZoneBonus, 0.5)
 RULE_INT(Zone, ReservedInstances, 30) //Will reserve this many instance ids for globals... probably not a good idea to change this while a server is running.
 RULE_INT(Zone, EbonCrystalItemID, 40902)
 RULE_INT(Zone, RadiantCrystalItemID, 40903)
@@ -266,6 +267,17 @@ RULE_INT(Zone, MinOfflineTimeToReplenishments, 21600) // 21600 seconds is 6 Hour
 RULE_BOOL(Zone, UseZoneController, true) // Enables the ability to use persistent quest based zone controllers (zone_controller.pl/lua)
 RULE_BOOL(Zone, EnableZoneControllerGlobals, false) // Enables the ability to use quest globals with the zone controller NPC
 RULE_INT(Zone, GlobalLootMultiplier, 1) // Sets Global Loot drop multiplier for database based drops, useful for double, triple loot etc.
+RULE_CATEGORY_END()
+
+RULE_CATEGORY( AlKabor )
+RULE_BOOL( AlKabor, AllowTickSplit, false) //AK behavior is true
+RULE_BOOL ( AlKabor, StripBuffsOnLowHP, true) //AK behavior is true
+RULE_BOOL ( AlKabor, OutOfRangeGroupXPBonus, true) //AK behavior is true
+RULE_BOOL ( AlKabor, GroupEXPBonuses, false) //AK behavior is true
+RULE_BOOL ( AlKabor, Count6thGroupMember, false) //AK behavior is false
+RULE_BOOL ( AlKabor, GreensGiveXPToGroup, true) //AK behavior is true
+RULE_BOOL( AlKabor, AllowCharmPetRaidTanks, true) // AK behavior is true.  If false, NPCs will ignore charmed pets once MaxEntitiesCharmTanks players get on an NPC's hate list as per April 2003 patch.
+RULE_INT( AlKabor, MaxEntitiesCharmTanks, 8) // If AllowCharmPetRaidTanks is false, this is the max number of entities on an NPC's hate list before the NPC will ignore charmed pets.  April 2003 patch set this to 4 on Live.
 RULE_CATEGORY_END()
 
 RULE_CATEGORY(Map)
@@ -395,6 +407,9 @@ RULE_BOOL(Spells, UseAdditiveFocusFromWornSlot, false) // Allows an additive foc
 RULE_BOOL(Spells, AlwaysSendTargetsBuffs, false) // ignore LAA level if true
 RULE_BOOL(Spells, FlatItemExtraSpellAmt, false) // allow SpellDmg stat to affect all spells, regardless of cast time/cooldown/etc
 RULE_BOOL(Spells, IgnoreSpellDmgLvlRestriction, false) // ignore the 5 level spread on applying SpellDmg
+RULE_REAL(Spells, BreakFeignDeathWhenCastOn, 50.0) // percentage that fd will break when you resist a spell
+RULE_REAL(Spells, BreakSneakWhenCastOn, 2.0) // percentage that sneak will break when you resist a spell
+RULE_INT(Spells, SpellResistSoftCap, 255) 	// Softcap for spell resists.
 RULE_BOOL(Spells, AllowItemTGB, false) // TGB doesn't work with items on live, custom servers want it though
 RULE_BOOL(Spells, NPCInnateProcOverride, true) //  NPC innate procs override the target type to single target.
 RULE_CATEGORY_END()
@@ -427,13 +442,13 @@ RULE_REAL(Combat, HitFalloffModerate, 7.0) //hit will fall off up to 7% over the
 RULE_REAL(Combat, HitFalloffMajor, 50.0) //hit will fall off sharply if we're outside the minor and moderate range
 RULE_REAL(Combat, HitBonusPerLevel, 1.2) //You gain this % of hit for every level you are above your target
 RULE_REAL(Combat, WeaponSkillFalloff, 0.33) //For every weapon skill point that's not maxed you lose this % of hit
-RULE_REAL(Combat, ArcheryHitPenalty, 0.25) //Archery has a hit penalty to try to help balance it with the plethora of long term +hit modifiers for it
+RULE_REAL(Combat, ArcheryHitPenalty, 0) //Archery has a hit penalty to try to help balance it with the plethora of long term +hit modifiers for it
 RULE_REAL(Combat, AgiHitFactor, 0.01)
 RULE_REAL(Combat, MinChancetoHit, 5.0) //Minimum % chance to hit with regular melee/ranged
 RULE_REAL(Combat, MaxChancetoHit, 95.0) //Maximum % chance to hit with regular melee/ranged
 RULE_INT(Combat, MinRangedAttackDist, 25) //Minimum Distance to use Ranged Attacks
 RULE_BOOL(Combat, ArcheryBonusRequiresStationary, true) //does the 2x archery bonus chance require a stationary npc
-RULE_REAL(Combat, ArcheryBaseDamageBonus, 1) // % Modifier to Base Archery Damage (.5 = 50% base damage, 1 = 100%, 2 = 200%)
+RULE_REAL(Combat, ArcheryBaseDamageBonus, 0.85) // % Modifier to Base Archery Damage (.5 = 50% base damage, 1 = 100%, 2 = 200%)
 RULE_REAL(Combat, ArcheryNPCMultiplier, 1.0) // this is multiplied by the regular dmg to get the archery dmg
 RULE_BOOL(Combat, AssistNoTargetSelf, true) //when assisting a target that does not have a target: true = target self, false = leave target as was before assist (false = live like)
 RULE_INT(Combat, MaxRampageTargets, 3) //max number of people hit with rampage
@@ -499,6 +514,11 @@ RULE_INT(Combat, NPCAssistCapTimer, 6000) // Time in milliseconds a NPC will tak
 RULE_BOOL(Combat, UseRevampHandToHand, false) // use h2h revamped dmg/delays I believe this was implemented during SoF
 RULE_BOOL(Combat, ClassicMasterWu, false) // classic master wu uses a random special, modern doesn't
 RULE_INT(Combat, LevelToStopDamageCaps, 0) // 1 will effectively disable them, 20 should give basically same results as old incorrect system
+RULE_REAL(Combat, HitBoxMod, 1.00) // Added to test hit boxes.
+RULE_INT(Combat, RampageDistance, 100) // Distance a mob can Rampage
+RULE_INT(Combat, TripleAttackChanceWarrior, 100) // Innate Chance for Warrior to Triple Attack after a Double Attack (100 = 10%). DEFAULT: 100
+RULE_INT(Combat, TripleAttackChanceMonk, 100) // Innate Chance for Monk to Triple Attack after a Double Attack (100 = 10%). DEFAULT: 100
+RULE_BOOL(Combat, RogueBackstabHasteCorrection, false) // Toggle to enable correction for Haste impacting Backstab DPS too much.  DEFAULT: false
 RULE_CATEGORY_END()
 
 RULE_CATEGORY(NPC)
@@ -520,6 +540,7 @@ RULE_BOOL(NPC, LiveLikeEnrage, false) // If set to true then only player control
 RULE_BOOL(NPC, EnableMeritBasedFaction, false) // If set to true, faction will given in the same way as experience (solo/group/raid)
 RULE_INT(NPC, NPCToNPCAggroTimerMin, 500)
 RULE_INT(NPC, NPCToNPCAggroTimerMax, 6000)
+RULE_BOOL(NPC, IgnoreQuestLoot, false)
 RULE_BOOL(NPC, UseClassAsLastName, true) // Uses class archetype as LastName for npcs with none
 RULE_BOOL(NPC, NewLevelScaling, true) // Better level scaling, use old if new formulas would break your server
 RULE_CATEGORY_END()
@@ -539,6 +560,7 @@ RULE_INT(Aggro, IntAggroThreshold, 75) // Int <= this will aggro regardless of l
 RULE_BOOL(Aggro, AllowTickPulling, false) // tick pulling is an exploit in an NPC's call for help fixed sometime in 2006 on live
 RULE_BOOL(Aggro, UseLevelAggro, true) // Level 18+ and Undead will aggro regardless of level difference. (this will disabled Rule:IntAggroThreshold if set to true)
 RULE_INT(Aggro, ClientAggroCheckInterval, 6) // Interval in which clients actually check for aggro - in seconds
+RULE_INT(Aggro, InitialAggroBonus, 100) // Initial Aggro Bonus, Default 100
 RULE_CATEGORY_END()
 
 RULE_CATEGORY(TaskSystem)
@@ -661,7 +683,7 @@ RULE_INT(Adventure, LDoNAdventureExpireTime, 1800) //30 minutes to expire
 RULE_CATEGORY_END()
 
 RULE_CATEGORY(AA)
-RULE_INT(AA, ExpPerPoint, 23976503)	//Amount of exp per AA. Is the same as the amount of exp to go from level 51 to level 52.
+RULE_INT (AA, ExpPerPoint, 23976496)
 RULE_BOOL(AA, Stacking, true) //Allow AA that belong to the same group to stack on SOF+ clients.
 RULE_CATEGORY_END()
 

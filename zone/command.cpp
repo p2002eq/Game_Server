@@ -67,6 +67,7 @@
 #include "titles.h"
 #include "water_map.h"
 #include "worldserver.h"
+#include "client.h"
 
 extern QueryServ* QServ;
 extern WorldServer worldserver;
@@ -215,6 +216,7 @@ int command_init(void)
 		command_add("globalview", "Lists all qglobals in cache if you were to do a quest with this target.", 80, command_globalview) ||
 		command_add("gm", "- Turn player target's or your GM flag on or off", 80, command_gm) ||
 		command_add("gmspeed", "[on/off] - Turn GM speed hack on/off for you or your player target", 100, command_gmspeed) ||
+		command_add("godmode", "[on/off] - Turns on/off hideme, gmspeed, invul, and flymode.", 200, command_godmode) ||
 		command_add("goto", "[x] [y] [z] - Teleport to the provided coordinates or to your target", 10, command_goto) ||
 		command_add("grid", "[add/delete] [grid_num] [wandertype] [pausetype] - Create/delete a wandering grid", 170, command_grid) ||
 		command_add("guild", "- Guild manipulation commands. Use argument help for more info.", 10, command_guild) ||
@@ -377,11 +379,13 @@ int command_init(void)
 		command_add("texture", "[texture] [helmtexture] - Change your or your target's appearance, use 255 to show equipment", 10, command_texture) ||
 		command_add("time", "[HH] [MM] - Set EQ time", 90, command_time) ||
 		command_add("timers", "- Display persistent timers for target", 200, command_timers) ||
+		command_add("timers_clear", "Clear all the timers of the current target", 200, command_timers_clear) ||
 		command_add("timezone", "[HH] [MM] - Set timezone. Minutes are optional", 90, command_timezone) ||
 		command_add("title", "[text] [1 = create title table row] - Set your or your player target's title", 50, command_title) ||
 		command_add("titlesuffix", "[text] [1 = create title table row] - Set your or your player target's title suffix", 50, command_titlesuffix) ||
 		command_add("traindisc", "[level] - Trains all the disciplines usable by the target, up to level specified. (may freeze client for a few seconds)", 150, command_traindisc) ||
 		command_add("tune",  "Calculate ideal statical values related to combat.",  100, command_tune) ||
+		command_add("undeletechar", "- Undelete a character that was previously deleted.", 255, command_undeletechar) ||
 		command_add("undyeme", "- Remove dye from all of your armor slots", 0, command_undyeme) ||
 		command_add("unfreeze", "- Unfreeze your target", 80, command_unfreeze) ||
 		command_add("unlock", "- Unlock the worldserver", 150, command_unlock) ||
@@ -399,6 +403,7 @@ int command_init(void)
 		command_add("wp", "[add/delete] [grid_num] [pause] [wp_num] [-h] - Add/delete a waypoint to/from a wandering grid", 170, command_wp) ||
 		command_add("wpadd", "[pause] [-h] - Add your current location as a waypoint to your NPC target's AI path", 170, command_wpadd) ||
 		command_add("wpinfo", "- Show waypoint info about your NPC target", 170, command_wpinfo) ||
+		command_add("xpinfo", "- Show XP info about your current target", 250, command_xpinfo) ||
 		command_add("xtargets",  "Show your targets Extended Targets and optionally set how many xtargets they can have.",  250, command_xtargets) ||
 		command_add("zclip", "[min] [max] - modifies and resends zhdr packet", 80, command_zclip) ||
 		command_add("zcolor", "[red] [green] [blue] - Change sky color", 80, command_zcolor) ||
@@ -552,14 +557,20 @@ int command_realdispatch(Client *c, const char *message)
 		return(-1);
 	}
 
-	/* QS: Player_Log_Issued_Commands */
-	if (RuleB(QueryServ, PlayerLogIssuedCommandes)){
-		std::string event_desc = StringFormat("Issued command :: '%s' in zoneid:%i instid:%i",  message, c->GetZoneID(), c->GetInstanceID());
-		QServ->PlayerLogEvent(Player_Log_Issued_Commands, c->CharacterID(), event_desc);
-	}
-
 	if(cur->access >= COMMANDS_LOGGING_MIN_STATUS) {
-		Log(Logs::General, Logs::Commands, "%s (%s) used command: %s (target=%s)",  c->GetName(), c->AccountName(), message, c->GetTarget()?c->GetTarget()->GetName():"NONE");
+		const char *targetType = "notarget";
+		if (c->GetTarget()) {
+			if (c->GetTarget()->IsClient()) targetType = "player";
+			else if (c->GetTarget()->IsPet()) targetType = "pet";
+			else if (c->GetTarget()->IsNPC()) targetType = "NPC";
+			else if (c->GetTarget()->IsCorpse()) targetType = "Corpse";
+			database.LogCommands(c->GetName(), c->AccountName(), c->GetY(), c->GetX(), c->GetZ(), message, targetType,
+								 c->GetTarget()->GetName(), c->GetTarget()->GetY(), c->GetTarget()->GetX(),
+								 c->GetTarget()->GetZ(), c->GetZoneID(), zone->GetShortName());
+		} else {
+			database.LogCommands(c->GetName(), c->AccountName(), c->GetY(), c->GetX(), c->GetZ(), message, targetType,
+								 targetType, 0, 0, 0, c->GetZoneID(), zone->GetShortName());
+		}
 	}
 
 	if(cur->function == nullptr) {
@@ -879,11 +890,17 @@ void command_npcloot(Client *c, const Seperator *sep)
 			uint32 item = atoi(sep->arg[2]);
 			if (database.GetItem(item))
 			{
-				if (sep->arg[3][0] != 0 && sep->IsNumber(3))
-					c->GetTarget()->CastToNPC()->AddItem(item, atoi(sep->arg[3]), 0);
-				else
-					c->GetTarget()->CastToNPC()->AddItem(item, 1, 0);
-				c->Message(0, "Added item(%i) to the %s's loot.",  item, c->GetTarget()->GetName());
+				bool quest = false;
+				if (sep->arg[4][0] != 0 && sep->IsNumber(4)) {
+					quest = atoi(sep->arg[4]);
+				}
+				if (sep->arg[3][0] != 0 && sep->IsNumber(3)) {
+					c->GetTarget()->CastToNPC()->AddItem(item, atoi(sep->arg[3]), 0, quest);
+				} else {
+					c->GetTarget()->CastToNPC()->AddItem(item, 1, 0, quest);
+				}
+				std::string isQuest = quest ? "true" : "false";
+				c->Message(0, "Added item(%i) to the %s's loot. isQuest: %s",  item, c->GetTarget()->GetName(), isQuest.c_str());
 			}
 			else
 				c->Message(0, "Error: #npcloot add: Item(%i) does not exist!",  item);
@@ -1390,6 +1407,8 @@ void command_invul(Client *c, const Seperator *sep)
 
 	if(sep->arg[1][0] != 0) {
 		t->SetInvul(state);
+		uint32 account = t->AccountID();
+		database.SetGMInvul(account, state);
 		c->Message(0, "%s is %s invulnerable from attack.",  t->GetName(), state?"now":"no longer");
 	}
 	else
@@ -2096,22 +2115,26 @@ void command_mana(Client *c, const Seperator *sep)
 		t->SetMana(t->CalcMaxMana());
 }
 
-void command_flymode(Client *c, const Seperator *sep)
-{
-	Client *t=c;
+void command_flymode(Client *c, const Seperator *sep) {
+	Client *t = c;
 
 	if (strlen(sep->arg[1]) == 1 && !(sep->arg[1][0] == '0' || sep->arg[1][0] == '1' || sep->arg[1][0] == '2'))
 		c->Message(0, "#flymode [0/1/2]");
 	else {
-		if(c->GetTarget() && c->GetTarget()->IsClient())
-			t=c->GetTarget()->CastToClient();
+		if (c->GetTarget() && c->GetTarget()->IsClient())
+			t = c->GetTarget()->CastToClient();
 		t->SendAppearancePacket(AT_Levitate, atoi(sep->arg[1]));
-		if (sep->arg[1][0] == '1')
-			c->Message(0, "Turning %s's Flymode ON",  t->GetName());
-		else if (sep->arg[1][0] == '2')
-			c->Message(0, "Turning %s's Flymode LEV",  t->GetName());
-		else
-			c->Message(0, "Turning %s's Flymode OFF",  t->GetName());
+		uint32 account = c->AccountID();
+		if (sep->arg[1][0] == '1') {
+			c->Message(0, "Turning %s's Flymode ON", t->GetName());
+			database.SetGMFlymode(account, 1);
+		} else if (sep->arg[1][0] == '2') {
+			c->Message(0, "Turning %s's Flymode LEV", t->GetName());
+			database.SetGMFlymode(account, 2);
+		} else {
+			c->Message(0, "Turning %s's Flymode OFF", t->GetName());
+			database.SetGMFlymode(account, 0);
+		}
 	}
 }
 
@@ -4069,11 +4092,13 @@ void command_setxp(Client *c, const Seperator *sep)
 	if(c->GetTarget() && c->GetTarget()->IsClient())
 		t=c->GetTarget()->CastToClient();
 
+	uint32 currentaaXP = t->GetAAXP();
+
 	if (sep->IsNumber(1)) {
 		if (atoi(sep->arg[1]) > 9999999)
 			c->Message(0, "Error: Value too high.");
 		else
-			t->AddEXP(atoi(sep->arg[1]));
+			t->AddEXP(atoi(sep->arg[1]), currentaaXP);
 	}
 	else
 		c->Message(0, "Usage: #setxp number");
@@ -5666,9 +5691,6 @@ void command_setaaxp(Client *c, const Seperator *sep)
 
 	if (sep->IsNumber(1)) {
 		t->SetEXP(t->GetEXP(), atoi(sep->arg[1]), false);
-		if(sep->IsNumber(2) && sep->IsNumber(3)) {
-			t->SetLeadershipEXP(atoi(sep->arg[2]), atoi(sep->arg[3]));
-		}
 	} else
 		c->Message(0, "Usage: #setaaxp <new AA XP value> (<new Group AA XP value> <new Raid XP value>)");
 }
@@ -5688,12 +5710,10 @@ void command_setaapts(Client *c, const Seperator *sep)
 		t->GetPP().group_leadership_points = atoi(sep->arg[2]);
 		t->GetPP().group_leadership_exp = 0;
 		t->Message(MT_Experience, "Setting Group AA points to %u", t->GetPP().group_leadership_points);
-		t->SendLeadershipEXPUpdate();
 	} else if(!strcasecmp(sep->arg[1], "raid")) {
 		t->GetPP().raid_leadership_points = atoi(sep->arg[2]);
 		t->GetPP().raid_leadership_exp = 0;
 		t->Message(MT_Experience, "Setting Raid AA points to %u", t->GetPP().raid_leadership_points);
-		t->SendLeadershipEXPUpdate();
 	} else {
 		t->GetPP().aapoints = atoi(sep->arg[2]);
 		t->GetPP().expAA = 0;
@@ -6028,6 +6048,18 @@ void command_timers(Client *c, const Seperator *sep) {
 	for(r = 0; r < l; r++) {
 		c->Message(0,"Timer %d: %d seconds remain.",  res[r].first, res[r].second->GetRemainingTime());
 	}
+}
+
+void command_timers_clear(Client* c, const Seperator* sep)
+{
+	if (!c->GetTarget() || !c->GetTarget()->IsClient())
+	{
+		c->Message(0, "Need a player target for timers_clear.");
+	}
+	Client* target = c->GetTarget()->CastToClient();
+	c->GetPTimers().Clear(&database);
+
+	c->Message(0, "Timers cleared for %s.", c->GetName());
 }
 
 void command_npcemote(Client *c, const Seperator *sep)
@@ -10704,6 +10736,18 @@ void command_mysqltest(Client *c, const Seperator *sep)
 	Log(Logs::General, Logs::Debug, "MySQL Test... Took %f seconds", ((float)(std::clock() - t)) / CLOCKS_PER_SEC);
 }
 
+void command_undeletechar(Client *c, const Seperator *sep) {
+	if (sep->arg[1][0] != 0) {
+		if (!database.UnDeleteCharacter(sep->arg[1])) {
+			c->Message(CC_Red, "%s could not be undeleted. Check the spelling of their name.", sep->arg[1]);
+		} else {
+			c->Message(CC_Green, "%s successfully undeleted!", sep->arg[1]);
+		}
+	} else {
+		c->Message(CC_Default, "Usage: undeletechar [charname]");
+	}
+}
+
 void command_resetaa_timer(Client *c, const Seperator *sep) {
 	Client *target = nullptr;
 	if(!c->GetTarget() || !c->GetTarget()->IsClient()) {
@@ -10837,6 +10881,53 @@ void command_reloadperlexportsettings(Client *c, const Seperator *sep)
 	}
 }
 
+void command_xpinfo(Client *c, const Seperator *sep){
+
+	Client *t;
+
+	if (c->GetTarget() && c->GetTarget()->IsClient())
+		t = c->GetTarget()->CastToClient();
+	else
+		t = c;
+
+	uint16 level = t->GetLevel();
+	uint32 totalrequiredxp = t->GetEXPForLevel(level + 1);
+	uint32 currentxp = t->GetEXP();
+	float xpforlevel = totalrequiredxp - currentxp;
+	float totalxpforlevel = totalrequiredxp - t->GetEXPForLevel(level);
+	float xp_percent = 100.0 - ((xpforlevel/totalxpforlevel) * 100.0);
+
+	int exploss;
+	t->GetExpLoss(nullptr, 0, exploss);
+	float loss_percent = (exploss/totalxpforlevel) * 100.0;
+
+	float maxaa = t->GetEXPForLevel(0, true);
+	uint32 currentaaxp = t->GetAAXP();
+	float aa_percent = (currentaaxp/maxaa) * 100.0;
+
+	c->Message(CC_Yellow, "%s has %d of %d required XP.", t->GetName(), currentxp, totalrequiredxp);
+	c->Message(CC_Yellow, "They need %0.1f more to get to %d. They are %0.2f percent towards this level.", xpforlevel, level+1, xp_percent);
+	c->Message(CC_Yellow, "Their XP loss at this level is %d which is %0.2f percent of their current level.", exploss, loss_percent);
+	c->Message(CC_Yellow, "They have %d of %0.1f towards an AA point. They are %0.2f percent towards this point.", currentaaxp, maxaa, aa_percent);
+}
+
+void command_godmode(Client *c, const Seperator *sep){
+	bool state = atobool(sep->arg[1]);
+	uint32 account = c->AccountID();
+
+	if (sep->arg[1][0] != 0)
+	{
+		c->SetInvul(state);
+		database.SetGMInvul(account, state);
+		database.SetGMSpeed(account, state ? 1 : 0);
+		c->SendAppearancePacket(AT_Levitate, state);
+		database.SetGMFlymode(account, state);
+		c->SetHideMe(state);
+		c->Message(CC_Default, "Turning GodMode %s for %s (zone for gmspeed to take effect)", state ? "On" : "Off", c->GetName());
+	}
+	else
+		c->Message(CC_Default, "Usage: #godmode [on/off]");
+}
 
 // All new code added to command.cpp should be BEFORE this comment line. Do no append code to this file below the BOTS code block.
 #ifdef BOTS

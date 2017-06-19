@@ -50,6 +50,7 @@ int32 Mob::GetActSpellDamage(uint16 spell_id, int32 value, Mob* target) {
 	bool Critical = false;
 	int32 value_BaseEffect = 0;
 	int chance = 0;
+	int32 MBCap = 9492;  //Manaburn Damage Cap, same cap whether critical or normal
 
 	value_BaseEffect = value + (value*GetFocusEffect(focusFcBaseEffects, spell_id)/100);
 
@@ -122,6 +123,12 @@ int32 Mob::GetActSpellDamage(uint16 spell_id, int32 value, Mob* target) {
 			else if (IsNPC() && CastToNPC()->GetSpellScale())
 				value = int(static_cast<float>(value) * CastToNPC()->GetSpellScale() / 100.0f);
 
+			// Manaburn can crit, but is still held to the same cap
+			if (spell_id == 2751) {
+				if (value < -MBCap)
+					value = -MBCap;
+			}
+			
 			entity_list.MessageClose_StringID(this, true, 100, MT_SpellCrits,
 					OTHER_CRIT_BLAST, GetName(), itoa(-value));
 
@@ -158,6 +165,12 @@ int32 Mob::GetActSpellDamage(uint16 spell_id, int32 value, Mob* target) {
 	if (IsNPC() && CastToNPC()->GetSpellScale())
 		value = int(static_cast<float>(value) * CastToNPC()->GetSpellScale() / 100.0f);
 
+	// Apply Manaburn damage cap
+	if (spell_id == 2751) {
+		if (value < -MBCap)
+			value = -MBCap;
+	}
+	
 	return value;
 }
 
@@ -356,65 +369,18 @@ int32 Client::GetActSpellCost(uint16 spell_id, int32 cost)
 		cost -= mana_back;
 	}
 
-	// This formula was derived from the following resource:
-	// http://www.eqsummoners.com/eq1/specialization-library.html
-	// WildcardX
-	float PercentManaReduction = 0;
+	// Formula used from Graffe's testing
+	// https://www.graffe.com/forums/showthread.php?3471-Spell-Casting-Mastery-tests-(no-NOT-fury-mastery)
+	// Info in in-era for 2002
 	float SpecializeSkill = GetSpecializeSkillValue(spell_id);
-	int SuccessChance = zone->random.Int(0, 100);
+	float PercentManaReduction = SpecializeSkill / 20.0f;
 
-	float bonus = 1.0;
-	switch(GetAA(aaSpellCastingMastery))
-	{
-	case 1:
-		bonus += 0.05;
-		break;
-	case 2:
-		bonus += 0.15;
-		break;
-	case 3:
-		bonus += 0.30;
-		break;
-	}
-
-	bonus += 0.05f * GetAA(aaAdvancedSpellCastingMastery);
-
-	if(SuccessChance <= (SpecializeSkill * 0.3 * bonus))
-	{
-		PercentManaReduction = 1 + 0.05f * SpecializeSkill;
-		switch(GetAA(aaSpellCastingMastery))
-		{
-		case 1:
-			PercentManaReduction += 2.5;
-			break;
-		case 2:
-			PercentManaReduction += 5.0;
-			break;
-		case 3:
-			PercentManaReduction += 10.0;
-			break;
-		}
-
-		switch(GetAA(aaAdvancedSpellCastingMastery))
-		{
-		case 1:
-			PercentManaReduction += 2.5;
-			break;
-		case 2:
-			PercentManaReduction += 5.0;
-			break;
-		case 3:
-			PercentManaReduction += 10.0;
-			break;
-		}
-	}
+	// SCM effects count as an AA-based focus effect, so are rolled into the GetFocusEffect function
 
 	int16 focus_redux = GetFocusEffect(focusManaCost, spell_id);
 
-	if(focus_redux > 0)
-	{
-		PercentManaReduction += zone->random.Real(1, (double)focus_redux);
-	}
+	// random roll of mana preservation effects handled inside GetFocusEffect function, no need to randomize here
+	PercentManaReduction += focus_redux;
 
 	cost -= (cost * (PercentManaReduction / 100));
 

@@ -100,6 +100,28 @@ bool SharedDatabase::SetGMSpeed(uint32 account_id, uint8 gmspeed)
 	return true;
 }
 
+bool SharedDatabase::SetGMInvul(uint32 account_id, bool gminvul)
+{
+	std::string query = StringFormat("UPDATE account SET gminvul = %i WHERE id = %i", gminvul, account_id);
+	auto results = QueryDatabase(query);
+	if (!results.Success()) {
+		return false;
+	}
+
+	return true;
+}
+
+bool SharedDatabase::SetGMFlymode(uint32 account_id, uint8 flymode)
+{
+	std::string query = StringFormat("UPDATE account SET flymode = %i WHERE id = %i", flymode, account_id);
+	auto results = QueryDatabase(query);
+	if (!results.Success()) {
+		return false;
+	}
+
+	return true;
+}
+
 uint32 SharedDatabase::GetTotalTimeEntitledOnAccount(uint32 AccountID) {
 	uint32 EntitledTime = 0;
 	std::string query = StringFormat("SELECT `time_played` FROM `character_data` WHERE `account_id` = %u", AccountID);
@@ -110,30 +132,34 @@ uint32 SharedDatabase::GetTotalTimeEntitledOnAccount(uint32 AccountID) {
 	return EntitledTime;
 }
 
-bool SharedDatabase::SaveCursor(uint32 char_id, std::list<EQEmu::ItemInstance*>::const_iterator &start, std::list<EQEmu::ItemInstance*>::const_iterator &end)
-{
+bool SharedDatabase::SaveCursor(uint32 char_id, std::list<EQEmu::ItemInstance*>::const_iterator &start, std::list<EQEmu::ItemInstance*>::const_iterator &end) {
 	// Delete cursor items
 	std::string query = StringFormat("DELETE FROM inventory WHERE charid = %i "
-                                    "AND ((slotid >= 8000 AND slotid <= 8999) "
-                                    "OR slotid = %i OR (slotid >= %i AND slotid <= %i) )",
-									char_id, EQEmu::inventory::slotCursor,
-									EQEmu::legacy::CURSOR_BAG_BEGIN, EQEmu::legacy::CURSOR_BAG_END);
-    auto results = QueryDatabase(query);
-    if (!results.Success()) {
-        std::cout << "Clearing cursor failed: " << results.ErrorMessage() << std::endl;
-        return false;
-    }
+											 "AND ((slotid >= %i AND slotid <= %i) "
+											 "OR slotid = %i OR (slotid >= %i AND slotid <= %i) )",
+									 char_id, EQEmu::legacy::CURSOR_QUEUE_BEGIN, EQEmu::legacy::CURSOR_QUEUE_END,
+									 EQEmu::inventory::slotCursor, EQEmu::legacy::CURSOR_BAG_BEGIN,
+									 EQEmu::legacy::CURSOR_BAG_END);
+	auto results = QueryDatabase(query);
+	if (!results.Success()) {
+		std::cout << "Clearing cursor failed: " << results.ErrorMessage() << std::endl;
+		return false;
+	}
 
-    int i = 8000;
-    for(auto it = start; it != end; ++it, i++) {
-		if (i > 8999) { break; } // shouldn't be anything in the queue that indexes this high
-        EQEmu::ItemInstance *inst = *it;
-		int16 use_slot = (i == 8000) ? EQEmu::inventory::slotCursor : i;
+	int i = EQEmu::legacy::CURSOR_QUEUE_BEGIN;
+	for (auto it = start; it != end; ++it, i++) {
+		EQEmu::ItemInstance *inst = *it;
+		int16 use_slot = (i == EQEmu::legacy::CURSOR_QUEUE_BEGIN) ? EQEmu::inventory::slotCursor : i;
+		if (inst)
+			Log(Logs::Moderate, Logs::Inventory, "SaveCursor: Attempting to save item %s for char %d in slot %d",
+				inst->GetItem()->Name, char_id, use_slot);
+		else
+			Log(Logs::Moderate, Logs::Inventory,
+				"SaveCursor: No inst found. This is either an error, or we've reached the end of the list.");
 		if (!SaveInventory(char_id, inst, use_slot)) {
 			return false;
 		}
-    }
-
+	}
 	return true;
 }
 
@@ -347,9 +373,9 @@ bool SharedDatabase::DeleteSharedBankSlot(uint32 char_id, int16 slot_id) {
 }
 
 
-int32 SharedDatabase::GetSharedPlatinum(uint32 account_id)
+int32 SharedDatabase::GetSharedPlatinum(uint32 CharacterID)
 {
-	std::string query = StringFormat("SELECT sharedplat FROM account WHERE id = '%i'", account_id);
+	std::string query = StringFormat("SELECT platinum_shared FROM character_currency WHERE id = '%i'", CharacterID);
     auto results = QueryDatabase(query);
     if (!results.Success()) {
 		return false;
@@ -363,8 +389,8 @@ int32 SharedDatabase::GetSharedPlatinum(uint32 account_id)
 	return atoi(row[0]);
 }
 
-bool SharedDatabase::SetSharedPlatinum(uint32 account_id, int32 amount_to_add) {
-	std::string query = StringFormat("UPDATE account SET sharedplat = sharedplat + %i WHERE id = %i", amount_to_add, account_id);
+bool SharedDatabase::SetSharedPlatinum(uint32 CharacterID, int32 amount_to_add) {
+	std::string query = StringFormat("UPDATE character_currency SET platinum_shared = platinum_shared + %i WHERE id = %i", amount_to_add, CharacterID);
 	auto results = QueryDatabase(query);
 	if (!results.Success()) {
 		return false;
