@@ -276,10 +276,6 @@ int main(int argc, char** argv) {
 		}
 	}
 
-	if (!ignore_db) {
-		Log(Logs::General, Logs::World_Server, "Checking Database Conversions..");
-		database.CheckDatabaseConversions();
-	}
 	Log(Logs::General, Logs::World_Server, "Loading variables..");
 	database.LoadVariables();
 
