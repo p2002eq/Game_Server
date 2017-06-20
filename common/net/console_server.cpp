@@ -33,6 +33,23 @@ void EQ::Net::ConsoleServer::ConnectionDisconnected(ConsoleServerConnection *c)
 	}
 }
 
+EQ::Net::ConsoleServerConnection *EQ::Net::ConsoleServer::FindByAccountName(const std::string &acct_name) {
+	for (auto &iter : m_connections) {
+		if (iter.second->UserName().compare(acct_name) == 0) {
+			return iter.second.get();
+		}
+	}
+	return nullptr;
+}
+
+
+void EQ::Net::ConsoleServer::SendChannelMessage(const ServerChannelMessage_Struct* scm, std::function<void(void)> onTell) {
+	for (auto &iter : m_connections) {
+		iter.second->SendChannelMessage(scm, onTell);
+	}
+}
+
+
 void EQ::Net::ConsoleServer::ProcessCommand(ConsoleServerConnection *c, const std::string &cmd)
 {
 	auto split = SplitString(cmd, ' ');
