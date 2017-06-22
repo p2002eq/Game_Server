@@ -560,7 +560,7 @@ bool Client::SummonItem(uint32 item_id, int16 charges, uint32 aug1, uint32 aug2,
 	// check to see if item is usable in requested slot
 	if (enforceusable && (((to_slot >= EQEmu::inventory::slotCharm) && (to_slot <= EQEmu::inventory::slotAmmo)) || (to_slot == EQEmu::inventory::slotPowerSource))) {
 	*/
-	if (((to_slot >= EQEmu::inventory::SlotCharm) && (to_slot <= EQEmu::inventory::SlotAmmo)) || (to_slot == EQEmu::inventory::SlotPowerSource)) {
+	if (((to_slot >= EQEmu::inventory::slotCharm) && (to_slot <= EQEmu::inventory::slotAmmo)) || (to_slot == EQEmu::inventory::slotPowerSource)) {
 		uint32 slottest = (to_slot == EQEmu::inventory::slotPowerSource) ? 22 : to_slot; // can't change '22' just yet...
 
 		if(!(slots & ((uint32)1 << slottest))) {
