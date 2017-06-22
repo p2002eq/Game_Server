@@ -234,14 +234,16 @@ bool Client::SummonItem(uint32 item_id, int16 charges, uint32 aug1, uint32 aug2,
 
 		return false;
 	}
-	*/
+	
 
 	uint32 augments[EQEmu::inventory::SocketCount] = { aug1, aug2, aug3, aug4, aug5, aug6 };
+*/
 
 	uint32 classes	= item->Classes;
 	uint32 races	= item->Races;
 	uint32 slots	= item->Slots;
 
+/*
 	bool enforcewear	= RuleB(Inventory, EnforceAugmentWear);
 	bool enforcerestr	= RuleB(Inventory, EnforceAugmentRestriction);
 	bool enforceusable	= RuleB(Inventory, EnforceAugmentUsability);
@@ -278,7 +280,7 @@ bool Client::SummonItem(uint32 item_id, int16 charges, uint32 aug1, uint32 aug2,
 			// Same as GM check above
 
 			// check to make sure we are a GM if the augment is GM-only
-			/*
+			
 			else if(augtest->MinStatus && ((this->Admin() < augtest->MinStatus) || (this->Admin() < RuleI(GM, MinStatusToSummonItem)))) {
 				Message(13, "You are not a GM or do not have the status to summon this augment.");
 				Log(Logs::Detail, Logs::Inventory, "Player %s on account %s attempted to create a GM-only augment (Aug%i) with a status of %i.\n(Item: %u, Aug1: %u, Aug2: %u, Aug3: %u, Aug4: %u, Aug5: %u, MinStatus: %u)\n",
@@ -286,7 +288,7 @@ bool Client::SummonItem(uint32 item_id, int16 charges, uint32 aug1, uint32 aug2,
 
 				return false;
 			}
-			*/
+			
 
 			// check for augment type allowance
 			if(enforcewear) {
@@ -515,6 +517,7 @@ bool Client::SummonItem(uint32 item_id, int16 charges, uint32 aug1, uint32 aug2,
 		}
 	}
 
+*/
 	// validation passed..so, set the charges and create the actual item
 
 	// if the item is stackable and the charge amount is -1 or 0 then set to 1 charge.
@@ -539,6 +542,7 @@ bool Client::SummonItem(uint32 item_id, int16 charges, uint32 aug1, uint32 aug2,
 		return false;
 	}
 
+/*
 	// add any validated augments
 	for (int iter = EQEmu::inventory::socketBegin; iter < EQEmu::inventory::SocketCount; ++iter) {
 		if(augments[iter])
@@ -555,6 +559,8 @@ bool Client::SummonItem(uint32 item_id, int16 charges, uint32 aug1, uint32 aug2,
 
 	// check to see if item is usable in requested slot
 	if (enforceusable && (((to_slot >= EQEmu::inventory::slotCharm) && (to_slot <= EQEmu::inventory::slotAmmo)) || (to_slot == EQEmu::inventory::slotPowerSource))) {
+	*/
+	if (((to_slot >= EQEmu::inventory::slotCharm) && (to_slot <= EQEmu::inventory::slotAmmo)) || (to_slot == EQEmu::inventory::slotPowerSource)) {
 		uint32 slottest = (to_slot == EQEmu::inventory::slotPowerSource) ? 22 : to_slot; // can't change '22' just yet...
 
 		if(!(slots & ((uint32)1 << slottest))) {
