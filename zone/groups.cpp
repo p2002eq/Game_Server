@@ -616,7 +616,13 @@ bool Group::DelMember(Mob* oldmember, bool ignoresender)
 	{
 		return false;
 	}
-
+	
+	// Temporary fix for zone crashing. causing groups to fully break as they did before.
+	if (oldmember == GetLeader()) {
+		DisbandGroup();
+		return true;
+	}
+	
 	for (uint32 i = 0; i < MAX_GROUP_MEMBERS; i++)
 	{
 		if (members[i] == oldmember)
