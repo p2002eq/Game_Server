@@ -816,6 +816,8 @@ public:
 
 	uint8 GetWeaponDamageBonus(const EQEmu::ItemData* weapon, bool offhand = false);
 	const DamageTable &GetDamageTable() const;
+	int GetMobFixedOffenseSkill();
+	int GetMobFixedWeaponSkill();
 	void ApplyDamageTable(DamageHitInfo &hit);
 	virtual int GetHandToHandDamage(void);
 
