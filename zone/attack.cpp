@@ -245,7 +245,7 @@ int Mob::compute_defense()
 	if (IsClient())
 		AgiScaleFactor = std::min(1000, static_cast<int>(GetLevel())*1000/65); // Scales Agi Contribution for PC's Level, max Contribution at Level 65
 	
-	defense += AgiScaleFactor * (8000 * (GetAGI() - 40)) / 36000 / 1000;
+	defense += AgiScaleFactor * (800 * (GetAGI() - 40)) / 3600 / 1000;
 	
 	if (IsClient())
 		defense += CastToClient()->GetHeroicAGI() / 10;
