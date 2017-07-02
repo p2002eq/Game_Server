@@ -859,6 +859,8 @@ int Mob::ACSum()
 int Mob::offense(EQEmu::skills::SkillType skill)
 {
 	int offense = GetSkill(skill);
+	if (IsNPC() && !IsPet() && !IsTempPet())
+		offense = GetMobFixedWeaponSkill();
 	int stat_bonus = 0;
 	if (skill == EQEmu::skills::SkillArchery || skill == EQEmu::skills::SkillThrowing)
 		stat_bonus = GetDEX();
