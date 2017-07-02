@@ -859,6 +859,8 @@ int Mob::ACSum()
 int Mob::offense(EQEmu::skills::SkillType skill)
 {
 	int offense = GetSkill(skill);
+	if (IsNPC() && !IsPet() && !IsTempPet())
+		offense = GetMobFixedWeaponSkill();
 	int stat_bonus = 0;
 	if (skill == EQEmu::skills::SkillArchery || skill == EQEmu::skills::SkillThrowing)
 		stat_bonus = GetDEX();
@@ -866,7 +868,10 @@ int Mob::offense(EQEmu::skills::SkillType skill)
 		stat_bonus = GetSTR();
 	if (stat_bonus >= 75)
 		offense += (2 * stat_bonus - 150) / 3;
-	offense += GetATK();
+	// GetATK() = ATK + itembonuses.ATK + spellbonuses.ATK.  However, ATK appears to already be itembonuses.ATK + spellbonuses.ATK, so as is, it is double counting attack
+	// This causes attack to be significnatly more important than it should be based on era rule of thumbs.  I do not want to change the GetATK() function in case doing so breaks something,
+	// so instead I am just adding a /2 to remedy the double counting.
+	offense += GetATK() / 2;
 	return offense;
 }
 
