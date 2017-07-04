@@ -868,10 +868,17 @@ int Mob::offense(EQEmu::skills::SkillType skill)
 		stat_bonus = GetSTR();
 	if (stat_bonus >= 75)
 		offense += (2 * stat_bonus - 150) / 3;
-	// GetATK() = ATK + itembonuses.ATK + spellbonuses.ATK.  However, ATK appears to already be itembonuses.ATK + spellbonuses.ATK, so as is, it is double counting attack
+	// GetATK() = ATK + itembonuses.ATK + spellbonuses.ATK.  However, ATK appears to already be itembonuses.ATK + spellbonuses.ATK for PCs, so as is, it is double counting attack
 	// This causes attack to be significnatly more important than it should be based on era rule of thumbs.  I do not want to change the GetATK() function in case doing so breaks something,
-	// so instead I am just adding a /2 to remedy the double counting.
-	offense += GetATK() / 2;
+	// so instead I am just adding a /2 to remedy the double counting.  NPCs do not have this issue, so they are broken up.
+	// PCAttackPowerScaling is used to help bring attack power further in line with era estimates.
+	if (IsClient())
+		offense += (GetATK() / 2) * RuleI(Combat, PCAttackPowerScaling) / 100;
+	else
+		offense += GetATK();
+		
+	Log(Logs::Detail, Logs::Combat, "ATK: %d, itembonuses.ATK: %d, spellbonuses.ATK: %d",ATK, itembonuses.ATK, spellbonuses.ATK);
+	
 	return offense;
 }
 
