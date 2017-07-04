@@ -521,6 +521,7 @@ RULE_INT(Combat, TripleAttackChanceMonk, 100) // Innate Chance for Monk to Tripl
 RULE_BOOL(Combat, RogueBackstabHasteCorrection, false) // Toggle to enable correction for Haste impacting Backstab DPS too much.  DEFAULT: false
 RULE_BOOL(Combat, UseMobFixedOffenseSkill, true) // Toggle to enabled the use of a fixed offense skill for Mobs.  DEFAULT: true
 RULE_BOOL(Combat, UseEnhancedMobFixedWeaponSkill, true) // Toggle to enabled the use of an enhanced (slightly higher hit rate) fixed weapon skill for Mobs.  DEFAULT: true
+RULE_INT(Combat, PCAttackPowerScaling, 75) // Applies scaling to PC Attack Power (75 = 75%).  DEFAULT: 75
 RULE_CATEGORY_END()
 
 RULE_CATEGORY(NPC)
