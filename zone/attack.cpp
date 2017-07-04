@@ -876,8 +876,6 @@ int Mob::offense(EQEmu::skills::SkillType skill)
 		offense += (GetATK() / 2) * RuleI(Combat, PCAttackPowerScaling) / 100;
 	else
 		offense += GetATK();
-		
-	Log(Logs::Detail, Logs::Combat, "ATK: %d, itembonuses.ATK: %d, spellbonuses.ATK: %d",ATK, itembonuses.ATK, spellbonuses.ATK);
 	
 	return offense;
 }
