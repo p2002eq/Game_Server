@@ -132,9 +132,9 @@ int32 EQEmu::skills::GetBaseDamage(SkillType skill)
 	case SkillDragonPunch:
 		return 12;
 	case SkillEagleStrike:
-		return 7;
+		return 8;
 	case SkillFlyingKick:
-		return 25;
+		return 13;
 	case SkillKick:
 		return 3;
 	case SkillRoundKick:
