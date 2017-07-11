@@ -32,10 +32,16 @@ int Mob::GetBaseSkillDamage(EQEmu::skills::SkillType skill, Mob *target)
 {
 	int base = EQEmu::skills::GetBaseDamage(skill);
 	auto skill_level = GetSkill(skill);
+	float ac_bonus = 0.0f;
 	switch (skill) {
 	case EQEmu::skills::SkillDragonPunch:
 	case EQEmu::skills::SkillEagleStrike:
-	case EQEmu::skills::SkillTigerClaw:
+	case EQEmu::skills::SkillTigerClaw: {
+		if (IsClient()) {
+			auto inst = CastToClient()->GetInv().GetItem(EQEmu::inventory::slotHands);
+			if (inst)
+				ac_bonus = inst->GetItemArmorClass(true) / 25.0f;
+		}
 		if (skill_level >= 25)
 			base++;
 		if (skill_level >= 75)
@@ -44,7 +50,8 @@ int Mob::GetBaseSkillDamage(EQEmu::skills::SkillType skill, Mob *target)
 			base++;
 		if (skill_level >= 175)
 			base++;
-		return base;
+		return (base + static_cast<int>(ac_bonus));
+	}
 	case EQEmu::skills::SkillFrenzy:
 		if (IsClient() && CastToClient()->GetInv().GetItem(EQEmu::inventory::slotPrimary)) {
 			if (GetLevel() > 15)
@@ -60,47 +67,66 @@ int Mob::GetBaseSkillDamage(EQEmu::skills::SkillType skill, Mob *target)
 		}
 		return base;
 	case EQEmu::skills::SkillFlyingKick: {
-		float skill_bonus = skill_level / 9.0f;
-		float ac_bonus = 0.0f;
+		// float skill_bonus = skill_level / 9.0f;
 		if (IsClient()) {
 			auto inst = CastToClient()->GetInv().GetItem(EQEmu::inventory::slotFeet);
 			if (inst)
 				ac_bonus = inst->GetItemArmorClass(true) / 25.0f;
 		}
-		if (ac_bonus > skill_bonus)
-			ac_bonus = skill_bonus;
-		return static_cast<int>(ac_bonus + skill_bonus);
+		// if (ac_bonus > skill_bonus)
+		// 	ac_bonus = skill_bonus;
+		if (skill_level >= 20)
+			base++;
+		if (skill_level >= 60)
+			base++;
+		if (skill_level >= 100)
+			base++;
+		if (skill_level >= 140)
+			base++;
+		if (skill_level >= 180)
+			base++;
+		// return static_cast<int>(ac_bonus + skill_bonus);
+		return (base + static_cast<int>(ac_bonus));
 	}
-	case EQEmu::skills::SkillKick: {
+	case EQEmu::skills::SkillKick:
+	case EQEmu::skills::SkillRoundKick: {
 		// there is some base *= 4 case in here?
-		float skill_bonus = skill_level / 10.0f;
-		float ac_bonus = 0.0f;
+		// float skill_bonus = skill_level / 10.0f;
 		if (IsClient()) {
 			auto inst = CastToClient()->GetInv().GetItem(EQEmu::inventory::slotFeet);
 			if (inst)
 				ac_bonus = inst->GetItemArmorClass(true) / 25.0f;
 		}
-		if (ac_bonus > skill_bonus)
-			ac_bonus = skill_bonus;
-		return static_cast<int>(ac_bonus + skill_bonus);
+		// if (ac_bonus > skill_bonus)
+		// 	ac_bonus = skill_bonus;
+		if (skill_level >= 75)
+			base++;
+		if (skill_level >= 175)
+			base++;
+		// return static_cast<int>(ac_bonus + skill_bonus);
+		return (base + static_cast<int>(ac_bonus));
 	}
 	case EQEmu::skills::SkillBash: {
-		float skill_bonus = skill_level / 10.0f;
-		float ac_bonus = 0.0f;
+		// float skill_bonus = skill_level / 10.0f;
 		const EQEmu::ItemInstance *inst = nullptr;
 		if (IsClient()) {
 			if (HasShieldEquiped())
 				inst = CastToClient()->GetInv().GetItem(EQEmu::inventory::slotSecondary);
-			else if (HasTwoHanderEquipped())
-				inst = CastToClient()->GetInv().GetItem(EQEmu::inventory::slotPrimary);
+			// else if (HasTwoHanderEquipped())
+			// 	inst = CastToClient()->GetInv().GetItem(EQEmu::inventory::slotPrimary);
 		}
 		if (inst)
 			ac_bonus = inst->GetItemArmorClass(true) / 25.0f;
 		else
 			return 0; // return 0 in cases where we don't have an item
-		if (ac_bonus > skill_bonus)
-			ac_bonus = skill_bonus;
-		return static_cast<int>(ac_bonus + skill_bonus);
+		// if (ac_bonus > skill_bonus)
+		//	ac_bonus = skill_bonus;
+		if (skill_level >= 75)
+			base++;
+		if (skill_level >= 175)
+			base++;
+		// return static_cast<int>(ac_bonus + skill_bonus);
+		return (base + static_cast<int>(ac_bonus));
 	}
 	case EQEmu::skills::SkillBackstab: {
 		float skill_bonus = static_cast<float>(skill_level) * 0.02f;
@@ -212,7 +238,9 @@ void Mob::DoSpecialAttackDamage(Mob *who, EQEmu::skills::SkillType skill, int32 
 	}
 		
 		
-		
+	// Adjust min damage for Monk Flying Kick based on level.  This should be for a 40 damage min cap at level 60.
+	if (skill == EQEmu::skills::SkillFlyingKick)
+		my_hit.min_damage = GetLevel() - 22;
 			
 	
 	
