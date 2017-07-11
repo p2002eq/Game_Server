@@ -1762,7 +1762,9 @@ void SharedDatabase::LoadSpells(void *data, int max_spells) {
 		sp[tempid].max_dist_mod = atof(row[230]);
 		sp[tempid].min_range = static_cast<float>(atoi(row[231]));
 		sp[tempid].no_remove = atoi(row[232]) != 0;
+        sp[tempid].priority = atoi(row[235]);
 		sp[tempid].DamageShieldType = 0;
+
     }
 
     LoadDamageShieldTypes(sp, max_spells);

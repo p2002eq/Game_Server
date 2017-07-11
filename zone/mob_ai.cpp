@@ -102,7 +102,6 @@ bool NPC::AICastSpell(Mob* tar, uint8 iChance, uint32 iSpellTypes) {
 				Log(Logs::Detail, Logs::AI, "Mob::AICastSpell: Casting: spellid=%u, tar=%s, dist2[%f]<=%f, mana_cost[%i]<=%i, cancast[%u]<=%u, type=%u",
 					AIspells[i].spellid, tar->GetName(), dist2, (spells[AIspells[i].spellid].range * spells[AIspells[i].spellid].range), mana_cost, GetMana(), AIspells[i].time_cancast, Timer::GetCurrentTime(), AIspells[i].type);
 #endif
-
 				switch (AIspells[i].type) {
 					case SpellType_Heal: {
 						if (
@@ -181,33 +180,40 @@ bool NPC::AICastSpell(Mob* tar, uint8 iChance, uint32 iSpellTypes) {
 					case SpellType_Slow:
 					case SpellType_Debuff: {
 						Mob * debuffee = GetHateRandom();
-						if (debuffee && manaR >= 10 && zone->random.Roll(70) &&
-								debuffee->CanBuffStack(AIspells[i].spellid, GetLevel(), true) >= 0) {
-							if (spells[AIspells[i].spellid].targettype != ST_AECaster && !checked_los) {
-								if (!CheckLosFN(debuffee))
-									return false;
-								checked_los = true;
-							}
-							AIDoSpellCast(i, debuffee, mana_cost);
-							return true;
-						}
+                        if (debuffee && manaR >= 10 && zone->random.Roll(70))
+                        { 
+                            if (spells[AIspells[i].spellid].priority >= AI_SPELL_MAX_PRIORITY || debuffee->CanBuffStack(AIspells[i].spellid, GetLevel(), true) >= 0)
+                            {
+                                if (spells[AIspells[i].spellid].targettype != ST_AECaster && !checked_los)
+                                {
+                                    if (!CheckLosFN(debuffee))
+                                        return false;
+                                    checked_los = true;
+                                }
+                                AIDoSpellCast(i, debuffee, mana_cost);
+                                return true;
+                            }
+                        }
 						break;
 					}
 					case SpellType_Nuke: {
-						if (
-							manaR >= 10 && zone->random.Roll(70)
-							&& tar->CanBuffStack(AIspells[i].spellid, GetLevel(), true) >= 0
-							) {
-							if(spells[AIspells[i].spellid].targettype != ST_AECaster && !checked_los) {
-								if(!CheckLosFN(tar))
-									return(false);	//cannot see target... we assume that no spell is going to work since we will only be casting detrimental spells in this call
-								checked_los = true;
-							}
-							AIDoSpellCast(i, tar, mana_cost);
-							return true;
-						}
+						if (manaR >= 10 && zone->random.Roll(70))
+                        {
+							if (spells[AIspells[i].spellid].priority >= AI_SPELL_MAX_PRIORITY || tar->CanBuffStack(AIspells[i].spellid, GetLevel(), true) >= 0)
+                            {
+                                if(spells[AIspells[i].spellid].targettype != ST_AECaster && !checked_los)
+                                {
+                                    if(!CheckLosFN(tar))
+                                        return(false);	//cannot see target... we assume that no spell is going to work since we will only be casting detrimental spells in this call
+                                    checked_los = true;
+                                }
+                                AIDoSpellCast(i, tar, mana_cost);
+                                return true;
+                            }
+                        }
 						break;
 					}
+                                         
 					case SpellType_Dispel: {
 						if(zone->random.Roll(15))
 						{
