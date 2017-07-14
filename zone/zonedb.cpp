@@ -1,4 +1,3 @@
-
 #include "../common/eqemu_logsys.h"
 #include "../common/extprofile.h"
 #include "../common/item_instance.h"
@@ -2705,7 +2704,7 @@ uint8 ZoneDatabase::GetGridType(uint32 grid, uint32 zoneid ) {
 void ZoneDatabase::SaveMerchantTemp(uint32 npcid, uint32 slot, uint32 item, uint32 charges, uint32 itemcharges){
 
 	std::string query = StringFormat("REPLACE INTO merchantlist_temp (npcid, slot, itemid, charges, itemcharges) "
-                                    "VALUES(%d, %d, %d, %d)", npcid, slot, item, charges, itemcharges);
+                                    "VALUES(%d, %d, %d, %d, %d)", npcid, slot, item, charges, itemcharges);
     QueryDatabase(query);
 }
 
