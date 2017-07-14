@@ -12457,7 +12457,7 @@ void Client::Handle_OP_ShopPlayerBuy(const EQApplicationPacket *app)
 				item_id = ml.item;
 				tmpmer_used = true;
 				prevcharges = ml.charges;
-				prevcharges = ml.charges;
+				itemcharges = ml.charges;
 				break;
 			}
 		}
