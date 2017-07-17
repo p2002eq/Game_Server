@@ -2496,7 +2496,7 @@ void QuestManager::UpdateSpawnTimer(uint32 id, uint32 newTime)
 }
 
 // used to set the number of an item in the selected merchant's temp item list. Defaults to zero if no quantity is specified.
-void QuestManager::MerchantSetItem(uint32 NPCid, uint32 itemid, uint32 quantity) {
+void QuestManager::MerchantSetItem(uint32 NPCid, uint32 itemid, uint32 quantity, int charges) {
 	Mob* merchant = entity_list.GetMobByNpcTypeID(NPCid);
 
 	if (merchant == 0 || !merchant->IsNPC() || (merchant->GetClass() != MERCHANT))
@@ -2506,7 +2506,7 @@ void QuestManager::MerchantSetItem(uint32 NPCid, uint32 itemid, uint32 quantity)
 	item = database.GetItem(itemid);
 	if (!item) return;		// if the item id doesn't correspond to a real item, do nothing
 
-	zone->SaveTempItem(merchant->CastToNPC()->MerchantType, NPCid, itemid, quantity);
+	zone->SaveTempItem(merchant->CastToNPC()->MerchantType, NPCid, itemid, quantity, charges);
 }
 
 uint32 QuestManager::MerchantCountItem(uint32 NPCid, uint32 itemid) {

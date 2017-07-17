@@ -170,7 +170,8 @@ public:
 	void	LoadNewMerchantData(uint32 merchantid);
 	void	LoadTempMerchantData();
 	uint32	GetTempMerchantQuantity(uint32 NPCID, uint32 Slot);
-	int		SaveTempItem(uint32 merchantid, uint32 npcid, uint32 item, int32 charges, bool sold=false);
+	TempMerchantList GetTempMerchItem(uint32 merchantid, uint32 npcid, uint32 item);
+	int		SaveTempItem(uint32 merchantid, uint32 npcid, uint32 item, int32 quantity, int32 charges, bool sold=false);
 	void LoadMercTemplates();
 	void LoadMercSpells();
 	void LoadLevelEXPMods();

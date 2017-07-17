@@ -934,9 +934,13 @@ void Client::BulkSendMerchantInventory(int merchant_id, int npcid) {
 				handychance--;
 			int charges = 1;
 			//if(item->ItemClass==ItemClassCommon && (int16)ml.charges <= item->MaxCharges)
-			//	charges=ml.charges;
-			//else
-			charges = item->MaxCharges;
+			//if(item->ItemClass==0 && (int16)ml.charges <= item->MaxCharges)
+			if (item->MaxCharges != 0)
+				charges = ml.itemcharges;
+			else if ((int16)ml.charges <= item->MaxCharges)
+				charges=ml.charges;
+			else
+				charges = item->MaxCharges;
 			EQEmu::ItemInstance* inst = database.CreateItem(item, charges);
 			if (inst) {
 				if (RuleB(Merchant, UsePriceMod)) {
@@ -946,10 +950,7 @@ void Client::BulkSendMerchantInventory(int merchant_id, int npcid) {
 					inst->SetPrice((item->Price * (RuleR(Merchant, SellCostMod)) * item->SellRate));
 				inst->SetMerchantSlot(ml.slot);
 				inst->SetMerchantCount(ml.charges);
-				if(charges > 0)
-					inst->SetCharges(item->MaxCharges);//inst->SetCharges(charges);
-				else
-					inst->SetCharges(1);
+				inst->SetCharges(charges);
 				SendItemPacket(ml.slot-1, inst, ItemPacketMerchant);
 				safe_delete(inst);
 			}

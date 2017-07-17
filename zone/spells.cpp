@@ -75,8 +75,14 @@ Copyright (C) 2001-2002 EQEMu Development Team (http://eqemu.org)
 #include <string.h>
 
 #include "../common/unix.h"
+
+#ifdef _WIN32
+#include <winsock2.h>
+#include <windows.h>
+#else
 #include <netinet/in.h>
 #include <sys/time.h>
+#endif
 
 #include "../common/database.h"
 #include "../common/eq_packet_structs.h"
