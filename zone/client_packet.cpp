@@ -11011,6 +11011,13 @@ void Client::Handle_OP_RaidCommand(const EQApplicationPacket *app)
 	{
 	case RaidCommandInviteIntoExisting:
 	case RaidCommandInvite: {
+		// This block checks if the invitee is targeted and is a client.
+		Mob *m = GetTarget();
+		if (!m || !m->IsClient()) {
+			Message(0, "Invalid target!");
+			break;
+		}
+
 		Client *i = entity_list.GetClientByName(ri->player_name);
 		if (!i)
 			break;
