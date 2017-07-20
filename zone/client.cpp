@@ -8016,7 +8016,7 @@ void Client::SetFactionLevel2(uint32 char_id, int32 faction_id, uint8 char_class
 int32 Client::GetCharacterFactionLevel(int32 faction_id, bool updating)
 {
 	int32 faction = 0;
-	if (!updating && (faction_id <= 0 || GetRaceBitmask(GetRace()) == 0))
+	if (!updating && (faction_id <= 0)) // if this is checked then illusions will set base faction to 0 - || GetRaceBitmask(GetRace()) == 0))
 	{
 		Log(Logs::Detail, Logs::Faction, "Race: %d is non base, ignoring character faction. This is %s.", GetRace(), updating ? "a save" : "not a save");
 		return 0;
