@@ -827,8 +827,6 @@ void EntityList::MassGroupBuff(Mob *caster, Mob *center, uint16 spell_id, bool a
 
 	for (auto it = mob_list.begin(); it != mob_list.end(); ++it) {
 		curmob = it->second;
-		if (curmob == center)	//do not affect center
-			continue;
 		if (curmob == caster && !affect_caster)	//watch for caster too
 			continue;
 		if (DistanceSquared(center->GetPosition(), curmob->GetPosition()) > dist2)	//make sure they are in range
