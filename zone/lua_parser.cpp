@@ -10,8 +10,13 @@
 #include <vector>
 #include <algorithm>
 
-#include "masterentity.h"
 #include "../common/spdat.h"
+#include "masterentity.h"
+#include "questmgr.h"
+#include "zone.h"
+#include "zone_config.h"
+
+#include "lua_parser.h"
 #include "lua_bit.h"
 #include "lua_entity.h"
 #include "lua_item.h"
@@ -31,96 +36,93 @@
 #include "lua_spawn.h"
 #include "lua_packet.h"
 #include "lua_general.h"
-#include "questmgr.h"
-#include "zone.h"
-#include "zone_config.h"
-#include "lua_parser.h"
 #include "lua_encounter.h"
+#include "lua_stat_bonuses.h"
 
 const char *LuaEvents[_LargestEventID] = {
-	"event_say",
-	"event_trade",
-	"event_death",
-	"event_spawn",
-	"event_attack",
-	"event_combat",
-	"event_aggro",
-	"event_slay",
-	"event_npc_slay",
-	"event_waypoint_arrive",
-	"event_waypoint_depart",
-	"event_timer",
-	"event_signal",
-	"event_hp",
-	"event_enter",
-	"event_exit",
-	"event_enter_zone",
-	"event_click_door",
-	"event_loot",
-	"event_zone",
-	"event_level_up",
-	"event_killed_merit",
-	"event_cast_on",
-	"event_task_accepted",
-	"event_task_stage_complete",
-	"event_task_update",
-	"event_task_complete",
-	"event_task_fail",
-	"event_aggro_say",
-	"event_player_pickup",
-	"event_popup_response",
-	"event_environmental_damage",
-	"event_proximity_say",
-	"event_cast",
-	"event_cast_begin",
-	"event_scale_calc",
-	"event_item_enter_zone",
-	"event_target_change",
-	"event_hate_list",
-	"event_spell_effect",
-	"event_spell_effect",
-	"event_spell_buff_tic",
-	"event_spell_buff_tic",
-	"event_spell_fade",
-	"event_spell_effect_translocate_complete",
-	"event_combine_success",
-	"event_combine_failure",
-	"event_item_click",
-	"event_item_click_cast",
-	"event_group_change",
-	"event_forage_success",
-	"event_forage_failure",
-	"event_fish_start",
-	"event_fish_success",
-	"event_fish_failure",
-	"event_click_object",
-	"event_discover_item",
-	"event_disconnect",
-	"event_connect",
-	"event_item_tick",
-	"event_duel_win",
-	"event_duel_lose",
-	"event_encounter_load",
-	"event_encounter_unload",
-	"event_command",
-	"event_drop_item",
-	"event_destroy_item",
-	"event_feign_death",
-	"event_weapon_proc",
-	"event_equip_item",
-	"event_unequip_item",
-	"event_augment_item",
-	"event_unaugment_item",
-	"event_augment_insert",
-	"event_augment_remove",
-	"event_enter_area",
-	"event_leave_area",
-	"event_respawn",
-	"event_death_complete",
-	"event_unhandled_opcode",
-	"event_tick",
-	"event_spawn_zone",
-	"event_death_zone"
+		"event_say",
+		"event_trade",
+		"event_death",
+		"event_spawn",
+		"event_attack",
+		"event_combat",
+		"event_aggro",
+		"event_slay",
+		"event_npc_slay",
+		"event_waypoint_arrive",
+		"event_waypoint_depart",
+		"event_timer",
+		"event_signal",
+		"event_hp",
+		"event_enter",
+		"event_exit",
+		"event_enter_zone",
+		"event_click_door",
+		"event_loot",
+		"event_zone",
+		"event_level_up",
+		"event_killed_merit",
+		"event_cast_on",
+		"event_task_accepted",
+		"event_task_stage_complete",
+		"event_task_update",
+		"event_task_complete",
+		"event_task_fail",
+		"event_aggro_say",
+		"event_player_pickup",
+		"event_popup_response",
+		"event_environmental_damage",
+		"event_proximity_say",
+		"event_cast",
+		"event_cast_begin",
+		"event_scale_calc",
+		"event_item_enter_zone",
+		"event_target_change",
+		"event_hate_list",
+		"event_spell_effect",
+		"event_spell_effect",
+		"event_spell_buff_tic",
+		"event_spell_buff_tic",
+		"event_spell_fade",
+		"event_spell_effect_translocate_complete",
+		"event_combine_success",
+		"event_combine_failure",
+		"event_item_click",
+		"event_item_click_cast",
+		"event_group_change",
+		"event_forage_success",
+		"event_forage_failure",
+		"event_fish_start",
+		"event_fish_success",
+		"event_fish_failure",
+		"event_click_object",
+		"event_discover_item",
+		"event_disconnect",
+		"event_connect",
+		"event_item_tick",
+		"event_duel_win",
+		"event_duel_lose",
+		"event_encounter_load",
+		"event_encounter_unload",
+		"event_command",
+		"event_drop_item",
+		"event_destroy_item",
+		"event_feign_death",
+		"event_weapon_proc",
+		"event_equip_item",
+		"event_unequip_item",
+		"event_augment_item",
+		"event_unaugment_item",
+		"event_augment_insert",
+		"event_augment_remove",
+		"event_enter_area",
+		"event_leave_area",
+		"event_respawn",
+		"event_death_complete",
+		"event_unhandled_opcode",
+		"event_tick",
+		"event_spawn_zone",
+		"event_death_zone"
 };
 
 extern Zone *zone;
@@ -334,7 +336,7 @@ int LuaParser::_EventNPC(std::string package_name, QuestEventID evt, NPC* npc, M
 }
 
 int LuaParser::EventPlayer(QuestEventID evt, Client *client, std::string data, uint32 extra_data,
-		std::vector<EQEmu::Any> *extra_pointers) {
+						   std::vector<EQEmu::Any> *extra_pointers) {
 	evt = ConvertLuaEvent(evt);
 	if(evt >= _LargestEventID) {
 		return 0;
@@ -352,7 +354,7 @@ int LuaParser::EventPlayer(QuestEventID evt, Client *client, std::string data, u
 }
 
 int LuaParser::EventGlobalPlayer(QuestEventID evt, Client *client, std::string data, uint32 extra_data,
-		std::vector<EQEmu::Any> *extra_pointers) {
+								 std::vector<EQEmu::Any> *extra_pointers) {
 	evt = ConvertLuaEvent(evt);
 	if(evt >= _LargestEventID) {
 		return 0;
@@ -427,7 +429,7 @@ int LuaParser::_EventPlayer(std::string package_name, QuestEventID evt, Client *
 }
 
 int LuaParser::EventItem(QuestEventID evt, Client *client, EQEmu::ItemInstance *item, Mob *mob, std::string data, uint32 extra_data,
-		std::vector<EQEmu::Any> *extra_pointers) {
+						 std::vector<EQEmu::Any> *extra_pointers) {
 	evt = ConvertLuaEvent(evt);
 	if(evt >= _LargestEventID) {
 		return 0;
@@ -797,12 +799,14 @@ void LuaParser::Init() {
 void LuaParser::ReloadQuests() {
 	loaded_.clear();
 	errors_.clear();
+	mods_.clear();
 	lua_encounter_events_registered.clear();
 	lua_encounters_loaded.clear();
 
 	for (auto encounter : lua_encounters) {
 		encounter.second->Depop();
 	}
+
 	lua_encounters.clear();
 	// so the Depop function above depends on the Process being called again so ...
 	// And there is situations where it wouldn't be :P
@@ -814,6 +818,8 @@ void LuaParser::ReloadQuests() {
 
 	L = luaL_newstate();
 	luaL_openlibs(L);
+
+	auto top = lua_gettop(L);
 
 	if(luaopen_bit(L) != 1) {
 		std::string error = lua_tostring(L, -1);
@@ -828,7 +834,7 @@ void LuaParser::ReloadQuests() {
 #ifdef SANITIZE_LUA_LIBS
 	//io
 	lua_pushnil(L);
-	lua_setglobal(L, "io");
+	//lua_setglobal(L, "io");
 
 	//some os/debug are okay some are not
 	lua_getglobal(L, "os");
@@ -931,23 +937,47 @@ void LuaParser::ReloadQuests() {
 				std::string error = lua_tostring(L, -1);
 				AddError(error);
 			}
-
-			return;
 		}
+		else {
+			zone_script = Config->QuestDir;
+			zone_script += "/";
+			zone_script += zone->GetShortName();
+			zone_script += "/script_init.lua";
+			f = fopen(zone_script.c_str(), "r");
+			if (f) {
+				fclose(f);
 
-		zone_script = Config->QuestDir;
-		zone_script += "/";
-		zone_script += zone->GetShortName();
-		zone_script += "/script_init.lua";
-		f = fopen(zone_script.c_str(), "r");
-		if(f) {
-			fclose(f);
-
-			if(luaL_dofile(L, zone_script.c_str())) {
-				std::string error = lua_tostring(L, -1);
-				AddError(error);
+				if (luaL_dofile(L, zone_script.c_str())) {
+					std::string error = lua_tostring(L, -1);
+					AddError(error);
+				}
 			}
 		}
+	}
+
+	FILE *load_order = fopen("mods/load_order.txt", "r");
+	if (load_order) {
+		char file_name[256] = { 0 };
+		while (fgets(file_name, 256, load_order) != nullptr) {
+			for (int i = 0; i < 256; ++i) {
+				auto c = file_name[i];
+				if (c == '\n' || c == '\r' || c == ' ') {
+					file_name[i] = 0;
+					break;
+				}
+			}
+
+			LoadScript("mods/" + std::string(file_name), file_name);
+			mods_.push_back(LuaMod(L, this, file_name));
+		}
+
+		fclose(load_order);
+	}
+
+	auto end = lua_gettop(L);
+	int n = end - top;
+	if (n > 0) {
+		lua_pop(L, n);
 	}
 }
 
@@ -957,6 +987,7 @@ void LuaParser::LoadScript(std::string filename, std::string package_name) {
 		return;
 	}
 
+	auto top = lua_gettop(L);
 	if(luaL_loadfile(L, filename.c_str())) {
 		std::string error = lua_tostring(L, -1);
 		AddError(error);
@@ -984,14 +1015,20 @@ void LuaParser::LoadScript(std::string filename, std::string package_name) {
 		std::string error = lua_tostring(L, -1);
 		AddError(error);
 		lua_pop(L, 1);
-		return;
+	}
+	else {
+		loaded_[package_name] = true;
 	}
 
-	loaded_[package_name] = true;
+	auto end = lua_gettop(L);
+	int n = end - top;
+	if (n > 0) {
+		lua_pop(L, n);
+	}
 }
 
 bool LuaParser::HasFunction(std::string subname, std::string package_name) {
-	std::transform(subname.begin(), subname.end(), subname.begin(), ::tolower);
+	//std::transform(subname.begin(), subname.end(), subname.begin(), ::tolower);
 
 	auto iter = loaded_.find(package_name);
 	if(iter == loaded_.end()) {
@@ -1017,42 +1054,53 @@ void LuaParser::MapFunctions(lua_State *L) {
 
 		luabind::module(L)
 		[
-			lua_register_general(),
-			lua_register_events(),
-			lua_register_faction(),
-			lua_register_slot(),
-			lua_register_material(),
-			lua_register_client_version(),
-			lua_register_appearance(),
-			lua_register_entity(),
-			lua_register_encounter(),
-			lua_register_mob(),
-			lua_register_special_abilities(),
-			lua_register_npc(),
-			lua_register_client(),
-			lua_register_inventory(),
-			lua_register_inventory_where(),
-			lua_register_iteminst(),
-			lua_register_item(),
-			lua_register_spell(),
-			lua_register_spawn(),
-			lua_register_hate_entry(),
-			lua_register_hate_list(),
-			lua_register_entity_list(),
-			lua_register_mob_list(),
-			lua_register_client_list(),
-			lua_register_npc_list(),
-			lua_register_corpse_list(),
-			lua_register_object_list(),
-			lua_register_door_list(),
-			lua_register_spawn_list(),
-			lua_register_group(),
-			lua_register_raid(),
-			lua_register_corpse(),
-			lua_register_door(),
-			lua_register_object(),
-			lua_register_packet(),
-			lua_register_packet_opcodes()
+				lua_register_general(),
+						lua_register_random(),
+						lua_register_events(),
+						lua_register_faction(),
+						lua_register_slot(),
+						lua_register_material(),
+						lua_register_client_version(),
+						lua_register_appearance(),
+						lua_register_classes(),
+						lua_register_skills(),
+						lua_register_bodytypes(),
+						lua_register_filters(),
+						lua_register_message_types(),
+						lua_register_entity(),
+						lua_register_encounter(),
+						lua_register_mob(),
+						lua_register_special_abilities(),
+						lua_register_npc(),
+						lua_register_client(),
+						lua_register_inventory(),
+						lua_register_inventory_where(),
+						lua_register_iteminst(),
+						lua_register_item(),
+						lua_register_spell(),
+						lua_register_spawn(),
+						lua_register_hate_entry(),
+						lua_register_hate_list(),
+						lua_register_entity_list(),
+						lua_register_mob_list(),
+						lua_register_client_list(),
+						lua_register_npc_list(),
+						lua_register_corpse_list(),
+						lua_register_object_list(),
+						lua_register_door_list(),
+						lua_register_spawn_list(),
+						lua_register_group(),
+						lua_register_raid(),
+						lua_register_corpse(),
+						lua_register_door(),
+						lua_register_object(),
+						lua_register_packet(),
+						lua_register_packet_opcodes(),
+						lua_register_stat_bonuses(),
+						lua_register_rules_const(),
+						lua_register_rulei(),
+						lua_register_ruler(),
+						lua_register_ruleb()
 		];
 
 	} catch(std::exception &ex) {
@@ -1062,7 +1110,7 @@ void LuaParser::MapFunctions(lua_State *L) {
 }
 
 int LuaParser::DispatchEventNPC(QuestEventID evt, NPC* npc, Mob *init, std::string data, uint32 extra_data,
-								 std::vector<EQEmu::Any> *extra_pointers) {
+								std::vector<EQEmu::Any> *extra_pointers) {
 	evt = ConvertLuaEvent(evt);
 	if(evt >= _LargestEventID) {
 		return 0;
@@ -1081,8 +1129,8 @@ int LuaParser::DispatchEventNPC(QuestEventID evt, NPC* npc, Mob *init, std::stri
 			if(riter->event_id == evt) {
 				std::string package_name = "encounter_" + riter->encounter_name;
 				int i = _EventNPC(package_name, evt, npc, init, data, extra_data, extra_pointers, &riter->lua_reference);
-                if(i != 0)
-                    ret = i;
+				if(i != 0)
+					ret = i;
 			}
 			++riter;
 		}
@@ -1098,17 +1146,17 @@ int LuaParser::DispatchEventNPC(QuestEventID evt, NPC* npc, Mob *init, std::stri
 		if(riter->event_id == evt) {
 			std::string package_name = "encounter_" + riter->encounter_name;
 			int i = _EventNPC(package_name, evt, npc, init, data, extra_data, extra_pointers, &riter->lua_reference);
-            if(i != 0)
-                ret = i;
+			if(i != 0)
+				ret = i;
 		}
 		++riter;
 	}
 
-    return ret;
+	return ret;
 }
 
 int LuaParser::DispatchEventPlayer(QuestEventID evt, Client *client, std::string data, uint32 extra_data,
-									std::vector<EQEmu::Any> *extra_pointers) {
+								   std::vector<EQEmu::Any> *extra_pointers) {
 	evt = ConvertLuaEvent(evt);
 	if(evt >= _LargestEventID) {
 		return 0;
@@ -1121,23 +1169,23 @@ int LuaParser::DispatchEventPlayer(QuestEventID evt, Client *client, std::string
 		return 0;
 	}
 
-    int ret = 0;
+	int ret = 0;
 	auto riter = iter->second.begin();
 	while(riter != iter->second.end()) {
 		if(riter->event_id == evt) {
 			std::string package_name = "encounter_" + riter->encounter_name;
 			int i = _EventPlayer(package_name, evt, client, data, extra_data, extra_pointers, &riter->lua_reference);
-            if(i != 0)
-                ret = i;
+			if(i != 0)
+				ret = i;
 		}
 		++riter;
 	}
 
-    return ret;
+	return ret;
 }
 
 int LuaParser::DispatchEventItem(QuestEventID evt, Client *client, EQEmu::ItemInstance *item, Mob *mob, std::string data, uint32 extra_data,
-								  std::vector<EQEmu::Any> *extra_pointers) {
+								 std::vector<EQEmu::Any> *extra_pointers) {
 	evt = ConvertLuaEvent(evt);
 	if(evt >= _LargestEventID) {
 		return 0;
@@ -1157,8 +1205,8 @@ int LuaParser::DispatchEventItem(QuestEventID evt, Client *client, EQEmu::ItemIn
 			if(riter->event_id == evt) {
 				std::string package_name = "encounter_" + riter->encounter_name;
 				int i = _EventItem(package_name, evt, client, item, mob, data, extra_data, extra_pointers, &riter->lua_reference);
-                if(i != 0)
-                    ret = i;
+				if(i != 0)
+					ret = i;
 			}
 			++riter;
 		}
@@ -1174,16 +1222,16 @@ int LuaParser::DispatchEventItem(QuestEventID evt, Client *client, EQEmu::ItemIn
 		if(riter->event_id == evt) {
 			std::string package_name = "encounter_" + riter->encounter_name;
 			int i = _EventItem(package_name, evt, client, item, mob, data, extra_data, extra_pointers, &riter->lua_reference);
-            if(i != 0)
-                ret = i;
+			if(i != 0)
+				ret = i;
 		}
 		++riter;
 	}
-    return ret;
+	return ret;
 }
 
 int LuaParser::DispatchEventSpell(QuestEventID evt, NPC* npc, Client *client, uint32 spell_id, uint32 extra_data,
-								   std::vector<EQEmu::Any> *extra_pointers) {
+								  std::vector<EQEmu::Any> *extra_pointers) {
 	evt = ConvertLuaEvent(evt);
 	if(evt >= _LargestEventID) {
 		return 0;
@@ -1191,17 +1239,17 @@ int LuaParser::DispatchEventSpell(QuestEventID evt, NPC* npc, Client *client, ui
 
 	std::string package_name = "spell_" + std::to_string(spell_id);
 
-    int ret = 0;
+	int ret = 0;
 	auto iter = lua_encounter_events_registered.find(package_name);
 	if(iter != lua_encounter_events_registered.end()) {
-	    auto riter = iter->second.begin();
+		auto riter = iter->second.begin();
 		while(riter != iter->second.end()) {
 			if(riter->event_id == evt) {
 				std::string package_name = "encounter_" + riter->encounter_name;
 				int i = _EventSpell(package_name, evt, npc, client, spell_id, extra_data, extra_pointers, &riter->lua_reference);
-                if(i != 0) {
-                    ret = i;
-                }
+				if(i != 0) {
+					ret = i;
+				}
 			}
 			++riter;
 		}
@@ -1217,35 +1265,81 @@ int LuaParser::DispatchEventSpell(QuestEventID evt, NPC* npc, Client *client, ui
 		if(riter->event_id == evt) {
 			std::string package_name = "encounter_" + riter->encounter_name;
 			int i = _EventSpell(package_name, evt, npc, client, spell_id, extra_data, extra_pointers, &riter->lua_reference);
-            if(i != 0)
-                ret = i;
+			if(i != 0)
+				ret = i;
 		}
 		++riter;
 	}
-    return ret;
+	return ret;
 }
 
 QuestEventID LuaParser::ConvertLuaEvent(QuestEventID evt) {
 	switch(evt) {
-	case EVENT_SLAY:
-	case EVENT_NPC_SLAY:
-		return EVENT_SLAY;
-		break;
-	case EVENT_SPELL_EFFECT_CLIENT:
-	case EVENT_SPELL_EFFECT_NPC:
-		return EVENT_SPELL_EFFECT_CLIENT;
-		break;
-	case EVENT_SPELL_BUFF_TIC_CLIENT:
-	case EVENT_SPELL_BUFF_TIC_NPC:
-		return EVENT_SPELL_BUFF_TIC_CLIENT;
-		break;
-	case EVENT_AGGRO:
-	case EVENT_ATTACK:
-		return _LargestEventID;
-		break;
-	default:
-		return evt;
+		case EVENT_SLAY:
+		case EVENT_NPC_SLAY:
+			return EVENT_SLAY;
+			break;
+		case EVENT_SPELL_EFFECT_CLIENT:
+		case EVENT_SPELL_EFFECT_NPC:
+			return EVENT_SPELL_EFFECT_CLIENT;
+			break;
+		case EVENT_SPELL_BUFF_TIC_CLIENT:
+		case EVENT_SPELL_BUFF_TIC_NPC:
+			return EVENT_SPELL_BUFF_TIC_CLIENT;
+			break;
+		case EVENT_AGGRO:
+		case EVENT_ATTACK:
+			return _LargestEventID;
+			break;
+		default:
+			return evt;
 	}
 }
 
 #endif
+
+void LuaParser::MeleeMitigation(Mob *self, Mob *attacker, DamageHitInfo &hit, ExtraAttackOptions *opts, bool &ignoreDefault)
+{
+	for (auto &mod : mods_) {
+		mod.MeleeMitigation(self, attacker, hit, opts, ignoreDefault);
+	}
+}
+
+void LuaParser::ApplyDamageTable(Mob *self, DamageHitInfo &hit, bool &ignoreDefault)
+{
+	for (auto &mod : mods_) {
+		mod.ApplyDamageTable(self, hit, ignoreDefault);
+	}
+}
+
+bool LuaParser::AvoidDamage(Mob *self, Mob *other, DamageHitInfo &hit, bool & ignoreDefault)
+{
+	bool retval = false;
+	for (auto &mod : mods_) {
+		mod.AvoidDamage(self, other, hit, retval, ignoreDefault);
+	}
+	return retval;
+}
+
+bool LuaParser::CheckHitChance(Mob *self, Mob *other, DamageHitInfo &hit, bool &ignoreDefault)
+{
+	bool retval = false;
+	for (auto &mod : mods_) {
+		mod.CheckHitChance(self, other, hit, retval, ignoreDefault);
+	}
+	return retval;
+}
+
+void LuaParser::TryCriticalHit(Mob *self, Mob *defender, DamageHitInfo &hit, ExtraAttackOptions *opts, bool &ignoreDefault)
+{
+	for (auto &mod : mods_) {
+		mod.TryCriticalHit(self, defender, hit, opts, ignoreDefault);
+	}
+}
+
+void LuaParser::CommonOutgoingHitSuccess(Mob *self, Mob *other, DamageHitInfo &hit, ExtraAttackOptions *opts, bool &ignoreDefault)
+{
+	for (auto &mod : mods_) {
+		mod.CommonOutgoingHitSuccess(self, other, hit, opts, ignoreDefault);
+	}
+}
