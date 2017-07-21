@@ -234,7 +234,7 @@ public:
 	inline bool GetSeeInvisible(uint8 see_invis);
 	bool IsInvisible(Mob* other = 0) const;
 	void SetInvisible(uint8 state = 0, uint8 type = 0);
-	EQEmu::skills::SkillType AttackAnimation(int Hand, const EQEmu::ItemInstance* weapon);
+	EQEmu::skills::SkillType AttackAnimation(int Hand, const EQEmu::ItemInstance* weapon, EQEmu::skills::SkillType skillinuse = EQEmu::skills::Skill1HBlunt);
 
 	//Song
 	bool UseBardSpellLogic(uint16 spell_id = 0xffff, int slot = -1);
