@@ -2080,7 +2080,6 @@ void Client::Handle_OP_AdventureMerchantRequest(const EQApplicationPacket *app)
 		return;
 
 	merchantid = tmp->CastToNPC()->MerchantType;
-	tmp->CastToNPC()->FaceTarget(this->CastToMob());
 
 	const EQEmu::ItemData *item = nullptr;
 	std::list<MerchantList> merlist = zone->merchanttable[merchantid];
