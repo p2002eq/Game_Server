@@ -2746,22 +2746,15 @@ const char* QuestManager::saylink(char* Phrase, bool silent, const char* LinkNam
 	auto results = database.QueryDatabase(query);
 	if (results.Success()) {
 		if (results.RowCount() >= 1) {
-			for (auto row = results.begin();row != results.end(); ++row)
+			for (auto row = results.begin(); row != results.end(); ++row)
 				sayid = atoi(row[0]);
-		} else { // Add a new saylink entry to the database and query it again for the new sayid number
+		} else {
 			std::string insert_query = StringFormat("INSERT INTO `saylink` (`phrase`) VALUES ('%s')", escaped_string);
 			results = database.QueryDatabase(insert_query);
 			if (!results.Success()) {
 				Log(Logs::General, Logs::Error, "Error in saylink phrase queries", results.ErrorMessage().c_str());
 			} else {
-				results = database.QueryDatabase(query);
-				if (results.Success()) {
-					if (results.RowCount() >= 1)
-						for(auto row = results.begin(); row != results.end(); ++row)
-							sayid = atoi(row[0]);
-				} else {
-					Log(Logs::General, Logs::Error, "Error in saylink phrase queries", results.ErrorMessage().c_str());
-				}
+				sayid = results.LastInsertedID();
 			}
 		}
 	}
