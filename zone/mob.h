@@ -1392,7 +1392,6 @@ protected:
 	void ClearItemFactionBonuses();
 
 	void CalculateFearPosition();
-	uint32 move_tic_count;
 
 	bool flee_mode;
 	Timer flee_timer;

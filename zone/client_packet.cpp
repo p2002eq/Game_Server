@@ -603,10 +603,10 @@ void Client::CompleteConnect()
 		}
 	}
 	else {
-		Group *group_update = nullptr;
-		group_update = this->GetGroup();
-		if (group_update)
-			group_update->SendHPPacketsTo(this);
+		Group *group = nullptr;
+		group = this->GetGroup();
+		if (group)
+			group->SendHPPacketsTo(this);
 	}
 
 	//bulk raid send in here eventually
