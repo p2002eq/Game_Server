@@ -134,6 +134,11 @@ bool Client::Process() {
 		if (hpupdate_timer.Check(false))
 			SendHPUpdate();
 
+		/* I haven't naturally updated my position in 10 seconds, updating manually */
+		if (position_update_timer.Check()) {
+			SendPositionUpdate();
+		}
+
 		if (mana_timer.Check())
 			CheckManaEndUpdate();
 
@@ -269,14 +274,6 @@ bool Client::Process() {
 					} else if (mob->GetAggroRange() > scan_range) {
 						close_mobs.insert(std::pair<Mob *, float>(mob, distance));
 					}
-				}
-				/* Clients need to be kept up to date for position updates more often otherwise they disappear */
-				if (mob->IsClient() && this != mob && !mob->IsMoving() && distance <= client_update_range) {
-					auto app = new EQApplicationPacket(OP_ClientUpdate, sizeof(PlayerPositionUpdateServer_Struct));
-					PlayerPositionUpdateServer_Struct *spawn_update = (PlayerPositionUpdateServer_Struct *) app->pBuffer;
-					mob->MakeSpawnUpdate(spawn_update);
-					this->FastQueuePacket(&app, false);
-					safe_delete(app);
 				}
 			}
 		}
@@ -458,7 +455,7 @@ bool Client::Process() {
 				{
 					animation = 0;
 					m_Delta = glm::vec4(0.0f, 0.0f, 0.0f, m_Delta.w);
-					SendPosUpdate(2);
+					SendPositionUpdate(2);
 				}
 			}
 

@@ -152,6 +152,7 @@ RULE_BOOL(Character, AllowMQTarget, false) // Disables putting players in the 'h
 RULE_BOOL(Character, UseOldBindWound, false) // Uses the original bind wound behavior
 RULE_BOOL(Character, GrantHoTTOnCreate, false) // Grant Health of Target's Target leadership AA on character creation
 RULE_BOOL(Character, UseOldConSystem, false) // Grant Health of Target's Target leadership AA on character creation
+RULE_BOOL(Character, OPClientUpdateVisualDebug, false) // Shows a pulse and forward directional particle each time the client sends its position to server
 RULE_INT(Character, UnusedAAPointCap, 30) // Cap for Unused AA Points.  Default: 30.  NOTE: DO NOT LOWER THIS WITHOUT KNOWING WHAT YOU ARE DOING.  MAY RESULT IN PLAYERS LOSING AAs.
 RULE_CATEGORY_END()
 
