@@ -140,8 +140,8 @@ void EQ::Net::DaybreakConnectionManager::Process()
 				if ((size_t)time_since_last_send.count() > m_options.connect_delay_ms) {
 					connection->SendConnect();
 				}
-			}
 				break;
+			}
 			case StatusConnected: {
 				if (m_options.keepalive_delay_ms != 0) {
 					auto time_since_last_send = std::chrono::duration_cast<std::chrono::milliseconds>(now - connection->m_last_send);
