@@ -1458,7 +1458,7 @@ void Mob::SendHPUpdate(bool skip_self /*= false*/, bool force_update_all /*= fal
 	}
 }
 
-// this one just warps the mob to the current location
+/* Used for NPCs mainly */
 void Mob::SendPosition()
 {
 	auto app = new EQApplicationPacket(OP_ClientUpdate, sizeof(PlayerPositionUpdateServer_Struct));
@@ -1466,7 +1466,7 @@ void Mob::SendPosition()
 	MakeSpawnUpdateNoDelta(spu);
 
 	/* When an NPC has made a large distance change - we should update all clients to prevent "ghosts" */
-	if (DistanceSquared(last_major_update_position, m_Position) > (100 * 100)) {
+	if (DistanceSquared(last_major_update_position, m_Position) >= (100 * 100)) {
 		entity_list.QueueClients(this, app, true, true);
 		last_major_update_position = m_Position;
 	}
