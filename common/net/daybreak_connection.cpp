@@ -403,15 +403,15 @@ void EQ::Net::DaybreakConnection::ProcessPacket(Packet &p)
 				switch (m_encode_passes[i]) {
 					case EncodeCompression:
 						if(temp.GetInt8(0) == 0)
- +							Decompress(temp, DaybreakHeader::size(), temp.Length() - DaybreakHeader::size());
- +						else
- +							Decompress(temp, 1, temp.Length() - 1);
+ 							Decompress(temp, DaybreakHeader::size(), temp.Length() - DaybreakHeader::size());
+ 						else
+ 							Decompress(temp, 1, temp.Length() - 1);
 						break;
 					case EncodeXOR:
 						if (temp.GetInt8(0) == 0)
- +							Decode(temp, DaybreakHeader::size(), temp.Length() - DaybreakHeader::size());
- +						else
- +							Decode(temp, 1, temp.Length() - 1);
+ 							Decode(temp, DaybreakHeader::size(), temp.Length() - DaybreakHeader::size());
+ 						else
+ 							Decode(temp, 1, temp.Length() - 1);
 						break;
 					default:
 						break;
@@ -427,9 +427,9 @@ void EQ::Net::DaybreakConnection::ProcessPacket(Packet &p)
 				switch (m_encode_passes[i]) {
 					case EncodeXOR:
 						if (temp.GetInt8(0) == 0) 
- +							Decode(temp, DaybreakHeader::size(), temp.Length() - DaybreakHeader::size());
- +						else
- +							Decode(temp, 1, temp.Length() - 1);
+ 							Decode(temp, DaybreakHeader::size(), temp.Length() - DaybreakHeader::size());
+ 						else
+ 							Decode(temp, 1, temp.Length() - 1);
 						break;
 					default:
 						break;
@@ -1198,15 +1198,15 @@ void EQ::Net::DaybreakConnection::InternalSend(Packet &p)
 			switch (m_encode_passes[i]) {
 				case EncodeCompression:
 					if(out.GetInt8(0) == 0) 
- +						Compress(out, DaybreakHeader::size(), out.Length() - DaybreakHeader::size());
- +					else
- +						Compress(out, 1, out.Length() - 1);
+						Compress(out, DaybreakHeader::size(), out.Length() - DaybreakHeader::size());
+					else
+						Compress(out, 1, out.Length() - 1);
 					break;
 				case EncodeXOR:
 					if (out.GetInt8(0) == 0)
- +						Encode(out, DaybreakHeader::size(), out.Length() - DaybreakHeader::size());
- +					else
- +						Encode(out, 1, out.Length() - 1);
+						Encode(out, DaybreakHeader::size(), out.Length() - DaybreakHeader::size());
+					else
+						Encode(out, 1, out.Length() - 1);
 					break;
 				default:
 					break;
