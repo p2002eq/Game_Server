@@ -1953,7 +1953,9 @@ const NPCType* ZoneDatabase::LoadNPCTypesData(uint32 npc_type_id, bool bulk_load
 		"npc_types.feettexture, "
 		"npc_types.combat_hp_regen, "
 		"npc_types.combat_mana_regen, "
-		"npc_types.ignore_despawn "
+		"npc_types.ignore_despawn, "
+		"npc_types.show_name, "
+		"npc_types.untargetable "
 		"FROM npc_types %s",
 		where_condition.c_str()
 	);
@@ -2131,6 +2133,8 @@ const NPCType* ZoneDatabase::LoadNPCTypesData(uint32 npc_type_id, bool bulk_load
 		temp_npctype_data->combat_hp_regen = atoi(row[97]);
 		temp_npctype_data->combat_mana_regen = atoi(row[98]);
 		temp_npctype_data->ignore_despawn = atoi(row[99]) == 1 ? true : false;
+		temp_npctype_data->show_name = atoi(row[100]) != 0 ? true : false;
+		temp_npctype_data->untargetable = atoi(row[101]) != 0 ? true : false;
 
 		// If NPC with duplicate NPC id already in table,
 		// free item we attempted to add.
