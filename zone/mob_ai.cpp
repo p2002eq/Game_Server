@@ -1568,6 +1568,8 @@ void NPC::AI_DoMovement() {
 						SetHeading(m_CurrentWayPoint.w);
 					}
 
+					this->FixZ();
+
 					SendPosition();
 
 					//kick off event_waypoint arrive
