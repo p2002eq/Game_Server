@@ -191,7 +191,9 @@ Client::Client(EQStreamInterface* ieqs)
 	strcpy(account_name, "");
 	tellsoff = false;
 	last_reported_mana = 0;
-	last_reported_endur = 0;
+	last_reported_endurance = 0;
+	last_reported_endurance_percent = 0;
+	last_reported_mana_percent = 0;
 	gmhideme = false;
 	AFK = false;
 	LFG = false;
@@ -270,7 +272,7 @@ Client::Client(EQStreamInterface* ieqs)
 	RestRegenMana = 0;
 	RestRegenEndurance = 0;
 	XPRate = 100;
-	cur_end = 0;
+	current_endurance = 0;
 
 	m_TimeSinceLastPositionCheck = 0;
 	m_DistanceSinceLastPositionCheck = 0.0f;
@@ -288,7 +290,7 @@ Client::Client(EQStreamInterface* ieqs)
 	HideCorpseMode = HideCorpseNone;
 	PendingGuildInvitation = false;
 
-	cur_end = 0;
+	current_endurance = 0;
 
 	InitializeBuffSlots();
 
@@ -599,9 +601,9 @@ bool Client::Save(uint8 iCommitNow) {
 		m_pp.mana      = GetMaxMana();
 		m_pp.endurance = GetMaxEndurance();
 	} else { 	// Otherwise, no changes.
-		m_pp.cur_hp    = GetHP();
-		m_pp.mana      = cur_mana;
-		m_pp.endurance = cur_end;
+		m_pp.cur_hp = GetHP();
+		m_pp.mana = current_mana;
+		m_pp.endurance = current_endurance;
 	}
 
 	/* Save Character Currency */
@@ -1822,20 +1824,20 @@ const int32& Client::SetMana(int32 amount) {
 		amount = 0;
 	if (amount > GetMaxMana())
 		amount = GetMaxMana();
-	if (amount != cur_mana)
+	if (amount != current_mana)
 		update = true;
-	cur_mana = amount;
+	current_mana = amount;
 	if (update)
 		Mob::SetMana(amount);
-	SendManaUpdatePacket();
-	return cur_mana;
+	CheckManaEndUpdate();
+	return current_mana;
 }
 
-void Client::SendManaUpdatePacket() {
+void Client::CheckManaEndUpdate() {
 	if (!Connected())
 		return;
 
-	if (last_reported_mana != cur_mana || last_reported_endur != cur_end) {
+	if (last_reported_mana != current_mana || last_reported_endurance != current_endurance) {
 
 		if (ClientVersion() >= EQEmu::versions::ClientVersion::SoD) {
 			SendManaUpdate();
@@ -1843,46 +1845,62 @@ void Client::SendManaUpdatePacket() {
 		}
 
 		auto outapp = new EQApplicationPacket(OP_ManaChange, sizeof(ManaChange_Struct));
-		ManaChange_Struct* manachange = (ManaChange_Struct*)outapp->pBuffer;
-		manachange->new_mana = cur_mana;
-		manachange->stamina = cur_end;
-		manachange->spell_id = casting_spell_id;
-		manachange->keepcasting = 1;
+		ManaChange_Struct* mana_change = (ManaChange_Struct*)outapp->pBuffer;
+		mana_change->new_mana = current_mana;
+		mana_change->stamina = current_endurance;
+		mana_change->spell_id = casting_spell_id;
+		mana_change->keepcasting = 1;
 		outapp->priority = 6;
 		QueuePacket(outapp);
 		safe_delete(outapp);
 
-		Group *g = GetGroup();
+		/* Let others know when our mana percent has changed */
+		if (this->GetManaPercent() != last_reported_mana_percent) {
+			Group *group = this->GetGroup();
+			Raid *raid = this->GetRaid();
 
-		if(g)
-		{
-			outapp = new EQApplicationPacket(OP_MobManaUpdate, sizeof(MobManaUpdate_Struct));
-			auto outapp2 =
-			    new EQApplicationPacket(OP_MobEnduranceUpdate, sizeof(MobEnduranceUpdate_Struct));
+			if (raid) {
+				raid->SendManaPacketFrom(this);
+			} else if (group) {
+				group->SendManaPacketFrom(this);
+			}
 
-			MobManaUpdate_Struct *mmus = (MobManaUpdate_Struct *)outapp->pBuffer;
-			MobEnduranceUpdate_Struct *meus = (MobEnduranceUpdate_Struct *)outapp2->pBuffer;
+			auto mana_packet = new EQApplicationPacket(OP_ManaUpdate, sizeof(ManaUpdate_Struct));
+			ManaUpdate_Struct *mana_update = (ManaUpdate_Struct *) mana_packet->pBuffer;
+			mana_update->cur_mana = GetMana();
+			mana_update->max_mana = GetMaxMana();
+			mana_update->spawn_id = GetID();
+			QueuePacket(mana_packet);
+			entity_list.QueueClientsByXTarget(this, mana_packet, false);
+			safe_delete(mana_packet);
 
-			mmus->spawn_id = meus->spawn_id = GetID();
-
-			mmus->mana = GetManaPercent();
-			meus->endurance = GetEndurancePercent();
-
-
-			for(int i = 0; i < MAX_GROUP_MEMBERS; ++i)
-				if (g->members[i] && g->members[i]->IsClient() && (g->members[i] != this) && (g->members[i]->CastToClient()->ClientVersion() >= EQEmu::versions::ClientVersion::SoD))
-				{
-					g->members[i]->CastToClient()->QueuePacket(outapp);
-					g->members[i]->CastToClient()->QueuePacket(outapp2);
-				}
-
-			safe_delete(outapp);
-			safe_delete(outapp2);
+			last_reported_mana_percent = this->GetManaPercent();
 		}
 
+		/* Let others know when our endurance percent has changed */
+		if (this->GetEndurancePercent() != last_reported_endurance_percent) {
+			Group *group = this->GetGroup();
+			Raid *raid = this->GetRaid();
 
-		last_reported_mana = cur_mana;
-		last_reported_endur = cur_end;
+			if (raid) {
+				raid->SendEndurancePacketFrom(this);
+			}
+			else if (group) {
+				group->SendEndurancePacketFrom(this);
+			}
+
+			auto endurance_packet = new EQApplicationPacket(OP_EnduranceUpdate, sizeof(EnduranceUpdate_Struct));
+			EnduranceUpdate_Struct* endurance_update = (EnduranceUpdate_Struct*)endurance_packet->pBuffer;
+			endurance_update->cur_end = GetEndurance();
+			endurance_update->max_end = GetMaxEndurance();
+			endurance_update->spawn_id = GetID();
+			QueuePacket(endurance_packet);
+			entity_list.QueueClientsByXTarget(this, endurance_packet, false);
+			safe_delete(endurance_packet);
+			last_reported_endurance_percent = this->GetEndurancePercent();
+		}
+		last_reported_mana = current_mana;
+		last_reported_endurance = current_endurance;
 	}
 }
 
@@ -1890,12 +1908,11 @@ void Client::SendManaUpdatePacket() {
 void Client::SendManaUpdate()
 {
 	auto mana_app = new EQApplicationPacket(OP_ManaUpdate, sizeof(ManaUpdate_Struct));
-	ManaUpdate_Struct* mus = (ManaUpdate_Struct*)mana_app->pBuffer;
-	mus->cur_mana = GetMana();
-	mus->max_mana = GetMaxMana();
-	mus->spawn_id = GetID();
+	ManaUpdate_Struct* mana_update = (ManaUpdate_Struct*)mana_app->pBuffer;
+	mana_update->cur_mana = GetMana();
+	mana_update->max_mana = GetMaxMana();
+	mana_update->spawn_id = GetID();
 	QueuePacket(mana_app);
-	entity_list.QueueClientsByXTarget(this, mana_app, false);
 	safe_delete(mana_app);
 }
 
@@ -1903,12 +1920,11 @@ void Client::SendManaUpdate()
 void Client::SendEnduranceUpdate()
 {
 	auto end_app = new EQApplicationPacket(OP_EnduranceUpdate, sizeof(EnduranceUpdate_Struct));
-	EnduranceUpdate_Struct* eus = (EnduranceUpdate_Struct*)end_app->pBuffer;
-	eus->cur_end = GetEndurance();
-	eus->max_end = GetMaxEndurance();
-	eus->spawn_id = GetID();
+	EnduranceUpdate_Struct* endurance_update = (EnduranceUpdate_Struct*)end_app->pBuffer;
+	endurance_update->cur_end = GetEndurance();
+	endurance_update->max_end = GetMaxEndurance();
+	endurance_update->spawn_id = GetID();
 	QueuePacket(end_app);
-	entity_list.QueueClientsByXTarget(this, end_app, false);
 	safe_delete(end_app);
 }
 
@@ -3771,8 +3787,8 @@ void Client::SetEndurance(int32 newEnd)
 		newEnd = GetMaxEndurance();
 	}
 
-	cur_end = newEnd;
-	SendManaUpdatePacket();
+	current_endurance = newEnd;
+	CheckManaEndUpdate();
 }
 
 void Client::SacrificeConfirm(Client *caster)
@@ -4361,7 +4377,7 @@ bool Client::GroupFollow(Client* inviter) {
 		}
 
 		database.RefreshGroupFromDB(this);
-		group->SendHPPacketsTo(this);
+		group->SendHPManaEndPacketsTo(this);
 		//send updates to clients out of zone...
 		group->SendGroupJoinOOZ(this);
 		return true;
