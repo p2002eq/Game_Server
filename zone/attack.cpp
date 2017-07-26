@@ -31,6 +31,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #include "water_map.h"
 #include "worldserver.h"
 #include "zone.h"
+#include "lua_parser.h"
 
 #include <assert.h>
 #include <stdio.h>
@@ -52,7 +53,7 @@ extern WorldServer worldserver;
 extern EntityList entity_list;
 extern Zone* zone;
 
-bool Mob::AttackAnimation(EQEmu::skills::SkillType &skillinuse, int Hand, const EQEmu::ItemInstance* weapon)
+EQEmu::skills::SkillType Mob::AttackAnimation(int Hand, const EQEmu::ItemInstance* weapon, EQEmu::skills::SkillType skillinuse)
 {
 	// Determine animation
 	int type = 0;
@@ -137,7 +138,7 @@ bool Mob::AttackAnimation(EQEmu::skills::SkillType &skillinuse, int Hand, const 
 		type = animDualWield;
 
 	DoAnim(type, 0, false);
-	return true;
+	return skillinuse;
 }
 
 int Mob::compute_tohit(EQEmu::skills::SkillType skillinuse)
@@ -297,6 +298,15 @@ int Mob::GetTotalDefense()
 // and does other mitigation checks. 'this' is the mob being attacked.
 bool Mob::CheckHitChance(Mob* other, DamageHitInfo &hit)
 {
+#ifdef LUA_EQEMU
+	bool lua_ret = false;
+	bool ignoreDefault = false;
+	lua_ret = LuaParser::Instance()->CheckHitChance(this, other, hit, ignoreDefault);
+
+	if(ignoreDefault) {
+		return lua_ret;
+	}
+#endif
 	Mob *attacker = other;
 	Mob *defender = this;
 	Log(Logs::Detail, Logs::Attack, "CheckHitChance(%s) attacked by %s", defender->GetName(), attacker->GetName());
@@ -327,6 +337,15 @@ bool Mob::CheckHitChance(Mob* other, DamageHitInfo &hit)
 
 bool Mob::AvoidDamage(Mob *other, DamageHitInfo &hit)
 {
+#ifdef LUA_EQEMU
+	bool lua_ret = false;
+	bool ignoreDefault = false;
+	lua_ret = LuaParser::Instance()->AvoidDamage(this, other, hit, ignoreDefault);
+
+	if (ignoreDefault) {
+		return lua_ret;
+	}
+#endif
 	/* called when a mob is attacked, does the checks to see if it's a hit
 	* and does other mitigation checks. 'this' is the mob being attacked.
 	*
@@ -907,6 +926,14 @@ double Mob::RollD20(int offense, int mitigation)
 
 void Mob::MeleeMitigation(Mob *attacker, DamageHitInfo &hit, ExtraAttackOptions *opts)
 {
+#ifdef LUA_EQEMU
+	bool ignoreDefault = false;
+	LuaParser::Instance()->MeleeMitigation(this, attacker, hit, opts, ignoreDefault);
+
+	if (ignoreDefault) {
+		return;
+	}
+#endif
 	if (hit.damage_done < 0 || hit.base_damage == 0)
 		return;
 
@@ -1366,7 +1393,7 @@ bool Client::Attack(Mob* other, int Hand, bool bRiposte, bool IsStrikethrough, b
 	DamageHitInfo my_hit;
 	// calculate attack_skill and skillinuse depending on hand and weapon
 	// also send Packet to near clients
-	AttackAnimation(my_hit.skill, Hand, weapon);
+	my_hit.skill = AttackAnimation(Hand, weapon);
 	Log(Logs::Detail, Logs::Combat, "Attacking with %s in slot %d using skill %d", weapon ? weapon->GetItem()->Name : "Fist", Hand, my_hit.skill);
 
 	// Now figure out damage
@@ -1927,7 +1954,7 @@ bool NPC::Attack(Mob* other, int Hand, bool bRiposte, bool IsStrikethrough, bool
 	//do attack animation regardless of whether or not we can hit below
 	int16 charges = 0;
 	EQEmu::ItemInstance weapon_inst(weapon, charges);
-	AttackAnimation(my_hit.skill, Hand, &weapon_inst);
+	my_hit.skill = AttackAnimation(Hand, &weapon_inst, my_hit.skill);
 
 	//basically "if not immune" then do the attack
 	if (weapon_damage > 0) {
@@ -2379,6 +2406,7 @@ bool NPC::Death(Mob* killer_mob, int32 damage, uint16 spell, EQEmu::skills::Skil
 
 			entity_list.UnMarkNPC(GetID());
 			entity_list.RemoveNPC(GetID());
+
 			this->SetID(0);
 
 			if (killer != 0 && emoteid != 0) {
@@ -2823,6 +2851,7 @@ uint8 Mob::GetWeaponDamageBonus(const EQEmu::ItemData *weapon, bool offhand)
 		}
 		return damage_bonus;
 	}
+	return 0;
 }
 
 int Mob::GetHandToHandDamage(void)
@@ -3402,9 +3431,6 @@ void Mob::CommonDamage(Mob* attacker, int &damage, const uint16 spell_id, const 
 
         SetHP(GetHP() - damage);
 
-		if (IsClient() && RuleB(Character, MarqueeHPUpdates))
-			this->CastToClient()->SendHPUpdateMarquee();
-
 		if (HasDied()) {
 			bool IsSaved = false;
 
@@ -3554,8 +3580,11 @@ void Mob::CommonDamage(Mob* attacker, int &damage, const uint16 spell_id, const 
 			if (zone->zonemap && zone->zonemap->CheckLoS(glm::vec3(m_Position), new_pos)) { // If we have LoS on the new loc it should be reachable.
 				if (IsNPC()) {
 					// Is this adequate?
+
 					Teleport(new_pos);
-					SendPosUpdate();
+					if (position_update_melee_push_timer.Check()) {
+						SendPositionUpdate();
+					}
 				}
 			}
 			else {
@@ -4103,7 +4132,7 @@ void Mob::TryPetCriticalHit(Mob *defender, DamageHitInfo &hit)
 
 	if (critChance > 0) {
 		if (zone->random.Roll(critChance)) {
-			critMod += GetCritDmgMob(hit.skill);
+			critMod += GetCritDmgMod(hit.skill);
 			hit.damage_done += 5;
 			hit.damage_done = (hit.damage_done * critMod) / 100;
 
@@ -4124,6 +4153,14 @@ void Mob::TryPetCriticalHit(Mob *defender, DamageHitInfo &hit)
 
 void Mob::TryCriticalHit(Mob *defender, DamageHitInfo &hit, ExtraAttackOptions *opts)
 {
+#ifdef LUA_EQEMU
+	bool ignoreDefault = false;
+	LuaParser::Instance()->TryCriticalHit(this, defender, hit, opts, ignoreDefault);
+
+	if (ignoreDefault) {
+		return;
+	}
+#endif
 	if (hit.damage_done < 1 || !defender)
 		return;
 
@@ -4183,7 +4220,11 @@ void Mob::TryCriticalHit(Mob *defender, DamageHitInfo &hit, ExtraAttackOptions *
 		// check if we crited
 		if (roll < dex_bonus) {
 
-		int crit_mod = 170 + GetCritDmgMob(hit.skill);
+			int crit_mod = 170 + GetCritDmgMod(hit.skill);
+			if (crit_mod < 100) {
+				crit_mod = 100;
+			}
+
 		
 			// 1: Try Slay Undead - On P2002 Slay Undead is a critical conversion, not a flat chance per hit
 			if (defender && (defender->GetBodyType() == BT_Undead || defender->GetBodyType() == BT_SummonedUndead ||
@@ -4290,7 +4331,7 @@ void Mob::TryCriticalHit(Mob *defender, DamageHitInfo &hit, ExtraAttackOptions *
 				// Crippling blows also have a chance to stun
 				// Kayen: Crippling Blow would cause a chance to interrupt for npcs < 55, with a
 				// staggers message.
-				if (defender->GetLevel() <= 55 && !defender->GetSpecialAbility(IMMUNE_STUN)) {
+				if (defender->GetLevel() <= 55 && !defender->GetSpecialAbility(UNSTUNABLE)) {
 					defender->Emote("staggers.");
 					defender->Stun(2000);
 				}
@@ -4806,6 +4847,14 @@ int Mob::GetMobFixedWeaponSkill()
 
 void Mob::ApplyDamageTable(DamageHitInfo &hit)
 {
+#ifdef LUA_EQEMU
+	bool ignoreDefault = false;
+	LuaParser::Instance()->ApplyDamageTable(this, hit, ignoreDefault);
+
+	if (ignoreDefault) {
+		return;
+	}
+#endif
 	// someone may want to add this to custom servers, can remove this if that's the case
 	if (!IsClient()
 #ifdef BOTS
@@ -5141,6 +5190,15 @@ void Mob::CommonOutgoingHitSuccess(Mob* defender, DamageHitInfo &hit, ExtraAttac
 {
 	if (!defender)
 		return;
+
+#ifdef LUA_EQEMU
+	bool ignoreDefault = false;
+	LuaParser::Instance()->CommonOutgoingHitSuccess(this, defender, hit, opts, ignoreDefault);
+
+	if (ignoreDefault) {
+		return;
+	}
+#endif
 
 	// BER weren't parsing the halving
 	if (hit.skill == EQEmu::skills::SkillArchery ||

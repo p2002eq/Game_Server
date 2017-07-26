@@ -88,6 +88,8 @@ enum LogCategory {
 	Group,
 	Client_Login,
 	Headless_Client,
+	HP_Update,
+	FixZ,
 	MaxCategoryID	/* Don't Remove this*/
 };
 
@@ -139,8 +141,11 @@ static const char* LogCategoryName[LogCategory::MaxCategoryID] = {
 	"Packet :: Client -> Server (Dump)",
 	"Login Server",
 	"Group",
-	"Client Login"
-};
+	"Client Login",
+	"Headless Client",
+	"HP Update",
+	"FixZ"
+	};
 }
 
 #define Log(debug_level, log_category, message, ...) do {\

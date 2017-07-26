@@ -234,7 +234,7 @@ public:
 	inline bool GetSeeInvisible(uint8 see_invis);
 	bool IsInvisible(Mob* other = 0) const;
 	void SetInvisible(uint8 state = 0, uint8 type = 0);
-	bool AttackAnimation(EQEmu::skills::SkillType &skillinuse, int Hand, const EQEmu::ItemInstance* weapon);
+	EQEmu::skills::SkillType AttackAnimation(int Hand, const EQEmu::ItemInstance* weapon, EQEmu::skills::SkillType skillinuse = EQEmu::skills::Skill1HBlunt);
 
 	//Song
 	bool UseBardSpellLogic(uint16 spell_id = 0xffff, int slot = -1);
@@ -447,6 +447,9 @@ public:
 	inline StatBonuses GetItemBonuses() const { return itembonuses; }
 	inline StatBonuses GetSpellBonuses() const { return spellbonuses; }
 	inline StatBonuses GetAABonuses() const { return aabonuses; }
+	inline StatBonuses* GetItemBonusesPtr() { return &itembonuses; }
+	inline StatBonuses* GetSpellBonusesPtr() { return &spellbonuses; }
+	inline StatBonuses* GetAABonusesPtr() { return &aabonuses; }
 	inline virtual int32 GetMaxSTR() const { return GetSTR(); }
 	inline virtual int32 GetMaxSTA() const { return GetSTA(); }
 	inline virtual int32 GetMaxDEX() const { return GetDEX(); }
@@ -464,14 +467,14 @@ public:
 	inline int32 GetMaxHP() const { return max_hp; }
 	virtual int32 CalcMaxHP();
 	inline int32 GetMaxMana() const { return max_mana; }
-	inline int32 GetMana() const { return cur_mana; }
+	inline int32 GetMana() const { return current_mana; }
 	virtual int32 GetEndurance() const { return 0; }
 	virtual void SetEndurance(int32 newEnd) { return; }
 	int32 GetItemHPBonuses();
 	int32 GetSpellHPBonuses();
 	virtual const int32& SetMana(int32 amount);
 	inline float GetManaRatio() const { return max_mana == 0 ? 100 :
-		((static_cast<float>(cur_mana) / max_mana) * 100); }
+											   ((static_cast<float>(current_mana) / max_mana) * 100); }
 	virtual int32 CalcMaxMana();
 	uint32 GetNPCTypeID() const { return npctype_id; }
 	void SetNPCTypeID(uint32 npctypeid) { npctype_id = npctypeid; }
@@ -490,6 +493,7 @@ public:
 	inline const float GetTarVZ() const { return m_TargetV.z; }
 	inline const float GetTarVector() const { return tar_vector; }
 	inline const uint8 GetTarNDX() const { return tar_ndx; }
+	inline const int8 GetFlyMode() const { return flymode; }
 	bool IsBoat() const;
 
 	//Group
@@ -519,7 +523,7 @@ public:
 	virtual void GMMove(float x, float y, float z, float heading = 0.01, bool SendUpdate = true);
 	void SetDelta(const glm::vec4& delta);
 	void SetTargetDestSteps(uint8 target_steps) { tar_ndx = target_steps; }
-	void SendPosUpdate(uint8 iSendToSelf = 0);
+	void SendPositionUpdate(uint8 iSendToSelf = 0);
 	void MakeSpawnUpdateNoDelta(PlayerPositionUpdateServer_Struct* spu);
 	void MakeSpawnUpdate(PlayerPositionUpdateServer_Struct* spu);
 	void SendPosition();
@@ -553,7 +557,7 @@ public:
 	void SetPrimaryAggro(bool value) { PrimaryAggro = value; if (value) AssistAggro = false; }
 	void SetAssistAggro(bool value) { AssistAggro = value; if (PrimaryAggro) AssistAggro = false; }
 	bool HateSummon();
-	void FaceTarget(Mob* MobToFace = 0);
+	void FaceTarget(Mob* mob_to_face = 0);
 	void SetHeading(float iHeading) { if(m_Position.w != iHeading) { pLastChange = Timer::GetCurrentTime();
 		m_Position.w = iHeading; } }
 	void WipeHateList();
@@ -580,7 +584,7 @@ public:
 	static void CreateSpawnPacket(EQApplicationPacket* app, NewSpawn_Struct* ns);
 	virtual void FillSpawnStruct(NewSpawn_Struct* ns, Mob* ForWho);
 	void CreateHPPacket(EQApplicationPacket* app);
-	void SendHPUpdate(bool skip_self = false);
+	void SendHPUpdate(bool skip_self = false, bool force_update_all = false);
 	virtual void ResetHPUpdateTimer() {}; // does nothing
 
 	//Util
@@ -704,7 +708,7 @@ public:
 	void CastOnCure(uint32 spell_id);
 	void CastOnNumHitFade(uint32 spell_id);
 	void SlowMitigation(Mob* caster);
-	int16 GetCritDmgMob(uint16 skill);
+	int16 GetCritDmgMod(uint16 skill);
 	int16 GetMeleeDamageMod_SE(uint16 skill);
 	int16 GetMeleeMinDamageMod_SE(uint16 skill);
 	int16 GetCrippBlowChance();
@@ -923,6 +927,7 @@ public:
 	float				GetGroundZ(float new_x, float new_y, float z_offset=0.0);
 	void				SendTo(float new_x, float new_y, float new_z);
 	void				SendToFixZ(float new_x, float new_y, float new_z);
+	void				FixZ();
 	void				NPCSpecialAttacks(const char* parse, int permtag, bool reset = true, bool remove = false);
 	inline uint32		DontHealMeBefore() const { return pDontHealMeBefore; }
 	inline uint32		DontBuffMeBefore() const { return pDontBuffMeBefore; }
@@ -1006,7 +1011,7 @@ public:
 	Timer GetAttackTimer() { return attack_timer; }
 	Timer GetAttackDWTimer() { return attack_dw_timer; }
 	inline bool IsFindable() { return findable; }
-	inline uint8 GetManaPercent() { return (uint8)((float)cur_mana / (float)max_mana * 100.0f); }
+	inline uint8 GetManaPercent() { return (uint8)((float)current_mana / (float)max_mana * 100.0f); }
 	virtual uint8 GetEndurancePercent() { return 0; }
 
 	inline virtual bool IsBlockedBuff(int16 SpellID) { return false; }
@@ -1078,6 +1083,10 @@ public:
 	void AddAssistCap() { ++npc_assist_cap; }
 	void DelAssistCap() { --npc_assist_cap; }
 	void ResetAssistCap() { npc_assist_cap = 0; }
+	int GetWeaponDamage(Mob *against, const EQEmu::ItemData *weapon_item);
+	int GetWeaponDamage(Mob *against, const EQEmu::ItemInstance *weapon_item, uint32 *hate = nullptr);
+
+	float last_z;
 
 	// Bots HealRotation methods
 #ifdef BOTS
@@ -1154,7 +1163,7 @@ protected:
 	int32 cur_hp;
 	int32 max_hp;
 	int32 base_hp;
-	int32 cur_mana;
+	int32 current_mana;
 	int32 max_mana;
 	int32 hp_regen;
 	int32 mana_regen;
@@ -1194,6 +1203,8 @@ protected:
 	uint8 orig_level;
 	uint32 npctype_id;
 	glm::vec4 m_Position;
+	/* Used to determine when an NPC has traversed so many units - to send a zone wide pos update */
+	glm::vec4 last_major_update_position;
 	uint16 animation;
 	float base_size;
 	float size;
@@ -1228,8 +1239,6 @@ protected:
 	virtual float GetDefensiveProcChances(float &ProcBonus, float &ProcChance, uint16 hand = EQEmu::inventory::slotPrimary, Mob *on = nullptr);
 	virtual float GetSkillProcChances(uint16 ReuseTime, uint16 hand = 0); // hand = MainCharm?
 	uint16 GetWeaponSpeedbyHand(uint16 hand);
-	int GetWeaponDamage(Mob *against, const EQEmu::ItemData *weapon_item);
-	int GetWeaponDamage(Mob *against, const EQEmu::ItemInstance *weapon_item, uint32 *hate = nullptr);
 #ifdef BOTS
 	virtual
 #endif
@@ -1385,10 +1394,13 @@ protected:
 	void ClearItemFactionBonuses();
 
 	void CalculateFearPosition();
-	uint32 move_tic_count;
 
 	bool flee_mode;
 	Timer flee_timer;
+	Timer fix_z_timer;
+	Timer fix_z_timer_engaged;
+	Timer attack_anim_timer;
+	Timer position_update_melee_push_timer;
 
 	bool pAIControlled;
 	bool roamer;
@@ -1396,6 +1408,8 @@ protected:
 
 	int wandertype;
 	int pausetype;
+	int8 last_hp_percent;
+	int32 last_hp;
 
 	int cur_wp;
 	glm::vec4 m_CurrentWayPoint;

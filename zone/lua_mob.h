@@ -8,6 +8,7 @@ class Mob;
 struct Lua_HateList;
 class Lua_Item;
 class Lua_ItemInst;
+class Lua_StatBonuses;
 
 namespace luabind {
 	struct scope;
@@ -332,6 +333,8 @@ public:
 	void ModSkillDmgTaken(int skill, int value);
 	int GetModSkillDmgTaken(int skill);
 	int GetSkillDmgTaken(int skill);
+	int GetFcDamageAmtIncoming(Lua_Mob caster, uint32 spell_id, bool use_skill, uint16 skill);
+	int GetSkillDmgAmt(uint16 skill);
 	void SetAllowBeneficial(bool value);
 	bool GetAllowBeneficial();
 	bool IsBeneficialAllowed(Lua_Mob target);
@@ -382,6 +385,21 @@ public:
 	bool IsSilenced();
 	bool IsAmnesiad();
 	int32 GetMeleeMitigation();
+	int GetWeaponDamageBonus(Lua_Item weapon, bool offhand);
+	Lua_StatBonuses GetItemBonuses();
+	Lua_StatBonuses GetSpellBonuses();
+	Lua_StatBonuses GetAABonuses();
+	int16 GetMeleeDamageMod_SE(uint16 skill);
+	int16 GetMeleeMinDamageMod_SE(uint16 skill);
+	bool IsAttackAllowed(Lua_Mob target, bool isSpellAttack);
+	bool IsCasting();
+	int AttackAnimation(int Hand, Lua_ItemInst weapon);
+	int GetWeaponDamage(Lua_Mob against, Lua_ItemInst weapon);
+	bool IsBerserk();
+	bool TryFinishingBlow(Lua_Mob defender, int &damage);
+	int GetBodyType();
+	int GetOrigBodyType();
+	void CheckNumHitsRemaining(int type, int32 buff_slot, uint16 spell_id);
 };
 
 #endif

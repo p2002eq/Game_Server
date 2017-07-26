@@ -2295,25 +2295,13 @@ bool Mob::SpellFinished(uint16 spell_id, Mob *spell_target, CastingSlot slot, ui
 				// special ae duration spell
 				ae_center->CastToBeacon()->AELocationSpell(this, spell_id, resist_adjust);
 			} else {
-				// regular PB AE or targeted AE spell - spell_target is null if PB
-				if(spell_target)	// this must be an AETarget spell
-				{
-					bool cast_on_target = true;
-					if (spells[spell_id].targettype == ST_TargetAENoPlayersPets && spell_target->IsPetOwnerClient())
-						cast_on_target = false;
-					if (spells[spell_id].targettype == ST_AreaClientOnly && !spell_target->IsClient())
-						cast_on_target = false;
-					if (spells[spell_id].targettype == ST_AreaNPCOnly && !spell_target->IsNPC())
-						cast_on_target = false;
-
-					// affect the target too
-					if (cast_on_target)
-						SpellOnTarget(spell_id, spell_target, false, true, resist_adjust);
-				}
+				// unsure if we actually need this? Need to find some spell examples
 				if(ae_center && ae_center == this && IsBeneficialSpell(spell_id))
 					SpellOnTarget(spell_id, this);
 
-				bool affect_caster = !IsNPC();	//NPC AE spells do not affect the NPC caster
+				// NPCs should never be affected by an AE they cast. PB AEs shouldn't affect caster either
+				// I don't think any other cases that get here matter
+				bool affect_caster = !IsNPC() && spells[spell_id].targettype != ST_AECaster;
 
 				if (spells[spell_id].targettype == ST_AETargetHateList)
 					hate_list.SpellCast(this, spell_id, spells[spell_id].aoerange, ae_center);
@@ -3118,6 +3106,12 @@ int Mob::CheckStackConflict(uint16 spellid1, int caster_level1, uint16 spellid2,
 		if (IsEffectIgnoredInStacking(effect1))
 			continue;
 
+		// negative AC affects are skipped. Ex. Sun's Corona and Glacier Breath should stack
+		// There may be more SPAs we need to add here ....
+		// The client does just check base rather than calculating the affect change value.
+		if ((effect1 == SE_ArmorClass || effect1 == SE_ACv2) && sp2.base[i] < 0)
+			continue;
+
 		/*
 		If target is a npc and caster1 and caster2 exist
 		If Caster1 isn't the same as Caster2 and the effect is a DoT then ignore it.
@@ -3872,8 +3866,21 @@ bool Mob::SpellOnTarget(uint16 spell_id, Mob *spelltar, bool reflect, bool use_r
 				break;
 		}
 		if (reflect_chance) {
-			entity_list.MessageClose_StringID(this, false, RuleI(Range, SpellMessages), MT_Spells,
-							  SPELL_REFLECT, GetCleanName(), spelltar->GetCleanName());
+			if (RuleB(Spells, ReflectMessagesClose)) {
+				entity_list.MessageClose_StringID(
+						this, /* Sender */
+						false, /* Skip Sender */
+						RuleI(Range, SpellMessages), /* Range */
+						MT_Spells, /* Type */
+						SPELL_REFLECT, /* String ID */
+						GetCleanName(), /* Message 1 */
+						spelltar->GetCleanName() /* Message 2 */
+				);
+			}
+			else {
+				Message_StringID(MT_Spells, SPELL_REFLECT, GetCleanName(), spelltar->GetCleanName());
+			}
+
 			CheckNumHitsRemaining(NumHit::ReflectSpell);
 			// caster actually appears to change
 			// ex. During OMM fight you click your reflect mask and you get the recourse from the reflected

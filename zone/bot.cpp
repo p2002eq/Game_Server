@@ -22,6 +22,7 @@
 #include "object.h"
 #include "doors.h"
 #include "quest_parser_collection.h"
+#include "lua_parser.h"
 #include "../common/string_util.h"
 #include "../common/say_link.h"
 
@@ -83,7 +84,7 @@ Bot::Bot(NPCType npcTypeData, Client* botOwner) : NPC(&npcTypeData, nullptr, glm
 	GenerateBaseStats();
 	// Calculate HitPoints Last As It Uses Base Stats
 	cur_hp = GenerateBaseHitPoints();
-	cur_mana = GenerateBaseManaPoints();
+	current_mana = GenerateBaseManaPoints();
 	cur_end = CalcBaseEndurance();
 	hp_regen = CalcHPRegen();
 	mana_regen = CalcManaRegen();
@@ -128,7 +129,7 @@ Bot::Bot(uint32 botID, uint32 botOwnerCharacterID, uint32 botSpellsID, double to
 	_baseRace = npcTypeData.race;
 	_baseGender = npcTypeData.gender;
 	cur_hp = npcTypeData.cur_hp;
-	cur_mana = npcTypeData.Mana;
+	current_mana = npcTypeData.Mana;
 	RestRegenHP = 0;
 	RestRegenMana = 0;
 	RestRegenEndurance = 0;
@@ -205,8 +206,8 @@ Bot::Bot(uint32 botID, uint32 botOwnerCharacterID, uint32 botSpellsID, double to
 		SpellOnTarget(756, this); // Rezz effects
 	}
 
-	if(cur_mana > max_mana)
-		cur_mana = max_mana;
+	if(current_mana > max_mana)
+		current_mana = max_mana;
 
 	cur_end = max_end;
 }
@@ -2171,7 +2172,7 @@ void Bot::AI_Process() {
 				}
 
 				if(IsMoving())
-					SendPosUpdate();
+					SendPositionUpdate();
 				else
 					SendPosition();
 			}
@@ -2382,7 +2383,7 @@ void Bot::AI_Process() {
 
 				// TODO: Test RuleB(Bots, UpdatePositionWithTimer)
 				if(IsMoving())
-					SendPosUpdate();
+					SendPositionUpdate();
 				else
 					SendPosition();
 			}
@@ -2504,7 +2505,7 @@ void Bot::AI_Process() {
 				}
 
 				if(IsMoving())
-					SendPosUpdate();
+					SendPositionUpdate();
 				else
 					SendPosition();
 			}
@@ -3919,7 +3920,7 @@ bool Bot::Attack(Mob* other, int Hand, bool FromRiposte, bool IsStrikethrough, b
 	// calculate attack_skill and skillinuse depending on hand and weapon
 	// also send Packet to near clients
 	DamageHitInfo my_hit;
-	AttackAnimation(my_hit.skill, Hand, weapon);
+	my_hit.skill = AttackAnimation(Hand, weapon);
 	Log(Logs::Detail, Logs::Combat, "Attacking with %s in slot %d using skill %d", weapon?weapon->GetItem()->Name:"Fist", Hand, my_hit.skill);
 
 	// Now figure out damage
@@ -5556,8 +5557,8 @@ int32 Bot::CalcMaxMana() {
 		}
 	}
 
-	if(cur_mana > max_mana)
-		cur_mana = max_mana;
+	if(current_mana > max_mana)
+		current_mana = max_mana;
 	else if(max_mana < 0)
 		max_mana = 0;
 

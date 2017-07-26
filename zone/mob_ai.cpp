@@ -749,6 +749,9 @@ void Client::AI_Process()
 
 	if(RuleB(Combat, EnableFearPathing)){
 		if(currently_fleeing) {
+			if (fix_z_timer_engaged.Check())
+				this->FixZ();
+
 			if(IsRooted()) {
 				//make sure everybody knows were not moving, for appearance sake
 				if(IsMoving())
@@ -996,7 +999,23 @@ void Mob::AI_Process() {
 	}
 
 	if (engaged) {
-
+		/* Fix Z when following during pull, not when engaged and stationary */
+		if (moving && fix_z_timer_engaged.Check()) {
+			if (this->GetTarget()) {
+				/* If we are engaged, moving and following client, let's look for best Z more often */
+				float target_distance = DistanceNoZ(this->GetPosition(), this->GetTarget()->GetPosition());
+				if (target_distance >= 25) {
+					this->FixZ();
+				} else if (!this->CheckLosFN(this->GetTarget())) {
+					Mob *target = this->GetTarget();
+					m_Position.x = target->GetX();
+					m_Position.y = target->GetY();
+					m_Position.z = target->GetZ();
+					m_Position.w = target->GetHeading();
+					SendPosition();
+				}
+			}
+		}
 		if (!(m_PlayerState & static_cast<uint32>(PlayerState::Aggressive)))
 			SendAddPlayerState(PlayerState::Aggressive);
 		// we are prevented from getting here if we are blind and don't have a target in range
@@ -1548,6 +1567,8 @@ void NPC::AI_DoMovement() {
 					if (m_CurrentWayPoint.w >= 0.0) {
 						SetHeading(m_CurrentWayPoint.w);
 					}
+
+					this->FixZ();
 
 					SendPosition();
 
