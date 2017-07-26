@@ -3384,6 +3384,93 @@ void command_corpse(Client *c, const Seperator *sep)
 			c->Message(0, "Insufficient status to depop player corpse.");
 
 	}
+	else if (strcasecmp(sep->arg[1], "backups") == 0)
+	{
+		if (target == 0 || !target->IsClient())
+			c->Message(CC_Default, "Error: Target must be a player to list their backups.");
+		else
+		{
+			c->Message(CC_Red, "CorpseID : Zone , x , y , z , Items");
+			std::string query = StringFormat("SELECT id, zone_id, x, y, z FROM character_corpses_backup WHERE charid = %d", target->CastToClient()->CharacterID());
+			auto results = database.QueryDatabase(query);
+
+			if (!results.Success() || results.RowCount() == 0)
+			{
+				c->Message(CC_Red, "No corpse backups exist for %s with ID: %i.", target->GetName(), target->CastToClient()->CharacterID());
+				return;
+			}
+
+			for (auto row = results.begin(); row != results.end(); ++row)
+			{
+				std::string ic_query = StringFormat("SELECT COUNT(*) FROM character_corpse_items_backup WHERE corpse_id = %d", atoi(row[0]));
+				auto ic_results = database.QueryDatabase(ic_query);
+				auto ic_row = ic_results.begin();
+
+				c->Message(CC_Yellow, " %s:	%s, %s, %s, %s, (%s)", row[0], database.GetZoneName(atoi(row[1])), row[2], row[3], row[4], ic_row[0]);
+			}
+		}
+	}
+	else if (strcasecmp(sep->arg[1], "restore") == 0)
+	{
+		if (c->Admin() >= commandEditPlayerCorpses)
+		{
+			uint32 corpseid;
+			Client *t = c;
+
+			if (c->GetTarget() && c->GetTarget()->IsClient() && c->GetGM())
+				t = c->GetTarget()->CastToClient();
+			else
+			{
+				c->Message(CC_Default, "You must first turn your GM flag on and select a target!");
+				return;
+			}
+
+			if (!sep->IsNumber(2))
+			{
+				c->Message(CC_Default, "Usage: #corpse restore [corpse_id].");
+				return;
+			}
+			else
+				corpseid = atoi(sep->arg[2]);
+
+			if (!database.IsValidCorpseBackup(corpseid))
+			{
+				c->Message(CC_Red, "Backup corpse %i not found.", corpseid);
+				return;
+			}
+			else if (database.IsValidCorpse(corpseid))
+			{
+				c->Message(CC_Red, "Corpse %i has been found! Please summon or delete it before attempting to restore from a backup.", atoi(sep->arg[2]));
+				return;
+			}
+			else if (!database.IsCorpseBackupOwner(corpseid, t->CharacterID()))
+			{
+				c->Message(CC_Red, "Targetted player is not the owner of the specified corpse!");
+				return;
+			}
+			else
+			{
+				if (database.CopyBackupCorpse(corpseid))
+				{
+					Corpse* PlayerCorpse = database.SummonCharacterCorpse(corpseid, t->CharacterID(), t->GetZoneID(), zone->GetInstanceID(), t->GetPosition());
+
+					if (!PlayerCorpse)
+						c->Message(CC_Default, "Summoning of backup corpse failed. Please escalate this issue.");
+
+					return;
+				}
+				else
+				{
+					c->Message(CC_Red, "There was an error copying corpse %i. Please contact a DB admin.", corpseid);
+					return;
+				}
+			}
+		}
+		else
+		{
+			c->Message(CC_Default, "Insufficient status to summon backup corpses.");
+		}
+	}
 	else if (sep->arg[1][0] == 0 || strcasecmp(sep->arg[1], "help") == 0) {
 		c->Message(0, "#Corpse Sub-Commands:");
 		c->Message(0, "  DeleteNPCCorpses");
