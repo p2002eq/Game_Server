@@ -351,8 +351,8 @@ bool Group::AddMember(Mob* newmember, const char *NewMemberName, uint32 Characte
 		database.SetGroupID(NewMemberName, GetID(), CharacterID, ismerc);
 	}
 
-	if (newmember && newmember->IsClient())
-		newmember->CastToClient()->JoinGroupXTargets(this);
+	//if (newmember && newmember->IsClient())
+	//	newmember->CastToClient()->JoinGroupXTargets(this);
 
 	safe_delete(outapp);
 
