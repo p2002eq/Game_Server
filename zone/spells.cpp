@@ -2295,8 +2295,9 @@ bool Mob::SpellFinished(uint16 spell_id, Mob *spell_target, CastingSlot slot, ui
 				// special ae duration spell
 				ae_center->CastToBeacon()->AELocationSpell(this, spell_id, resist_adjust);
 			} else {
+
 				// unsure if we actually need this? Need to find some spell examples
-				if(ae_center && ae_center == this && IsBeneficialSpell(spell_id))
+				if (ae_center && ae_center == this && IsBeneficialSpell(spell_id))
 					SpellOnTarget(spell_id, this);
 
 				// NPCs should never be affected by an AE they cast. PB AEs shouldn't affect caster either
