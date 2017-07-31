@@ -1259,6 +1259,8 @@ public:
 	void FixClientXP();
 	void SendHPUpdateMarquee();
 
+	uint32 trapid; //ID of trap player has triggered. This is cleared when the player leaves the trap's radius, or it despawns.
+
 	// exp.cpp
 	uint32 GetEXPForLevel(uint16 level, bool aa = false);
 	void AddEXP(uint32 in_add_exp, uint8 conlevel = 0xFF, bool resexp = false);
