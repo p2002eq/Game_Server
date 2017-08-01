@@ -12443,13 +12443,11 @@ void Client::Handle_OP_ShopPlayerBuy(const EQApplicationPacket *app)
 		Message(15, "You can only have one of a lore item.");
 		return;
 	}
-	// If item has charges then quantity is always 1
-	if (item->MaxCharges != 0)
-		mp->quantity = 1;
 
-	// Item's stackable, but the quantity they want to buy exceeds the max stackable quantity.
-	if (item->Stackable && mp->quantity > item->StackSize)
+	if (item->Stackable && mp->quantity > item->StackSize) 	// Item is stackable, but the quantity they want to buy exceeds the max stackable quantity.
 		mp->quantity = item->StackSize;
+	else if (!item->Stackable && item->MaxCharges != 0) // If item has itemcharges (like puppet strings) then quantity is always 1
+		mp->quantity = 1;
 
 	auto outapp = new EQApplicationPacket(OP_ShopPlayerBuy, sizeof(Merchant_Sell_Struct));
 	Merchant_Sell_Struct* mpo = (Merchant_Sell_Struct*)outapp->pBuffer;
@@ -12460,9 +12458,9 @@ void Client::Handle_OP_ShopPlayerBuy(const EQApplicationPacket *app)
 
 	int16 freeslotid = INVALID_INDEX;
 	int16 charges = 0;
-	if (item->Stackable)
+	if (item->Stackable) // charges equal to quantity if an item is stackable, otherwise use itemcharges from temp merch table
 		charges = mp->quantity;
-	else if (item->MaxCharges != 0)
+	else if (item->MaxCharges != 0) // check if item has charges
 		charges = itemcharges;
 
 	EQEmu::ItemInstance* inst = database.CreateItem(item, charges);
@@ -12473,7 +12471,7 @@ void Client::Handle_OP_ShopPlayerBuy(const EQApplicationPacket *app)
 	else
 		SinglePrice = (item->Price * (RuleR(Merchant, SellCostMod)) * item->SellRate);
 
-	if (item->MaxCharges > 1)
+	if (!item->Stackable && item->MaxCharges > 1)
 		mpo->price = SinglePrice;
 	else
 		mpo->price = SinglePrice * mp->quantity;
@@ -12697,7 +12695,7 @@ void Client::Handle_OP_ShopPlayerSell(const EQApplicationPacket *app)
 
 	AddMoneyToPP(price, false);
 
-	if (inst->IsStackable() && !inst->IsCharged())
+	if (inst->IsStackable())
 	{
 		unsigned int i_quan = inst->GetCharges();
 		if (mp->quantity > i_quan)
@@ -12718,7 +12716,7 @@ void Client::Handle_OP_ShopPlayerSell(const EQApplicationPacket *app)
 	if (quantity > 0 && (freeslot = zone->SaveTempItem(vendor->CastToNPC()->MerchantType, vendor->GetNPCTypeID(), itemid, quantity, inst->GetCharges(), true)) > 0) {
 		EQEmu::ItemInstance* inst2 = inst->Clone();
 
-		if (item->MaxCharges > 0) // set this item instance's charges to the charges of the temp item currently on the merchant
+		if (!item->Stackable && item->MaxCharges > 0) // set this item instance's charges to the charges of the temp item currently on the merchant
 			inst2->SetCharges(zone->GetTempMerchItem(vendor->CastToNPC()->MerchantType, vendor->GetNPCTypeID(), itemid).itemcharges);
 
 		while (true) {
