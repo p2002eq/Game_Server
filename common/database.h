@@ -470,6 +470,7 @@ public:
 	*/
 	bool DBSetup();
 	bool DBSetup_PlayerCorpseBackup();
+	bool DBSetup_Logs();
 
 	/* Database Variables */
 

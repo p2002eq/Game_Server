@@ -328,6 +328,8 @@ Client::Client(EQStreamInterface* ieqs)
 
 	interrogateinv_flag = false;
 
+	trapid = 0;
+
 	AI_Init();
 }
 

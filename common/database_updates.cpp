@@ -25,6 +25,7 @@
 bool Database::DBSetup() {
 	Log(Logs::Detail, Logs::Debug, "Database setup started..");
 	DBSetup_PlayerCorpseBackup();
+	DBSetup_Logs();
 	return true;
 }
 
@@ -153,4 +154,81 @@ bool Database::DBSetup_PlayerCorpseBackup(){
 	}
 
 	return true;
+}
+
+bool Database::DBSetup_Logs()
+{
+	// Placing ALL Rule creations in here, initial rule check as number in query and results, then increment by letter.
+	std::string check_query1 = StringFormat("SELECT * FROM `logsys_categories` WHERE `log_category_description`='Group'");
+	auto results1 = QueryDatabase(check_query1);
+	if (results1.RowCount() == 0)
+	{
+		std::string check_query1a = StringFormat("INSERT INTO `logsys_categories` (`log_category_id`, `log_category_description`, `log_to_console`, `log_to_file`, `log_to_gmsay`) VALUES ('46', 'Group', '0', '0', '0')");
+		auto results1a = QueryDatabase(check_query1a);
+		if (!results1a.Success())
+		{
+			Log(Logs::Detail, Logs::Error, "Error creating logsys category `group`.");
+			return false;
+		}
+	}
+	std::string check_query2 = StringFormat("SELECT * FROM `logsys_categories` WHERE `log_category_description`='Corpse'");
+	auto results2 = QueryDatabase(check_query2);
+	if (results2.RowCount() == 0)
+	{
+		std::string check_query2a = StringFormat("INSERT INTO `logsys_categories` (`log_category_id`, `log_category_description`, `log_to_console`, `log_to_file`, `log_to_gmsay`) VALUES ('47', 'Corpse', '0', '0', '0')");
+		auto results2a = QueryDatabase(check_query2a);
+		if (!results2a.Success())
+		{
+			Log(Logs::Detail, Logs::Error, "Error creating logsys category `corpse`.");
+			return false;
+		}
+	}
+	std::string check_query3 = StringFormat("SELECT * FROM `logsys_categories` WHERE `log_category_description`='Bazaar'");
+	auto results3 = QueryDatabase(check_query3);
+	if (results3.RowCount() == 0)
+	{
+		std::string check_query3a = StringFormat("INSERT INTO `logsys_categories` (`log_category_id`, `log_category_description`, `log_to_console`, `log_to_file`, `log_to_gmsay`) VALUES ('48', 'Bazaar', '0', '0', '0')");
+		auto results3a = QueryDatabase(check_query3a);
+		if (!results3a.Success())
+		{
+			Log(Logs::Detail, Logs::Error, "Error creating logsys category `bazaar`.");
+			return false;
+		}
+	}
+	std::string check_query4 = StringFormat("SELECT * FROM `logsys_categories` WHERE `log_category_description`='Discs'");
+	auto results4 = QueryDatabase(check_query4);
+	if (results4.RowCount() == 0)
+	{
+		std::string check_query4a = StringFormat("INSERT INTO `logsys_categories` (`log_category_id`, `log_category_description`, `log_to_console`, `log_to_file`, `log_to_gmsay`) VALUES ('49', 'Discs', '0', '0', '0')");
+		auto results4a = QueryDatabase(check_query4a);
+		if (!results4a.Success())
+		{
+			Log(Logs::Detail, Logs::Error, "Error creating logsys category `disc`.");
+			return false;
+		}
+	}
+	std::string check_query5 = StringFormat("SELECT * FROM `logsys_categories` WHERE `log_category_description`='Boats'");
+	auto results5 = QueryDatabase(check_query5);
+	if (results5.RowCount() == 0)
+	{
+		std::string check_query5a = StringFormat("INSERT INTO `logsys_categories` (`log_category_id`, `log_category_description`, `log_to_console`, `log_to_file`, `log_to_gmsay`) VALUES ('50', 'Boats', '0', '0', '0')");
+		auto results5a = QueryDatabase(check_query5a);
+		if (!results5a.Success())
+		{
+			Log(Logs::Detail, Logs::Error, "Error creating logsys category `boats`.");
+			return false;
+		}
+	}
+	std::string check_query6 = StringFormat("SELECT * FROM `logsys_categories` WHERE `log_category_description`='Traps'");
+	auto results6 = QueryDatabase(check_query6);
+	if (results6.RowCount() == 0)
+	{
+		std::string check_query6a = StringFormat("INSERT INTO `logsys_categories` (`log_category_id`, `log_category_description`, `log_to_console`, `log_to_file`, `log_to_gmsay`) VALUES ('51', 'Traps', '0', '0', '0')");
+		auto results6a = QueryDatabase(check_query6a);
+		if (!results6a.Success())
+		{
+			Log(Logs::Detail, Logs::Error, "Error creating logsys category `traps`.");
+			return false;
+		}
+	}
 }
