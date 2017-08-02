@@ -3574,6 +3574,10 @@ void Mob::CommonDamage(Mob* attacker, int &damage, const uint16 spell_id, const 
 		if (RuleB(Combat, MeleePush) && damage > 0 && !IsRooted() &&
 			(IsClient() || zone->random.Roll(RuleI(Combat, MeleePushChance)))) {
 			a->force = EQEmu::skills::GetSkillMeleePushForce(skill_used);
+			if (RuleR(Combat, MeleePushForceClient) && IsClient())
+				a->force += a->force*RuleR(Combat, MeleePushForceClient);
+			if (RuleR(Combat, MeleePushForcePet) && IsPet())
+				a->force += a->force*RuleR(Combat, MeleePushForcePet);
 			// update NPC stuff
 			auto new_pos = glm::vec3(m_Position.x + (a->force * std::sin(a->meleepush_xy) + m_Delta.x),
 				m_Position.y + (a->force * std::cos(a->meleepush_xy) + m_Delta.y), m_Position.z);
