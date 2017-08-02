@@ -4228,7 +4228,7 @@ bool ZoneDatabase::IsValidCorpseBackup(uint32 corpse_id) {
 }
 
 bool ZoneDatabase::IsValidCorpse(uint32 corpse_id) {
-	std::string query = StringFormat("SELECT COUNT(*) FROM `character_corpses` WHERE `id` = %d", corpse_id);
+	std::string query = StringFormat("SELECT COUNT(*) FROM `character_corpses` WHERE `id` = %d AND `is_buried` = 1", corpse_id);
 	auto results = QueryDatabase(query);
 	auto row = results.begin();
 	if (atoi(row[0]) == 1)
@@ -4248,7 +4248,7 @@ bool ZoneDatabase::IsCorpseBackupOwner(uint32 corpse_id, uint32 char_id) {
 }
 
 bool ZoneDatabase::CopyBackupCorpse(uint32 corpse_id) {
-	std::string query = StringFormat("INSERT INTO `character_corpses` SELECT * from `character_corpses_backup` WHERE `id` = %d", corpse_id);
+	std::string query = StringFormat("REPLACE INTO `character_corpses` SELECT * from `character_corpses_backup` WHERE `id` = %d", corpse_id);
 	auto results = QueryDatabase(query);
 	if (!results.Success()) {
 		return false;

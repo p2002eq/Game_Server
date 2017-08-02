@@ -3444,7 +3444,7 @@ void command_corpse(Client *c, const Seperator *sep)
 				c->Message(CC_Red, "Backup corpse %i not found.", corpseid);
 				return;
 			}
-			else if (database.IsValidCorpse(corpseid))
+			else if (!database.IsValidCorpse(corpseid))
 			{
 				c->Message(CC_Red, "Corpse %i has been found! Please summon or delete it before attempting to restore from a backup.", atoi(sep->arg[2]));
 				return;
