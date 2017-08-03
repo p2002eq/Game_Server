@@ -4378,7 +4378,7 @@ bool Mob::IsImmuneToSpell(uint16 spell_id, Mob *caster)
 
 	if(IsCharmSpell(spell_id))
 	{
-		if(GetSpecialAbility(UNCHARMABLE))
+		if (GetSpecialAbility(UNCHARMABLE) || IsPet())
 		{
 			Log(Logs::Detail, Logs::Spells, "We are immune to Charm spells.");
 			caster->Message_StringID(MT_Shout, CANNOT_CHARM);
@@ -4468,6 +4468,10 @@ bool Mob::IsImmuneToSpell(uint16 spell_id, Mob *caster)
 // pvp_resist_cap
 float Mob::ResistSpell(uint8 resist_type, uint16 spell_id, Mob *caster, bool use_resist_override, int resist_override, bool CharismaCheck, bool CharmTick, bool IsRoot, int level_override)
 {
+	// Pets use owner's resistances
+	if (IsPet()) {
+		return GetOwner()->ResistSpell(resist_type, spell_id, caster, use_resist_override, resist_override, CharismaCheck, CharmTick, IsRoot, level_override);
+	}
 
 	if(!caster)
 	{
