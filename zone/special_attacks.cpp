@@ -2094,6 +2094,7 @@ int Mob::TryHeadShot(Mob *defender, EQEmu::skills::SkillType skillInUse)
 			if (norm > 0)
 				chance = chance * norm / 100;
 			chance += aabonuses.HeadShot[0] + spellbonuses.HeadShot[0] + itembonuses.HeadShot[0];
+			Log(Logs::Detail, Logs::Attack, "Headshot Chance: %d", chance);
 			if (zone->random.Int(1, 1000) <= chance) {
 				entity_list.MessageClose_StringID(this, false, 200, MT_CritMelee, FATAL_BOW_SHOT,
 								  GetName());
