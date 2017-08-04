@@ -507,6 +507,7 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial, int level_ove
 								CastToClient()->MovePC(zone->GetZoneID(), zone->GetInstanceID(), x, y, z, heading, 0, EvacToSafeCoords);
 							else
 								GMMove(x, y, z, heading);
+							entity_list.ClearAggro(this);
 					}
 					else {
 #ifdef SPELL_EFFECT_SPAM
@@ -1519,6 +1520,10 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial, int level_ove
 				snprintf(effect_desc, _EDLEN, "Memory Blur: %d", effect_value);
 #endif
 				int wipechance = spells[spell_id].base[i];
+				// if 0 chance of wipe then special case of clearing aggro for clients
+				if (!wipechance && IsClient()) {
+					entity_list.ClearAggro(this);
+				}
 				int bonus = 0;
 
 				if (caster){
@@ -1531,8 +1536,7 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial, int level_ove
 
 				if(zone->random.Roll(wipechance))
 				{
-					if(IsAIControlled())
-					{
+					if (IsAIControlled()) {
 						WipeHateList();
 					}
 					Message(13, "Your mind fogs. Who are my friends? Who are my enemies?... it was all so clear a moment ago...");
