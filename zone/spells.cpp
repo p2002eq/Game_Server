@@ -4469,7 +4469,7 @@ bool Mob::IsImmuneToSpell(uint16 spell_id, Mob *caster)
 float Mob::ResistSpell(uint8 resist_type, uint16 spell_id, Mob *caster, bool use_resist_override, int resist_override, bool CharismaCheck, bool CharmTick, bool IsRoot, int level_override)
 {
 	// Pets use owner's resistances
-	if (IsPet()) {
+	if (IsPet() && !IsCharmed()) {
 		return GetOwner()->ResistSpell(resist_type, spell_id, caster, use_resist_override, resist_override, CharismaCheck, CharmTick, IsRoot, level_override);
 	}
 
