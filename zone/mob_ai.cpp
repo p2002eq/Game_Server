@@ -2137,6 +2137,15 @@ uint32 Mob::GetLevelCon(uint8 mylevel, uint8 iOtherLevel) {
 		else
 			conlevel = CON_BLUE;
 	}
+	else if (mylevel <= 42)
+	{
+		if (diff <= -15)
+			conlevel = CON_GREEN;
+		else if (diff <= -12)
+			conlevel = CON_LIGHTBLUE;
+		else
+			conlevel = CON_BLUE;
+	}
 	else if (mylevel <= 44)
 	{
 		if (diff <= -16)
