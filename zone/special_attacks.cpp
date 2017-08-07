@@ -2086,7 +2086,7 @@ int Mob::TryHeadShot(Mob *defender, EQEmu::skills::SkillType skillInUse)
 
 		if (HeadShot_Dmg && HeadShot_Level && (defender->GetLevel() <= HeadShot_Level)) {
 			int chance = GetDEX();
-			chance = 100 * chance / (chance + 3500);
+			chance = 100 * chance / (chance + 4750);
 			if (IsClient())
 				chance += CastToClient()->GetHeroicDEX() / 25;
 			chance *= 10;
@@ -2094,6 +2094,7 @@ int Mob::TryHeadShot(Mob *defender, EQEmu::skills::SkillType skillInUse)
 			if (norm > 0)
 				chance = chance * norm / 100;
 			chance += aabonuses.HeadShot[0] + spellbonuses.HeadShot[0] + itembonuses.HeadShot[0];
+			Log(Logs::Detail, Logs::Attack, "Headshot Chance: %d", chance);
 			if (zone->random.Int(1, 1000) <= chance) {
 				entity_list.MessageClose_StringID(this, false, 200, MT_CritMelee, FATAL_BOW_SHOT,
 								  GetName());
@@ -2111,7 +2112,7 @@ int Mob::TryAssassinate(Mob *defender, EQEmu::skills::SkillType skillInUse)
 	    (skillInUse == EQEmu::skills::SkillBackstab || skillInUse == EQEmu::skills::SkillThrowing)) {
 		int chance = GetDEX();
 		if (skillInUse == EQEmu::skills::SkillBackstab) {
-			chance = 100 * chance / (chance + 3500);
+			chance = 100 * chance / (chance + 4750);
 			if (IsClient())
 				chance += CastToClient()->GetHeroicDEX();
 			chance *= 10;
@@ -2123,17 +2124,28 @@ int Mob::TryAssassinate(Mob *defender, EQEmu::skills::SkillType skillInUse)
 				chance = 260;
 			else
 				chance += 5;
+			chance /= 2;
 		}
 
 		chance += aabonuses.Assassinate[0] + spellbonuses.Assassinate[0] + itembonuses.Assassinate[0];
 
+		Log(Logs::Detail, Logs::Attack, "Assassinate Chance: %d", chance);
+		
 		uint32 Assassinate_Dmg =
 		    aabonuses.Assassinate[1] + spellbonuses.Assassinate[1] + itembonuses.Assassinate[1];
 
-		uint8 Assassinate_Level = 0; // Get Highest Headshot Level
+		uint8 Assassinate_Level = 0; // Get Highest Assassinate Level
 		Assassinate_Level = std::max(
 		    {aabonuses.AssassinateLevel[0], spellbonuses.AssassinateLevel[0], itembonuses.AssassinateLevel[0]});
-
+		
+		// Innate Assassinate for Level 60+ Rogues.
+		if (GetLevel() >= 60) {
+			if (!Assassinate_Dmg)
+				Assassinate_Dmg = 32000;
+			if (!Assassinate_Level)
+				Assassinate_Level = 45;
+		}
+			
 		// revamped AAs require AA line I believe?
 		if (!Assassinate_Level)
 			return 0;

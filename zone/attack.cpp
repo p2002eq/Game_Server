@@ -5218,6 +5218,7 @@ void Mob::CommonOutgoingHitSuccess(Mob* defender, DamageHitInfo &hit, ExtraAttac
 		int headshot = TryHeadShot(defender, hit.skill);
 		if (headshot > 0) {
 			hit.damage_done = headshot;
+			return;
 		}
 		else if (GetClass() == RANGER && GetLevel() > 50) { // no double dmg on headshot
 			// Double Damage Bonus should apply to Permarooted mobs
@@ -5244,8 +5245,10 @@ void Mob::CommonOutgoingHitSuccess(Mob* defender, DamageHitInfo &hit, ExtraAttac
 		}
 		else {
 			int ass = TryAssassinate(defender, hit.skill);
-			if (ass > 0)
+			if (ass > 0) {
 				hit.damage_done = ass;
+				return;
+			}
 		}
 	}
 	else if (hit.skill == EQEmu::skills::SkillFrenzy && GetClass() == BERSERKER && GetLevel() > 50) {
