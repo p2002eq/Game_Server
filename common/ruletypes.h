@@ -232,6 +232,7 @@ RULE_BOOL (World, IPLimitDisconnectAll, false)
 RULE_BOOL(World, MaxClientsSimplifiedLogic, false) // New logic that only uses ExemptMaxClientsStatus and MaxClientsPerIP. Done on the loginserver. This mimics the P99-style special IP rules.
 RULE_INT (World, TellQueueSize, 20)
 RULE_BOOL(World, StartZoneSameAsBindOnCreation, true) //Should the start zone ALWAYS be the same location as your bind?
+RULE_BOOL(World, P2002ConSystem, true) // Controls whether the Client (False) or Server (True) Handles sending the Con message.  This was added to allow the Con message to match mob_ai.cpp and the P2002 era appropriate level ranges.
 RULE_CATEGORY_END()
 
 RULE_CATEGORY(Zone)
