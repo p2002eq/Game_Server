@@ -503,9 +503,12 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial, int level_ove
 #ifdef SPELL_EFFECT_SPAM
 						Log(Logs::General, Logs::None, "Succor/Evacuation Spell In Same Zone.");
 #endif
-							if(IsClient())
+							if(IsClient()) {
+								// break charmed pets before moving to not poof pet (exploitable otherwise)
+								if (HasPet() && GetPet()->IsCharmed())
+									GetPet()->BuffFadeByEffect(SE_Charm);
 								CastToClient()->MovePC(zone->GetZoneID(), zone->GetInstanceID(), x, y, z, heading, 0, EvacToSafeCoords);
-							else
+							} else
 								GMMove(x, y, z, heading);
 							entity_list.ClearAggro(this);
 					}
@@ -2183,11 +2186,14 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial, int level_ove
 				if (!caster)
 					break;
 				if (IsClient()) {
+					// clear aggro when summoned in zone
+					if (caster->CalculateDistance(GetX(), GetY(), GetZ()) >= RuleR(Spells, CallOfTheHeroAggroClearDist))
+						entity_list.ClearAggro(this);
+						//caster->Message(13, std::to_string(caster->CalculateDistance(GetX(), GetY(), GetZ())).c_str());
 					CastToClient()->MovePC(zone->GetZoneID(), zone->GetInstanceID(), caster->GetX(),
 							       caster->GetY(), caster->GetZ(), caster->GetHeading(), 2,
 							       SummonPC);
 					Message(15, "You have been summoned!");
-					entity_list.ClearAggro(this);
 				} else
 					caster->Message(13, "This spell can only be cast on players.");
 

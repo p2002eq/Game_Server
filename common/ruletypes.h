@@ -360,7 +360,7 @@ RULE_INT(Spells, MaxSongSlotsNPC, 0)	// NPCs don't have songs ...
 RULE_INT(Spells, MaxDiscSlotsNPC, 0)	// NPCs don't have discs ...
 RULE_INT(Spells, MaxTotalSlotsNPC, 60)	// default to Tit's limit
 RULE_INT(Spells, MaxTotalSlotsPET, 30)	// default to Tit's limit
-RULE_BOOL (Spells, EnableBlockedBuffs, true)
+RULE_BOOL(Spells, EnableBlockedBuffs, true)
 RULE_INT(Spells, ReflectType, 3) //0 = disabled, 1 = single target player spells only, 2 = all player spells, 3 = all single target spells, 4 = all spells
 RULE_BOOL(Spells, ReflectMessagesClose, true) // Live functionality is for Reflect messages to show to players within close proximity, false shows just player reflecting
 RULE_INT(Spells, VirusSpreadDistance, 30) // The distance a viral spell will jump to its next victim
@@ -416,6 +416,7 @@ RULE_INT(Spells, SpellResistSoftCap, 255) 	// Softcap for spell resists.
 RULE_BOOL(Spells, AllowItemTGB, false) // TGB doesn't work with items on live, custom servers want it though
 RULE_BOOL(Spells, NPCInnateProcOverride, true) //  NPC innate procs override the target type to single target.
 RULE_BOOL(Spells, OldRainTargets, false) // use old incorrectly implemented max targets for rains
+RULE_REAL(Spells, CallOfTheHeroAggroClearDist, 250.0)
 RULE_CATEGORY_END()
 
 RULE_CATEGORY(Combat)
