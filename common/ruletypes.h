@@ -527,6 +527,7 @@ RULE_BOOL(Combat, RogueBackstabHasteCorrection, false) // Toggle to enable corre
 RULE_BOOL(Combat, UseMobFixedOffenseSkill, true) // Toggle to enabled the use of a fixed offense skill for Mobs.  DEFAULT: true
 RULE_BOOL(Combat, UseEnhancedMobFixedWeaponSkill, true) // Toggle to enabled the use of an enhanced (slightly higher hit rate) fixed weapon skill for Mobs.  DEFAULT: true
 RULE_INT(Combat, PCAttackPowerScaling, 75) // Applies scaling to PC Attack Power (75 = 75%).  DEFAULT: 75
+RULE_INT(Combat, PCAccAvoidMod2ScaleFactor, 75) // Scale Factor for PC Accuracy and Avoidance (Mod2, found on items).  Found a value of 100 to make both too strong (75 = x0.75).  DEFAULT: 75
 RULE_CATEGORY_END()
 
 RULE_CATEGORY(NPC)

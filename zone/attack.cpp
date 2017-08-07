@@ -190,8 +190,16 @@ int Mob::GetTotalToHit(EQEmu::skills::SkillType skill, int chance_mod)
 	// unsure on the stacking order of these effects, rather hard to parse
 	// item mod2 accuracy isn't applied to range? Theory crafting and parses back it up I guess
 	// mod2 accuracy -- flat bonus
-	if (skill != EQEmu::skills::SkillArchery && skill != EQEmu::skills::SkillThrowing)
-		accuracy += itembonuses.HitChance;
+	// NOTE: Commenting out the Ranged/Thrown check as I could find the occasional source that says Accuracy SHOULD affect ranged/thrown in era, 
+	// and the only stuff I could find that said otherwise was from Omens Expansion or later when Sharpshooting (accuracy for Ranged/Thrown) was added.
+	// Also applying a scale factor as sources suggest Accuracy should reduce number of missing by 0.1% per point, so 150 = 15% reduction in misses.
+	// Based on my calculator 150 Accuracy was reducing misses by too much (closer to 20%)
+	// NOTE: This doesn't mean if you have a 30% miss chance you now miss 15%.  It means if you have a 30% miss chance you now have a 30% * (100% - 15%) = 30% * 85% = 25.5% miss chance
+	// Using same scale factor for Avoidance and Accuracy since they impact the formula about the same.
+	//if (skill != EQEmu::skills::SkillArchery && skill != EQEmu::skills::SkillThrowing)
+	accuracy += itembonuses.HitChance * RuleI(Combat, PCAccAvoidMod2ScaleFactor) / 100;
+
+	Log(Logs::Detail, Logs::Attack, "itembonuses.HitChance: %d", itembonuses.HitChance * RuleI(Combat, PCAccAvoidMod2ScaleFactor) / 100);
 
 	// 216 Melee Accuracy Amt aka SE_Accuracy -- flat bonus
 	accuracy += itembonuses.Accuracy[EQEmu::skills::HIGHEST_SKILL + 1] +
@@ -251,7 +259,12 @@ int Mob::compute_defense()
 	if (IsClient())
 		defense += CastToClient()->GetHeroicAGI() / 10;
 
-	defense += itembonuses.AvoidMeleeChance; // item mod2
+	// Based on my calculator 150 Avoidance was reducing misses by too much (closer to 20%)
+	// NOTE: This doesn't mean if you have a 30% miss chance you now miss 15%.  It means if you have a 30% miss chance you now have a 30% * (100% - 15%) = 30% * 85% = 25.5% miss chance
+	// Using same scale factor for Avoidance and Accuracy since they impact the formula about the same.
+	defense += itembonuses.AvoidMeleeChance * RuleI(Combat, PCAccAvoidMod2ScaleFactor) / 100; // item mod2
+	
+	Log(Logs::Detail, Logs::Attack, "itembonuses.AvoidMeleeChance: %d", itembonuses.AvoidMeleeChance * RuleI(Combat, PCAccAvoidMod2ScaleFactor) / 100);
 	
 	if (IsNPC())
 		defense += CastToNPC()->GetAvoidanceRating();
