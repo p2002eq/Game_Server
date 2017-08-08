@@ -4788,12 +4788,24 @@ void Client::Handle_OP_Consider(const EQApplicationPacket *app)
 	// Titan Client appears to have different con levels/colors than what was correct in era for P2002.  Additionally, client seems to ignore the con->level you send it.
 	// To get con levels/colors to match the table in mob_ai.cpp, the below code (P2002ConSystem = True) is used.  This code ignores the client and instead has the server
 	// send the client a messsage.  If (P2002ConSystem = False), the code will revert to relying on the client to display the message, which won't likely match mob_ai.cpp.
-	if (RuleB(World, P2002ConSystem) == true) {
+	if (RuleB(World, P2002ConSystem)) {
 			
 		// Get Target Name
 		std::string tar_name = tmob->GetName();
-		std::replace(tar_name.begin(), tar_name.end(),'_',' ');
-		tar_name.resize(tar_name.size() - 3);
+		std::replace(tar_name.begin(), tar_name.end(), '_', ' ');
+		if(!tmob->IsClient())
+			tar_name.resize(tar_name.size() - 3);
+		std::string gender;
+		
+		// Get Gender Message
+		switch (tmob->GetGender()) {
+			case 0:
+				gender = "he"; break;
+			case 1:
+				gender = "she"; break;
+			default:
+				gender = "it";
+		}
 		
 		// Get Faction Message
 		std::string faction_msg;
@@ -4822,12 +4834,14 @@ void Client::Handle_OP_Consider(const EQApplicationPacket *app)
 			level_msg = "You could probably win this fight.";
 		else if(con->level == CON_LIGHTBLUE)
 			level_msg = "You would probably win this fight... it's not certain though.";
-		else if(con->level == CON_BLUE)
-			level_msg = "They appear to be quite formidable.";
+		else if(con->level == CON_BLUE) {
+			gender[0] = toupper(gender[0]);
+			level_msg = gender + " appears to be quite formidable.";
+		}
 		else if(con->level == CON_WHITE)
 			level_msg = "Looks like quite the gamble.";
 		else if(con->level == CON_YELLOW)
-			level_msg = "Looks like they would wipe the floor with you!";
+			level_msg = "Looks like " + gender + " would wipe the floor with you!";
 		else if(con->level == CON_RED)
 			level_msg = "What would you like your tombstone to say?";
 		
