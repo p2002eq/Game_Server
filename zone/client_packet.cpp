@@ -4795,6 +4795,8 @@ void Client::Handle_OP_Consider(const EQApplicationPacket *app)
 		std::replace(tar_name.begin(), tar_name.end(), '_', ' ');
 		if(!tmob->IsClient())
 			tar_name.resize(tar_name.size() - 3);
+		else
+			con->faction = 5;
 		std::string gender;
 		
 		// Get Gender Message
@@ -4839,7 +4841,7 @@ void Client::Handle_OP_Consider(const EQApplicationPacket *app)
 			level_msg = gender + " appears to be quite formidable.";
 		}
 		else if(con->level == CON_WHITE)
-			level_msg = "Looks like quite the gamble.";
+			level_msg = "Looks like quite a gamble.";
 		else if(con->level == CON_YELLOW)
 			level_msg = "Looks like " + gender + " would wipe the floor with you!";
 		else if(con->level == CON_RED)
