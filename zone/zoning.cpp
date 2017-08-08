@@ -636,7 +636,6 @@ void Client::ZonePC(uint32 zoneID, uint32 instance_id, float x, float y, float z
 			// 213 is Plane of War
 			// 76 is orignial Plane of Hate
 			// WildcardX 27 January 2008. Tested this for 6.2 and Titanium clients.
-
 			if(this->GetZoneID() == 1)
 				gmg->zone_id = 2;
 			else if(this->GetZoneID() == 2)

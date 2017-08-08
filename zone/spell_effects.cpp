@@ -291,7 +291,7 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial, int level_ove
 				} else if (spell_id == 2755 && caster) //Lifeburn
 				{
 					dmg = caster->GetHP()*(-1);
-					caster->SetHP(1);
+					caster->SetHP(10);
 					if(caster->IsClient()){
 						caster->CastToClient()->SetFeigned(true);
 						caster->SendAppearancePacket(AT_Anim, 115);
@@ -503,10 +503,14 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial, int level_ove
 #ifdef SPELL_EFFECT_SPAM
 						Log(Logs::General, Logs::None, "Succor/Evacuation Spell In Same Zone.");
 #endif
-							if(IsClient())
+							if(IsClient()) {
+								// break charmed pets before moving to not poof pet (exploitable otherwise)
+								if (HasPet() && GetPet()->IsCharmed())
+									GetPet()->BuffFadeByEffect(SE_Charm);
 								CastToClient()->MovePC(zone->GetZoneID(), zone->GetInstanceID(), x, y, z, heading, 0, EvacToSafeCoords);
-							else
+							} else
 								GMMove(x, y, z, heading);
+							entity_list.ClearAggro(this);
 					}
 					else {
 #ifdef SPELL_EFFECT_SPAM
@@ -869,7 +873,7 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial, int level_ove
 							SetHeading(CalculateHeadingToTarget(ClosestMob->GetX(), ClosestMob->GetY()));
 							SetTarget(ClosestMob);
 							CastToClient()->SendTargetCommand(ClosestMob->GetID());
-							SendPosUpdate(2);
+							SendPositionUpdate(2);
 						}
 						else
 							Message_StringID(clientMessageError, SENSE_NOTHING);
@@ -1519,6 +1523,10 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial, int level_ove
 				snprintf(effect_desc, _EDLEN, "Memory Blur: %d", effect_value);
 #endif
 				int wipechance = spells[spell_id].base[i];
+				// if 0 chance of wipe then special case of clearing aggro for clients
+				if (!wipechance && IsClient()) {
+					entity_list.ClearAggro(this);
+				}
 				int bonus = 0;
 
 				if (caster){
@@ -1531,8 +1539,7 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial, int level_ove
 
 				if(zone->random.Roll(wipechance))
 				{
-					if(IsAIControlled())
-					{
+					if (IsAIControlled()) {
 						WipeHateList();
 					}
 					Message(13, "Your mind fogs. Who are my friends? Who are my enemies?... it was all so clear a moment ago...");
@@ -2179,11 +2186,14 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial, int level_ove
 				if (!caster)
 					break;
 				if (IsClient()) {
+					// clear aggro when summoned in zone
+					if (caster->CalculateDistance(GetX(), GetY(), GetZ()) >= RuleR(Spells, CallOfTheHeroAggroClearDist))
+						entity_list.ClearAggro(this);
+						//caster->Message(13, std::to_string(caster->CalculateDistance(GetX(), GetY(), GetZ())).c_str());
 					CastToClient()->MovePC(zone->GetZoneID(), zone->GetInstanceID(), caster->GetX(),
 							       caster->GetY(), caster->GetZ(), caster->GetHeading(), 2,
 							       SummonPC);
 					Message(15, "You have been summoned!");
-					entity_list.ClearAggro(this);
 				} else
 					caster->Message(13, "This spell can only be cast on players.");
 
@@ -3667,7 +3677,7 @@ void Mob::DoBuffTic(const Buffs_Struct &buff, int slot, Mob *caster)
 
 		case SE_Fear: {
 			if (zone->random.Roll(RuleI(Spells, FearBreakCheckChance))) {
-				float resist_check = ResistSpell(spells[buff.spellid].resisttype, buff.spellid, caster);
+				float resist_check = ResistSpell(spells[buff.spellid].resisttype, buff.spellid, caster,0,0,true);
 
 				if (resist_check == 100)
 					break;
@@ -5058,8 +5068,19 @@ int16 Mob::CalcFocusEffect(focusType type, uint16 focus_id, uint16 spell_id, boo
 				break;
 
 		case SE_SpellResistReduction:
-			if (type == focusResistRate && focus_spell.base[i] > value)
-				value = focus_spell.base[i];
+			if (type == focusResistRate) {
+				if (best_focus) {
+					if (focus_spell.base2[i] != 0) {
+						value = focus_spell.base2[i];
+					} else {
+						value = focus_spell.base[i];
+					}
+				} else if (focus_spell.base2[i] == 0 || focus_spell.base[i] == focus_spell.base2[i]) {
+					value = focus_spell.base[i];
+				} else {
+					value = zone->random.Int(focus_spell.base[i], focus_spell.base2[i]);
+				}
+			}
 			break;
 
 		case SE_SpellHateMod:
@@ -5634,7 +5655,7 @@ int16 NPC::GetFocusEffect(focusType type, uint16 spell_id) {
 
 	//Improved Healing, Damage & Mana Reduction are handled differently in that some are random percentages
 	//In these cases we need to find the most powerful effect, so that each piece of gear wont get its own chance
-	if(RuleB(Spells, LiveLikeFocusEffects) && (type == focusManaCost || type == focusImprovedHeal || type == focusImprovedDamage || type == focusImprovedDamage2))
+	if(RuleB(Spells, LiveLikeFocusEffects) && (type == focusManaCost || type == focusImprovedHeal || type == focusImprovedDamage || type == focusImprovedDamage2 || type == focusResistRate))
 		rand_effectiveness = true;
 
 	if (RuleB(Spells, NPC_UseFocusFromItems) && itembonuses.FocusEffects[type]){

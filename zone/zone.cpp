@@ -316,7 +316,22 @@ bool Zone::LoadGroundSpawns() {
 	return(true);
 }
 
-int Zone::SaveTempItem(uint32 merchantid, uint32 npcid, uint32 item, int32 charges, bool sold) {
+/*
+	Gets a temp item from a merchant.
+*/
+TempMerchantList Zone::GetTempMerchItem(uint32 merchantid, uint32 npcid, uint32 item) {
+	std::list<TempMerchantList> tmp_merlist = tmpmerchanttable[npcid];
+	std::list<TempMerchantList>::const_iterator tmp_itr;
+	TempMerchantList ml;
+	for (tmp_itr = tmp_merlist.begin(); tmp_itr != tmp_merlist.end(); ++tmp_itr) {
+		ml = *tmp_itr;
+		if (ml.item == item) {
+			return ml;
+		}
+	}
+}
+
+int Zone::SaveTempItem(uint32 merchantid, uint32 npcid, uint32 item, int32 quantity, int32 charges, bool sold)	{
 	int freeslot = 0;
 	std::list<MerchantList> merlist = merchanttable[merchantid];
 	std::list<MerchantList>::const_iterator itr;
@@ -357,14 +372,15 @@ int Zone::SaveTempItem(uint32 merchantid, uint32 npcid, uint32 item, int32 charg
 			if(ml2.item != item)
 				tmp_merlist.push_back(ml2);
 		}
-		if (sold)
-			ml.charges = ml.charges + charges;
-		else
-			ml.charges = charges;
+		if (sold) {
+			ml.charges = ml.charges + quantity;
+			ml.itemcharges = ml.itemcharges;
+		} else
+			ml.charges = quantity;
 		if (!ml.origslot)
 			ml.origslot = ml.slot;
-		if (charges > 0) {
-			database.SaveMerchantTemp(npcid, ml.origslot, item, ml.charges);
+		if (quantity > 0) {
+			database.SaveMerchantTemp(npcid, ml.origslot, item, ml.charges, ml.itemcharges);
 			tmp_merlist.push_back(ml);
 		}
 		else {
@@ -377,12 +393,13 @@ int Zone::SaveTempItem(uint32 merchantid, uint32 npcid, uint32 item, int32 charg
 
 	}
 	if (freeslot) {
-		if (charges < 0) //sanity check only, shouldnt happen
-			charges = 0x7FFF;
-		database.SaveMerchantTemp(npcid, freeslot, item, charges);
+		if (quantity < 0) //sanity check only, shouldnt happen
+			quantity = 0x7FFF;
+		database.SaveMerchantTemp(npcid, freeslot, item, quantity, charges);
 		tmp_merlist = tmpmerchanttable[npcid];
 		TempMerchantList ml2;
-		ml2.charges = charges;
+		ml2.charges = quantity;
+		ml2.itemcharges = charges;
 		ml2.item = item;
 		ml2.npcid = npcid;
 		ml2.slot = freeslot;
@@ -412,7 +429,8 @@ void Zone::LoadTempMerchantData() {
 		"DISTINCT ml.npcid,					   "
 		"ml.slot,							   "
 		"ml.charges,						   "
-		"ml.itemid							   "
+		"ml.itemid,							   "
+		"ml.itemcharges						   "
 		"FROM								   "
 		"merchantlist_temp ml,				   "
 		"spawnentry se,						   "
@@ -443,6 +461,7 @@ void Zone::LoadTempMerchantData() {
 		ml.slot = atoul(row[1]);
 		ml.charges = atoul(row[2]);
 		ml.item = atoul(row[3]);
+		ml.itemcharges = atoul(row[4]);
 		ml.origslot = ml.slot;
 		cur->second.push_back(ml);
 	}
@@ -1414,17 +1433,20 @@ bool Zone::HasWeather()
 
 void Zone::StartShutdownTimer(uint32 set_time) {
 	if (set_time > autoshutdown_timer.GetRemainingTime()) {
-		if (set_time == (RuleI(Zone, AutoShutdownDelay)))
-		{
+		if (set_time == (RuleI(Zone, AutoShutdownDelay))) {
 			set_time = database.getZoneShutDownDelay(GetZoneID(), GetInstanceVersion());
 		}
-		autoshutdown_timer.Start(set_time, false);
+		autoshutdown_timer.SetTimer(set_time);
+		Log(Logs::General, Logs::Zone_Server, "Zone::StartShutdownTimer set to %u", set_time);
+
 	}
 }
 
 bool Zone::Depop(bool StartSpawnTimer) {
 	std::map<uint32,NPCType *>::iterator itr;
 	entity_list.Depop(StartSpawnTimer);
+	entity_list.ClearTrapPointers();
+	entity_list.UpdateAllTraps(false);
 
 	/* Refresh npctable (cache), getting current info from database. */
 	while(!npctable.empty()) {
@@ -1493,12 +1515,16 @@ void Zone::Repop(uint32 delay) {
 		iterator.RemoveCurrent();
 	}
 
+	entity_list.ClearTrapPointers();
+
 	quest_manager.ClearAllTimers();
 
 	if (!database.PopulateZoneSpawnList(zoneid, spawn2_list, GetInstanceVersion(), delay))
 		Log(Logs::General, Logs::None, "Error in Zone::Repop: database.PopulateZoneSpawnList failed");
 
 	initgrids_timer.Start();
+
+	entity_list.UpdateAllTraps(true, true);
 
 	//MODDING HOOK FOR REPOP
 	mod_repop();

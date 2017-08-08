@@ -31,6 +31,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #include "water_map.h"
 #include "worldserver.h"
 #include "zone.h"
+#include "lua_parser.h"
 
 #include <assert.h>
 #include <stdio.h>
@@ -52,7 +53,7 @@ extern WorldServer worldserver;
 extern EntityList entity_list;
 extern Zone* zone;
 
-bool Mob::AttackAnimation(EQEmu::skills::SkillType &skillinuse, int Hand, const EQEmu::ItemInstance* weapon)
+EQEmu::skills::SkillType Mob::AttackAnimation(int Hand, const EQEmu::ItemInstance* weapon, EQEmu::skills::SkillType skillinuse)
 {
 	// Determine animation
 	int type = 0;
@@ -137,15 +138,26 @@ bool Mob::AttackAnimation(EQEmu::skills::SkillType &skillinuse, int Hand, const 
 		type = animDualWield;
 
 	DoAnim(type, 0, false);
-	return true;
+	return skillinuse;
 }
 
 int Mob::compute_tohit(EQEmu::skills::SkillType skillinuse)
 {
-	int tohit = GetSkill(EQEmu::skills::SkillOffense) + 7;
-	tohit += GetSkill(skillinuse);
-	if (IsNPC())
+	int tohit = 0;
+	
+	if (IsNPC() && !IsPet() && !IsTempPet()) {
+		tohit += GetMobFixedWeaponSkill();
+		if (RuleB(Combat, UseMobFixedOffenseSkill))
+			tohit += GetMobFixedOffenseSkill() + 7;
+		else
+			tohit += GetSkill(EQEmu::skills::SkillOffense) + 7;
 		tohit += CastToNPC()->GetAccuracyRating();
+	}
+	else {
+		tohit += GetSkill(EQEmu::skills::SkillOffense) + 7;
+		tohit += GetSkill(skillinuse);
+	}
+
 	if (IsClient()) {
 		double reduction = CastToClient()->m_pp.intoxication / 2.0;
 		if (reduction > 20.0) {
@@ -156,6 +168,7 @@ int Mob::compute_tohit(EQEmu::skills::SkillType skillinuse)
 			tohit += (GetLevel() * 2) / 5;
 		}
 	}
+	
 	return std::max(tohit, 1);
 }
 
@@ -177,8 +190,16 @@ int Mob::GetTotalToHit(EQEmu::skills::SkillType skill, int chance_mod)
 	// unsure on the stacking order of these effects, rather hard to parse
 	// item mod2 accuracy isn't applied to range? Theory crafting and parses back it up I guess
 	// mod2 accuracy -- flat bonus
-	if (skill != EQEmu::skills::SkillArchery && skill != EQEmu::skills::SkillThrowing)
-		accuracy += itembonuses.HitChance;
+	// NOTE: Commenting out the Ranged/Thrown check as I could find the occasional source that says Accuracy SHOULD affect ranged/thrown in era, 
+	// and the only stuff I could find that said otherwise was from Omens Expansion or later when Sharpshooting (accuracy for Ranged/Thrown) was added.
+	// Also applying a scale factor as sources suggest Accuracy should reduce number of missing by 0.1% per point, so 150 = 15% reduction in misses.
+	// Based on my calculator 150 Accuracy was reducing misses by too much (closer to 20%)
+	// NOTE: This doesn't mean if you have a 30% miss chance you now miss 15%.  It means if you have a 30% miss chance you now have a 30% * (100% - 15%) = 30% * 85% = 25.5% miss chance
+	// Using same scale factor for Avoidance and Accuracy since they impact the formula about the same.
+	//if (skill != EQEmu::skills::SkillArchery && skill != EQEmu::skills::SkillThrowing)
+	accuracy += itembonuses.HitChance * RuleI(Combat, PCAccAvoidMod2ScaleFactor) / 100;
+
+	Log(Logs::Detail, Logs::Attack, "itembonuses.HitChance: %d", itembonuses.HitChance * RuleI(Combat, PCAccAvoidMod2ScaleFactor) / 100);
 
 	// 216 Melee Accuracy Amt aka SE_Accuracy -- flat bonus
 	accuracy += itembonuses.Accuracy[EQEmu::skills::HIGHEST_SKILL + 1] +
@@ -226,11 +247,25 @@ int Mob::GetTotalToHit(EQEmu::skills::SkillType skill, int chance_mod)
 int Mob::compute_defense()
 {
 	int defense = GetSkill(EQEmu::skills::SkillDefense) * 400 / 225;
-	defense += (8000 * (GetAGI() - 40)) / 36000;
+	int AgiScaleFactor = 1000;
+	// In new code, AGI becomes a large contributor to avoidance at low levels, since AGI isn't capped by Level but Defense is
+	// A scale factor is implemented for PCs to reduce the effect of AGI at low levels.  This isn't applied to NPCs since they can be
+	// easily controlled via the Database.
+	if (IsClient())
+		AgiScaleFactor = std::min(1000, static_cast<int>(GetLevel())*1000/65); // Scales Agi Contribution for PC's Level, max Contribution at Level 65
+	
+	defense += AgiScaleFactor * (800 * (GetAGI() - 40)) / 3600 / 1000;
+	
 	if (IsClient())
 		defense += CastToClient()->GetHeroicAGI() / 10;
 
-	defense += itembonuses.AvoidMeleeChance; // item mod2
+	// Based on my calculator 150 Avoidance was reducing misses by too much (closer to 20%)
+	// NOTE: This doesn't mean if you have a 30% miss chance you now miss 15%.  It means if you have a 30% miss chance you now have a 30% * (100% - 15%) = 30% * 85% = 25.5% miss chance
+	// Using same scale factor for Avoidance and Accuracy since they impact the formula about the same.
+	defense += itembonuses.AvoidMeleeChance * RuleI(Combat, PCAccAvoidMod2ScaleFactor) / 100; // item mod2
+	
+	Log(Logs::Detail, Logs::Attack, "itembonuses.AvoidMeleeChance: %d", itembonuses.AvoidMeleeChance * RuleI(Combat, PCAccAvoidMod2ScaleFactor) / 100);
+	
 	if (IsNPC())
 		defense += CastToNPC()->GetAvoidanceRating();
 
@@ -276,6 +311,15 @@ int Mob::GetTotalDefense()
 // and does other mitigation checks. 'this' is the mob being attacked.
 bool Mob::CheckHitChance(Mob* other, DamageHitInfo &hit)
 {
+#ifdef LUA_EQEMU
+	bool lua_ret = false;
+	bool ignoreDefault = false;
+	lua_ret = LuaParser::Instance()->CheckHitChance(this, other, hit, ignoreDefault);
+
+	if(ignoreDefault) {
+		return lua_ret;
+	}
+#endif
 	Mob *attacker = other;
 	Mob *defender = this;
 	Log(Logs::Detail, Logs::Attack, "CheckHitChance(%s) attacked by %s", defender->GetName(), attacker->GetName());
@@ -306,6 +350,15 @@ bool Mob::CheckHitChance(Mob* other, DamageHitInfo &hit)
 
 bool Mob::AvoidDamage(Mob *other, DamageHitInfo &hit)
 {
+#ifdef LUA_EQEMU
+	bool lua_ret = false;
+	bool ignoreDefault = false;
+	lua_ret = LuaParser::Instance()->AvoidDamage(this, other, hit, ignoreDefault);
+
+	if (ignoreDefault) {
+		return lua_ret;
+	}
+#endif
 	/* called when a mob is attacked, does the checks to see if it's a hit
 	* and does other mitigation checks. 'this' is the mob being attacked.
 	*
@@ -838,6 +891,8 @@ int Mob::ACSum()
 int Mob::offense(EQEmu::skills::SkillType skill)
 {
 	int offense = GetSkill(skill);
+	if (IsNPC() && !IsPet() && !IsTempPet())
+		offense = GetMobFixedWeaponSkill();
 	int stat_bonus = 0;
 	if (skill == EQEmu::skills::SkillArchery || skill == EQEmu::skills::SkillThrowing)
 		stat_bonus = GetDEX();
@@ -845,7 +900,15 @@ int Mob::offense(EQEmu::skills::SkillType skill)
 		stat_bonus = GetSTR();
 	if (stat_bonus >= 75)
 		offense += (2 * stat_bonus - 150) / 3;
-	offense += GetATK();
+	// GetATK() = ATK + itembonuses.ATK + spellbonuses.ATK.  However, ATK appears to already be itembonuses.ATK + spellbonuses.ATK for PCs, so as is, it is double counting attack
+	// This causes attack to be significnatly more important than it should be based on era rule of thumbs.  I do not want to change the GetATK() function in case doing so breaks something,
+	// so instead I am just adding a /2 to remedy the double counting.  NPCs do not have this issue, so they are broken up.
+	// PCAttackPowerScaling is used to help bring attack power further in line with era estimates.
+	if (IsClient())
+		offense += (GetATK() / 2) * RuleI(Combat, PCAttackPowerScaling) / 100;
+	else
+		offense += GetATK();
+	
 	return offense;
 }
 
@@ -876,6 +939,14 @@ double Mob::RollD20(int offense, int mitigation)
 
 void Mob::MeleeMitigation(Mob *attacker, DamageHitInfo &hit, ExtraAttackOptions *opts)
 {
+#ifdef LUA_EQEMU
+	bool ignoreDefault = false;
+	LuaParser::Instance()->MeleeMitigation(this, attacker, hit, opts, ignoreDefault);
+
+	if (ignoreDefault) {
+		return;
+	}
+#endif
 	if (hit.damage_done < 0 || hit.base_damage == 0)
 		return;
 
@@ -1335,7 +1406,7 @@ bool Client::Attack(Mob* other, int Hand, bool bRiposte, bool IsStrikethrough, b
 	DamageHitInfo my_hit;
 	// calculate attack_skill and skillinuse depending on hand and weapon
 	// also send Packet to near clients
-	AttackAnimation(my_hit.skill, Hand, weapon);
+	my_hit.skill = AttackAnimation(Hand, weapon);
 	Log(Logs::Detail, Logs::Combat, "Attacking with %s in slot %d using skill %d", weapon ? weapon->GetItem()->Name : "Fist", Hand, my_hit.skill);
 
 	// Now figure out damage
@@ -1896,7 +1967,7 @@ bool NPC::Attack(Mob* other, int Hand, bool bRiposte, bool IsStrikethrough, bool
 	//do attack animation regardless of whether or not we can hit below
 	int16 charges = 0;
 	EQEmu::ItemInstance weapon_inst(weapon, charges);
-	AttackAnimation(my_hit.skill, Hand, &weapon_inst);
+	my_hit.skill = AttackAnimation(Hand, &weapon_inst, my_hit.skill);
 
 	//basically "if not immune" then do the attack
 	if (weapon_damage > 0) {
@@ -2348,6 +2419,7 @@ bool NPC::Death(Mob* killer_mob, int32 damage, uint16 spell, EQEmu::skills::Skil
 
 			entity_list.UnMarkNPC(GetID());
 			entity_list.RemoveNPC(GetID());
+
 			this->SetID(0);
 
 			if (killer != 0 && emoteid != 0) {
@@ -2792,6 +2864,7 @@ uint8 Mob::GetWeaponDamageBonus(const EQEmu::ItemData *weapon, bool offhand)
 		}
 		return damage_bonus;
 	}
+	return 0;
 }
 
 int Mob::GetHandToHandDamage(void)
@@ -3371,9 +3444,6 @@ void Mob::CommonDamage(Mob* attacker, int &damage, const uint16 spell_id, const 
 
         SetHP(GetHP() - damage);
 
-		if (IsClient() && RuleB(Character, MarqueeHPUpdates))
-			this->CastToClient()->SendHPUpdateMarquee();
-
 		if (HasDied()) {
 			bool IsSaved = false;
 
@@ -3389,7 +3459,7 @@ void Mob::CommonDamage(Mob* attacker, int &damage, const uint16 spell_id, const 
 			}
 		}
 		else {
-			if(GetHPRatio() < 16 and previousHPRatio >= 16)
+			if(GetHPRatio() < 16 && previousHPRatio >= 16)
 				TryDeathSave();
 		}
 
@@ -3517,14 +3587,21 @@ void Mob::CommonDamage(Mob* attacker, int &damage, const uint16 spell_id, const 
 		if (RuleB(Combat, MeleePush) && damage > 0 && !IsRooted() &&
 			(IsClient() || zone->random.Roll(RuleI(Combat, MeleePushChance)))) {
 			a->force = EQEmu::skills::GetSkillMeleePushForce(skill_used);
+			if (RuleR(Combat, MeleePushForceClient) && IsClient())
+				a->force += a->force*RuleR(Combat, MeleePushForceClient);
+			if (RuleR(Combat, MeleePushForcePet) && IsPet())
+				a->force += a->force*RuleR(Combat, MeleePushForcePet);
 			// update NPC stuff
 			auto new_pos = glm::vec3(m_Position.x + (a->force * std::sin(a->meleepush_xy) + m_Delta.x),
 				m_Position.y + (a->force * std::cos(a->meleepush_xy) + m_Delta.y), m_Position.z);
 			if (zone->zonemap && zone->zonemap->CheckLoS(glm::vec3(m_Position), new_pos)) { // If we have LoS on the new loc it should be reachable.
 				if (IsNPC()) {
 					// Is this adequate?
+
 					Teleport(new_pos);
-					SendPosUpdate();
+					if (position_update_melee_push_timer.Check()) {
+						SendPositionUpdate();
+					}
 				}
 			}
 			else {
@@ -4072,7 +4149,7 @@ void Mob::TryPetCriticalHit(Mob *defender, DamageHitInfo &hit)
 
 	if (critChance > 0) {
 		if (zone->random.Roll(critChance)) {
-			critMod += GetCritDmgMob(hit.skill);
+			critMod += GetCritDmgMod(hit.skill);
 			hit.damage_done += 5;
 			hit.damage_done = (hit.damage_done * critMod) / 100;
 
@@ -4093,6 +4170,14 @@ void Mob::TryPetCriticalHit(Mob *defender, DamageHitInfo &hit)
 
 void Mob::TryCriticalHit(Mob *defender, DamageHitInfo &hit, ExtraAttackOptions *opts)
 {
+#ifdef LUA_EQEMU
+	bool ignoreDefault = false;
+	LuaParser::Instance()->TryCriticalHit(this, defender, hit, opts, ignoreDefault);
+
+	if (ignoreDefault) {
+		return;
+	}
+#endif
 	if (hit.damage_done < 1 || !defender)
 		return;
 
@@ -4152,7 +4237,11 @@ void Mob::TryCriticalHit(Mob *defender, DamageHitInfo &hit, ExtraAttackOptions *
 		// check if we crited
 		if (roll < dex_bonus) {
 
-		int crit_mod = 170 + GetCritDmgMob(hit.skill);
+			int crit_mod = 170 + GetCritDmgMod(hit.skill);
+			if (crit_mod < 100) {
+				crit_mod = 100;
+			}
+
 		
 			// 1: Try Slay Undead - On P2002 Slay Undead is a critical conversion, not a flat chance per hit
 			if (defender && (defender->GetBodyType() == BT_Undead || defender->GetBodyType() == BT_SummonedUndead ||
@@ -4259,7 +4348,7 @@ void Mob::TryCriticalHit(Mob *defender, DamageHitInfo &hit, ExtraAttackOptions *
 				// Crippling blows also have a chance to stun
 				// Kayen: Crippling Blow would cause a chance to interrupt for npcs < 55, with a
 				// staggers message.
-				if (defender->GetLevel() <= 55 && !defender->GetSpecialAbility(IMMUNE_STUN)) {
+				if (defender->GetLevel() <= 55 && !defender->GetSpecialAbility(UNSTUNABLE)) {
 					defender->Emote("staggers.");
 					defender->Stun(2000);
 				}
@@ -4538,8 +4627,251 @@ const DamageTable &Mob::GetDamageTable() const
 	return which[level - 50];
 }
 
+int Mob::GetMobFixedOffenseSkill()
+{
+	// Due to new code using a combination of Offense and Weapon skill to determine hit, depending on the class
+	// and weapon wielded by a mob, the hit rate of an equal level mob could vary between 15% and 60%, which made
+	// many mobs far too easy.  This particular call replaces the class based Offense Skill with a fixed value
+	// equal to that of a Warrior of appropriate Level if UseMobFixedOffenseSkill flag is TRUE.
+	
+	int level = std::max(1,static_cast<int>(GetLevel()));
+	
+	// Current tables are flat above Level 60
+	if (level > 60)
+		level = 60;
+	
+	int FixedOffenseSkillTable[] = {
+		10, // 1
+		15,
+		20,
+		25,
+		30, // 5
+		35,
+		40,
+		45,
+		50,
+		55, // 10
+		60,
+		65,
+		70,
+		75,
+		80, // 15
+		85,
+		90,
+		95,
+		100,
+		105, // 20
+		110,
+		115,
+		120,
+		125,
+		130, // 25
+		135,
+		140,
+		145,
+		150,
+		155, // 30
+		160,
+		165,
+		170,
+		175,
+		180, // 35
+		185,
+		190,
+		195,
+		200,
+		205, // 40
+		210,
+		210,
+		210,
+		210,
+		210, // 45
+		210,
+		210,
+		210,
+		210,
+		210, // 50
+		215,
+		220,
+		225,
+		230,
+		235, // 55
+		240,
+		245,
+		250,
+		252,
+		252, // 60
+	};
+	
+	return FixedOffenseSkillTable[level - 1];
+}
+
+int Mob::GetMobFixedWeaponSkill()
+{
+	// Due to new code using a combination of Offense and Weapon skill to determine hit, depending on the class
+	// and weapon wielded by a mob, the hit rate of an equal level mob could vary between 15% and 60%, which made
+	// many mobs far too easy.  This particular call replaces the weapon/class based Weapon Skill with a fixed value.
+	// Two tables exist, one equal to a Warrior of appropriate level, and one modified to make hit rate equal to the old code
+	// assuming the UseMobFixedOffenseSkill flag is set TRUE or the mob class is a Warrior (all the the bonus is in Weapon Skill).
+	
+	int level = std::max(1,static_cast<int>(GetLevel()));
+	
+	// Current tables are flat above Level 65
+	if (level > 65)
+		level = 65;
+	
+	int FixedWeaponSkillTable[] = {
+		10, // 1
+		15,
+		20,
+		25,
+		30, // 5
+		35,
+		40,
+		45,
+		50,
+		55, // 10
+		60,
+		65,
+		70,
+		75,
+		80, // 15
+		85,
+		90,
+		95,
+		100,
+		105, // 20
+		110,
+		115,
+		120,
+		125,
+		130, // 25
+		135,
+		140,
+		145,
+		150,
+		155, // 30
+		160,
+		165,
+		170,
+		175,
+		180, // 35
+		185,
+		190,
+		195,
+		200,
+		200, // 40
+		200,
+		200,
+		200,
+		200,
+		200, // 45
+		200,
+		200,
+		200,
+		200,
+		200, // 50
+		205,
+		210,
+		215,
+		220,
+		225, // 55
+		230,
+		235,
+		240,
+		245,
+		250, // 60
+		250,
+		250,
+		250,
+		250,
+		250, // 65
+	};
+	
+	int EnhancedFixedWeaponSkillTable[] = {
+		5, // 1
+		11,
+		18,
+		24,
+		30, // 5
+		37,
+		44,
+		49,
+		55,
+		62, // 10
+		68,
+		74,
+		80,
+		87,
+		94, // 15
+		99,
+		106,
+		112,
+		117,
+		124, // 20
+		131,
+		137,
+		143,
+		150,
+		156, // 25
+		163,
+		167,
+		174,
+		181,
+		188, // 30
+		193,
+		200,
+		206,
+		212,
+		219, // 35
+		224,
+		231,
+		237,
+		243,
+		250, // 40
+		257,
+		257,
+		258,
+		259,
+		260, // 45
+		260,
+		261,
+		263,
+		264,
+		264, // 50
+		270,
+		277,
+		283,
+		288,
+		295, // 55
+		302,
+		307,
+		314,
+		318,
+		319, // 60
+		326,
+		327,
+		328,
+		328,
+		329, // 65
+	};
+	
+	auto &UsedTable = (RuleB(Combat, UseEnhancedMobFixedWeaponSkill)) ? EnhancedFixedWeaponSkillTable : FixedWeaponSkillTable;
+	
+	return UsedTable[level - 1];
+}
+	
+
 void Mob::ApplyDamageTable(DamageHitInfo &hit)
 {
+#ifdef LUA_EQEMU
+	bool ignoreDefault = false;
+	LuaParser::Instance()->ApplyDamageTable(this, hit, ignoreDefault);
+
+	if (ignoreDefault) {
+		return;
+	}
+#endif
 	// someone may want to add this to custom servers, can remove this if that's the case
 	if (!IsClient()
 #ifdef BOTS
@@ -4876,6 +5208,15 @@ void Mob::CommonOutgoingHitSuccess(Mob* defender, DamageHitInfo &hit, ExtraAttac
 	if (!defender)
 		return;
 
+#ifdef LUA_EQEMU
+	bool ignoreDefault = false;
+	LuaParser::Instance()->CommonOutgoingHitSuccess(this, defender, hit, opts, ignoreDefault);
+
+	if (ignoreDefault) {
+		return;
+	}
+#endif
+
 	// BER weren't parsing the halving
 	if (hit.skill == EQEmu::skills::SkillArchery ||
 		(hit.skill == EQEmu::skills::SkillThrowing && GetClass() != BERSERKER))
@@ -4890,6 +5231,7 @@ void Mob::CommonOutgoingHitSuccess(Mob* defender, DamageHitInfo &hit, ExtraAttac
 		int headshot = TryHeadShot(defender, hit.skill);
 		if (headshot > 0) {
 			hit.damage_done = headshot;
+			return;
 		}
 		else if (GetClass() == RANGER && GetLevel() > 50) { // no double dmg on headshot
 			// Double Damage Bonus should apply to Permarooted mobs
@@ -4916,8 +5258,10 @@ void Mob::CommonOutgoingHitSuccess(Mob* defender, DamageHitInfo &hit, ExtraAttac
 		}
 		else {
 			int ass = TryAssassinate(defender, hit.skill);
-			if (ass > 0)
+			if (ass > 0) {
 				hit.damage_done = ass;
+				return;
+			}
 		}
 	}
 	else if (hit.skill == EQEmu::skills::SkillFrenzy && GetClass() == BERSERKER && GetLevel() > 50) {

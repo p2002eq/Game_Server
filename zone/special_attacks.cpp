@@ -23,6 +23,7 @@
 #include "entity.h"
 #include "mob.h"
 #include "string_ids.h"
+#include "lua_parser.h"
 
 #include <string.h>
 
@@ -32,10 +33,16 @@ int Mob::GetBaseSkillDamage(EQEmu::skills::SkillType skill, Mob *target)
 {
 	int base = EQEmu::skills::GetBaseDamage(skill);
 	auto skill_level = GetSkill(skill);
+	float ac_bonus = 0.0f;
 	switch (skill) {
 	case EQEmu::skills::SkillDragonPunch:
 	case EQEmu::skills::SkillEagleStrike:
-	case EQEmu::skills::SkillTigerClaw:
+	case EQEmu::skills::SkillTigerClaw: {
+		if (IsClient()) {
+			auto inst = CastToClient()->GetInv().GetItem(EQEmu::inventory::slotHands);
+			if (inst)
+				ac_bonus = inst->GetItemArmorClass(true) / 25.0f;
+		}
 		if (skill_level >= 25)
 			base++;
 		if (skill_level >= 75)
@@ -44,7 +51,8 @@ int Mob::GetBaseSkillDamage(EQEmu::skills::SkillType skill, Mob *target)
 			base++;
 		if (skill_level >= 175)
 			base++;
-		return base;
+		return (base + static_cast<int>(ac_bonus));
+	}
 	case EQEmu::skills::SkillFrenzy:
 		if (IsClient() && CastToClient()->GetInv().GetItem(EQEmu::inventory::slotPrimary)) {
 			if (GetLevel() > 15)
@@ -60,47 +68,66 @@ int Mob::GetBaseSkillDamage(EQEmu::skills::SkillType skill, Mob *target)
 		}
 		return base;
 	case EQEmu::skills::SkillFlyingKick: {
-		float skill_bonus = skill_level / 9.0f;
-		float ac_bonus = 0.0f;
+		// float skill_bonus = skill_level / 9.0f;
 		if (IsClient()) {
 			auto inst = CastToClient()->GetInv().GetItem(EQEmu::inventory::slotFeet);
 			if (inst)
 				ac_bonus = inst->GetItemArmorClass(true) / 25.0f;
 		}
-		if (ac_bonus > skill_bonus)
-			ac_bonus = skill_bonus;
-		return static_cast<int>(ac_bonus + skill_bonus);
+		// if (ac_bonus > skill_bonus)
+		// 	ac_bonus = skill_bonus;
+		if (skill_level >= 20)
+			base++;
+		if (skill_level >= 60)
+			base++;
+		if (skill_level >= 100)
+			base++;
+		if (skill_level >= 140)
+			base++;
+		if (skill_level >= 180)
+			base++;
+		// return static_cast<int>(ac_bonus + skill_bonus);
+		return (base + static_cast<int>(ac_bonus));
 	}
-	case EQEmu::skills::SkillKick: {
+	case EQEmu::skills::SkillKick:
+	case EQEmu::skills::SkillRoundKick: {
 		// there is some base *= 4 case in here?
-		float skill_bonus = skill_level / 10.0f;
-		float ac_bonus = 0.0f;
+		// float skill_bonus = skill_level / 10.0f;
 		if (IsClient()) {
 			auto inst = CastToClient()->GetInv().GetItem(EQEmu::inventory::slotFeet);
 			if (inst)
 				ac_bonus = inst->GetItemArmorClass(true) / 25.0f;
 		}
-		if (ac_bonus > skill_bonus)
-			ac_bonus = skill_bonus;
-		return static_cast<int>(ac_bonus + skill_bonus);
+		// if (ac_bonus > skill_bonus)
+		// 	ac_bonus = skill_bonus;
+		if (skill_level >= 75)
+			base++;
+		if (skill_level >= 175)
+			base++;
+		// return static_cast<int>(ac_bonus + skill_bonus);
+		return (base + static_cast<int>(ac_bonus));
 	}
 	case EQEmu::skills::SkillBash: {
-		float skill_bonus = skill_level / 10.0f;
-		float ac_bonus = 0.0f;
+		// float skill_bonus = skill_level / 10.0f;
 		const EQEmu::ItemInstance *inst = nullptr;
 		if (IsClient()) {
 			if (HasShieldEquiped())
 				inst = CastToClient()->GetInv().GetItem(EQEmu::inventory::slotSecondary);
-			else if (HasTwoHanderEquipped())
-				inst = CastToClient()->GetInv().GetItem(EQEmu::inventory::slotPrimary);
+			// else if (HasTwoHanderEquipped())
+			// 	inst = CastToClient()->GetInv().GetItem(EQEmu::inventory::slotPrimary);
 		}
 		if (inst)
 			ac_bonus = inst->GetItemArmorClass(true) / 25.0f;
 		else
 			return 0; // return 0 in cases where we don't have an item
-		if (ac_bonus > skill_bonus)
-			ac_bonus = skill_bonus;
-		return static_cast<int>(ac_bonus + skill_bonus);
+		// if (ac_bonus > skill_bonus)
+		//	ac_bonus = skill_bonus;
+		if (skill_level >= 75)
+			base++;
+		if (skill_level >= 175)
+			base++;
+		// return static_cast<int>(ac_bonus + skill_bonus);
+		return (base + static_cast<int>(ac_bonus));
 	}
 	case EQEmu::skills::SkillBackstab: {
 		float skill_bonus = static_cast<float>(skill_level) * 0.02f;
@@ -212,7 +239,9 @@ void Mob::DoSpecialAttackDamage(Mob *who, EQEmu::skills::SkillType skill, int32 
 	}
 		
 		
-		
+	// Adjust min damage for Monk Flying Kick based on level.  This should be for a 40 damage min cap at level 60.
+	if (skill == EQEmu::skills::SkillFlyingKick)
+		my_hit.min_damage = GetLevel() - 22;
 			
 	
 	
@@ -797,7 +826,6 @@ void Mob::DoArcheryAttackDmg(Mob *other, const EQEmu::ItemInstance *RangeWeapon,
 			     uint16 weapon_damage, int16 chance_mod, int16 focus, int ReuseTime, uint32 range_id,
 			     uint32 ammo_id, const EQEmu::ItemData *AmmoItem, int AmmoSlot, float speed)
 {
-
 	if ((other == nullptr ||
 	     ((IsClient() && CastToClient()->dead) || (other->IsClient() && other->CastToClient()->dead)) ||
 	     HasDied() || (!IsAttackAllowed(other)) || (other->GetInvul() || other->GetSpecialAbility(IMMUNE_MELEE)))) {
@@ -2058,7 +2086,7 @@ int Mob::TryHeadShot(Mob *defender, EQEmu::skills::SkillType skillInUse)
 
 		if (HeadShot_Dmg && HeadShot_Level && (defender->GetLevel() <= HeadShot_Level)) {
 			int chance = GetDEX();
-			chance = 100 * chance / (chance + 3500);
+			chance = 100 * chance / (chance + 4750);
 			if (IsClient())
 				chance += CastToClient()->GetHeroicDEX() / 25;
 			chance *= 10;
@@ -2066,6 +2094,7 @@ int Mob::TryHeadShot(Mob *defender, EQEmu::skills::SkillType skillInUse)
 			if (norm > 0)
 				chance = chance * norm / 100;
 			chance += aabonuses.HeadShot[0] + spellbonuses.HeadShot[0] + itembonuses.HeadShot[0];
+			Log(Logs::Detail, Logs::Attack, "Headshot Chance: %d", chance);
 			if (zone->random.Int(1, 1000) <= chance) {
 				entity_list.MessageClose_StringID(this, false, 200, MT_CritMelee, FATAL_BOW_SHOT,
 								  GetName());
@@ -2083,7 +2112,7 @@ int Mob::TryAssassinate(Mob *defender, EQEmu::skills::SkillType skillInUse)
 	    (skillInUse == EQEmu::skills::SkillBackstab || skillInUse == EQEmu::skills::SkillThrowing)) {
 		int chance = GetDEX();
 		if (skillInUse == EQEmu::skills::SkillBackstab) {
-			chance = 100 * chance / (chance + 3500);
+			chance = 100 * chance / (chance + 4750);
 			if (IsClient())
 				chance += CastToClient()->GetHeroicDEX();
 			chance *= 10;
@@ -2095,17 +2124,28 @@ int Mob::TryAssassinate(Mob *defender, EQEmu::skills::SkillType skillInUse)
 				chance = 260;
 			else
 				chance += 5;
+			chance /= 2;
 		}
 
 		chance += aabonuses.Assassinate[0] + spellbonuses.Assassinate[0] + itembonuses.Assassinate[0];
 
+		Log(Logs::Detail, Logs::Attack, "Assassinate Chance: %d", chance);
+		
 		uint32 Assassinate_Dmg =
 		    aabonuses.Assassinate[1] + spellbonuses.Assassinate[1] + itembonuses.Assassinate[1];
 
-		uint8 Assassinate_Level = 0; // Get Highest Headshot Level
+		uint8 Assassinate_Level = 0; // Get Highest Assassinate Level
 		Assassinate_Level = std::max(
 		    {aabonuses.AssassinateLevel[0], spellbonuses.AssassinateLevel[0], itembonuses.AssassinateLevel[0]});
-
+		
+		// Innate Assassinate for Level 60+ Rogues.
+		if (GetLevel() >= 60) {
+			if (!Assassinate_Dmg)
+				Assassinate_Dmg = 32000;
+			if (!Assassinate_Level)
+				Assassinate_Level = 45;
+		}
+			
 		// revamped AAs require AA line I believe?
 		if (!Assassinate_Level)
 			return 0;

@@ -102,7 +102,6 @@ bool NPC::AICastSpell(Mob* tar, uint8 iChance, uint32 iSpellTypes) {
 				Log(Logs::Detail, Logs::AI, "Mob::AICastSpell: Casting: spellid=%u, tar=%s, dist2[%f]<=%f, mana_cost[%i]<=%i, cancast[%u]<=%u, type=%u",
 					AIspells[i].spellid, tar->GetName(), dist2, (spells[AIspells[i].spellid].range * spells[AIspells[i].spellid].range), mana_cost, GetMana(), AIspells[i].time_cancast, Timer::GetCurrentTime(), AIspells[i].type);
 #endif
-
 				switch (AIspells[i].type) {
 					case SpellType_Heal: {
 						if (
@@ -181,33 +180,40 @@ bool NPC::AICastSpell(Mob* tar, uint8 iChance, uint32 iSpellTypes) {
 					case SpellType_Slow:
 					case SpellType_Debuff: {
 						Mob * debuffee = GetHateRandom();
-						if (debuffee && manaR >= 10 && zone->random.Roll(70) &&
-								debuffee->CanBuffStack(AIspells[i].spellid, GetLevel(), true) >= 0) {
-							if (spells[AIspells[i].spellid].targettype != ST_AECaster && !checked_los) {
-								if (!CheckLosFN(debuffee))
-									return false;
-								checked_los = true;
-							}
-							AIDoSpellCast(i, debuffee, mana_cost);
-							return true;
-						}
+                        if (debuffee && manaR >= 10 && zone->random.Roll(70))
+                        { 
+                            if (spells[AIspells[i].spellid].priority >= AI_SPELL_MAX_PRIORITY || debuffee->CanBuffStack(AIspells[i].spellid, GetLevel(), true) >= 0)
+                            {
+                                if (spells[AIspells[i].spellid].targettype != ST_AECaster && !checked_los)
+                                {
+                                    if (!CheckLosFN(debuffee))
+                                        return false;
+                                    checked_los = true;
+                                }
+                                AIDoSpellCast(i, debuffee, mana_cost);
+                                return true;
+                            }
+                        }
 						break;
 					}
 					case SpellType_Nuke: {
-						if (
-							manaR >= 10 && zone->random.Roll(70)
-							&& tar->CanBuffStack(AIspells[i].spellid, GetLevel(), true) >= 0
-							) {
-							if(spells[AIspells[i].spellid].targettype != ST_AECaster && !checked_los) {
-								if(!CheckLosFN(tar))
-									return(false);	//cannot see target... we assume that no spell is going to work since we will only be casting detrimental spells in this call
-								checked_los = true;
-							}
-							AIDoSpellCast(i, tar, mana_cost);
-							return true;
-						}
+						if (manaR >= 10 && zone->random.Roll(70))
+                        {
+							if (spells[AIspells[i].spellid].priority >= AI_SPELL_MAX_PRIORITY || tar->CanBuffStack(AIspells[i].spellid, GetLevel(), true) >= 0)
+                            {
+                                if(spells[AIspells[i].spellid].targettype != ST_AECaster && !checked_los)
+                                {
+                                    if(!CheckLosFN(tar))
+                                        return(false);	//cannot see target... we assume that no spell is going to work since we will only be casting detrimental spells in this call
+                                    checked_los = true;
+                                }
+                                AIDoSpellCast(i, tar, mana_cost);
+                                return true;
+                            }
+                        }
 						break;
 					}
+                                         
 					case SpellType_Dispel: {
 						if(zone->random.Roll(15))
 						{
@@ -743,6 +749,9 @@ void Client::AI_Process()
 
 	if(RuleB(Combat, EnableFearPathing)){
 		if(currently_fleeing) {
+			if (fix_z_timer_engaged.Check())
+				this->FixZ();
+
 			if(IsRooted()) {
 				//make sure everybody knows were not moving, for appearance sake
 				if(IsMoving())
@@ -990,7 +999,23 @@ void Mob::AI_Process() {
 	}
 
 	if (engaged) {
-
+		/* Fix Z when following during pull, not when engaged and stationary */
+		if (moving && fix_z_timer_engaged.Check()) {
+			if (this->GetTarget()) {
+				/* If we are engaged, moving and following client, let's look for best Z more often */
+				float target_distance = DistanceNoZ(this->GetPosition(), this->GetTarget()->GetPosition());
+				if (target_distance >= 25) {
+					this->FixZ();
+				} else if (!this->CheckLosFN(this->GetTarget())) {
+					Mob *target = this->GetTarget();
+					m_Position.x = target->GetX();
+					m_Position.y = target->GetY();
+					m_Position.z = target->GetZ();
+					m_Position.w = target->GetHeading();
+					SendPosition();
+				}
+			}
+		}
 		if (!(m_PlayerState & static_cast<uint32>(PlayerState::Aggressive)))
 			SendAddPlayerState(PlayerState::Aggressive);
 		// we are prevented from getting here if we are blind and don't have a target in range
@@ -1542,6 +1567,8 @@ void NPC::AI_DoMovement() {
 					if (m_CurrentWayPoint.w >= 0.0) {
 						SetHeading(m_CurrentWayPoint.w);
 					}
+
+					this->FixZ();
 
 					SendPosition();
 
@@ -2110,6 +2137,15 @@ uint32 Mob::GetLevelCon(uint8 mylevel, uint8 iOtherLevel) {
 		else
 			conlevel = CON_BLUE;
 	}
+	else if (mylevel <= 42)
+	{
+		if (diff <= -15)
+			conlevel = CON_GREEN;
+		else if (diff <= -12)
+			conlevel = CON_LIGHTBLUE;
+		else
+			conlevel = CON_BLUE;
+	}
 	else if (mylevel <= 44)
 	{
 		if (diff <= -16)
@@ -2157,7 +2193,7 @@ uint32 Mob::GetLevelCon(uint8 mylevel, uint8 iOtherLevel) {
 			conlevel = CON_LIGHTBLUE;
 		else
 			conlevel = CON_BLUE;
-	}
+	}	
 	else if (mylevel <= 60)
 	{
 		if (diff <= -21)
@@ -2167,7 +2203,7 @@ uint32 Mob::GetLevelCon(uint8 mylevel, uint8 iOtherLevel) {
 		else
 			conlevel = CON_BLUE;
 	}
-	else if (mylevel >= 61)
+	else if (mylevel <= 61)
 	{
 		if (diff <= -19)
 			conlevel = CON_GREEN;
@@ -2176,7 +2212,7 @@ uint32 Mob::GetLevelCon(uint8 mylevel, uint8 iOtherLevel) {
 		else
 			conlevel = CON_BLUE;
 	}
-	else if (mylevel >= 62)
+	else if (mylevel <= 62)
 	{
 		if (diff <= -17)
 			conlevel = CON_GREEN;

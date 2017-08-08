@@ -599,7 +599,14 @@ void Client::CompleteConnect()
 
 			if (raid->IsLocked())
 				raid->SendRaidLockTo(this);
+			raid->SendHPManaEndPacketsTo(this);
 		}
+	}
+	else {
+		Group *group = nullptr;
+		group = this->GetGroup();
+		if (group)
+			group->SendHPManaEndPacketsTo(this);
 	}
 
 	//bulk raid send in here eventually
@@ -1295,7 +1302,7 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 		lsaccountid = atoi(row[2]);
 		gmspeed = atoi(row[3]);
 		revoked = atoi(row[4]);
-		gmhideme = atoi(row[5]);
+		gm_hide_me = atoi(row[5]);
 		account_creation = atoul(row[6]);
 		gminvul = atoi(row[7]);
 		flymode = atoi(row[8]);
@@ -1365,7 +1372,7 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 	if (level) { level = m_pp.level; }
 
 	/* If GM, not trackable */
-	if (gmhideme) { trackable = false; }
+	if (gm_hide_me) { trackable = false; }
 	if (gminvul) { invulnerable = true; }
 	if (flymode > 0) { SendAppearancePacket(AT_Levitate, flymode); }
 	/* Set Con State for Reporting */
@@ -2080,7 +2087,6 @@ void Client::Handle_OP_AdventureMerchantRequest(const EQApplicationPacket *app)
 		return;
 
 	merchantid = tmp->CastToNPC()->MerchantType;
-	tmp->CastToNPC()->FaceTarget(this->CastToMob());
 
 	const EQEmu::ItemData *item = nullptr;
 	std::list<MerchantList> merlist = zone->merchanttable[merchantid];
@@ -3886,7 +3892,7 @@ void Client::Handle_OP_BoardBoat(const EQApplicationPacket *app)
 	Mob* boat = entity_list.GetMob(boatname);
 	if (!boat || (boat->GetRace() != CONTROLLED_BOAT && boat->GetRace() != 502))
 		return;
-	BoatID = boat->GetID();	// set the client's BoatID to show that it's on this boat
+	controlling_boat_id = boat->GetID();	// set the client's BoatID to show that it's on this boat
 
 	return;
 }
@@ -4396,7 +4402,7 @@ void Client::Handle_OP_ClientUpdate(const EQApplicationPacket *app)
 	if (dead)
 		return;
 
-	//currently accepting two sizes, one has an extra byte on the end
+	/* Invalid size check */
 	if (app->size != sizeof(PlayerPositionUpdateClient_Struct)
 		&& app->size != (sizeof(PlayerPositionUpdateClient_Struct) + 1)
 		) {
@@ -4405,30 +4411,29 @@ void Client::Handle_OP_ClientUpdate(const EQApplicationPacket *app)
 	}
 	PlayerPositionUpdateClient_Struct* ppu = (PlayerPositionUpdateClient_Struct*)app->pBuffer;
 
+	/* Boat handling */
 	if (ppu->spawn_id != GetID()) {
-		// check if the id is for a boat the player is controlling
-		if (ppu->spawn_id == BoatID) {
-			Mob* boat = entity_list.GetMob(BoatID);
-			if (boat == 0) {	// if the boat ID is invalid, reset the id and abort
-				BoatID = 0;
+		/* If player is controlling boat */
+		if (ppu->spawn_id == controlling_boat_id) {
+			Mob* boat = entity_list.GetMob(controlling_boat_id);
+			if (boat == 0) {
+				controlling_boat_id = 0;
 				return;
 			}
 
-			// set the boat's position deltas
-			auto boatDelta = glm::vec4(ppu->delta_x, ppu->delta_y, ppu->delta_z, ppu->delta_heading);
-			boat->SetDelta(boatDelta);
-			// send an update to everyone nearby except the client controlling the boat
-			auto outapp =
-				new EQApplicationPacket(OP_ClientUpdate, sizeof(PlayerPositionUpdateServer_Struct));
+			auto boat_delta = glm::vec4(ppu->delta_x, ppu->delta_y, ppu->delta_z, ppu->delta_heading);
+			boat->SetDelta(boat_delta);
+
+			auto outapp = new EQApplicationPacket(OP_ClientUpdate, sizeof(PlayerPositionUpdateServer_Struct));
 			PlayerPositionUpdateServer_Struct* ppus = (PlayerPositionUpdateServer_Struct*)outapp->pBuffer;
 			boat->MakeSpawnUpdate(ppus);
 			entity_list.QueueCloseClients(boat, outapp, true, 300, this, false);
 			safe_delete(outapp);
-			// update the boat's position on the server, without sending an update
+			/* Update the boat's position on the server, without sending an update */
 			boat->GMMove(ppu->x_pos, ppu->y_pos, ppu->z_pos, EQ19toFloat(ppu->heading), false);
 			return;
 		}
-		else return;	// if not a boat, do nothing
+		else return;
 	}
 
 	float dist = 0;
@@ -4439,51 +4444,34 @@ void Client::Handle_OP_ClientUpdate(const EQApplicationPacket *app)
 	dist += tmp*tmp;
 	dist = sqrt(dist);
 
-	//the purpose of this first block may not be readily apparent
-	//basically it's so people don't do a moderate warp every 2.5 seconds
-	//letting it even out and basically getting the job done without triggering
-	if (dist == 0)
-	{
-		if (m_DistanceSinceLastPositionCheck > 0.0)
-		{
+	/* Hack checks */
+	if (dist == 0) {
+		if (m_DistanceSinceLastPositionCheck > 0.0) {
 			uint32 cur_time = Timer::GetCurrentTime();
-			if ((cur_time - m_TimeSinceLastPositionCheck) > 0)
-			{
+			if ((cur_time - m_TimeSinceLastPositionCheck) > 0) {
 				float speed = (m_DistanceSinceLastPositionCheck * 100) / (float)(cur_time - m_TimeSinceLastPositionCheck);
 				int runs = GetRunspeed();
-				if (speed > (runs * RuleR(Zone, MQWarpDetectionDistanceFactor)))
-				{
-					if (!GetGMSpeed() && (runs >= GetBaseRunspeed() || (speed > (GetBaseRunspeed() * RuleR(Zone, MQWarpDetectionDistanceFactor)))))
-					{
-						if (IsShadowStepExempted())
-						{
-							if (m_DistanceSinceLastPositionCheck > 800)
-							{
+				if (speed > (runs * RuleR(Zone, MQWarpDetectionDistanceFactor))) {
+					if (!GetGMSpeed() && (runs >= GetBaseRunspeed() || (speed > (GetBaseRunspeed() * RuleR(Zone, MQWarpDetectionDistanceFactor))))) {
+						if (IsShadowStepExempted()) {
+							if (m_DistanceSinceLastPositionCheck > 800) {
 								CheatDetected(MQWarpShadowStep, ppu->x_pos, ppu->y_pos, ppu->z_pos);
 							}
 						}
-						else if (IsKnockBackExempted())
-						{
-							//still potential to trigger this if you're knocked back off a
-							//HUGE fall that takes > 2.5 seconds
-							if (speed > 30.0f)
-							{
+						else if (IsKnockBackExempted()) {
+							if (speed > 30.0f) {
 								CheatDetected(MQWarpKnockBack, ppu->x_pos, ppu->y_pos, ppu->z_pos);
 							}
 						}
-						else if (!IsPortExempted())
-						{
-							if (!IsMQExemptedArea(zone->GetZoneID(), ppu->x_pos, ppu->y_pos, ppu->z_pos))
-							{
-								if (speed > (runs * 2 * RuleR(Zone, MQWarpDetectionDistanceFactor)))
-								{
+						else if (!IsPortExempted()) {
+							if (!IsMQExemptedArea(zone->GetZoneID(), ppu->x_pos, ppu->y_pos, ppu->z_pos)) {
+								if (speed > (runs * 2 * RuleR(Zone, MQWarpDetectionDistanceFactor))) {
 									m_TimeSinceLastPositionCheck = cur_time;
 									m_DistanceSinceLastPositionCheck = 0.0f;
 									CheatDetected(MQWarp, ppu->x_pos, ppu->y_pos, ppu->z_pos);
 									//Death(this, 10000000, SPELL_UNKNOWN, _1H_BLUNT);
 								}
-								else
-								{
+								else {
 									CheatDetected(MQWarpLight, ppu->x_pos, ppu->y_pos, ppu->z_pos);
 								}
 							}
@@ -4498,64 +4486,42 @@ void Client::Handle_OP_ClientUpdate(const EQApplicationPacket *app)
 				m_CheatDetectMoved = false;
 			}
 		}
-		else
-		{
+		else {
 			m_TimeSinceLastPositionCheck = Timer::GetCurrentTime();
 			m_CheatDetectMoved = false;
 		}
 	}
-	else
-	{
+	else {
 		m_DistanceSinceLastPositionCheck += dist;
 		m_CheatDetectMoved = true;
-		if (m_TimeSinceLastPositionCheck == 0)
-		{
+		if (m_TimeSinceLastPositionCheck == 0) {
 			m_TimeSinceLastPositionCheck = Timer::GetCurrentTime();
 		}
-		else
-		{
+		else {
 			uint32 cur_time = Timer::GetCurrentTime();
-			if ((cur_time - m_TimeSinceLastPositionCheck) > 2500)
-			{
+			if ((cur_time - m_TimeSinceLastPositionCheck) > 2500) {
 				float speed = (m_DistanceSinceLastPositionCheck * 100) / (float)(cur_time - m_TimeSinceLastPositionCheck);
 				int runs = GetRunspeed();
-				if (speed > (runs * RuleR(Zone, MQWarpDetectionDistanceFactor)))
-				{
-					if (!GetGMSpeed() && (runs >= GetBaseRunspeed() || (speed > (GetBaseRunspeed() * RuleR(Zone, MQWarpDetectionDistanceFactor)))))
-					{
-						if (IsShadowStepExempted())
-						{
-							if (m_DistanceSinceLastPositionCheck > 800)
-							{
-								//if(!IsMQExemptedArea(zone->GetZoneID(), ppu->x_pos, ppu->y_pos, ppu->z_pos))
-								//{
+				if (speed > (runs * RuleR(Zone, MQWarpDetectionDistanceFactor))) {
+					if (!GetGMSpeed() && (runs >= GetBaseRunspeed() || (speed > (GetBaseRunspeed() * RuleR(Zone, MQWarpDetectionDistanceFactor))))) {
+						if (IsShadowStepExempted()) {
+							if (m_DistanceSinceLastPositionCheck > 800) {
 								CheatDetected(MQWarpShadowStep, ppu->x_pos, ppu->y_pos, ppu->z_pos);
-								//Death(this, 10000000, SPELL_UNKNOWN, _1H_BLUNT);
-								//}
 							}
 						}
-						else if (IsKnockBackExempted())
-						{
-							//still potential to trigger this if you're knocked back off a
-							//HUGE fall that takes > 2.5 seconds
-							if (speed > 30.0f)
-							{
+						else if (IsKnockBackExempted()) {
+							if (speed > 30.0f) {
 								CheatDetected(MQWarpKnockBack, ppu->x_pos, ppu->y_pos, ppu->z_pos);
 							}
 						}
-						else if (!IsPortExempted())
-						{
-							if (!IsMQExemptedArea(zone->GetZoneID(), ppu->x_pos, ppu->y_pos, ppu->z_pos))
-							{
-								if (speed > (runs * 2 * RuleR(Zone, MQWarpDetectionDistanceFactor)))
-								{
+						else if (!IsPortExempted()) {
+							if (!IsMQExemptedArea(zone->GetZoneID(), ppu->x_pos, ppu->y_pos, ppu->z_pos)) {
+								if (speed > (runs * 2 * RuleR(Zone, MQWarpDetectionDistanceFactor))) {
 									m_TimeSinceLastPositionCheck = cur_time;
 									m_DistanceSinceLastPositionCheck = 0.0f;
 									CheatDetected(MQWarp, ppu->x_pos, ppu->y_pos, ppu->z_pos);
-									//Death(this, 10000000, SPELL_UNKNOWN, _1H_BLUNT);
 								}
-								else
-								{
+								else {
 									CheatDetected(MQWarpLight, ppu->x_pos, ppu->y_pos, ppu->z_pos);
 								}
 							}
@@ -4574,7 +4540,7 @@ void Client::Handle_OP_ClientUpdate(const EQApplicationPacket *app)
 			DragCorpses();
 	}
 
-	//Check to see if PPU should trigger an update to the rewind position.
+	/* Check to see if PPU should trigger an update to the rewind position. */
 	float rewind_x_diff = 0;
 	float rewind_y_diff = 0;
 
@@ -4583,14 +4549,18 @@ void Client::Handle_OP_ClientUpdate(const EQApplicationPacket *app)
 	rewind_y_diff = ppu->y_pos - m_RewindLocation.y;
 	rewind_y_diff *= rewind_y_diff;
 
-	//We only need to store updated values if the player has moved.
-	//If the player has moved more than units for x or y, then we'll store
-	//his pre-PPU x and y for /rewind, in case he gets stuck.
+	/*
+		We only need to store updated values if the player has moved.
+		If the player has moved more than units for x or y, then we'll store
+		his pre-PPU x and y for /rewind, in case he gets stuck.
+	*/
 	if ((rewind_x_diff > 750) || (rewind_y_diff > 750))
 		m_RewindLocation = glm::vec3(m_Position);
 
-	//If the PPU was a large jump, such as a cross zone gate or Call of Hero,
-	//just update rewind coords to the new ppu coords. This will prevent exploitation.
+	/*
+		If the PPU was a large jump, such as a cross zone gate or Call of Hero,
+			just update rewind coordinates to the new ppu coordinates. This will prevent exploitation.
+	*/
 
 	if ((rewind_x_diff > 5000) || (rewind_y_diff > 5000))
 		m_RewindLocation = glm::vec3(ppu->x_pos, ppu->y_pos, ppu->z_pos);
@@ -4603,7 +4573,7 @@ void Client::Handle_OP_ClientUpdate(const EQApplicationPacket *app)
 		m_Proximity = glm::vec3(ppu->x_pos, ppu->y_pos, ppu->z_pos);
 	}
 
-	// Update internal state
+	/* Update internal state */
 	m_Delta = glm::vec4(ppu->delta_x, ppu->delta_y, ppu->delta_z, ppu->delta_heading);
 
 	if (IsTracking() && ((m_Position.x != ppu->x_pos) || (m_Position.y != ppu->y_pos))) {
@@ -4616,7 +4586,7 @@ void Client::Handle_OP_ClientUpdate(const EQApplicationPacket *app)
 		if(Trader) {
 			Trader_EndTrader();
 		}
-		// Break Hide if moving without sneaking and set rewind timer if moved
+		/* Break Hide if moving without sneaking and set rewind timer if moved */
 		if ((hidden || improved_hidden) && !sneaking) {
 			hidden = false;
 			improved_hidden = false;
@@ -4661,35 +4631,40 @@ void Client::Handle_OP_ClientUpdate(const EQApplicationPacket *app)
 		}
 	}
 
-	// Outgoing client packet
-	float tmpheading = EQ19toFloat(ppu->heading);
-	/* The clients send an update at best every 1.3 seconds
-	* We want to avoid reflecting these updates to other clients as much as possible
-	* The client also sends an update every 280 ms while turning, if we prevent
-	* sending these by checking if the location is the same too aggressively, clients end up spinning
-	* so keep a count of how many packets are the same within a tolerance and stop when we get there */
+	float new_heading = EQ19toFloat(ppu->heading);
+	int32 new_animation = ppu->animation;
 
-	bool pos_same = FCMP(ppu->y_pos, m_Position.y) && FCMP(ppu->x_pos, m_Position.x) && FCMP(tmpheading, m_Position.w) && ppu->animation == animation;
-	if (!pos_same || (pos_same && position_update_same_count < 6))
-	{
-		if (pos_same)
-			position_update_same_count++;
-		else
-			position_update_same_count = 0;
+	/* Update internal server position from what the client has sent */
+	m_Position.x = ppu->x_pos;
+	m_Position.y = ppu->y_pos;
+	m_Position.z = ppu->z_pos;
 
-		m_Position.x = ppu->x_pos;
-		m_Position.y = ppu->y_pos;
-		m_Position.z = ppu->z_pos;
-		m_Position.w = tmpheading;
+	/* Visual Debugging */
+	if (RuleB(Character, OPClientUpdateVisualDebug)) {
+		Log(Logs::General, Logs::Debug, "ClientUpdate: ppu x: %f y: %f z: %f h: %u", ppu->x_pos, ppu->y_pos, ppu->z_pos, ppu->heading);
+		this->SendAppearanceEffect(78, 0, 0, 0, 0);
+		this->SendAppearanceEffect(41, 0, 0, 0, 0);
+	}
+
+	/* Only feed real time updates when client is moving */
+	if (is_client_moving || new_heading != m_Position.w || new_animation != animation) {
+
 		animation = ppu->animation;
+		m_Position.w = EQ19toFloat(ppu->heading);
 
+		/* Broadcast update to other clients */
 		auto outapp = new EQApplicationPacket(OP_ClientUpdate, sizeof(PlayerPositionUpdateServer_Struct));
-		PlayerPositionUpdateServer_Struct* ppu = (PlayerPositionUpdateServer_Struct*)outapp->pBuffer;
-		MakeSpawnUpdate(ppu);
-		if (gmhideme)
+		PlayerPositionUpdateServer_Struct* position_update = (PlayerPositionUpdateServer_Struct*)outapp->pBuffer;
+
+		MakeSpawnUpdate(position_update);
+
+		if (gm_hide_me) {
 			entity_list.QueueClientsStatus(this, outapp, true, Admin(), 250);
-		else
-			entity_list.QueueCloseClients(this, outapp, true, 300, nullptr, false);
+		}
+		else {
+			entity_list.QueueCloseClients(this, outapp, true, 300, nullptr, true);
+		}
+
 		safe_delete(outapp);
 	}
 
@@ -4701,27 +4676,6 @@ void Client::Handle_OP_ClientUpdate(const EQApplicationPacket *app)
 
 	return;
 }
-
-/*
-void Client::Handle_OP_CloseContainer(const EQApplicationPacket *app)
-{
-if (app->size != sizeof(CloseContainer_Struct)) {
-LogFile->write(EQEMuLog::Error, "Invalid size on CloseContainer_Struct: Expected %i, Got %i",
-sizeof(CloseContainer_Struct), app->size);
-return;
-}
-
-SetTradeskillObject(nullptr);
-
-ClickObjectAck_Struct* oos = (ClickObjectAck_Struct*)app->pBuffer;
-Entity* entity = entity_list.GetEntityObject(oos->drop_id);
-if (entity && entity->IsObject()) {
-Object* object = entity->CastToObject();
-object->Close();
-}
-return;
-}
-*/
 
 void Client::Handle_OP_CombatAbility(const EQApplicationPacket *app)
 {
@@ -4809,7 +4763,7 @@ void Client::Handle_OP_Consider(const EQApplicationPacket *app)
 	else
 		con->faction = 1;
 	con->level = GetLevelCon(tmob->GetLevel());
-
+	
 	if (zone->IsPVPZone()) {
 		if (!tmob->IsNPC())
 			con->pvpcon = tmob->CastToClient()->GetPVP();
@@ -4831,25 +4785,97 @@ void Client::Handle_OP_Consider(const EQApplicationPacket *app)
 		}
 	}
 
-	if (con->faction == FACTION_APPREHENSIVE) {
-		con->faction = FACTION_SCOWLS;
+	// Titan Client appears to have different con levels/colors than what was correct in era for P2002.  Additionally, client seems to ignore the con->level you send it.
+	// To get con levels/colors to match the table in mob_ai.cpp, the below code (P2002ConSystem = True) is used.  This code ignores the client and instead has the server
+	// send the client a messsage.  If (P2002ConSystem = False), the code will revert to relying on the client to display the message, which won't likely match mob_ai.cpp.
+	if (RuleB(World, P2002ConSystem)) {
+			
+		// Get Target Name
+		std::string tar_name = tmob->GetName();
+		std::replace(tar_name.begin(), tar_name.end(), '_', ' ');
+		if(!tmob->IsClient())
+			tar_name.resize(tar_name.size() - 3);
+		else
+			con->faction = 5;
+		std::string gender;
+		
+		// Get Gender Message
+		switch (tmob->GetGender()) {
+			case 0:
+				gender = "he"; break;
+			case 1:
+				gender = "she"; break;
+			default:
+				gender = "it";
+		}
+		
+		// Get Faction Message
+		std::string faction_msg;
+		if(con->faction == FACTION_SCOWLS)
+			faction_msg = " scowls at you, ready to attack -- ";
+		else if(con->faction == FACTION_THREATENLY)
+			faction_msg = " glares at you threateningly -- ";
+		else if(con->faction == FACTION_DUBIOUS)
+			faction_msg = " glowers at you dubiously -- ";
+		else if(con->faction == FACTION_APPREHENSIVE)
+			faction_msg = " looks your way apprehensively -- ";
+		else if(con->faction == FACTION_INDIFFERENT)
+			faction_msg = " regards you indifferently -- ";
+		else if(con->faction == FACTION_AMIABLE)
+			faction_msg = " judges you amiably -- ";
+		else if(con->faction == FACTION_KINDLY)
+			faction_msg = " kindly considers you -- ";
+		else if(con->faction == FACTION_WARMLY)
+			faction_msg = " looks upon you warmly -- ";
+		else if(con->faction == FACTION_ALLY)
+			faction_msg = " regards you as an ally -- ";
+		
+		// Get Level Message
+		std::string level_msg;
+		if(con->level == CON_GREEN)
+			level_msg = "You could probably win this fight.";
+		else if(con->level == CON_LIGHTBLUE)
+			level_msg = "You would probably win this fight... it's not certain though.";
+		else if(con->level == CON_BLUE) {
+			gender[0] = toupper(gender[0]);
+			level_msg = gender + " appears to be quite formidable.";
+		}
+		else if(con->level == CON_WHITE)
+			level_msg = "Looks like quite a gamble.";
+		else if(con->level == CON_YELLOW)
+			level_msg = "Looks like " + gender + " would wipe the floor with you!";
+		else if(con->level == CON_RED)
+			level_msg = "What would you like your tombstone to say?";
+		
+		// Combine
+		std::string con_msg = tar_name + faction_msg + level_msg;
+		
+		// Send Con
+		SendColoredText(con->level, con_msg);
 	}
-	else if (con->faction == FACTION_DUBIOUS) {
-		con->faction = FACTION_THREATENLY;
+	else {
+			
+		if (con->faction == FACTION_APPREHENSIVE) {
+			con->faction = FACTION_SCOWLS;
+		}
+		else if (con->faction == FACTION_DUBIOUS) {
+			con->faction = FACTION_THREATENLY;
+		}
+		else if (con->faction == FACTION_SCOWLS) {
+			con->faction = FACTION_APPREHENSIVE;
+		}
+		else if (con->faction == FACTION_THREATENLY) {
+			con->faction = FACTION_DUBIOUS;
+		}
+		
+		mod_consider(tmob, con);
+		QueuePacket(outapp);
+		safe_delete(outapp);
 	}
-	else if (con->faction == FACTION_SCOWLS) {
-		con->faction = FACTION_APPREHENSIVE;
-	}
-	else if (con->faction == FACTION_THREATENLY) {
-		con->faction = FACTION_DUBIOUS;
-	}
-
-	mod_consider(tmob, con);
-
-	QueuePacket(outapp);
-	safe_delete(outapp);
+		
 	// only wanted to check raid target once
 	// and need con to still be around so, do it here!
+	/*
 	if (tmob->IsRaidTarget()) {
 		uint32 color = 0;
 		switch (con->level) {
@@ -4882,7 +4908,7 @@ void Client::Handle_OP_Consider(const EQApplicationPacket *app)
 
 		SendColoredText(color, std::string("This creature would take an army to defeat!"));
 	}
-
+	*/
 	// this could be done better, but this is only called when you con so w/e
 	// Shroud of Stealth has a special message
 	if (improved_hidden && (!tmob->see_improved_hide && (tmob->see_invis || tmob->see_hide)))
@@ -5381,8 +5407,8 @@ void Client::Handle_OP_DisarmTraps(const EQApplicationPacket *app)
 		{
 			Message(MT_Skills, "You disarm a trap.");
 			trap->disarmed = true;
-			trap->chkarea_timer.Disable();
-			trap->respawn_timer.Start((trap->respawn_time + zone->random.Int(0, trap->respawn_var)) * 1000);
+			Log(Logs::General, Logs::Traps, "Trap %d is disarmed.", trap->trap_id);
+			trap->UpdateTrap();
 		}
 		else
 		{
@@ -6764,7 +6790,8 @@ void Client::Handle_OP_GroupInvite2(const EQApplicationPacket *app)
 
 	GroupInvite_Struct* gis = (GroupInvite_Struct*)app->pBuffer;
 
-	Mob *Invitee = entity_list.GetMob(gis->invitee_name);
+	// We can only invite the current target.
+	Mob* Invitee = GetTarget();
 
 	if (Invitee == this)
 	{
@@ -6776,6 +6803,9 @@ void Client::Handle_OP_GroupInvite2(const EQApplicationPacket *app)
 	{
 		if (Invitee->IsClient())
 		{
+			// If the Invitee is correct (it is a valid client target), we set it as the person
+			// to invite.
+			strn0cpy(gis->invitee_name, Invitee->GetName(), 64);
 			if (Invitee->CastToClient()->MercOnlyOrNoGroup() && !Invitee->IsRaidGrouped())
 			{
 				if (app->GetOpcode() == OP_GroupInvite2)
@@ -6804,10 +6834,7 @@ void Client::Handle_OP_GroupInvite2(const EQApplicationPacket *app)
 	}
 	else
 	{
-		auto pack = new ServerPacket(ServerOP_GroupInvite, sizeof(GroupInvite_Struct));
-		memcpy(pack->pBuffer, gis, sizeof(GroupInvite_Struct));
-		worldserver.SendPacket(pack);
-		safe_delete(pack);
+		Message(0, "Invalid target!");
 	}
 	return;
 }
@@ -8956,12 +8983,12 @@ void Client::Handle_OP_LeaveAdventure(const EQApplicationPacket *app)
 
 void Client::Handle_OP_LeaveBoat(const EQApplicationPacket *app)
 {
-	Mob* boat = entity_list.GetMob(this->BoatID);	// find the mob corresponding to the boat id
+	Mob* boat = entity_list.GetMob(this->controlling_boat_id);	// find the mob corresponding to the boat id
 	if (boat) {
 		if ((boat->GetTarget() == this) && boat->GetHateAmount(this) == 0)	// if the client somehow left while still controlling the boat (and the boat isn't attacking them)
 			boat->SetTarget(0);			// fix it to stop later problems
 	}
-	this->BoatID = 0;
+	this->controlling_boat_id = 0;
 	return;
 }
 
@@ -9400,7 +9427,7 @@ void Client::Handle_OP_Mend(const EQApplicationPacket *app)
 
 	int mendhp = GetMaxHP() / 4;
 	int currenthp = GetHP();
-	if (zone->random.Int(0, 199) < (int)GetSkill(EQEmu::skills::SkillMend)) {
+	if (zone->random.Int(0, 99) < (int)GetSkill(EQEmu::skills::SkillMend)) {
 
 		int criticalchance = spellbonuses.CriticalMend + itembonuses.CriticalMend + aabonuses.CriticalMend;
 
@@ -9419,7 +9446,7 @@ void Client::Handle_OP_Mend(const EQApplicationPacket *app)
 		0 skill - 25% chance to worsen
 		20 skill - 23% chance to worsen
 		50 skill - 16% chance to worsen */
-		if ((GetSkill(EQEmu::skills::SkillMend) <= 75) && (zone->random.Int(GetSkill(EQEmu::skills::SkillMend), 100) < 75) && (zone->random.Int(1, 3) == 1))
+		if ((GetSkill(EQEmu::skills::SkillMend) <= 50) && (zone->random.Int(GetSkill(EQEmu::skills::SkillMend), 100) < 75) && (zone->random.Int(1, 3) == 1))
 		{
 			SetHP(currenthp > mendhp ? (GetHP() - mendhp) : 1);
 			SendHPUpdate();
@@ -11010,6 +11037,13 @@ void Client::Handle_OP_RaidCommand(const EQApplicationPacket *app)
 	{
 	case RaidCommandInviteIntoExisting:
 	case RaidCommandInvite: {
+		// This block checks if the invitee is targeted and is a client.
+		Mob *m = GetTarget();
+		if (!m || !m->IsClient()) {
+			Message(0, "Invalid target!");
+			break;
+		}
+
 		Client *i = entity_list.GetClientByName(ri->player_name);
 		if (!i)
 			break;
@@ -12446,6 +12480,7 @@ void Client::Handle_OP_ShopPlayerBuy(const EQApplicationPacket *app)
 	}
 	const EQEmu::ItemData* item = nullptr;
 	uint32 prevcharges = 0;
+	uint32 itemcharges = 0;
 	if (item_id == 0) { //check to see if its on the temporary table
 		std::list<TempMerchantList> tmp_merlist = zone->tmpmerchanttable[tmp->GetNPCTypeID()];
 		std::list<TempMerchantList>::const_iterator tmp_itr;
@@ -12456,6 +12491,7 @@ void Client::Handle_OP_ShopPlayerBuy(const EQApplicationPacket *app)
 				item_id = ml.item;
 				tmpmer_used = true;
 				prevcharges = ml.charges;
+				itemcharges = ml.itemcharges;
 				break;
 			}
 		}
@@ -12479,17 +12515,11 @@ void Client::Handle_OP_ShopPlayerBuy(const EQApplicationPacket *app)
 		Message(15, "You can only have one of a lore item.");
 		return;
 	}
-	if (tmpmer_used && (mp->quantity > prevcharges || item->MaxCharges > 1))
-	{
-		if (prevcharges > item->MaxCharges && item->MaxCharges > 1)
-			mp->quantity = item->MaxCharges;
-		else
-			mp->quantity = prevcharges;
-	}
 
-	// Item's stackable, but the quantity they want to buy exceeds the max stackable quantity.
-	if (item->Stackable && mp->quantity > item->StackSize)
+	if (item->Stackable && mp->quantity > item->StackSize) 	// Item is stackable, but the quantity they want to buy exceeds the max stackable quantity.
 		mp->quantity = item->StackSize;
+	else if (!item->Stackable && item->MaxCharges != 0) // If item has itemcharges (like puppet strings) then quantity is always 1
+		mp->quantity = 1;
 
 	auto outapp = new EQApplicationPacket(OP_ShopPlayerBuy, sizeof(Merchant_Sell_Struct));
 	Merchant_Sell_Struct* mpo = (Merchant_Sell_Struct*)outapp->pBuffer;
@@ -12500,10 +12530,10 @@ void Client::Handle_OP_ShopPlayerBuy(const EQApplicationPacket *app)
 
 	int16 freeslotid = INVALID_INDEX;
 	int16 charges = 0;
-	if (item->Stackable || item->MaxCharges > 1)
+	if (item->Stackable) // charges equal to quantity if an item is stackable, otherwise use itemcharges from temp merch table
 		charges = mp->quantity;
-	else
-		charges = item->MaxCharges;
+	else if (item->MaxCharges != 0) // check if item has charges
+		charges = itemcharges;
 
 	EQEmu::ItemInstance* inst = database.CreateItem(item, charges);
 
@@ -12513,7 +12543,7 @@ void Client::Handle_OP_ShopPlayerBuy(const EQApplicationPacket *app)
 	else
 		SinglePrice = (item->Price * (RuleR(Merchant, SellCostMod)) * item->SellRate);
 
-	if (item->MaxCharges > 1)
+	if (!item->Stackable && item->MaxCharges > 1)
 		mpo->price = SinglePrice;
 	else
 		mpo->price = SinglePrice * mp->quantity;
@@ -12575,9 +12605,9 @@ void Client::Handle_OP_ShopPlayerBuy(const EQApplicationPacket *app)
 	}
 	QueuePacket(outapp);
 	if (inst && tmpmer_used) {
-		int32 new_charges = prevcharges - mp->quantity;
-		zone->SaveTempItem(merchantid, tmp->GetNPCTypeID(), item_id, new_charges);
-		if (new_charges <= 0) {
+		int32 new_quantity = prevcharges - mp->quantity;
+		zone->SaveTempItem(merchantid, tmp->GetNPCTypeID(), item_id, new_quantity, itemcharges);
+		if (new_quantity <= 0) {
 			auto delitempacket = new EQApplicationPacket(OP_ShopDelItem, sizeof(Merchant_DelItem_Struct));
 			Merchant_DelItem_Struct* delitem = (Merchant_DelItem_Struct*)delitempacket->pBuffer;
 			delitem->itemslot = mp->itemslot;
@@ -12589,10 +12619,10 @@ void Client::Handle_OP_ShopPlayerBuy(const EQApplicationPacket *app)
 		}
 		else {
 			// Update the charges/quantity in the merchant window
-			inst->SetCharges(new_charges);
+			inst->SetCharges(itemcharges);
 			inst->SetPrice(SinglePrice);
 			inst->SetMerchantSlot(mp->itemslot);
-			inst->SetMerchantCount(new_charges);
+			inst->SetMerchantCount(new_quantity);
 
 			SendItemPacket(mp->itemslot, inst, ItemPacketMerchant);
 		}
@@ -12737,10 +12767,10 @@ void Client::Handle_OP_ShopPlayerSell(const EQApplicationPacket *app)
 
 	AddMoneyToPP(price, false);
 
-	if (inst->IsStackable() || inst->IsCharged())
+	if (inst->IsStackable())
 	{
 		unsigned int i_quan = inst->GetCharges();
-		if (mp->quantity > i_quan || inst->IsCharged())
+		if (mp->quantity > i_quan)
 			mp->quantity = i_quan;
 	}
 	else
@@ -12749,14 +12779,17 @@ void Client::Handle_OP_ShopPlayerSell(const EQApplicationPacket *app)
 	if (RuleB(EventLog, RecordSellToMerchant))
 		LogMerchant(this, vendor, mp->quantity, price, item, false);
 
-	int charges = mp->quantity;
+	int quantity = mp->quantity;
 	//Hack workaround so usable items with 0 charges aren't simply deleted
-	if (charges == 0 && item->ItemType != 11 && item->ItemType != 17 && item->ItemType != 19 && item->ItemType != 21)
-		charges = 1;
+	if (quantity == 0 && item->ItemType != 11 && item->ItemType != 17 && item->ItemType != 19 && item->ItemType != 21)
+		quantity = 1;
 
 	int freeslot = 0;
-	if (charges > 0 && (freeslot = zone->SaveTempItem(vendor->CastToNPC()->MerchantType, vendor->GetNPCTypeID(), itemid, charges, true)) > 0) {
+	if (quantity > 0 && (freeslot = zone->SaveTempItem(vendor->CastToNPC()->MerchantType, vendor->GetNPCTypeID(), itemid, quantity, inst->GetCharges(), true)) > 0) {
 		EQEmu::ItemInstance* inst2 = inst->Clone();
+
+		if (!item->Stackable && item->MaxCharges > 0) // set this item instance's charges to the charges of the temp item currently on the merchant
+			inst2->SetCharges(zone->GetTempMerchItem(vendor->CastToNPC()->MerchantType, vendor->GetNPCTypeID(), itemid).itemcharges);
 
 		while (true) {
 			if (inst2 == nullptr)
@@ -12806,7 +12839,7 @@ void Client::Handle_OP_ShopPlayerSell(const EQApplicationPacket *app)
 
 		qsaudit->items[0].char_slot = mp->itemslot;
 		qsaudit->items[0].item_id = itemid;
-		qsaudit->items[0].charges = charges;
+		qsaudit->items[0].charges = quantity;
 		qsaudit->items[0].aug_1 = m_inv[mp->itemslot]->GetAugmentItemID(1);
 		qsaudit->items[0].aug_2 = m_inv[mp->itemslot]->GetAugmentItemID(2);
 		qsaudit->items[0].aug_3 = m_inv[mp->itemslot]->GetAugmentItemID(3);

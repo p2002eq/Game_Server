@@ -174,6 +174,7 @@ int command_init(void)
 		command_add("checklos", "- Check for line of sight to your target", 50, command_checklos) ||
 		command_add("clearinvsnapshots", "[use rule] - Clear inventory snapshot history (true - elapsed entries, false - all entries)", 200, command_clearinvsnapshots) ||
 		command_add("corpse", "- Manipulate corpses, use with no arguments for help", 50, command_corpse) ||
+		command_add("corpsefix", "Attempts to bring corpses from underneath the ground within close proximity of the player", 0, command_corpsefix) ||
 		command_add("crashtest", "- Crash the zoneserver", 255, command_crashtest) ||
 		command_add("cvs", "- Summary of client versions currently online.", 200, command_cvs) ||
 		command_add("damage", "[amount] - Damage your target", 100, command_damage) ||
@@ -323,6 +324,7 @@ int command_init(void)
 		command_add("reloadrulesworld", "Executes a reload of all rules in world specifically.", 80, command_reloadworldrules) ||
 		command_add("reloadstatic", "- Reload Static Zone Data", 150, command_reloadstatic) ||
 		command_add("reloadtitles", "- Reload player titles from the database",  150, command_reloadtitles) ||
+		command_add("reloadtraps", "- Repops all traps in the current zone.", 80, command_reloadtraps) ||
 		command_add("reloadworld", "[0|1] - Clear quest cache (0 - no repop, 1 - repop)", 255, command_reloadworld) ||
 		command_add("reloadzps", "- Reload zone points from database", 150, command_reloadzps) ||
 		command_add("repop", "[delay] - Repop the zone with optional delay", 100, command_repop) ||
@@ -384,6 +386,7 @@ int command_init(void)
 		command_add("title", "[text] [1 = create title table row] - Set your or your player target's title", 50, command_title) ||
 		command_add("titlesuffix", "[text] [1 = create title table row] - Set your or your player target's title suffix", 50, command_titlesuffix) ||
 		command_add("traindisc", "[level] - Trains all the disciplines usable by the target, up to level specified. (may freeze client for a few seconds)", 150, command_traindisc) ||
+		command_add("trapinfo", "- Gets infomation about the traps currently spawned in the zone.", 81, command_trapinfo) ||
 		command_add("tune",  "Calculate ideal statical values related to combat.",  100, command_tune) ||
 		command_add("undeletechar", "- Undelete a character that was previously deleted.", 255, command_undeletechar) ||
 		command_add("undyeme", "- Remove dye from all of your armor slots", 0, command_undyeme) ||
@@ -3000,6 +3003,11 @@ void command_reloadqst(Client *c, const Seperator *sep)
 
 }
 
+void command_corpsefix(Client *c, const Seperator *sep)
+{
+	entity_list.CorpseFix(c);
+}
+
 void command_reloadworld(Client *c, const Seperator *sep)
 {
 	c->Message(0, "Reloading quest cache and repopping zones worldwide.");
@@ -3383,6 +3391,93 @@ void command_corpse(Client *c, const Seperator *sep)
 		else
 			c->Message(0, "Insufficient status to depop player corpse.");
 
+	}
+	else if (strcasecmp(sep->arg[1], "backups") == 0)
+	{
+		if (target == 0 || !target->IsClient())
+			c->Message(CC_Default, "Error: Target must be a player to list their backups.");
+		else
+		{
+			c->Message(CC_Red, "CorpseID : Zone , x , y , z , Items");
+			std::string query = StringFormat("SELECT id, zone_id, x, y, z FROM character_corpses_backup WHERE charid = %d", target->CastToClient()->CharacterID());
+			auto results = database.QueryDatabase(query);
+
+			if (!results.Success() || results.RowCount() == 0)
+			{
+				c->Message(CC_Red, "No corpse backups exist for %s with ID: %i.", target->GetName(), target->CastToClient()->CharacterID());
+				return;
+			}
+
+			for (auto row = results.begin(); row != results.end(); ++row)
+			{
+				std::string ic_query = StringFormat("SELECT COUNT(*) FROM character_corpse_items_backup WHERE corpse_id = %d", atoi(row[0]));
+				auto ic_results = database.QueryDatabase(ic_query);
+				auto ic_row = ic_results.begin();
+
+				c->Message(CC_Yellow, " %s:	%s, %s, %s, %s, (%s)", row[0], database.GetZoneName(atoi(row[1])), row[2], row[3], row[4], ic_row[0]);
+			}
+		}
+	}
+	else if (strcasecmp(sep->arg[1], "restore") == 0)
+	{
+		if (c->Admin() >= commandEditPlayerCorpses)
+		{
+			uint32 corpseid;
+			Client *t = c;
+
+			if (c->GetTarget() && c->GetTarget()->IsClient() && c->GetGM())
+				t = c->GetTarget()->CastToClient();
+			else
+			{
+				c->Message(CC_Default, "You must first turn your GM flag on and select a target!");
+				return;
+			}
+
+			if (!sep->IsNumber(2))
+			{
+				c->Message(CC_Default, "Usage: #corpse restore [corpse_id].");
+				return;
+			}
+			else
+				corpseid = atoi(sep->arg[2]);
+
+			if (!database.IsValidCorpseBackup(corpseid))
+			{
+				c->Message(CC_Red, "Backup corpse %i not found.", corpseid);
+				return;
+			}
+			else if (!database.IsValidCorpse(corpseid))
+			{
+				c->Message(CC_Red, "Corpse %i has been found! Please summon or delete it before attempting to restore from a backup.", atoi(sep->arg[2]));
+				return;
+			}
+			else if (!database.IsCorpseBackupOwner(corpseid, t->CharacterID()))
+			{
+				c->Message(CC_Red, "Targetted player is not the owner of the specified corpse!");
+				return;
+			}
+			else
+			{
+				if (database.CopyBackupCorpse(corpseid))
+				{
+					Corpse* PlayerCorpse = database.SummonCharacterCorpse(corpseid, t->CharacterID(), t->GetZoneID(), zone->GetInstanceID(), t->GetPosition());
+
+					if (!PlayerCorpse)
+						c->Message(CC_Default, "Summoning of backup corpse failed. Please escalate this issue.");
+
+					return;
+				}
+				else
+				{
+					c->Message(CC_Red, "There was an error copying corpse %i. Please contact a DB admin.", corpseid);
+					return;
+				}
+			}
+		}
+		else
+		{
+			c->Message(CC_Default, "Insufficient status to summon backup corpses.");
+		}
 	}
 	else if (sep->arg[1][0] == 0 || strcasecmp(sep->arg[1], "help") == 0) {
 		c->Message(0, "#Corpse Sub-Commands:");
@@ -7223,7 +7318,7 @@ void command_ginfo(Client *c, const Seperator *sep)
 void command_hp(Client *c, const Seperator *sep)
 {
 	c->SendHPUpdate();
-	c->SendManaUpdatePacket();
+	c->CheckManaEndUpdate();
 }
 
 void command_aggro(Client *c, const Seperator *sep)
@@ -8766,9 +8861,9 @@ void command_object(Client *c, const Seperator *sep)
 		// Verify no other objects already in this spot (accidental double-click of Hotkey?)
 		query = StringFormat(
 		    "SELECT COUNT(*) FROM object WHERE zoneid = %u "
-		    "AND version=%u AND (posx BETWEEN %.1f AND %.1f) "
-		    "AND (posy BETWEEN %.1f AND %.1f) "
-		    "AND (posz BETWEEN %.1f AND %.1f)",
+			"AND version=%u AND (xpos BETWEEN %.1f AND %.1f) "
+			"AND (ypos BETWEEN %.1f AND %.1f) "
+			"AND (zpos BETWEEN %.1f AND %.1f)",
 		    zone->GetZoneID(), zone->GetInstanceVersion(), od.x - 0.2f,
 		    od.x + 0.2f,	       // Yes, we're actually using a bounding box instead of a radius.
 		    od.y - 0.2f, od.y + 0.2f,  // Much less processing power used this way.
@@ -10927,6 +11022,17 @@ void command_godmode(Client *c, const Seperator *sep){
 	}
 	else
 		c->Message(CC_Default, "Usage: #godmode [on/off]");
+}
+
+void command_trapinfo(Client *c, const Seperator *sep)
+{
+	entity_list.GetTrapInfo(c);
+}
+
+void command_reloadtraps(Client *c, const Seperator *sep)
+{
+	entity_list.UpdateAllTraps(true, true);
+	c->Message(CC_Default, "Traps reloaded for %s.", zone->GetShortName());
 }
 
 // All new code added to command.cpp should be BEFORE this comment line. Do no append code to this file below the BOTS code block.

@@ -135,6 +135,8 @@ struct NPCType
 	uint32  combat_hp_regen;
 	uint32  combat_mana_regen;
 	bool	ignore_despawn;
+	bool	show_name; // should default on
+	bool	untargetable;
 };
 
 struct PlayerCorpse_Struct {

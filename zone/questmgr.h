@@ -218,7 +218,7 @@ public:
 	uint16 CreateGroundObjectFromModel(const char* model, const glm::vec4& position, uint8 type = 0x00, uint32 decay_time = 0);
 	void ModifyNPCStat(const char *identifier, const char *newValue);
 	void UpdateSpawnTimer(uint32 id, uint32 newTime);
-	void MerchantSetItem(uint32 NPCid, uint32 itemid, uint32 quantity = 0);
+	void MerchantSetItem(uint32 NPCid, uint32 itemid, uint32 quantity = 0, int charges = 0);
 	uint32 MerchantCountItem(uint32 NPCid, uint32 itemid);
 	uint16 CreateInstance(const char *zone, int16 version, uint32 duration);
 	void UpdateInstanceTimer(uint16 instance_id, uint32 new_duration);
@@ -255,6 +255,7 @@ public:
 	void CrossZoneSignalNPCByNPCTypeID(uint32 npctype_id, uint32 data);
 	void CrossZoneSignalPlayerByName(const char *CharName, uint32 data);
 	void CrossZoneSetEntityVariableByNPCTypeID(uint32 npctype_id, const char *id, const char *m_var);
+	void CrossZoneSetEntityVariableByClientName(const char *CharName, const char *id, const char *m_var);
 	void CrossZoneMessagePlayerByName(uint32 Type, const char *CharName, const char *Message);
 	void WorldWideMarquee(uint32 Type, uint32 Priority, uint32 FadeIn, uint32 FadeOut, uint32 Duration, const char *Message);
 	bool EnableRecipe(uint32 recipe_id);

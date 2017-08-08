@@ -42,6 +42,7 @@
 #define MAX_SKILL_PROCS 4 //Number of spells to check skill procs from. (This is arbitrary) [Single spell can have multiple proc checks]
 #define MAX_SYMPATHETIC_PROCS 10 // Number of sympathetic procs a client can have (This is arbitrary)
 
+#define AI_SPELL_MAX_PRIORITY 100 // Maximum priority number for AI spells.
 
 const int Z_AGGRO=10;
 
@@ -859,8 +860,10 @@ struct SPDat_Spell_Struct
 /* 233 */	//int spell_recourse_type; // -- SPELL_RECOURSE_TYPE
 /* 234 */	//bool only_during_fast_regen; // -- ONLY_DURING_FAST_REGEN
 /* 235 */	//bool is_beta_only; // -- IS_BETA_ONLY
+/* 235 */   int priority;
 /* 236 */	//int spell_subgroup; // -- SPELL_SUBGROUP
 			uint8 DamageShieldType; // This field does not exist in spells_us.txt
+
 };
 
 extern const SPDat_Spell_Struct* spells;

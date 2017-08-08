@@ -215,7 +215,7 @@ Mob* QuestManager::spawn2(int npc_type, int grid, int unused, const glm::vec4& p
 		{
 			npc->AssignWaypoints(grid);
 		}
-		npc->SendPosUpdate();
+		npc->SendPositionUpdate();
 		return npc;
 	}
 	return nullptr;
@@ -237,7 +237,7 @@ Mob* QuestManager::unique_spawn(int npc_type, int grid, int unused, const glm::v
 		{
 			npc->AssignWaypoints(grid);
 		}
-		npc->SendPosUpdate();
+		npc->SendPositionUpdate();
 		return npc;
 	}
 	return nullptr;
@@ -1665,7 +1665,7 @@ void QuestManager::respawn(int npcTypeID, int grid) {
 		if(grid > 0)
 			owner->CastToNPC()->AssignWaypoints(grid);
 
-		owner->SendPosUpdate();
+		owner->SendPositionUpdate();
 	}
 }
 
@@ -2496,7 +2496,7 @@ void QuestManager::UpdateSpawnTimer(uint32 id, uint32 newTime)
 }
 
 // used to set the number of an item in the selected merchant's temp item list. Defaults to zero if no quantity is specified.
-void QuestManager::MerchantSetItem(uint32 NPCid, uint32 itemid, uint32 quantity) {
+void QuestManager::MerchantSetItem(uint32 NPCid, uint32 itemid, uint32 quantity, int charges) {
 	Mob* merchant = entity_list.GetMobByNpcTypeID(NPCid);
 
 	if (merchant == 0 || !merchant->IsNPC() || (merchant->GetClass() != MERCHANT))
@@ -2506,7 +2506,7 @@ void QuestManager::MerchantSetItem(uint32 NPCid, uint32 itemid, uint32 quantity)
 	item = database.GetItem(itemid);
 	if (!item) return;		// if the item id doesn't correspond to a real item, do nothing
 
-	zone->SaveTempItem(merchant->CastToNPC()->MerchantType, NPCid, itemid, quantity);
+	zone->SaveTempItem(merchant->CastToNPC()->MerchantType, NPCid, itemid, quantity, charges);
 }
 
 uint32 QuestManager::MerchantCountItem(uint32 NPCid, uint32 itemid) {
@@ -2746,22 +2746,15 @@ const char* QuestManager::saylink(char* Phrase, bool silent, const char* LinkNam
 	auto results = database.QueryDatabase(query);
 	if (results.Success()) {
 		if (results.RowCount() >= 1) {
-			for (auto row = results.begin();row != results.end(); ++row)
+			for (auto row = results.begin(); row != results.end(); ++row)
 				sayid = atoi(row[0]);
-		} else { // Add a new saylink entry to the database and query it again for the new sayid number
+		} else {
 			std::string insert_query = StringFormat("INSERT INTO `saylink` (`phrase`) VALUES ('%s')", escaped_string);
 			results = database.QueryDatabase(insert_query);
 			if (!results.Success()) {
 				Log(Logs::General, Logs::Error, "Error in saylink phrase queries", results.ErrorMessage().c_str());
 			} else {
-				results = database.QueryDatabase(query);
-				if (results.Success()) {
-					if (results.RowCount() >= 1)
-						for(auto row = results.begin(); row != results.end(); ++row)
-							sayid = atoi(row[0]);
-				} else {
-					Log(Logs::General, Logs::Error, "Error in saylink phrase queries", results.ErrorMessage().c_str());
-				}
+				sayid = results.LastInsertedID();
 			}
 		}
 	}
@@ -3005,6 +2998,20 @@ void QuestManager::CrossZoneMessagePlayerByName(uint32 Type, const char *CharNam
 	CZSC->Type = Type;
 	strn0cpy(CZSC->CharName, CharName, 64);
 	strn0cpy(CZSC->Message, Message, 512);
+	worldserver.SendPacket(pack);
+	safe_delete(pack);
+}
+
+void QuestManager::CrossZoneSetEntityVariableByClientName(const char *CharName, const char *id, const char *m_var){
+	uint32 message_len = strlen(id) + 1;
+	uint32 message_len2 = strlen(m_var) + 1;
+	uint32 message_len3 = strlen(CharName) + 1;
+	auto pack = new ServerPacket(ServerOP_CZSetEntityVariableByClientName,
+								 sizeof(CZSetEntVarByClientName_Struct) + message_len + message_len2 + message_len3);
+	CZSetEntVarByClientName_Struct* CZ = (CZSetEntVarByClientName_Struct*)pack->pBuffer;
+	strn0cpy(CZ->CharName, CharName, 64);
+	strn0cpy(CZ->id, id, 256);
+	strn0cpy(CZ->m_var, m_var, 256);
 	worldserver.SendPacket(pack);
 	safe_delete(pack);
 }

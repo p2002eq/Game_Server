@@ -60,6 +60,9 @@ void command_ban(Client *c, const Seperator *sep);
 void command_beard(Client *c, const Seperator *sep);
 void command_beardcolor(Client *c, const Seperator *sep);
 void command_bind(Client* c, const Seperator *sep);
+void command_trapinfo(Client* c, const Seperator *sep);
+void command_reloadtraps(Client* c, const Seperator *sep);
+
 
 #ifdef BUGTRACK
 void command_bug(Client *c, const Seperator *sep);
@@ -72,6 +75,7 @@ void command_checklos(Client *c, const Seperator *sep);
 void command_clearinvsnapshots(Client *c, const Seperator *sep);
 void command_connectworldserver(Client *c, const Seperator *sep);
 void command_corpse(Client *c, const Seperator *sep);
+void command_corpsefix(Client *c, const Seperator *sep);
 void command_crashtest(Client *c, const Seperator *sep);
 void command_cvs(Client *c, const Seperator *sep);
 void command_d1(Client *c, const Seperator *sep);

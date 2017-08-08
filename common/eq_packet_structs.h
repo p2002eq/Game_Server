@@ -305,6 +305,7 @@ union
 	uint8 DestructibleUnk8;
 	uint32 DestructibleUnk9;
 	bool targetable_with_hotkey;
+	bool show_name;
 
 };
 
@@ -3574,6 +3575,7 @@ struct TempMerchantList {
 	uint32	slot;
 	uint32	item;
 	uint32	charges; //charges/quantity
+	uint32 itemcharges;
 	uint32	origslot;
 };
 
