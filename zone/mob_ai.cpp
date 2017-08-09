@@ -2034,30 +2034,42 @@ uint32 Mob::GetLevelForClientCon(uint8 mylevel, uint8 iOtherLevel) {
 	if (mylevel < 61 || diff >= 0)
 		return iOtherLevel;
 
-	uint32 fake_level;
+	uint32 fake_level = iOtherLevel;
+
 	switch (mylevel) {
 		case 61: {
-			fake_level = 50;// determine level to display to client to give correct con level for various mob levels
+			if (iOtherLevel <= 42)
+				fake_level = 40;
+			else if (iOtherLevel <= 47)
+				fake_level = 45;
 			break;
 		}
 		case 62: {
-			fake_level = 63;// determine level to display to client to give correct con level for various mob levels
+			if (iOtherLevel <= 45)
+				fake_level = 41;
+			else if (iOtherLevel <= 50)
+				fake_level = 46;
 			break;
 		}
 		case 63: {
-			fake_level = 62;// determine level to display to client to give correct con level for various mob levels
+			if (iOtherLevel <= 47)
+				fake_level = 42;
+			else if (iOtherLevel <= 52)
+				fake_level = 47;
 			break;
 		}
 		case 64: {
-			fake_level = 64;// determine level to display to client to give correct con level for various mob levels
+			if (iOtherLevel <= 48)
+				fake_level = 43;
+			else if (iOtherLevel <= 53)
+				fake_level = 48;
 			break;
 		}
 		case 65: {
-			fake_level = 100;// determine level to display to client to give correct con level for various mob levels
-			break;
-		}
-		default: {
-			fake_level = iOtherLevel;
+			if (iOtherLevel <= 49)
+				fake_level = 44;
+			else if (iOtherLevel <= 54)
+				fake_level = 49;
 			break;
 		}
 	}
