@@ -2029,6 +2029,42 @@ void Mob::AreaRampage(ExtraAttackOptions *opts)
 	m_specialattacks = eSpecialAttacks::None;
 }
 
+uint32 Mob::GetLevelForClientCon(uint8 mylevel, uint8 iOtherLevel) {
+	int16 diff = iOtherLevel - mylevel;
+	if (mylevel < 61 || diff >= 0)
+		return iOtherLevel;
+
+	uint32 fake_level;
+	switch (mylevel) {
+		case 61: {
+			fake_level = 50;// determine level to display to client to give correct con level for various mob levels
+			break;
+		}
+		case 62: {
+			fake_level = 63;// determine level to display to client to give correct con level for various mob levels
+			break;
+		}
+		case 63: {
+			fake_level = 62;// determine level to display to client to give correct con level for various mob levels
+			break;
+		}
+		case 64: {
+			fake_level = 64;// determine level to display to client to give correct con level for various mob levels
+			break;
+		}
+		case 65: {
+			fake_level = 100;// determine level to display to client to give correct con level for various mob levels
+			break;
+		}
+		default: {
+			fake_level = iOtherLevel;
+			break;
+		}
+	}
+
+	return fake_level;
+}
+
 uint32 Mob::GetLevelCon(uint8 mylevel, uint8 iOtherLevel) {
 	int16 diff = iOtherLevel - mylevel;
 	uint32 conlevel=0;

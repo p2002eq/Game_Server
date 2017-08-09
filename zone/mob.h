@@ -534,6 +534,7 @@ public:
 		m_Position.z = NewPosition.z; };
 
 	//AI
+	static uint32 GetLevelForClientCon(uint8 mylevel, uint8 iOtherLevel);
 	static uint32 GetLevelCon(uint8 mylevel, uint8 iOtherLevel);
 	inline uint32 GetLevelCon(uint8 iOtherLevel) const {
 		return this ? GetLevelCon(GetLevel(), iOtherLevel) : CON_GREEN; }

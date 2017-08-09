@@ -655,8 +655,8 @@ void EntityList::AddNPC(NPC *npc, bool SendSpawnPacket, bool dontqueue)
 	if (SendSpawnPacket) {
 		if (dontqueue) { // aka, SEND IT NOW BITCH!
 			auto app = new EQApplicationPacket;
-			npc->CreateSpawnPacket(app, npc);
-			QueueClients(npc, app);
+			npc->CreateSpawnPacket(app);
+			QueueClientsCreateSpawn(npc, app);
 			npc->SendArmorAppearance();
 			npc->SetAppearance(npc->GetGuardPointAnim(),false);
 			if (!npc->IsTargetable())
@@ -791,7 +791,7 @@ void EntityList::CheckSpawnQueue()
 			outapp = new EQApplicationPacket;
 			ns = iterator.GetData();
 			Mob::CreateSpawnPacket(outapp, ns);
-			QueueClients(0, outapp);
+			QueueClientsCreateSpawn(0, outapp);
 			auto it = npc_list.find(ns->spawn.spawnId);
 			if (it == npc_list.end()) {
 				// We must of despawned, hope that's the reason!
@@ -1279,8 +1279,7 @@ void EntityList::SendZoneSpawnsBulk(Client *client)
 	for (auto it = mob_list.begin(); it != mob_list.end(); ++it) {
 		spawn = it->second;
 		if (spawn && spawn->GetID() > 0 && spawn->Spawned()) {
-			if (spawn->IsClient() && (spawn->CastToClient()->GMHideMe(client) ||
-					spawn->CastToClient()->IsHoveringForRespawn()))
+			if (spawn->IsClient() && (spawn->CastToClient()->GMHideMe(client) || spawn->CastToClient()->IsHoveringForRespawn()))
 				continue;
 
 #if 1
@@ -1292,7 +1291,7 @@ void EntityList::SendZoneSpawnsBulk(Client *client)
 			
 			if (delaypkt) {
 				app = new EQApplicationPacket;
-				spawn->CreateSpawnPacket(app);
+				spawn->CreateSpawnPacket(app, client);
 				client->QueuePacket(app, true, Client::CLIENT_CONNECTED);
 				safe_delete(app);
 			}
@@ -1599,8 +1598,24 @@ void EntityList::QueueCloseClients(Mob *sender, const EQApplicationPacket *app,
 }
 
 //sender can be null
-void EntityList::QueueClients(Mob *sender, const EQApplicationPacket *app,
-		bool ignore_sender, bool ackreq)
+void EntityList::QueueClientsCreateSpawn(Mob *sender, const EQApplicationPacket *app, bool ignore_sender, bool ackreq)
+{
+	auto it = client_list.begin();
+	while (it != client_list.end()) {
+		Client *ent = it->second;
+
+		NewSpawn_Struct* ns = (NewSpawn_Struct*)app->pBuffer;
+		ns->spawn.level = Mob::GetLevelForClientCon(ent->GetLevel(), ns->spawn.level);
+
+		if ((!ignore_sender || ent != sender))
+			ent->QueuePacket(app, ackreq, Client::CLIENT_CONNECTED);
+
+		++it;
+	}
+}
+
+//sender can be null
+void EntityList::QueueClients(Mob *sender, const EQApplicationPacket *app, bool ignore_sender, bool ackreq)
 {
 	auto it = client_list.begin();
 	while (it != client_list.end()) {
