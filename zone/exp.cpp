@@ -523,6 +523,7 @@ void Client::SetLevel(uint8 set_level, bool command)
 	UpdateWho();
 	SendManaUpdate();
 	UpdateMercLevel();
+	entity_list.UpdateConLevels(this);
 	Save();
 }
 

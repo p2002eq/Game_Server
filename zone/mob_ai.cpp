@@ -2031,6 +2031,17 @@ void Mob::AreaRampage(ExtraAttackOptions *opts)
 
 uint32 Mob::GetLevelForClientCon(uint8 mylevel, uint8 iOtherLevel) {
 	int16 diff = iOtherLevel - mylevel;
+
+	// No light blue at 8 for client - 4 is green to 8 but should give xp. Making blue.
+	if (mylevel == 8 && iOtherLevel == 4)
+		return 5;
+
+	if (mylevel == 41 && iOtherLevel == 26)
+		return 25;
+
+	if (mylevel == 42 && iOtherLevel == 27)
+		return 26;
+
 	if (mylevel < 61 || diff >= 0)
 		return iOtherLevel;
 

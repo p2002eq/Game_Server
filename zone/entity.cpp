@@ -1597,6 +1597,18 @@ void EntityList::QueueCloseClients(Mob *sender, const EQApplicationPacket *app,
 	}
 }
 
+// This is to fool a specific client into thinking a mob is
+// a different level to get the right con color for p2002 era.
+// Run whenever a player changes levels.
+void EntityList::UpdateConLevels(Client *specific_target) {
+	auto it = npc_list.begin();
+	while (it != npc_list.end()) {
+		uint32 in_level = Mob::GetLevelForClientCon(specific_target->GetLevel(), it->second->GetLevel());
+		it->second->SetConLevel(in_level, specific_target);
+		++it;
+	}
+}
+
 //sender can be null
 void EntityList::QueueClientsCreateSpawn(Mob *sender, const EQApplicationPacket *app, bool ignore_sender, bool ackreq)
 {
