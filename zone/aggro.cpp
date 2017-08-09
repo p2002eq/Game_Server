@@ -325,7 +325,8 @@ bool Mob::CheckWillAggro(Mob *mob) {
 	(
 			//old InZone check taken care of above by !mob->CastToClient()->Connected()
 			(
-					( GetINT() <= RuleI(Aggro, IntAggroThreshold) )
+					( RuleB(Aggro, UndeadAlwaysAggro) && GetBodyType() == BT_Undead)
+					||( GetINT() <= RuleI(Aggro, IntAggroThreshold) )
 					||( mob->IsClient() && mob->CastToClient()->IsSitting() )
 					||( mob->GetLevelCon(GetLevel()) != CON_GREEN )
 
