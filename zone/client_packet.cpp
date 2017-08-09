@@ -12516,9 +12516,13 @@ void Client::Handle_OP_ShopPlayerBuy(const EQApplicationPacket *app)
 		return;
 	}
 
-	if (item->Stackable && mp->quantity > item->StackSize) 	// Item is stackable, but the quantity they want to buy exceeds the max stackable quantity.
-		mp->quantity = item->StackSize;
-	else if (!item->Stackable && item->MaxCharges != 0) // If item has itemcharges (like puppet strings) then quantity is always 1
+	if (item->Stackable) {
+		if (prevcharges && mp->quantity > prevcharges)
+			mp->quantity = prevcharges;
+		if (mp->quantity > item->StackSize)
+			mp->quantity = item->StackSize;
+	}
+	else if (!item->Stackable && item->MaxCharges != 0)
 		mp->quantity = 1;
 
 	auto outapp = new EQApplicationPacket(OP_ShopPlayerBuy, sizeof(Merchant_Sell_Struct));
