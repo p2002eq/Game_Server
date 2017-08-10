@@ -499,9 +499,9 @@ RULE_REAL(Combat, AvgDefProcsPerMinute, 2.0)
 RULE_REAL(Combat, DefProcPerMinAgiContrib, 0.075) //How much agility contributes to defensive proc rate
 RULE_INT(Combat, SpecialAttackACBonus, 15) //Percent amount of damage per AC gained for certain special attacks (damage = AC*SpecialAttackACBonus/100).
 RULE_INT(Combat, NPCFlurryChance, 20) // Chance for NPC to flurry.
-RULE_BOOL (Combat,TauntOverLevel, 1) //Allows you to taunt NPC's over warriors level.
-RULE_REAL (Combat,TauntSkillFalloff, 0.33)//For every taunt skill point that's not maxed you lose this % chance to taunt.
-RULE_BOOL (Combat,EXPFromDmgShield, false) //Determine if damage from a damage shield counts for EXP gain.
+RULE_BOOL(Combat, TauntOverLevel, 1) //Allows you to taunt NPC's over warriors level.
+RULE_REAL(Combat, TauntSkillFalloff, 0.33)//For every taunt skill point that's not maxed you lose this % chance to taunt.
+RULE_BOOL(Combat, EXPFromDmgShield, false) //Determine if damage from a damage shield counts for EXP gain.
 RULE_INT(Combat, MonkACBonusWeight, 15)
 RULE_INT(Combat, ClientStunLevel, 55) //This is the level where client kicks and bashes can stun the target
 RULE_INT(Combat, QuiverHasteCap, 1000) //Quiver haste cap 1000 on live for a while, currently 700 on live
@@ -537,7 +537,7 @@ RULE_INT(NPC, MinorNPCCorpseDecayTimeMS, 450000) //level<55
 RULE_INT(NPC, MajorNPCCorpseDecayTimeMS, 1500000) //level>=55
 RULE_INT(NPC, CorpseUnlockTimer, 150000)
 RULE_INT(NPC, EmptyNPCCorpseDecayTimeMS, 0)
-RULE_BOOL (NPC, UseItemBonusesForNonPets, true)
+RULE_BOOL(NPC, UseItemBonusesForNonPets, true)
 RULE_INT(NPC, SayPauseTimeInSec, 5)
 RULE_INT(NPC, OOCRegen, 0)
 RULE_BOOL(NPC, BuffFriends, false)
@@ -573,6 +573,7 @@ RULE_BOOL(Aggro, UseLevelAggro, true) // Level 18+ and Undead will aggro regardl
 RULE_BOOL(Aggro, UndeadAlwaysAggro, true) // should undead always aggro?
 RULE_INT(Aggro, ClientAggroCheckInterval, 6) // Interval in which clients actually check for aggro - in seconds
 RULE_INT(Aggro, InitialAggroBonus, 100) // Initial Aggro Bonus, Default 100
+RULE_BOOL(Aggro, PetsTriggerAggro, false)
 RULE_CATEGORY_END()
 
 RULE_CATEGORY(TaskSystem)
