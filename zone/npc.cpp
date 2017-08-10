@@ -1933,6 +1933,12 @@ void NPC::PetOnSpawn(NewSpawn_Struct* ns)
 	}
 }
 
+// This is to fool a specific client into thinking a mob is a different level to get the right con color
+void NPC::SetConLevel(uint8 in_level, Client *specific_target)
+{
+	SendAppearancePacket(AT_WhoLevel, in_level, false, true, specific_target);
+}
+
 void NPC::SetLevel(uint8 in_level, bool command)
 {
 	if(in_level > level)
