@@ -2929,6 +2929,9 @@ int Mob::CheckStackConflict(uint16 spellid1, int caster_level1, uint16 spellid2,
 
 	Log(Logs::Detail, Logs::Spells, "Check Stacking on old %s (%d) @ lvl %d (by %s) vs. new %s (%d) @ lvl %d (by %s)", sp1.name, spellid1, caster_level1, (caster1==nullptr)?"Nobody":caster1->GetName(), sp2.name, spellid2, caster_level2, (caster2==nullptr)?"Nobody":caster2->GetName());
 
+	if (IsResurrectionEffects(spellid1))
+		return 0;
+
 	if (spellid1 == spellid2 ) {
 		if (!IsStackableDot(spellid1) && !(spellid1 == 2751)) { // Manaburn cannot land on a target with the debuff
 			if (caster_level1 > caster_level2) { // cur buff higher level than new
@@ -3023,7 +3026,7 @@ int Mob::CheckStackConflict(uint16 spellid1, int caster_level1, uint16 spellid2,
 					return -1;
 			}
 
-			if(effect2 == SE_StackingCommand_Overwrite)
+			if (effect2 == SE_StackingCommand_Overwrite)
 			{
 				overwrite_effect = sp2.base[i];
 				overwrite_slot = sp2.formula[i] - 201;	//they use base 1 for slots, we use base 0
