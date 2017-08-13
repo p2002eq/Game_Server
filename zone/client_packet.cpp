@@ -12537,7 +12537,7 @@ void Client::Handle_OP_ShopPlayerBuy(const EQApplicationPacket *app)
 	if (item->Stackable) // charges equal to quantity if an item is stackable, otherwise use itemcharges from temp merch table
 		charges = mp->quantity;
 	else if (item->MaxCharges != 0) // check if item has charges
-		charges = itemcharges;
+		charges = tmpmer_used ? itemcharges : item->MaxCharges;
 
 	EQEmu::ItemInstance* inst = database.CreateItem(item, charges);
 
