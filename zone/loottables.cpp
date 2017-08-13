@@ -340,7 +340,6 @@ void NPC::AddLootDrop(const EQEmu::ItemData *item2, ItemList* itemlist, int16 ch
 			eslot = EQEmu::textures::weaponPrimary;
 			if (item2->Damage > 0) {
 				SendAddPlayerState(PlayerState::PrimaryWeaponEquipped);
-				SetFacestab(true);
 			}
 			if (item2->IsType2HWeapon())
 				SetTwoHanderEquipped(true);
