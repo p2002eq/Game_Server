@@ -4769,7 +4769,7 @@ float Mob::ResistSpell(uint8 resist_type, uint16 spell_id, Mob *caster, bool use
 	}
 
 	if (IsNPC())
-		resist_chance += (int)(resist_chance * RuleR(Spells, NPCResistMod));
+		resist_chance += RuleI(Spells, NPCResistMod);
 
 	//Finally our roll
 	int roll = zone->random.Int(0, 200);
