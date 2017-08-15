@@ -4472,7 +4472,7 @@ bool Mob::IsImmuneToSpell(uint16 spell_id, Mob *caster)
 // pvp_resist_cap
 float Mob::ResistSpell(uint8 resist_type, uint16 spell_id, Mob *caster, bool use_resist_override, int resist_override, bool CharismaCheck, bool CharmTick, bool IsRoot, int level_override)
 {
-	// Pets use owner's resistances
+	// Pets use owner's resistances if the pet isn't a charmed pet
 	if (IsPet() && !IsCharmed()) {
 		return GetOwner()->ResistSpell(resist_type, spell_id, caster, use_resist_override, resist_override, CharismaCheck, CharmTick, IsRoot, level_override);
 	}
@@ -4767,6 +4767,9 @@ float Mob::ResistSpell(uint8 resist_type, uint16 spell_id, Mob *caster, bool use
 		if (resist_chance < static_cast<int>(min_rootbreakchance))
 			resist_chance = min_rootbreakchance;
 	}
+
+	if (IsNPC())
+		resist_chance += (int)(resist_chance * RuleR(Spells, NPCResistMod));
 
 	//Finally our roll
 	int roll = zone->random.Int(0, 200);
