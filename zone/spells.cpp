@@ -4560,18 +4560,28 @@ float Mob::ResistSpell(uint8 resist_type, uint16 spell_id, Mob *caster, bool use
 	{
 	case RESIST_FIRE:
 		target_resist = GetFR();
+		if (IsNPC())
+			target_resist += RuleI(Spells, NPCResistModFire);
 		break;
 	case RESIST_COLD:
 		target_resist = GetCR();
+		if (IsNPC())
+			target_resist += RuleI(Spells, NPCResistModCold);
 		break;
 	case RESIST_MAGIC:
 		target_resist = GetMR();
+		if (IsNPC())
+			target_resist += RuleI(Spells, NPCResistModMagic);
 		break;
 	case RESIST_DISEASE:
 		target_resist = GetDR();
+		if (IsNPC())
+			target_resist += RuleI(Spells, NPCResistModDisease);
 		break;
 	case RESIST_POISON:
 		target_resist = GetPR();
+		if (IsNPC())
+			target_resist += RuleI(Spells, NPCResistModPoison);
 		break;
 	case RESIST_CORRUPTION:
 		target_resist = GetCorrup();
@@ -4768,8 +4778,11 @@ float Mob::ResistSpell(uint8 resist_type, uint16 spell_id, Mob *caster, bool use
 			resist_chance = min_rootbreakchance;
 	}
 
-	if (IsNPC())
+	if (IsNPC()) {
 		resist_chance += RuleI(Spells, NPCResistMod);
+		if (IsDamageSpell(spell_id))
+			resist_chance += RuleI(Spells, NPCResistModDamage);
+	}
 
 	//Finally our roll
 	int roll = zone->random.Int(0, 200);
