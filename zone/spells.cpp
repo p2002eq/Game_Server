@@ -1446,7 +1446,8 @@ void Mob::CastedSpellFinished(uint16 spell_id, uint32 target_id, CastingSlot slo
 		if(IsClient())
 		{
 			Client *c = CastToClient();
-			c->CheckSongSkillIncrease(spell_id);
+			if (!IsFromItem)
+				c->CheckSongSkillIncrease(spell_id);
 			if (spells[spell_id].EndurTimerIndex > 0 && slot < CastingSlot::MaxGems)
 				c->SetLinkedSpellReuseTimer(spells[spell_id].EndurTimerIndex, spells[spell_id].recast_time / 1000);
 			c->MemorizeSpell(static_cast<uint32>(slot), spell_id, memSpellSpellbar);
@@ -1469,7 +1470,7 @@ void Mob::CastedSpellFinished(uint16 spell_id, uint32 target_id, CastingSlot slo
 			SetMana(GetMana());
 
 			// skills
-			if (EQEmu::skills::IsCastingSkill(spells[spell_id].skill)) {
+			if (EQEmu::skills::IsCastingSkill(spells[spell_id].skill) && !IsFromItem) {
 				c->CheckIncreaseSkill(spells[spell_id].skill, nullptr);
 
 				// increased chance of gaining channel skill if you regained concentration
@@ -2929,6 +2930,9 @@ int Mob::CheckStackConflict(uint16 spellid1, int caster_level1, uint16 spellid2,
 
 	Log(Logs::Detail, Logs::Spells, "Check Stacking on old %s (%d) @ lvl %d (by %s) vs. new %s (%d) @ lvl %d (by %s)", sp1.name, spellid1, caster_level1, (caster1==nullptr)?"Nobody":caster1->GetName(), sp2.name, spellid2, caster_level2, (caster2==nullptr)?"Nobody":caster2->GetName());
 
+	if (IsResurrectionEffects(spellid1))
+		return 0;
+
 	if (spellid1 == spellid2 ) {
 		if (!IsStackableDot(spellid1) && !(spellid1 == 2751)) { // Manaburn cannot land on a target with the debuff
 			if (caster_level1 > caster_level2) { // cur buff higher level than new
@@ -3023,7 +3027,7 @@ int Mob::CheckStackConflict(uint16 spellid1, int caster_level1, uint16 spellid2,
 					return -1;
 			}
 
-			if(effect2 == SE_StackingCommand_Overwrite)
+			if (effect2 == SE_StackingCommand_Overwrite)
 			{
 				overwrite_effect = sp2.base[i];
 				overwrite_slot = sp2.formula[i] - 201;	//they use base 1 for slots, we use base 0
@@ -4468,7 +4472,7 @@ bool Mob::IsImmuneToSpell(uint16 spell_id, Mob *caster)
 // pvp_resist_cap
 float Mob::ResistSpell(uint8 resist_type, uint16 spell_id, Mob *caster, bool use_resist_override, int resist_override, bool CharismaCheck, bool CharmTick, bool IsRoot, int level_override)
 {
-	// Pets use owner's resistances
+	// Pets use owner's resistances if the pet isn't a charmed pet
 	if (IsPet() && !IsCharmed()) {
 		return GetOwner()->ResistSpell(resist_type, spell_id, caster, use_resist_override, resist_override, CharismaCheck, CharmTick, IsRoot, level_override);
 	}
@@ -4556,18 +4560,28 @@ float Mob::ResistSpell(uint8 resist_type, uint16 spell_id, Mob *caster, bool use
 	{
 	case RESIST_FIRE:
 		target_resist = GetFR();
+		if (IsNPC())
+			target_resist += RuleI(Spells, NPCResistModFire);
 		break;
 	case RESIST_COLD:
 		target_resist = GetCR();
+		if (IsNPC())
+			target_resist += RuleI(Spells, NPCResistModCold);
 		break;
 	case RESIST_MAGIC:
 		target_resist = GetMR();
+		if (IsNPC())
+			target_resist += RuleI(Spells, NPCResistModMagic);
 		break;
 	case RESIST_DISEASE:
 		target_resist = GetDR();
+		if (IsNPC())
+			target_resist += RuleI(Spells, NPCResistModDisease);
 		break;
 	case RESIST_POISON:
 		target_resist = GetPR();
+		if (IsNPC())
+			target_resist += RuleI(Spells, NPCResistModPoison);
 		break;
 	case RESIST_CORRUPTION:
 		target_resist = GetCorrup();
@@ -4762,6 +4776,12 @@ float Mob::ResistSpell(uint8 resist_type, uint16 spell_id, Mob *caster, bool use
 
 		if (resist_chance < static_cast<int>(min_rootbreakchance))
 			resist_chance = min_rootbreakchance;
+	}
+
+	if (IsNPC()) {
+		resist_chance += RuleI(Spells, NPCResistMod);
+		if (IsDamageSpell(spell_id))
+			resist_chance += RuleI(Spells, NPCResistModDamage);
 	}
 
 	//Finally our roll

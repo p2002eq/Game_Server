@@ -341,6 +341,13 @@ RULE_CATEGORY_END()
 RULE_CATEGORY(Spells)
 RULE_INT(Spells, AutoResistDiff, 15)
 RULE_REAL(Spells, ResistChance, 2.0) //chance to resist given no resists and same level
+RULE_INT(Spells, NPCResistMod, 0) // skew total NPC resists, resist += this
+RULE_INT(Spells, NPCResistModDamage, 0) // skew NPC resists for damage spells, resist += this
+RULE_INT(Spells, NPCResistModFire, 0)
+RULE_INT(Spells, NPCResistModCold, 0)
+RULE_INT(Spells, NPCResistModMagic, 0)
+RULE_INT(Spells, NPCResistModDisease, 0)
+RULE_INT(Spells, NPCResistModPoison, 0)
 RULE_REAL(Spells, ResistMod, 0.40) //multiplier, chance to resist = this * ResistAmount
 RULE_REAL(Spells, PartialHitChance, 0.7) //The chance when a spell is resisted that it will partial hit.
 RULE_REAL(Spells, PartialHitChanceFear, 0.25) //The chance when a fear spell is resisted that it will partial hit.
@@ -499,9 +506,9 @@ RULE_REAL(Combat, AvgDefProcsPerMinute, 2.0)
 RULE_REAL(Combat, DefProcPerMinAgiContrib, 0.075) //How much agility contributes to defensive proc rate
 RULE_INT(Combat, SpecialAttackACBonus, 15) //Percent amount of damage per AC gained for certain special attacks (damage = AC*SpecialAttackACBonus/100).
 RULE_INT(Combat, NPCFlurryChance, 20) // Chance for NPC to flurry.
-RULE_BOOL (Combat,TauntOverLevel, 1) //Allows you to taunt NPC's over warriors level.
-RULE_REAL (Combat,TauntSkillFalloff, 0.33)//For every taunt skill point that's not maxed you lose this % chance to taunt.
-RULE_BOOL (Combat,EXPFromDmgShield, false) //Determine if damage from a damage shield counts for EXP gain.
+RULE_BOOL(Combat, TauntOverLevel, 1) //Allows you to taunt NPC's over warriors level.
+RULE_REAL(Combat, TauntSkillFalloff, 0.33)//For every taunt skill point that's not maxed you lose this % chance to taunt.
+RULE_BOOL(Combat, EXPFromDmgShield, false) //Determine if damage from a damage shield counts for EXP gain.
 RULE_INT(Combat, MonkACBonusWeight, 15)
 RULE_INT(Combat, ClientStunLevel, 55) //This is the level where client kicks and bashes can stun the target
 RULE_INT(Combat, QuiverHasteCap, 1000) //Quiver haste cap 1000 on live for a while, currently 700 on live
@@ -537,7 +544,7 @@ RULE_INT(NPC, MinorNPCCorpseDecayTimeMS, 450000) //level<55
 RULE_INT(NPC, MajorNPCCorpseDecayTimeMS, 1500000) //level>=55
 RULE_INT(NPC, CorpseUnlockTimer, 150000)
 RULE_INT(NPC, EmptyNPCCorpseDecayTimeMS, 0)
-RULE_BOOL (NPC, UseItemBonusesForNonPets, true)
+RULE_BOOL(NPC, UseItemBonusesForNonPets, true)
 RULE_INT(NPC, SayPauseTimeInSec, 5)
 RULE_INT(NPC, OOCRegen, 0)
 RULE_BOOL(NPC, BuffFriends, false)
@@ -567,11 +574,14 @@ RULE_INT(Aggro, SongAggroMod, 33)
 RULE_INT(Aggro, PetSpellAggroMod, 10)
 RULE_REAL(Aggro, TunnelVisionAggroMod, 0.75) //people not currently the top hate generate this much hate on a Tunnel Vision mob
 RULE_INT(Aggro, MaxScalingProcAggro, 400) // Set to -1 for no limit. Maxmimum amount of aggro that HP scaling SPA effect in a proc will add.
+RULE_BOOL(Aggro, GreenAggroLevel, 19)
 RULE_INT(Aggro, IntAggroThreshold, 75) // Int <= this will aggro regardless of level difference.
 RULE_BOOL(Aggro, AllowTickPulling, false) // tick pulling is an exploit in an NPC's call for help fixed sometime in 2006 on live
 RULE_BOOL(Aggro, UseLevelAggro, true) // Level 18+ and Undead will aggro regardless of level difference. (this will disabled Rule:IntAggroThreshold if set to true)
+RULE_BOOL(Aggro, UndeadAlwaysAggro, true) // should undead always aggro?
 RULE_INT(Aggro, ClientAggroCheckInterval, 6) // Interval in which clients actually check for aggro - in seconds
 RULE_INT(Aggro, InitialAggroBonus, 100) // Initial Aggro Bonus, Default 100
+RULE_BOOL(Aggro, PetsTriggerAggro, false)
 RULE_CATEGORY_END()
 
 RULE_CATEGORY(TaskSystem)

@@ -11037,13 +11037,6 @@ void Client::Handle_OP_RaidCommand(const EQApplicationPacket *app)
 	{
 	case RaidCommandInviteIntoExisting:
 	case RaidCommandInvite: {
-		// This block checks if the invitee is targeted and is a client.
-		Mob *m = GetTarget();
-		if (!m || !m->IsClient()) {
-			Message(0, "Invalid target!");
-			break;
-		}
-
 		Client *i = entity_list.GetClientByName(ri->player_name);
 		if (!i)
 			break;
@@ -12537,7 +12530,7 @@ void Client::Handle_OP_ShopPlayerBuy(const EQApplicationPacket *app)
 	if (item->Stackable) // charges equal to quantity if an item is stackable, otherwise use itemcharges from temp merch table
 		charges = mp->quantity;
 	else if (item->MaxCharges != 0) // check if item has charges
-		charges = itemcharges;
+		charges = tmpmer_used ? itemcharges : item->MaxCharges;
 
 	EQEmu::ItemInstance* inst = database.CreateItem(item, charges);
 

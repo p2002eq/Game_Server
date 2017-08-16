@@ -2029,9 +2029,25 @@ void Mob::AreaRampage(ExtraAttackOptions *opts)
 	m_specialattacks = eSpecialAttacks::None;
 }
 
+uint32 Mob::GetLevelForClientCon(uint8 mylevel, uint8 iOtherLevel) {
+	int16 diff = iOtherLevel - mylevel;
+
+	if (diff >= 0 || mylevel > MAX_CON_LEVELS)
+		return iOtherLevel; // white/yellow/red is correct as database level
+
+	// this determines a "fake" level to send a
+	// client based on their level to give era-correct con color
+	auto levels = CON_LEVELS_MAP[mylevel - 1];
+	if (levels[2] && iOtherLevel <= levels[0] )
+		return levels[2]; // green
+	else if (levels[3] && iOtherLevel <= levels[1])
+		return levels[3]; // light blue
+	else
+		return iOtherLevel; // blue
+}
+
 uint32 Mob::GetLevelCon(uint8 mylevel, uint8 iOtherLevel) {
 	int16 diff = iOtherLevel - mylevel;
-	uint32 conlevel=0;
 
 	if (diff == 0)
 		return CON_WHITE;
@@ -2039,198 +2055,20 @@ uint32 Mob::GetLevelCon(uint8 mylevel, uint8 iOtherLevel) {
 		return CON_YELLOW;
 	else if (diff >= 3)
 		return CON_RED;
-
-	if (mylevel <= 7)
-	{
-		if (diff <= -4)
-			conlevel = CON_GREEN;
-		else
-			conlevel = CON_BLUE;
-	}
-	else if (mylevel <= 8)
-	{
-		if (diff <= -5)
-			conlevel = CON_GREEN;
-		else if (diff <= -4)
-			conlevel = CON_LIGHTBLUE;
-		else
-			conlevel = CON_BLUE;
-	}
-	else if (mylevel <= 12)
-	{
-		if (diff <= -6)
-			conlevel = CON_GREEN;
-		else if (diff <= -4)
-			conlevel = CON_LIGHTBLUE;
-		else
-			conlevel = CON_BLUE;
-	}
-	else if (mylevel <= 16)
-	{
-		if (diff <= -7)
-			conlevel = CON_GREEN;
-		else if (diff <= -5)
-			conlevel = CON_LIGHTBLUE;
-		else
-			conlevel = CON_BLUE;
-	}
-	else if (mylevel <= 20)
-	{
-		if (diff <= -8)
-			conlevel = CON_GREEN;
-		else if (diff <= -6)
-			conlevel = CON_LIGHTBLUE;
-		else
-			conlevel = CON_BLUE;
-	}
-	else if (mylevel <= 24)
-	{
-		if (diff <= -9)
-			conlevel = CON_GREEN;
-		else if (diff <= -7)
-			conlevel = CON_LIGHTBLUE;
-		else
-			conlevel = CON_BLUE;
-	}
-	else if (mylevel <= 28)
-	{
-		if (diff <= -10)
-			conlevel = CON_GREEN;
-		else if (diff <= -8)
-			conlevel = CON_LIGHTBLUE;
-		else
-			conlevel = CON_BLUE;
-	}
-	else if (mylevel <= 30)
-	{
-		if (diff <= -11)
-			conlevel = CON_GREEN;
-		else if (diff <= -9)
-			conlevel = CON_LIGHTBLUE;
-		else
-			conlevel = CON_BLUE;
-	}
-	else if (mylevel <= 32)
-	{
-		if (diff <= -12)
-			conlevel = CON_GREEN;
-		else if (diff <= -9)
-			conlevel = CON_LIGHTBLUE;
-		else
-			conlevel = CON_BLUE;
-	}
-	else if (mylevel <= 36)
-	{
-		if (diff <= -13)
-			conlevel = CON_GREEN;
-		else if (diff <= -10)
-			conlevel = CON_LIGHTBLUE;
-		else
-			conlevel = CON_BLUE;
-	}
-	else if (mylevel <= 40)
-	{
-		if (diff <= -14)
-			conlevel = CON_GREEN;
-		else if (diff <= -11)
-			conlevel = CON_LIGHTBLUE;
-		else
-			conlevel = CON_BLUE;
-	}
-	else if (mylevel <= 42)
-	{
-		if (diff <= -15)
-			conlevel = CON_GREEN;
-		else if (diff <= -12)
-			conlevel = CON_LIGHTBLUE;
-		else
-			conlevel = CON_BLUE;
-	}
-	else if (mylevel <= 44)
-	{
+	else if (mylevel > MAX_CON_LEVELS) {
 		if (diff <= -16)
-			conlevel = CON_GREEN;
-		else if (diff <= -12)
-			conlevel = CON_LIGHTBLUE;
-		else
-			conlevel = CON_BLUE;
-	}
-	else if (mylevel <= 48)
-	{
-		if (diff <= -17)
-			conlevel = CON_GREEN;
-		else if (diff <= -13)
-			conlevel = CON_LIGHTBLUE;
-		else
-			conlevel = CON_BLUE;
-	}
-	else if (mylevel <= 52)
-	{
-		if (diff <= -18)
-
-			conlevel = CON_GREEN;
-		else if (diff <= -14)
-			conlevel = CON_LIGHTBLUE;
-		else
-			conlevel = CON_BLUE;
-	}
-	else if (mylevel <= 54)
-	{
-		if (diff <= -19)
-
-			conlevel = CON_GREEN;
-		else if (diff <= -15)
-			conlevel = CON_LIGHTBLUE;
-		else
-			conlevel = CON_BLUE;
-	}
-	else if (mylevel <= 56)
-	{
-		if (diff <= -20)
-
-			conlevel = CON_GREEN;
-		else if (diff <= -15)
-			conlevel = CON_LIGHTBLUE;
-		else
-			conlevel = CON_BLUE;
-	}	
-	else if (mylevel <= 60)
-	{
-		if (diff <= -21)
-			conlevel = CON_GREEN;
-		else if (diff <= -16)
-			conlevel = CON_LIGHTBLUE;
-		else
-			conlevel = CON_BLUE;
-	}
-	else if (mylevel <= 61)
-	{
-		if (diff <= -19)
-			conlevel = CON_GREEN;
-		else if (diff <= -14)
-			conlevel = CON_LIGHTBLUE;
-		else
-			conlevel = CON_BLUE;
-	}
-	else if (mylevel <= 62)
-	{
-		if (diff <= -17)
-			conlevel = CON_GREEN;
-		else if (diff <= -12)
-			conlevel = CON_LIGHTBLUE;
-		else
-			conlevel = CON_BLUE;
-	}
-	else if (mylevel >= 63)
-	{
-		if (diff <= -16)
-			conlevel = CON_GREEN;
+			return CON_GREEN;
 		else if (diff <= -11)
-			conlevel = CON_LIGHTBLUE;
+			return CON_LIGHTBLUE;
 		else
-			conlevel = CON_BLUE;
+			return CON_BLUE;
 	}
-	return conlevel;
+	else if (iOtherLevel <= CON_LEVELS_MAP[mylevel - 1][0])
+		return CON_GREEN;
+	else if (iOtherLevel <= CON_LEVELS_MAP[mylevel - 1][1])
+		return CON_LIGHTBLUE;
+	else
+		return CON_BLUE;
 }
 
 void NPC::CheckSignal() {

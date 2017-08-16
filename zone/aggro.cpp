@@ -247,7 +247,8 @@ bool Mob::CheckWillAggro(Mob *mob) {
 	}
 
 	Mob *ownr = mob->GetOwner();
-	if(ownr && ownr->IsClient() && !ownr->CastToClient()->ClientFinishedLoading())
+	if (ownr && ownr->IsClient() &&
+		(!ownr->CastToClient()->ClientFinishedLoading() || !RuleB(Aggro, PetsTriggerAggro)))
 		return false;
 
 	float iAggroRange = GetAggroRange();
@@ -325,10 +326,11 @@ bool Mob::CheckWillAggro(Mob *mob) {
 	(
 			//old InZone check taken care of above by !mob->CastToClient()->Connected()
 			(
-					( GetINT() <= RuleI(Aggro, IntAggroThreshold) )
-					||( mob->IsClient() && mob->CastToClient()->IsSitting() )
-					||( mob->GetLevelCon(GetLevel()) != CON_GREEN )
-
+					(mob->IsClient() && mob->CastToClient()->IsSitting())
+					|| (mob->GetLevelCon(GetLevel()) != CON_GREEN)
+					|| ( GetLevel() >= RuleB(Aggro, GreenAggroLevel))
+					|| ( RuleB(Aggro, UndeadAlwaysAggro) && GetBodyType() == BT_Undead)
+					|| ( GetINT() <= RuleI(Aggro, IntAggroThreshold) )
 			)
 			&&
 			(
@@ -346,7 +348,7 @@ bool Mob::CheckWillAggro(Mob *mob) {
 	))
 	{
 		//FatherNiwtit: make sure we can see them. last since it is very expensive
-		if(CheckLosFN(mob)) {
+		if (CheckLosFN(mob)) {
 			Log(Logs::Detail, Logs::Aggro, "Check aggro for %s target %s.", GetName(), mob->GetName());
 			return( mod_will_aggro(mob, this) );
 		}
