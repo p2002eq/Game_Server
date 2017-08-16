@@ -341,6 +341,13 @@ RULE_CATEGORY_END()
 RULE_CATEGORY(Spells)
 RULE_INT(Spells, AutoResistDiff, 15)
 RULE_REAL(Spells, ResistChance, 2.0) //chance to resist given no resists and same level
+RULE_INT(Spells, NPCResistMod, 0) // skew total NPC resists, resist += this
+RULE_INT(Spells, NPCResistModDamage, 0) // skew NPC resists for damage spells, resist += this
+RULE_INT(Spells, NPCResistModFire, 0)
+RULE_INT(Spells, NPCResistModCold, 0)
+RULE_INT(Spells, NPCResistModMagic, 0)
+RULE_INT(Spells, NPCResistModDisease, 0)
+RULE_INT(Spells, NPCResistModPoison, 0)
 RULE_REAL(Spells, ResistMod, 0.40) //multiplier, chance to resist = this * ResistAmount
 RULE_REAL(Spells, PartialHitChance, 0.7) //The chance when a spell is resisted that it will partial hit.
 RULE_REAL(Spells, PartialHitChanceFear, 0.25) //The chance when a fear spell is resisted that it will partial hit.

@@ -4472,7 +4472,7 @@ bool Mob::IsImmuneToSpell(uint16 spell_id, Mob *caster)
 // pvp_resist_cap
 float Mob::ResistSpell(uint8 resist_type, uint16 spell_id, Mob *caster, bool use_resist_override, int resist_override, bool CharismaCheck, bool CharmTick, bool IsRoot, int level_override)
 {
-	// Pets use owner's resistances
+	// Pets use owner's resistances if the pet isn't a charmed pet
 	if (IsPet() && !IsCharmed()) {
 		return GetOwner()->ResistSpell(resist_type, spell_id, caster, use_resist_override, resist_override, CharismaCheck, CharmTick, IsRoot, level_override);
 	}
@@ -4560,18 +4560,28 @@ float Mob::ResistSpell(uint8 resist_type, uint16 spell_id, Mob *caster, bool use
 	{
 	case RESIST_FIRE:
 		target_resist = GetFR();
+		if (IsNPC())
+			target_resist += RuleI(Spells, NPCResistModFire);
 		break;
 	case RESIST_COLD:
 		target_resist = GetCR();
+		if (IsNPC())
+			target_resist += RuleI(Spells, NPCResistModCold);
 		break;
 	case RESIST_MAGIC:
 		target_resist = GetMR();
+		if (IsNPC())
+			target_resist += RuleI(Spells, NPCResistModMagic);
 		break;
 	case RESIST_DISEASE:
 		target_resist = GetDR();
+		if (IsNPC())
+			target_resist += RuleI(Spells, NPCResistModDisease);
 		break;
 	case RESIST_POISON:
 		target_resist = GetPR();
+		if (IsNPC())
+			target_resist += RuleI(Spells, NPCResistModPoison);
 		break;
 	case RESIST_CORRUPTION:
 		target_resist = GetCorrup();
@@ -4766,6 +4776,12 @@ float Mob::ResistSpell(uint8 resist_type, uint16 spell_id, Mob *caster, bool use
 
 		if (resist_chance < static_cast<int>(min_rootbreakchance))
 			resist_chance = min_rootbreakchance;
+	}
+
+	if (IsNPC()) {
+		resist_chance += RuleI(Spells, NPCResistMod);
+		if (IsDamageSpell(spell_id))
+			resist_chance += RuleI(Spells, NPCResistModDamage);
 	}
 
 	//Finally our roll
