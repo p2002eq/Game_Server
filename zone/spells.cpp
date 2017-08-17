@@ -2924,7 +2924,7 @@ int Mob::CheckStackConflict(uint16 spellid1, int caster_level1, uint16 spellid2,
 	const SPDat_Spell_Struct &sp1 = spells[spellid1];
 	const SPDat_Spell_Struct &sp2 = spells[spellid2];
 
-	int i, j, effect1, effect2, sp1_value, sp2_value;
+	int i, effect1, effect2, sp1_value, sp2_value;
 	int blocked_effect, blocked_below_value, blocked_slot;
 	int overwrite_effect, overwrite_below_value, overwrite_slot;
 
@@ -3030,16 +3030,9 @@ int Mob::CheckStackConflict(uint16 spellid1, int caster_level1, uint16 spellid2,
 			if (effect2 == SE_StackingCommand_Overwrite)
 			{
 				overwrite_effect = sp2.base[i];
-				overwrite_slot = -1;
-				for (j = 0; j < EFFECT_COUNT; j++) {
-					if (sp1.effectid[j] == overwrite_effect) {
-						overwrite_slot = j;
-						break;
-					}
-				}
-				//overwrite_slot = sp2.formula[i] - 201;	//they use base 1 for slots, we use base 0
+				overwrite_slot = sp2.base2[i];
 				overwrite_below_value = sp2.max[i];
-				if(overwrite_slot != -1)
+				if(sp1.effectid[overwrite_slot] == overwrite_effect)
 				{
 					sp1_value = CalcSpellEffectValue(spellid1, overwrite_slot, caster_level1);
 
@@ -3058,15 +3051,9 @@ int Mob::CheckStackConflict(uint16 spellid1, int caster_level1, uint16 spellid2,
 				}
 			} else if (effect1 == SE_StackingCommand_Block)
 			{
-				blocked_effect = sp1.base[i]; // 4
-				blocked_below_value = sp1.max[i]; // 67
+				blocked_effect = sp1.base[i];
+				blocked_below_value = sp1.max[i];
 				blocked_slot = sp1.base2[i];
-				//for (j = 0; j < EFFECT_COUNT; j++) {
-				//	if (sp2.effectid[j] == blocked_effect) 
-				//		blocked_slot = j; break; // 2
-				//}
-				//blocked_slot = sp1.effectid[i];// sp1.formula[i] - 201;
-
 				if (sp2.effectid[blocked_slot] == blocked_effect)
 				{
 					sp2_value = CalcSpellEffectValue(spellid2, blocked_slot, caster_level2);

@@ -2189,15 +2189,10 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial, int level_ove
 
 					if (caster->IsClient()) {
 						Group* group = entity_list.GetGroupByClient(caster->CastToClient());
-						Raid* raid = entity_list.GetRaidByClient(caster->CastToClient());
-
-						if ((!group && !raid)
-							|| (group && !group->IsGroupMember(this->CastToClient()))
-							|| (raid && (!raid->IsRaidMember(this->name) || raid->GetGroup(this->CastToClient()) != raid->GetGroup(caster->CastToClient())))) {
+						if (!group || !group->IsGroupMember(this->CastToClient())) {
 							caster->Message(13, "Your target must be a group member for this spell.");
 							break;
 						}
-
 						// clear aggro when summoned in zone
 						if (caster->CalculateDistance(GetX(), GetY(), GetZ()) >= RuleR(Spells, CallOfTheHeroAggroClearDist))
 							entity_list.ClearAggro(this);
