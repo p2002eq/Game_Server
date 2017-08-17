@@ -1773,33 +1773,9 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial, int level_ove
 					else
 						TargetClient = this->CastToClient();
 
-					// We now have a valid target for this spell. Either the caster himself or a targetted player. Lets see if the target is in the group.
-					Group* group = entity_list.GetGroupByClient(caster->CastToClient());
-					if (group) {
-						if(!group->IsGroupMember(TargetClient)) {
-							caster->Message(13, "Your target must be a group member for this spell.");
-							break;
-						}
-					}
-					else if (caster) {
-						Raid *r = entity_list.GetRaidByClient(caster->CastToClient());
-						if(r)
-						{
-							uint32 gid = 0xFFFFFFFF;
-							gid = r->GetGroup(caster->GetName());
-							if(gid < 11)
-							{
-								if(r->GetGroup(TargetClient->GetName()) != gid) {
-									Message(13, "Your target must be a group member for this spell.");
-									break;
-								}
-							}
-						} else {
-							if(TargetClient != this->CastToClient()) {
-								Message(13, "Your target must be a group member for this spell.");
-								break;
-							}
-						}
+					if (!entity_list.IsInSameGroupOrRaidGroup(caster->CastToClient(), TargetClient)) {
+						caster->Message(13, "Your target must be a group member for this spell.");
+						break;
 					}
 
 					// Now we should either be casting this on self or its being cast on a valid group member
@@ -2188,11 +2164,11 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial, int level_ove
 				if (IsClient()) {
 
 					if (caster->IsClient()) {
-						Group* group = entity_list.GetGroupByClient(caster->CastToClient());
-						if (!group || !group->IsGroupMember(this->CastToClient())) {
+						if (!entity_list.IsInSameGroupOrRaidGroup(caster->CastToClient(), this->CastToClient())) {
 							caster->Message(13, "Your target must be a group member for this spell.");
 							break;
 						}
+
 						// clear aggro when summoned in zone
 						if (caster->CalculateDistance(GetX(), GetY(), GetZ()) >= RuleR(Spells, CallOfTheHeroAggroClearDist))
 							entity_list.ClearAggro(this);
