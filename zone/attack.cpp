@@ -1694,7 +1694,8 @@ bool Client::Death(Mob* killerMob, int32 damage, uint16 spell, EQEmu::skills::Sk
 
 	entity_list.RemoveFromTargets(this, true);
 	hate_list.RemoveEntFromHateList(this);
-	RemoveAutoXTargets();
+	// P2002 does not use XTargets
+	// RemoveAutoXTargets();
 
 	//remove ourself from all proximities
 	ClearAllProximities();
@@ -1890,8 +1891,10 @@ bool NPC::Attack(Mob* other, int Hand, bool bRiposte, bool IsStrikethrough, bool
 		if (this->GetOwnerID())
 			this->Say_StringID(NOT_LEGAL_TARGET);
 		if (other) {
+			/* P2002 doesn't use XTarget
 			if (other->IsClient())
 				other->CastToClient()->RemoveXTarget(this, false);
+			*/
 			RemoveFromHateList(other);
 			Log(Logs::Detail, Logs::Combat, "I am not allowed to attack %s", other->GetName());
 		}
@@ -2408,7 +2411,7 @@ bool NPC::Death(Mob* killer_mob, int32 damage, uint16 spell, EQEmu::skills::Skil
 				this->CheckMinMaxLevel(killer);
 		}
 
-		entity_list.RemoveFromAutoXTargets(this);
+		// entity_list.RemoveFromAutoXTargets(this);
 		uint16 emoteid = this->GetEmoteID();
 		auto corpse = new Corpse(this, &itemlist, GetNPCTypeID(), &NPCTypedata,
 								 level > 54 ? RuleI(NPC, MajorNPCCorpseDecayTimeMS)
@@ -2495,7 +2498,7 @@ bool NPC::Death(Mob* killer_mob, int32 damage, uint16 spell, EQEmu::skills::Skil
 		}
 	}
 	else {
-		entity_list.RemoveFromXTargets(this);
+		// entity_list.RemoveFromXTargets(this);
 	}
 
 	// Parse quests even if we're killed by an NPC
@@ -2647,8 +2650,10 @@ void Mob::AddToHateList(Mob* other, uint32 hate /*= 0*/, int32 damage /*= 0*/, b
 
 	hate_list.AddEntToHateList(other, hate, damage, bFrenzy, !iBuffTic);
 
+	/* P2002 doesn't use xtargets
 	if (other->IsClient() && !on_hatelist)
 		other->CastToClient()->AddAutoXTarget(this);
+	*/
 
 #ifdef BOTS
 	// if other is a bot, add the bots client to the hate list
@@ -2659,7 +2664,7 @@ void Mob::AddToHateList(Mob* other, uint32 hate /*= 0*/, int32 damage /*= 0*/, b
 		else {
 			if (!hate_list.IsEntOnHateList(other->CastToBot()->GetBotOwner())) {
 				hate_list.AddEntToHateList(other->CastToBot()->GetBotOwner(), 0, 0, false, true);
-				other->CastToBot()->GetBotOwner()->CastToClient()->AddAutoXTarget(this);
+				// other->CastToBot()->GetBotOwner()->CastToClient()->AddAutoXTarget(this);
 			}
 		}
 	}
@@ -2689,8 +2694,10 @@ void Mob::AddToHateList(Mob* other, uint32 hate /*= 0*/, int32 damage /*= 0*/, b
 			if (!owner->GetSpecialAbility(IMMUNE_AGGRO))
 			{
 				hate_list.AddEntToHateList(owner, 0, 0, false, !iBuffTic);
+				/* P2002 does not use XTarget
 				if (owner->IsClient() && !CheckAggro(owner))
 					owner->CastToClient()->AddAutoXTarget(this);
+				*/
 			}
 		}
 	}

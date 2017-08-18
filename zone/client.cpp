@@ -306,7 +306,7 @@ Client::Client(EQStreamInterface* ieqs)
 	adv_requested_theme = 0;
 	adv_requested_id = 0;
 	adv_requested_member_count = 0;
-
+	/* P2002 doesn't use XTarget
 	for(int i = 0; i < XTARGET_HARDCAP; ++i)
 	{
 		XTargets[i].Type = Auto;
@@ -316,6 +316,7 @@ Client::Client(EQStreamInterface* ieqs)
 	}
 	MaxXTargets = 5;
 	XTargetAutoAddHaters = true;
+	*/
 	m_autohatermgr.SetOwner(this, nullptr, nullptr);
 	m_activeautohatermgr = &m_autohatermgr;
 	LoadAccountFlags();
@@ -1874,7 +1875,8 @@ void Client::CheckManaEndUpdate() {
 			mana_update->max_mana = GetMaxMana();
 			mana_update->spawn_id = GetID();
 			QueuePacket(mana_packet);
-			entity_list.QueueClientsByXTarget(this, mana_packet, false);
+			// P2002 doesn't use XTarget
+			// entity_list.QueueClientsByXTarget(this, mana_packet, false);
 			safe_delete(mana_packet);
 
 			last_reported_mana_percent = this->GetManaPercent();
@@ -1898,7 +1900,8 @@ void Client::CheckManaEndUpdate() {
 			endurance_update->max_end = GetMaxEndurance();
 			endurance_update->spawn_id = GetID();
 			QueuePacket(endurance_packet);
-			entity_list.QueueClientsByXTarget(this, endurance_packet, false);
+			// P2002 doesn't use XTarget
+			// entity_list.QueueClientsByXTarget(this, endurance_packet, false);
 			safe_delete(endurance_packet);
 			last_reported_endurance_percent = this->GetEndurancePercent();
 		}
@@ -4241,6 +4244,7 @@ bool Client::GroupFollow(Client* inviter) {
 			{
 				// okay, so we now have a single client (this) joining a group in a raid
 				// And they're not already in the raid (which is above and doesn't need xtarget shit)
+				/* P2002 doesn't use XTarget
 				if (!GetXTargetAutoMgr()->empty()) {
 					raid->GetXTargetAutoMgr()->merge(*GetXTargetAutoMgr());
 					GetXTargetAutoMgr()->clear();
@@ -4250,6 +4254,7 @@ bool Client::GroupFollow(Client* inviter) {
 				SetXTargetAutoMgr(raid->GetXTargetAutoMgr());
 				if (!GetXTargetAutoMgr()->empty())
 					SetDirtyAutoHaters();
+				*/
 
 				if (raid->GroupCount(groupToUse) < 6)
 				{
@@ -4326,9 +4331,11 @@ bool Client::GroupFollow(Client* inviter) {
 				inviter->SendGroupLeaderChangePacket(inviter->GetName());
 				inviter->SendGroupJoinAcknowledge();
 			}
+			/* P2002 doesn't use XTarget
 			group->GetXTargetAutoMgr()->merge(*inviter->GetXTargetAutoMgr());
 			inviter->GetXTargetAutoMgr()->clear();
 			inviter->SetXTargetAutoMgr(group->GetXTargetAutoMgr());
+			*/
 		}
 
 		if (!group)
@@ -7239,6 +7246,7 @@ void Client::OpenLFGuildWindow()
 
 bool Client::IsXTarget(const Mob *m) const
 {
+	/* P2002 doesn't use XTarget
 	if(!XTargettingAvailable() || !m || (m->GetID() == 0))
 		return false;
 
@@ -7247,11 +7255,13 @@ bool Client::IsXTarget(const Mob *m) const
 		if(XTargets[i].ID == m->GetID())
 			return true;
 	}
+	*/
 	return false;
 }
 
 bool Client::IsClientXTarget(const Client *c) const
 {
+	/* P2002 doesn't use XTarget
 	if(!XTargettingAvailable() || !c)
 		return false;
 
@@ -7260,12 +7270,14 @@ bool Client::IsClientXTarget(const Client *c) const
 		if(!strcasecmp(XTargets[i].Name, c->GetName()))
 			return true;
 	}
+	*/
 	return false;
 }
 
 
 void Client::UpdateClientXTarget(Client *c)
 {
+	/* P2002 doesn't use XTarget
 	if(!XTargettingAvailable() || !c)
 		return;
 
@@ -7277,11 +7289,13 @@ void Client::UpdateClientXTarget(Client *c)
 			SendXTargetPacket(i, c);
 		}
 	}
+	*/
 }
 
 // IT IS NOT SAFE TO CALL THIS IF IT'S NOT INITIAL AGGRO
 void Client::AddAutoXTarget(Mob *m, bool send)
 {
+	/* P2002 doesn't use XTarget
 	m_activeautohatermgr->increment_count(m);
 
 	if (!XTargettingAvailable() || !XTargetAutoAddHaters || IsXTarget(m))
@@ -7299,10 +7313,12 @@ void Client::AddAutoXTarget(Mob *m, bool send)
 			break;
 		}
 	}
+	*/
 }
 
 void Client::RemoveXTarget(Mob *m, bool OnlyAutoSlots)
 {
+	/* P2002 doesn't use XTarget
 	m_activeautohatermgr->decrement_count(m);
 	// now we may need to clean up our CurrentTargetNPC entries
 	for (int i = 0; i < GetMaxXTargets(); ++i) {
@@ -7312,10 +7328,12 @@ void Client::RemoveXTarget(Mob *m, bool OnlyAutoSlots)
 			XTargets[i].dirty = true;
 		}
 	}
+	*/
 }
 
 void Client::UpdateXTargetType(XTargetType Type, Mob *m, const char *Name)
 {
+	/* P2002 doesn't use XTarget
 	if(!XTargettingAvailable())
 		return;
 
@@ -7334,10 +7352,12 @@ void Client::UpdateXTargetType(XTargetType Type, Mob *m, const char *Name)
 			SendXTargetPacket(i, m);
 		}
 	}
+	*/
 }
 
 void Client::SendXTargetPacket(uint32 Slot, Mob *m)
 {
+	/* P2002 doesn't use XTarget
 	if(!XTargettingAvailable())
 		return;
 
@@ -7378,12 +7398,14 @@ void Client::SendXTargetPacket(uint32 Slot, Mob *m)
 	outapp->WriteUInt32(XTargets[Slot].ID);
 	outapp->WriteString(m ? m->GetCleanName() : XTargets[Slot].Name);
 	FastQueuePacket(&outapp);
+	*/
 }
 
 // This is a bulk packet, we use it when we remove something since we need to reorder the xtargets and maybe
 // add new mobs! Currently doesn't check if there is a dirty flag set, so it should only be called when there is
 void Client::SendXTargetUpdates()
 {
+	/* P2002 doesn't use XTarget
 	if (!XTargettingAvailable())
 		return;
 
@@ -7419,10 +7441,12 @@ void Client::SendXTargetUpdates()
 	outapp->SetWritePosition(4);
 	outapp->WriteUInt32(count);
 	FastQueuePacket(&outapp);
+	*/
 }
 
 void Client::RemoveGroupXTargets()
 {
+	/* P2002 doesn't use XTargets
 	if(!XTargettingAvailable())
 		return;
 
@@ -7443,10 +7467,12 @@ void Client::RemoveGroupXTargets()
 			SendXTargetPacket(i, nullptr);
 		}
 	}
+	*/
 }
 
 void Client::RemoveAutoXTargets()
 {
+	/* P2002 doesn't use XTarget
 	if(!XTargettingAvailable())
 		return;
 
@@ -7459,10 +7485,12 @@ void Client::RemoveAutoXTargets()
 			SendXTargetPacket(i, nullptr);
 		}
 	}
+	*/
 }
 
 void Client::ShowXTargets(Client *c)
 {
+	/* P2002 doesn't use XTarget
 	if(!c)
 		return;
 
@@ -7481,10 +7509,12 @@ void Client::ShowXTargets(Client *c)
 			break;
 		}
 	}
+	*/
 }
 
 void Client::ProcessXTargetAutoHaters()
 {
+	/* P2002 doesn't use XTarget
 	if (!XTargettingAvailable())
 		return;
 
@@ -7534,12 +7564,14 @@ void Client::ProcessXTargetAutoHaters()
 	}
 	m_dirtyautohaters = false;
 	SendXTargetUpdates();
+	*/
 }
 
 // This function is called when a client is added to a group
 // Group leader joining isn't handled by this function
 void Client::JoinGroupXTargets(Group *g)
 {
+	/* P2002 doesn't use XTarget
 	if (!g)
 		return;
 
@@ -7553,11 +7585,13 @@ void Client::JoinGroupXTargets(Group *g)
 
 	if (!GetXTargetAutoMgr()->empty())
 		SetDirtyAutoHaters();
+	*/
 }
 
 // This function is called when a client leaves a group
 void Client::LeaveGroupXTargets(Group *g)
 {
+	/* P2002 doesn't use XTarget
 	if (!g)
 		return;
 
@@ -7569,11 +7603,13 @@ void Client::LeaveGroupXTargets(Group *g)
 		GetXTargetAutoMgr()->demerge(*g->GetXTargetAutoMgr()); // this will remove entries where we only had aggro
 		SetDirtyAutoHaters();
 	}
+	*/
 }
 
 // This function is called when a client leaves a group
 void Client::LeaveRaidXTargets(Raid *r)
 {
+	/* P2002 doesn't use XTarget
 	if (!r)
 		return;
 
@@ -7585,10 +7621,12 @@ void Client::LeaveRaidXTargets(Raid *r)
 		GetXTargetAutoMgr()->demerge(*r->GetXTargetAutoMgr()); // this will remove entries where we only had aggro
 		SetDirtyAutoHaters();
 	}
+	*/
 }
 
 void Client::SetMaxXTargets(uint8 NewMax)
 {
+	/* P2002 doesn't use XTarget
 	if(!XTargettingAvailable())
 		return;
 
@@ -7610,6 +7648,7 @@ void Client::SetMaxXTargets(uint8 NewMax)
 	outapp->WriteUInt32(GetMaxXTargets());
 	outapp->WriteUInt32(0);
 	FastQueuePacket(&outapp);
+	*/
 }
 
 const char* Client::GetRacePlural(Client* client) {
@@ -9009,6 +9048,7 @@ void Client::ProcessAggroMeter()
 	// now to go over our xtargets
 	// if the entry is an NPC it's our hate relative to the NPCs current tank
 	// if it's a PC, it's their hate relative to our current target
+	/* P2002 doesn't use XTargets
 	for (int i = 0; i < GetMaxXTargets(); ++i) {
 		if (XTargets[i].ID) {
 			auto mob = entity_list.GetMob(XTargets[i].ID);
@@ -9022,7 +9062,7 @@ void Client::ProcessAggroMeter()
 					add_entry(static_cast<AggroMeter::AggroTypes>(AggroMeter::AT_XTarget1 + i));
 			}
 		}
-	}
+	}*/
 
 	if (send || count) {
 		app->size = app->GetWritePosition(); // this should be safe, although not recommended

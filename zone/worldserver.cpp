@@ -898,10 +898,11 @@ void WorldServer::HandleMessage(uint16 opcode, const EQ::Net::Packet &p)
 					Inviter->CastToClient()->SendGroupLeaderChangePacket(Inviter->GetName());
 					Inviter->CastToClient()->SendGroupJoinAcknowledge();
 				}
-
+				/* P2002 doesn't have XTarget
 				group->GetXTargetAutoMgr()->merge(*Inviter->CastToClient()->GetXTargetAutoMgr());
 				Inviter->CastToClient()->GetXTargetAutoMgr()->clear();
 				Inviter->CastToClient()->SetXTargetAutoMgr(group->GetXTargetAutoMgr());
+				*/
 			}
 
 			if (!group)
@@ -1008,6 +1009,7 @@ void WorldServer::HandleMessage(uint16 opcode, const EQ::Net::Packet &p)
 				if (lc)
 					group->SetLeader(lc);
 
+				/* P2002 doesn't use any of this crap
 				group->SetMainTank(MainTankName);
 				group->SetMainAssist(AssistName);
 				group->SetPuller(PullerName);
@@ -1015,6 +1017,7 @@ void WorldServer::HandleMessage(uint16 opcode, const EQ::Net::Packet &p)
 				group->SetGroupAAs(&GLAA);
 				group->SetGroupMentor(mentor_percent, mentoree_name);
 				client->JoinGroupXTargets(group);
+				*/
 			}
 		}
 		else if (client->GetMerc())
@@ -1125,7 +1128,8 @@ void WorldServer::HandleMessage(uint16 opcode, const EQ::Net::Packet &p)
 				r->SendRaidRemoveAll(rga->playername);
 				Client *rem = entity_list.GetClientByName(rga->playername);
 				if (rem) {
-					rem->LeaveRaidXTargets(r);
+					// P2002 doesn't have XTarget
+					// rem->LeaveRaidXTargets(r);
 					r->SendRaidDisband(rem);
 				}
 				r->LearnMembers();
