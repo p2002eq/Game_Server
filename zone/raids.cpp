@@ -914,6 +914,8 @@ void Raid::RemoveRaidLooter(const char* looter)
 	safe_delete(pack);
 }
 
+
+
 bool Raid::IsRaidMember(const char *name){
 	for(int x = 0; x < MAX_RAID_MEMBERS; x++)
 	{
