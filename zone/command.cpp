@@ -10314,10 +10314,13 @@ void command_xtargets(Client *c, const Seperator *sep)
 	else
 		t = c;
 
+	c->Message(13, "P2002 doesn't have XTargets");
+
+	/* P2002 doesnt' have xtargets
 	if(sep->arg[1][0])
 	{
 		uint8 NewMax = atoi(sep->arg[1]);
-
+		
 		if((NewMax < 5) || (NewMax > XTARGET_HARDCAP))
 		{
 			c->Message(13, "Number of XTargets must be between 5 and %i",  XTARGET_HARDCAP);
@@ -10328,6 +10331,7 @@ void command_xtargets(Client *c, const Seperator *sep)
 	}
 	else
 		t->ShowXTargets(c);
+	*/
 }
 
 void command_zopp(Client *c, const Seperator *sep)

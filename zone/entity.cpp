@@ -1419,13 +1419,14 @@ void EntityList::RemoveFromTargets(Mob *mob, bool RemoveFromXTargets)
 		if (!m)
 			continue;
 
+		/* XTargets isn't in our timeline, causing server crashes
 		if (RemoveFromXTargets) {
 			if (m->IsClient() && mob->CheckAggro(m))
 				m->CastToClient()->RemoveXTarget(mob, false);
 			// FadingMemories calls this function passing the client.
 			else if (mob->IsClient() && m->CheckAggro(mob))
 				mob->CastToClient()->RemoveXTarget(m, false);
-		}
+		}*/
 
 		m->RemoveFromHateList(mob);
 	}
@@ -1433,24 +1434,29 @@ void EntityList::RemoveFromTargets(Mob *mob, bool RemoveFromXTargets)
 
 void EntityList::RemoveFromXTargets(Mob *mob)
 {
+	/* P2002 doesn't have XTargets
 	auto it = client_list.begin();
 	while (it != client_list.end()) {
 		it->second->RemoveXTarget(mob, false);
 		++it;
 	}
+	*/
 }
 
 void EntityList::RemoveFromAutoXTargets(Mob *mob)
 {
+	/* P2002 doesn't have XTargets
 	auto it = client_list.begin();
 	while (it != client_list.end()) {
 		it->second->RemoveXTarget(mob, true);
 		++it;
 	}
+	*/
 }
 
 void EntityList::RefreshAutoXTargets(Client *c)
 {
+	/* P2002 doesn't have XTargets
 	if (!c)
 		return;
 
@@ -1468,10 +1474,12 @@ void EntityList::RefreshAutoXTargets(Client *c)
 		}
 
 	}
+	*/
 }
 
 void EntityList::RefreshClientXTargets(Client *c)
 {
+	/* P2002 doesn't have XTargets
 	if (!c)
 		return;
 
@@ -1486,6 +1494,7 @@ void EntityList::RefreshClientXTargets(Client *c)
 		if (c2->IsClientXTarget(c))
 			c2->UpdateClientXTarget(c);
 	}
+	*/
 }
 
 void EntityList::QueueClientsByTarget(Mob *sender, const EQApplicationPacket *app,

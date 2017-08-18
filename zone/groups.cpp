@@ -919,8 +919,9 @@ void Group::DisbandGroup(bool joinraid) {
 			database.SetGroupID(members[i]->GetCleanName(), 0, members[i]->CastToClient()->CharacterID(), false);
 			members[i]->CastToClient()->QueuePacket(outapp);
 			SendMarkedNPCsToMember(members[i]->CastToClient(), true);
-			if (!joinraid)
-				members[i]->CastToClient()->LeaveGroupXTargets(this);
+			// P2002 doesn't have XTarget
+			//if (!joinraid)
+			//	members[i]->CastToClient()->LeaveGroupXTargets(this);
 		}
 		
 		if (members[i]->IsMerc())
@@ -1403,6 +1404,7 @@ uint16 Group::GetAvgLevel()
 
 void Group::MarkNPC(Mob* Target, int Number)
 {
+	/* P2002 doesn't have XTarget (or Marking)
 	// Send a packet to all group members in this zone causing the client to prefix the Target mob's name
 	// with the specified Number.
 	//
@@ -1469,6 +1471,7 @@ void Group::MarkNPC(Mob* Target, int Number)
 	safe_delete(outapp);
 
 	UpdateXTargetMarkedNPC(Number, m);
+	*/
 }
 
 void Group::DelegateMainTank(const char *NewMainTankName, uint8 toggle)
@@ -1477,7 +1480,7 @@ void Group::DelegateMainTank(const char *NewMainTankName, uint8 toggle)
 	// (or himself). All group members in the zone are notified of the new Main Tank and it is recorded
 	// in the group_leaders table so as to persist across zones.
 	//
-
+	/* P2002 doesn't have XTarget (or delegating main tank)
 	bool updateDB = false;
 
 	if(!NewMainTankName)
@@ -1518,6 +1521,7 @@ void Group::DelegateMainTank(const char *NewMainTankName, uint8 toggle)
 		if (!results.Success())
 			Log(Logs::General, Logs::Error, "Unable to set group main tank: %s\n", results.ErrorMessage().c_str());
 	}
+	*/
 }
 
 void Group::DelegateMainAssist(const char *NewMainAssistName, uint8 toggle)
@@ -1526,7 +1530,7 @@ void Group::DelegateMainAssist(const char *NewMainAssistName, uint8 toggle)
 	// (or himself). All group members in the zone are notified of the new Main Assist and it is recorded
 	// in the group_leaders table so as to persist across zones.
 	//
-
+	/* P2002 does have XTarget (or delegating main assist)
 	bool updateDB = false;
 
 	if(!NewMainAssistName)
@@ -1565,6 +1569,7 @@ void Group::DelegateMainAssist(const char *NewMainAssistName, uint8 toggle)
 			Log(Logs::General, Logs::Error, "Unable to set group main assist: %s\n", results.ErrorMessage().c_str());
 
 	}
+	*/
 }
 
 void Group::DelegatePuller(const char *NewPullerName, uint8 toggle)
@@ -1573,7 +1578,7 @@ void Group::DelegatePuller(const char *NewPullerName, uint8 toggle)
 	// (or himself). All group members in the zone are notified of the new Puller and it is recorded
 	// in the group_leaders table so as to persist across zones.
 	//
-
+	/* P2002 does have XTarget (or delegation)
 	bool updateDB = false;
 
 	if(!NewPullerName)
@@ -1612,7 +1617,7 @@ void Group::DelegatePuller(const char *NewPullerName, uint8 toggle)
 			Log(Logs::General, Logs::Error, "Unable to set group main puller: %s\n", results.ErrorMessage().c_str());
 
 	}
-
+	*/
 }
 
 void Group::NotifyMainTank(Client *c, uint8 toggle)
@@ -1755,6 +1760,7 @@ void Group::UnDelegateMainTank(const char *OldMainTankName, uint8 toggle)
 	// Called when the group Leader removes the Main Tank delegation. Sends a packet to each group member in the zone
 	// informing them of the change and update the group_leaders table.
 	//
+	/* P2002 doesn't have XTarget (or delagation)
 	if(OldMainTankName == MainTankName) {
 
 		std::string query = StringFormat("UPDATE group_leaders SET maintank = '' WHERE gid = %i LIMIT 1", GetID());
@@ -1775,6 +1781,7 @@ void Group::UnDelegateMainTank(const char *OldMainTankName, uint8 toggle)
 
 		SetMainTank("");
 	}
+	*/
 }
 
 void Group::UnDelegateMainAssist(const char *OldMainAssistName, uint8 toggle)
@@ -1782,6 +1789,7 @@ void Group::UnDelegateMainAssist(const char *OldMainAssistName, uint8 toggle)
 	// Called when the group Leader removes the Main Assist delegation. Sends a packet to each group member in the zone
 	// informing them of the change and update the group_leaders table.
 	//
+	/* P2002 doesn't have XTarget (or delagation)
 	if(OldMainAssistName == MainAssistName) {
 		auto outapp = new EQApplicationPacket(OP_DelegateAbility, sizeof(DelegateAbility_Struct));
 
@@ -1825,6 +1833,7 @@ void Group::UnDelegateMainAssist(const char *OldMainAssistName, uint8 toggle)
 
 		SetMainAssist("");
 	}
+	*/
 }
 
 void Group::UnDelegatePuller(const char *OldPullerName, uint8 toggle)
@@ -1832,6 +1841,7 @@ void Group::UnDelegatePuller(const char *OldPullerName, uint8 toggle)
 	// Called when the group Leader removes the Puller delegation. Sends a packet to each group member in the zone
 	// informing them of the change and update the group_leaders table.
 	//
+	/* P2002 doesn't have XTarget (or delagation)
 	if(OldPullerName == PullerName) {
 
 		std::string query = StringFormat("UPDATE group_leaders SET puller = '' WHERE gid = %i LIMIT 1", GetID());
@@ -1852,10 +1862,12 @@ void Group::UnDelegatePuller(const char *OldPullerName, uint8 toggle)
 
 		SetPuller("");
 	}
+	*/
 }
 
 bool Group::IsNPCMarker(Client *c)
 {
+	/* P2002 doesn't have XTarget (or delagation)
 	// Returns true if the specified client has been delegated the NPC Marker Role
 	//
 	if(!c)
@@ -1865,13 +1877,14 @@ bool Group::IsNPCMarker(Client *c)
 		return(c->GetName() == NPCMarkerName);
 
 	return false;
-
+	*/
 }
 
 void Group::SetGroupAssistTarget(Mob *m)
 {
 	// Notify all group members in the zone of the new target the Main Assist has selected.
 	//
+	/* P2002 doesn't have XTarget (or delagation)
 	AssistTargetID = m ? m->GetID() : 0;
 
 	for(uint32 i = 0; i < MAX_GROUP_MEMBERS; ++i)
@@ -1881,10 +1894,13 @@ void Group::SetGroupAssistTarget(Mob *m)
 			NotifyAssistTarget(members[i]->CastToClient());
 		}
 	}
+	*/
 }
 
 void Group::SetGroupTankTarget(Mob *m)
 {
+	/* P2002 doesn't have XTarget (or delagation)
+
 	TankTargetID = m ? m->GetID() : 0;
 
 	for(uint32 i = 0; i < MAX_GROUP_MEMBERS; ++i)
@@ -1894,10 +1910,12 @@ void Group::SetGroupTankTarget(Mob *m)
 			members[i]->CastToClient()->UpdateXTargetType(GroupTankTarget, m);
 		}
 	}
+	*/
 }
 
 void Group::SetGroupPullerTarget(Mob *m)
 {
+	/* P2002 doesn't have XTarget (or delagation)
 	PullerTargetID = m ? m->GetID() : 0;
 
 	for(uint32 i = 0; i < MAX_GROUP_MEMBERS; ++i)
@@ -1907,10 +1925,12 @@ void Group::SetGroupPullerTarget(Mob *m)
 			members[i]->CastToClient()->UpdateXTargetType(PullerTarget, m);
 		}
 	}
+	*/
 }
 
 void Group::SetGroupMentor(int percent, char *name)
 {
+	/* P2002 doesn't have XTarget (or mentors)
 	mentoree_name = name;
 	mentor_percent = percent;
 	Client *client = entity_list.GetClientByName(name);
@@ -1921,10 +1941,12 @@ void Group::SetGroupMentor(int percent, char *name)
 	auto results = database.QueryDatabase(query);
 	if (!results.Success())
 		Log(Logs::General, Logs::Error, "Unable to set group mentor: %s\n", results.ErrorMessage().c_str());
+	*/
 }
 
 void Group::ClearGroupMentor()
 {
+	/* P2002 doesn't have XTarget (or mentors)
 	mentoree_name.clear();
 	mentor_percent = 0;
 	mentoree = nullptr;
@@ -1932,12 +1954,13 @@ void Group::ClearGroupMentor()
 	auto results = database.QueryDatabase(query);
 	if (!results.Success())
 		Log(Logs::General, Logs::Error, "Unable to clear group mentor: %s\n", results.ErrorMessage().c_str());
+	*/
 }
 
 void Group::NotifyAssistTarget(Client *c)
 {
 	// Send a packet to the specified client notifying them of the group target selected by the Main Assist.
-
+	/* P2002 doesn't have XTarget (or delagation)
 	if(!c)
 		return;
 
@@ -1956,31 +1979,37 @@ void Group::NotifyAssistTarget(Client *c)
 	Mob *m = entity_list.GetMob(AssistTargetID);
 
 	c->UpdateXTargetType(GroupAssistTarget, m);
+	*/
 
 }
 
 void Group::NotifyTankTarget(Client *c)
 {
+	/*
 	if(!c)
 		return;
 
 	Mob *m = entity_list.GetMob(TankTargetID);
 
 	c->UpdateXTargetType(GroupTankTarget, m);
+	*/
 }
 
 void Group::NotifyPullerTarget(Client *c)
 {
+	/* P2002 doesn't have XTarget (or notifications)
 	if(!c)
 		return;
 
 	Mob *m = entity_list.GetMob(PullerTargetID);
 
 	c->UpdateXTargetType(PullerTarget, m);
+	*/
 }
 
 void Group::DelegateMarkNPC(const char *NewNPCMarkerName)
 {
+	/* P2002 doesn't have XTarget (or notifications)
 	// Called when the group leader has delegated the Mark NPC ability to a group member.
 	// Notify all group members in the zone of the change and save the change in the group_leaders
 	// table to persist across zones.
@@ -2002,10 +2031,12 @@ void Group::DelegateMarkNPC(const char *NewNPCMarkerName)
     auto results = database.QueryDatabase(query);
 	if (!results.Success())
 		Log(Logs::General, Logs::Error, "Unable to set group mark npc: %s\n", results.ErrorMessage().c_str());
+	*/
 }
 
 void Group::NotifyMarkNPC(Client *c)
 {
+	/* P2002 doesn't have XTarget (or notifications)
 	// Notify the specified client who the group member is who has been delgated the Mark NPC ability.
 
 	if(!c)
@@ -2031,10 +2062,12 @@ void Group::NotifyMarkNPC(Client *c)
 	c->QueuePacket(outapp);
 
 	safe_delete(outapp);
-
+	*/
 }
+
 void Group::SetNPCMarker(const char *NewNPCMarkerName)
 {
+	/* P2002 doesn't have XTarget (or notifications)
 	NPCMarkerName = NewNPCMarkerName;
 
 	Client *m = entity_list.GetClientByName(NPCMarkerName.c_str());
@@ -2043,10 +2076,12 @@ void Group::SetNPCMarker(const char *NewNPCMarkerName)
 		NPCMarkerID = 0;
 	else
 		NPCMarkerID = m->GetID();
+	*/
 }
 
 void Group::UnDelegateMarkNPC(const char *OldNPCMarkerName)
 {
+	/* P2002 doesn't have XTarget (or notifications)
 	// Notify all group members in the zone that the Mark NPC ability has been rescinded from the specified
 	// group member.
 
@@ -2083,11 +2118,12 @@ void Group::UnDelegateMarkNPC(const char *OldNPCMarkerName)
     auto results = database.QueryDatabase(query);
 	if (!results.Success())
 		Log(Logs::General, Logs::Error, "Unable to clear group marknpc: %s\n", results.ErrorMessage().c_str());
-
+	*/
 }
 
 void Group::SaveGroupLeaderAA()
 {
+	/*
 	// Stores the Group Leaders Leadership AA data from the Player Profile as a blob in the group_leaders table.
 	// This is done so that group members not in the same zone as the Leader still have access to this information.
 	auto queryBuffer = new char[sizeof(GroupLeadershipAA_Struct) * 2 + 1];
@@ -2100,7 +2136,7 @@ void Group::SaveGroupLeaderAA()
     auto results = database.QueryDatabase(query);
 	if (!results.Success())
 		Log(Logs::General, Logs::Error, "Unable to store LeadershipAA: %s\n", results.ErrorMessage().c_str());
-
+	*/
 }
 
 void Group::UnMarkNPC(uint16 ID)
@@ -2110,7 +2146,7 @@ void Group::UnMarkNPC(uint16 ID)
 	// If the given mob has been marked by this group, it is removed from the list of marked NPCs.
 	// The primary reason for doing this is so that when a new group member joins or zones in, we
 	// send them correct details of which NPCs are currently marked.
-
+	/* P2002 doesn't have XTarget (or marking)
 	if(AssistTargetID == ID)
 		AssistTargetID = 0;
 
@@ -2129,6 +2165,7 @@ void Group::UnMarkNPC(uint16 ID)
 			UpdateXTargetMarkedNPC(i + 1, nullptr);
 		}
 	}
+	*/
 }
 
 void Group::SendMarkedNPCsToMember(Client *c, bool Clear)
@@ -2137,6 +2174,7 @@ void Group::SendMarkedNPCsToMember(Client *c, bool Clear)
 	// If Clear == true, then tell the client to unmark the NPCs (when a member disbands).
 	//
 	//
+	/* P2002 doesn't have XTarget (or marking)
 	if(!c)
 		return;
 
@@ -2166,6 +2204,7 @@ void Group::SendMarkedNPCsToMember(Client *c, bool Clear)
 	}
 
 	safe_delete(outapp);
+	*/
 }
 
 void Group::ClearAllNPCMarks()
@@ -2173,6 +2212,7 @@ void Group::ClearAllNPCMarks()
 	// This method is designed to be called when the number of members in the group drops below 3 and leadership AA
 	// may no longer be used. It removes all NPC marks.
 	//
+	/* P2002 doesn't have XTarget (or marking)
 	for(uint8 i = 0; i < MAX_GROUP_MEMBERS; ++i)
 		if(members[i] && members[i]->IsClient())
 			SendMarkedNPCsToMember(members[i]->CastToClient(), true);
@@ -2189,6 +2229,7 @@ void Group::ClearAllNPCMarks()
 
 		MarkedNPCs[i] = 0;
 	}
+	*/
 
 }
 
@@ -2316,6 +2357,7 @@ const char *Group::GetClientNameByIndex(uint8 index)
 
 void Group::UpdateXTargetMarkedNPC(uint32 Number, Mob *m)
 {
+	/* P2002 doesn't have XTarget (or marking)
 	for(uint32 i = 0; i < MAX_GROUP_MEMBERS; ++i)
 	{
 		if(members[i] && members[i]->IsClient())
@@ -2323,7 +2365,7 @@ void Group::UpdateXTargetMarkedNPC(uint32 Number, Mob *m)
 			members[i]->CastToClient()->UpdateXTargetType((Number == 1) ? GroupMarkTarget1 : ((Number == 2) ? GroupMarkTarget2 : GroupMarkTarget3), m);
 		}
 	}
-
+	*/
 }
 
 void Group::SetDirtyAutoHaters()
@@ -2335,6 +2377,7 @@ void Group::SetDirtyAutoHaters()
 
 void Group::JoinRaidXTarget(Raid *raid, bool first)
 {
+	/* P2002 doesnt' use XTarget
 	if (!GetXTargetAutoMgr()->empty())
 		raid->GetXTargetAutoMgr()->merge(*GetXTargetAutoMgr());
 
@@ -2348,6 +2391,7 @@ void Group::JoinRaidXTarget(Raid *raid, bool first)
 				client->SetDirtyAutoHaters();
 		}
 	}
+	*/
 }
 
 void Group::SetMainTank(const char *NewMainTankName)
