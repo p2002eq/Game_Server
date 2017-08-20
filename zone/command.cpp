@@ -244,6 +244,7 @@ int command_init(void)
 		command_add("invul", "[on/off] - Turn player target's or your invulnerable flag on or off", 80, command_invul) ||
 		command_add("ipban", "[IP address] - Ban IP by character name", 200, command_ipban) ||
 		command_add("iplookup", "[charname] - Look up IP address of charname", 200, command_iplookup) ||
+		command_add("issue", "- Report an issue with the server", 0, command_issue) ||
 		command_add("iteminfo", "- Get information about the item on your cursor", 10, command_iteminfo) ||
 		command_add("itemsearch", "[search criteria] - Search for an item", 10, command_itemsearch) ||
 		command_add("kick", "[charname] - Disconnect charname", 150, command_kick) ||
@@ -2066,6 +2067,120 @@ void command_iplookup(Client *c, const Seperator *sep)
 		strcpy(s->query, sep->argplus[1]);
 	worldserver.SendPacket(pack);
 	safe_delete(pack);
+}
+
+void command_issue(Client *c, const Seperator *sep) {
+
+	//Get the unclaimed_encounter_rewards
+	if (sep->arg[1] && strcasecmp(sep->arg[1], "delete") == 0) { //Delete an issue
+		if (!sep->arg[2] || atoi(sep->arg[2]) == 0) {
+			c->Message(0, "Invalid issue id. Format: #issue delete <number>");
+			return;
+		}
+		uint32 issue_id = atoi(sep->arg[2]);
+		std::string query = StringFormat("UPDATE issues SET is_deleted = 1 WHERE is_deleted = 0 AND my_character_id = %u AND id = %u LIMIT 1", c->CharacterID(), issue_id);
+		auto results = database.QueryDatabase(query);
+		if (!results.Success()) {
+			c->Message(13, "Deleting an issue failed. The admins have been notified.");
+			Log(Logs::General, Logs::Normal, "#issue creation failed for user %u: %s", c->CharacterID(), results.ErrorMessage().c_str());
+			return;
+		}
+		c->Message(0, "You have deleted issue #%u.", issue_id);
+		return;
+	}
+
+	if (sep->arg[1] && strcasecmp(sep->arg[1], "list") == 0) { //List past issues
+		//List Issues
+		std::string query = StringFormat("SELECT id, github_issue_id, is_in_progress, is_fixed, tar_name, message FROM issues WHERE my_character_id = %u AND is_deleted = 0 ORDER BY last_modified DESC LIMIT 10", c->CharacterID());
+		auto results = database.QueryDatabase(query);
+		if (!results.Success()) {
+			c->Message(13, "Listing issues failed. The admins have been notified.");
+			Log(Logs::General, Logs::Normal, "#issue list failed for user %u: %s", c->CharacterID(), results.ErrorMessage().c_str());
+			return;
+		}
+		if (results.RowCount() == 0) {
+			c->Message(0, "You have no pending issues.");
+			return;
+		}
+
+		c->Message(0, "Your %u most recently updated issues:", results.RowCount());
+		for (auto row = results.begin(); row != results.end(); ++row) {
+			std::string status = "New";
+			if (atoi(row[1]) > 0) status = "Reported";
+			if (atoi(row[2]) == 1) status = "In Progress";
+			if (atoi(row[3]) == 1) status = "Fixed";
+
+			std::string details = "";
+			if (strlen(row[4]) > 0 && strcasecmp(row[4], "(null)") != 0) details.append(StringFormat("(%s) ", row[4]));
+			std::string deletecommand = StringFormat("#issue delete %u", atoi(row[0]));
+			details.append(StringFormat("%s", row[5]));
+
+			c->Message(0, "#%u status: %s, details: %s [ %s ]", atoi(row[0]), status.c_str(), details.c_str(), c->CreateSayLink(deletecommand.c_str(), "delete").c_str());
+		}
+		return;
+	}
+
+
+	if (!sep->arg[1] || (strlen(sep->arg[1]) == 0)) {
+		uint32 issue_count = 0;
+		std::string query = StringFormat("SELECT count(id) FROM issues WHERE my_character_id = %u AND is_deleted = 0 LIMIT 1", c->CharacterID());
+		auto results = database.QueryDatabase(query);
+		if (results.Success()) {
+			if (results.RowCount() == 1) {
+				auto row = results.begin();
+				issue_count = atoi(row[0]);
+			}
+		}
+
+		if (issue_count > 0) c->Message(0, "You have %u previously submitted issues. [ %s ]", issue_count, c->CreateSayLink("#issue list", "list").c_str());
+		c->Message(0, "To report something to the GMs, you may target a mob or player and then:");
+		c->Message(0, "/say #issue Your report message");
+		return;
+	}
+
+
+	std::string itemname = "";
+	uint32 itemid = 0;
+	auto inst = c->GetInv()[EQEmu::inventory::slotCursor];
+	if (inst) {
+		auto item = inst->GetItem();
+		if (item) {
+			itemname = item->Name;
+			itemid = item->ID;
+		}
+	}
+
+
+	std::string query = StringFormat("INSERT INTO issues"
+											 "(my_name, my_account_id, my_character_id, my_zone_id, my_x, my_y, my_z, message, tar_name, tar_is_npc, tar_is_client, tar_account_id, tar_character_id, tar_npc_type_id, tar_npc_spawngroup_id, item_id, item_name, client)"
+											 "VALUES (\"%s\", %u, %u, %u, %f, %f, %f, \"%s\", \"%s\", %u, %u, %u, %u, %u, %u, %u, \"%s\", \"%s\")",
+									 StringFormat("%s", c->GetName()).c_str(),
+									 c->AccountID(),
+									 c->CharacterID(),
+									 c->GetZoneID(),
+									 c->GetX(),
+									 c->GetY(),
+									 c->GetZ(),
+									 EscapeString(sep->argplus[1]).c_str(), //message
+									 ((c->GetTarget() == nullptr) ? 0 : EscapeString(c->GetTarget()->GetCleanName()).c_str()),
+									 ((c->GetTarget() == nullptr || !c->GetTarget()->IsNPC()) ? 0 : 1),
+									 ((c->GetTarget() == nullptr || !c->GetTarget()->IsClient()) ? 0 : 1),
+									 ((c->GetTarget() == nullptr || !c->GetTarget()->IsClient()) ? 0 : c->GetTarget()->CastToClient()->AccountID()),
+									 ((c->GetTarget() == nullptr || !c->GetTarget()->IsClient()) ? 0 : c->GetTarget()->CastToClient()->CharacterID()),
+									 ((c->GetTarget() == nullptr || !c->GetTarget()->IsNPC()) ? 0 : c->GetTarget()->CastToNPC()->GetNPCTypeID()),
+									 ((c->GetTarget() == nullptr || !c->GetTarget()->IsNPC()) ? 0 : c->GetTarget()->CastToNPC()->GetSp2()),
+									 itemid,
+									 EscapeString(itemname.c_str()).c_str(),
+									 EQEmu::versions::ClientVersionName(c->ClientVersion())
+	);
+	auto results = database.QueryDatabase(query);
+	if (!results.Success()) {
+		c->Message(13, "Creating an issue failed. The admins have been notified.");
+		Log(Logs::General, Logs::Normal, "#issue creation failed for user %u: %s", c->CharacterID(), results.ErrorMessage().c_str());
+		return;
+	}
+
+	c->Message(0, "Your issue #%i has been submitted.", results.LastInsertedID());
 }
 
 void command_size(Client *c, const Seperator *sep)

@@ -20,6 +20,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include "../common/say_link.h"
 
 // for windows compile
 #ifndef _WINDOWS
@@ -8803,6 +8804,26 @@ void Client::SendHPUpdateMarquee(){
 
 	std::string health_update_notification = StringFormat("Health: %u%%", health_percentage);
 	this->SendMarqueeMessage(15, 510, 0, 3000, 3000, health_update_notification);
+}
+
+//Creates a say link from client perspective
+std::string Client::CreateSayLink(const char* message, const char* name) {
+	int saylink_size = strlen(message);
+	char* escaped_string = new char[saylink_size * 2];
+
+	database.DoEscapeString(escaped_string, message, saylink_size);
+
+	uint32 saylink_id = database.LoadSaylinkID(escaped_string);
+	safe_delete_array(escaped_string);
+
+	EQEmu::SayLinkEngine linker;
+	linker.SetLinkType(EQEmu::saylink::SayLinkItemData);
+	linker.SetProxyItemID(SAYLINK_ITEM_ID);
+	linker.SetProxyAugment1ID(saylink_id);
+	linker.SetProxyText(name);
+
+	auto saylink = linker.GenerateLink();
+	return saylink;
 }
 
 uint32 Client::GetMoney(uint8 type, uint8 subtype) {
