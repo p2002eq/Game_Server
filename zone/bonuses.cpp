@@ -1910,10 +1910,7 @@ void Mob::ApplySpellsBonuses(uint16 spell_id, uint8 casterlevel, StatBonuses *ne
 			}
 
 			case SE_MovementSpeed:
-				if (effect_value < 0)
-					new_bonus->movementspeed = effect_value;
-				else
-					new_bonus->movementspeed += effect_value;
+				new_bonus->movementspeed += effect_value;
 				break;
 
 			case SE_SpellDamageShield:
