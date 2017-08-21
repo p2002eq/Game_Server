@@ -1191,6 +1191,8 @@ bool Zone::Process() {
 
 		EQEmu::InventoryProfile::CleanDirty();
 
+		Log(Logs::Detail, Logs::Spawns, "Running Zone::Process -> Spawn2::Process");
+
 		iterator.Reset();
 		while (iterator.MoreElements()) {
 			if (iterator.GetData()->Process()) {
