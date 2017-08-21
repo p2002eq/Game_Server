@@ -118,8 +118,10 @@ void Client::CalcBonuses()
 
 	XPRate = 100 + spellbonuses.XPRateMod;
 
+	/* P2002 doesn't use xtargets
 	if (GetMaxXTargets() != 5 + aabonuses.extra_xtargets)
 		SetMaxXTargets(5 + aabonuses.extra_xtargets);
+	*/
 }
 
 int Client::CalcRecommendedLevelBonus(uint8 level, uint8 reclevel, int basestat)
@@ -1404,7 +1406,8 @@ void Mob::ApplyAABonuses(const AA::Rank &rank, StatBonuses *newbon)
 			newbon->ATK += base1;
 			break;
 		case SE_IncreaseExtTargetWindow:
-			newbon->extra_xtargets += base1;
+			// P2002 doesn't use xtargets
+			// newbon->extra_xtargets += base1;
 			break;
 
 		case SE_PC_Pet_Rampage: {
@@ -1907,7 +1910,10 @@ void Mob::ApplySpellsBonuses(uint16 spell_id, uint8 casterlevel, StatBonuses *ne
 			}
 
 			case SE_MovementSpeed:
-				new_bonus->movementspeed += effect_value;
+				if (effect_value < 0)
+					new_bonus->movementspeed = effect_value;
+				else
+					new_bonus->movementspeed += effect_value;
 				break;
 
 			case SE_SpellDamageShield:

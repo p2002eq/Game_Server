@@ -328,7 +328,7 @@ bool Mob::CheckWillAggro(Mob *mob) {
 			(
 					(mob->IsClient() && mob->CastToClient()->IsSitting())
 					|| (mob->GetLevelCon(GetLevel()) != CON_GREEN)
-					|| ( GetLevel() >= RuleB(Aggro, GreenAggroLevel))
+					|| ( GetLevel() >= RuleI(Aggro, GreenAggroLevel))
 					|| ( RuleB(Aggro, UndeadAlwaysAggro) && GetBodyType() == BT_Undead)
 					|| ( GetINT() <= RuleI(Aggro, IntAggroThreshold) )
 			)
@@ -1225,6 +1225,7 @@ void Mob::RemoveFromFeignMemory(Client* attacker) {
 }
 
 void Mob::ClearFeignMemory() {
+	/* No XTargets in P2002
 	auto RememberedCharID = feign_memory_list.begin();
 	while (RememberedCharID != feign_memory_list.end())
 	{
@@ -1232,7 +1233,7 @@ void Mob::ClearFeignMemory() {
 		if(remember_client != nullptr) //Still in zone
 			remember_client->RemoveXTarget(this, false);
 		++RememberedCharID;
-	}
+	}*/
 
 	feign_memory_list.clear();
 	minLastFightingDelayMoving = RuleI(NPC, LastFightingDelayMovingMin);

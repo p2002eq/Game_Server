@@ -116,7 +116,7 @@ RULE_INT(Character, StatCap, 0)
 RULE_BOOL(Character, CheckCursorEmptyWhenLooting, true) // If true, a player cannot loot a corpse (player or NPC) with an item on their cursor
 RULE_BOOL(Character, MaintainIntoxicationAcrossZones, true) // If true, alcohol effects are maintained across zoning and logging out/in.
 RULE_BOOL(Character, EnableDiscoveredItems, true) // If enabled, it enables EVENT_DISCOVER_ITEM and also saves character names and timestamps for the first time an item is discovered.
-RULE_BOOL(Character, EnableXTargetting, true) // Enable Extended Targetting Window, for users with UF and later clients.
+RULE_BOOL(Character, EnableXTargetting, false) // Enable Extended Targetting Window, for users with UF and later clients.
 RULE_BOOL(Character, EnableAggroMeter, true) // Enable Aggro Meter, for users with RoF and later clients.
 RULE_BOOL(Character, KeepLevelOverMax, false) // Don't delevel a character that has somehow gone over the level cap
 RULE_INT(Character, FoodLossPerUpdate, 35) // How much food/water you lose per stamina update
@@ -574,7 +574,7 @@ RULE_INT(Aggro, SongAggroMod, 33)
 RULE_INT(Aggro, PetSpellAggroMod, 10)
 RULE_REAL(Aggro, TunnelVisionAggroMod, 0.75) //people not currently the top hate generate this much hate on a Tunnel Vision mob
 RULE_INT(Aggro, MaxScalingProcAggro, 400) // Set to -1 for no limit. Maxmimum amount of aggro that HP scaling SPA effect in a proc will add.
-RULE_BOOL(Aggro, GreenAggroLevel, 19)
+RULE_INT(Aggro, GreenAggroLevel, 19)
 RULE_INT(Aggro, IntAggroThreshold, 75) // Int <= this will aggro regardless of level difference.
 RULE_BOOL(Aggro, AllowTickPulling, false) // tick pulling is an exploit in an NPC's call for help fixed sometime in 2006 on live
 RULE_BOOL(Aggro, UseLevelAggro, true) // Level 18+ and Undead will aggro regardless of level difference. (this will disabled Rule:IntAggroThreshold if set to true)

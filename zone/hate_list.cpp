@@ -70,7 +70,8 @@ void HateList::WipeHateList()
 
 			if (m->IsClient()) {
 				m->CastToClient()->DecrementAggroCount();
-				m->CastToClient()->RemoveXTarget(hate_owner, true);
+				// P2002 doesn't use XTarget
+				//m->CastToClient()->RemoveXTarget(hate_owner, true);
 			}
 		}
 		delete (*iterator);

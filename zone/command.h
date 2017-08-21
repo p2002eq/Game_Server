@@ -147,6 +147,7 @@ void command_invul(Client *c, const Seperator *sep);
 void command_ipban(Client *c, const Seperator *sep);
 void command_ipc(Client *c, const Seperator *sep);
 void command_iplookup(Client *c, const Seperator *sep);
+void command_issue(Client *c, const Seperator *sep);
 void command_iteminfo(Client *c, const Seperator *sep);
 void command_itemsearch(Client *c, const Seperator *sep);
 void command_itemtest(Client *c, const Seperator *sep);

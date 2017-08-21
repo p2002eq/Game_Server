@@ -593,9 +593,11 @@ void Client::CompleteConnect()
 			}
 			raid->SendGroupLeadershipAA(this, grpID); // this may get sent an extra time ...
 
+			/* P2002 doesn't have XTarget
 			SetXTargetAutoMgr(raid->GetXTargetAutoMgr());
 			if (!GetXTargetAutoMgr()->empty())
 				SetDirtyAutoHaters();
+			*/
 
 			if (raid->IsLocked())
 				raid->SendRaidLockTo(this);
@@ -895,7 +897,8 @@ void Client::CompleteConnect()
 		SetPetCommandState(PET_BUTTON_SPELLHOLD, 0);
 	}
 
-	entity_list.RefreshClientXTargets(this);
+	// P2002 doesn't have XTarget
+	// entity_list.RefreshClientXTargets(this);
 
 	FixClientXP();
 
@@ -1599,7 +1602,8 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 			if (group->IsLeader(this))
 				group->SendLeadershipAAUpdate();
 		}
-		JoinGroupXTargets(group);
+		// P2002 doesn't have XTargets
+		// JoinGroupXTargets(group);
 		group->UpdatePlayer(this);
 		LFG = false;
 	}
@@ -1734,12 +1738,13 @@ void Client::Handle_Connect_OP_ZoneEntry(const EQApplicationPacket *app)
 		safe_delete(outapp);
 	}
 
+	/* P2002 doesn't have XTarget
 	if (m_ClientVersionBit & EQEmu::versions::bit_UFAndLater) {
 		outapp = new EQApplicationPacket(OP_XTargetResponse, 8);
 		outapp->WriteUInt32(GetMaxXTargets());
 		outapp->WriteUInt32(0);
 		FastQueuePacket(&outapp);
-	}
+	}*/
 
 	/*
 	Weather Packet
@@ -11117,7 +11122,8 @@ void Client::Handle_OP_RaidCommand(const EQApplicationPacket *app)
 							}
 						}
 					}
-					g->JoinRaidXTarget(r);
+					// P2002 doesn't use XTarget
+					// g->JoinRaidXTarget(r);
 					g->DisbandGroup(true);
 					r->GroupUpdate(freeGroup);
 				}
@@ -11183,7 +11189,8 @@ void Client::Handle_OP_RaidCommand(const EQApplicationPacket *app)
 								}
 							}
 						}
-						ig->JoinRaidXTarget(r, true);
+						// P2002 doesn't use XTarget
+						// ig->JoinRaidXTarget(r, true);
 						ig->DisbandGroup(true);
 						r->GroupUpdate(groupFree);
 						groupFree = r->GetFreeGroup();
@@ -11237,7 +11244,8 @@ void Client::Handle_OP_RaidCommand(const EQApplicationPacket *app)
 							}
 						}
 					}
-					g->JoinRaidXTarget(r);
+					// P2002 doesn't use XTarget
+					// g->JoinRaidXTarget(r);
 					g->DisbandGroup(true);
 					r->GroupUpdate(groupFree);
 				}
@@ -11295,7 +11303,8 @@ void Client::Handle_OP_RaidCommand(const EQApplicationPacket *app)
 						r->SendRaidCreate(this);
 						r->SendMakeLeaderPacketTo(r->leadername, this);
 						r->SendBulkRaid(this);
-						ig->JoinRaidXTarget(r, true);
+						// P2002 doesn't use XTarget
+						// ig->JoinRaidXTarget(r, true);
 						r->AddMember(this);
 						ig->DisbandGroup(true);
 						r->GroupUpdate(0);
@@ -13373,7 +13382,8 @@ void Client::Handle_OP_TargetCommand(const EQApplicationPacket *app)
 		{
 			SetTarget(nullptr);
 			SetHoTT(0);
-			UpdateXTargetType(TargetsTarget, nullptr);
+			// P2002 doesn't use XTarget
+			// UpdateXTargetType(TargetsTarget, nullptr);
 
 			Group *g = GetGroup();
 
@@ -13393,7 +13403,8 @@ void Client::Handle_OP_TargetCommand(const EQApplicationPacket *app)
 	{
 		SetTarget(nullptr);
 		SetHoTT(0);
-		UpdateXTargetType(TargetsTarget, nullptr);
+		// P2002 doesn't use XTarget
+		// UpdateXTargetType(TargetsTarget, nullptr);
 		return;
 	}
 
@@ -13401,12 +13412,14 @@ void Client::Handle_OP_TargetCommand(const EQApplicationPacket *app)
 	if (GetTarget() && GetTarget()->GetTarget())
 	{
 		SetHoTT(GetTarget()->GetTarget()->GetID());
-		UpdateXTargetType(TargetsTarget, GetTarget()->GetTarget());
+		// P2002 doesn't use XTarget
+		// UpdateXTargetType(TargetsTarget, GetTarget()->GetTarget());
 	}
 	else
 	{
 		SetHoTT(0);
-		UpdateXTargetType(TargetsTarget, nullptr);
+		// P2002 doesn't use XTarget
+		// UpdateXTargetType(TargetsTarget, nullptr);
 	}
 
 	Group *g = GetGroup();
@@ -13509,11 +13522,12 @@ void Client::Handle_OP_TargetCommand(const EQApplicationPacket *app)
 				SetSenseExemption(false);
 				return;
 			}
+			/* P2002 doesn't use XTarget
 			else if (IsXTarget(GetTarget()))
 			{
 				GetTarget()->IsTargeted(1);
 				return;
-			}
+			}*/
 			else if (GetTarget()->IsPetOwnerClient())
 			{
 				GetTarget()->IsTargeted(1);
@@ -14456,6 +14470,7 @@ void Client::Handle_OP_WhoAllRequest(const EQApplicationPacket *app)
 
 void Client::Handle_OP_XTargetAutoAddHaters(const EQApplicationPacket *app)
 {
+	/* P2002 doesn't use XTarget
 	if (app->size != 1)
 	{
 		Log(Logs::General, Logs::None, "Size mismatch in OP_XTargetAutoAddHaters, expected 1, got %i", app->size);
@@ -14465,10 +14480,12 @@ void Client::Handle_OP_XTargetAutoAddHaters(const EQApplicationPacket *app)
 
 	XTargetAutoAddHaters = app->ReadUInt8(0);
 	SetDirtyAutoHaters();
+	*/
 }
 
 void Client::Handle_OP_XTargetOpen(const EQApplicationPacket *app)
 {
+	/* P2002 doesn't use XTarget
 	if (app->size != 4) {
 		Log(Logs::General, Logs::None, "Size mismatch in OP_XTargetOpen, expected 1, got %i", app->size);
 		DumpPacket(app);
@@ -14477,10 +14494,12 @@ void Client::Handle_OP_XTargetOpen(const EQApplicationPacket *app)
 
 	auto outapp = new EQApplicationPacket(OP_XTargetOpenResponse, 0);
 	FastQueuePacket(&outapp);
+	*/
 }
 
 void Client::Handle_OP_XTargetRequest(const EQApplicationPacket *app)
 {
+	/* P2002 doesn't have XTarget
 	if (app->size < 12)
 	{
 		Log(Logs::General, Logs::None, "Size mismatch in OP_XTargetRequest, expected at least 12, got %i", app->size);
@@ -14709,7 +14728,7 @@ void Client::Handle_OP_XTargetRequest(const EQApplicationPacket *app)
 		Log(Logs::General, Logs::None, "Unhandled XTarget Type %i", Type);
 		break;
 	}
-
+	*/
 }
 
 void Client::Handle_OP_YellForHelp(const EQApplicationPacket *app)

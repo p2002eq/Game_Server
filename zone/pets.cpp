@@ -569,11 +569,13 @@ void Mob::SetPetID(uint16 NewPetID) {
 		return;
 	petid = NewPetID;
 
+	/* P2002 doesn't use XTarget
 	if(IsClient())
 	{
 		Mob* NewPet = entity_list.GetMob(NewPetID);
 		CastToClient()->UpdateXTargetType(MyPet, NewPet);
 	}
+	*/
 }
 
 void Mob::RemovePet() {

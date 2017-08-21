@@ -126,6 +126,7 @@ void Raid::AddMember(Client *c, uint32 group, bool rleader, bool groupleader, bo
 	SendRaidMOTD(c);
 
 	// xtarget shit ..........
+	/* P2002 doesn't use XTargets
 	if (group == RAID_GROUPLESS) {
 		if (rleader) {
 			GetXTargetAutoMgr()->merge(*c->GetXTargetAutoMgr());
@@ -144,6 +145,7 @@ void Raid::AddMember(Client *c, uint32 group, bool rleader, bool groupleader, bo
 				c->SetDirtyAutoHaters();
 		}
 	}
+	*/
 
 	Raid *raid_update = nullptr;
 	raid_update = c->GetRaid();
@@ -176,7 +178,8 @@ void Raid::RemoveMember(const char *characterName)
 
 	if(client) {
 		client->SetRaidGrouped(false);
-		client->LeaveRaidXTargets(this);
+		// P2002 doesn't have XTargets
+		// client->LeaveRaidXTargets(this);
 	}
 
 	auto pack = new ServerPacket(ServerOP_RaidRemove, sizeof(ServerRaidGeneralAction_Struct));
@@ -913,6 +916,8 @@ void Raid::RemoveRaidLooter(const char* looter)
 	worldserver.SendPacket(pack);
 	safe_delete(pack);
 }
+
+
 
 bool Raid::IsRaidMember(const char *name){
 	for(int x = 0; x < MAX_RAID_MEMBERS; x++)
