@@ -2930,6 +2930,9 @@ int Mob::CheckStackConflict(uint16 spellid1, int caster_level1, uint16 spellid2,
 
 	Log(Logs::Detail, Logs::Spells, "Check Stacking on old %s (%d) @ lvl %d (by %s) vs. new %s (%d) @ lvl %d (by %s)", sp1.name, spellid1, caster_level1, (caster1==nullptr)?"Nobody":caster1->GetName(), sp2.name, spellid2, caster_level2, (caster2==nullptr)?"Nobody":caster2->GetName());
 
+	if (IsResurrectionEffects(spellid1))
+		return 0;
+
 	if (spellid1 == spellid2 ) {
 		if (!IsStackableDot(spellid1) && !(spellid1 == 2751)) { // Manaburn cannot land on a target with the debuff
 			if (caster_level1 > caster_level2) { // cur buff higher level than new
@@ -3141,6 +3144,14 @@ int Mob::CheckStackConflict(uint16 spellid1, int caster_level1, uint16 spellid2,
 
 		sp1_value = CalcSpellEffectValue(spellid1, i, caster_level1);
 		sp2_value = CalcSpellEffectValue(spellid2, i, caster_level2);
+
+		// Spells like SoW won't stack if a snare effect is already in place.
+		if (effect2 == SE_MovementSpeed && effect1 == SE_MovementSpeed) {
+			if (sp1_value < 0 && sp2_value > 0)
+				return -1;
+			else if (sp2_value < 0 && sp1_value > 0)
+				continue;
+		}
 
 		// some spells are hard to compare just on value. attack speed spells
 		// have a value that's a percentage for instance
