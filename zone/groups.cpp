@@ -1878,6 +1878,7 @@ bool Group::IsNPCMarker(Client *c)
 
 	return false;
 	*/
+	return false;
 }
 
 void Group::SetGroupAssistTarget(Mob *m)
