@@ -176,6 +176,7 @@ public:
 	Client *GetClient(uint32 ip, uint16 port);
 	Client *GetRandomClient(const glm::vec3& location, float Distance, Client *ExcludeClient = nullptr);
 	Group *GetGroupByMob(Mob* mob);
+	bool IsInSameGroupOrRaidGroup(Client *client1, Client *client2);
 	Group *GetGroupByClient(Client* client);
 	Group *GetGroupByID(uint32 id);
 	Group *GetGroupByLeaderName(const char* leader);
