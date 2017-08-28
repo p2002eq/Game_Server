@@ -278,25 +278,31 @@ void Client::SetEXP(uint32 set_exp, uint32 set_aaxp, bool isrezzexp) {
 
 	//check_level represents the level we should be when we have
 	//this amount of exp (once these loops complete)
-	uint16 check_level = GetLevel()+1;
+	uint16 check_level = GetLevel();
 	//see if we gained any levels
 	bool level_increase = true;
 	int8 level_count = 0;
 
-	while (set_exp >= GetEXPForLevel(check_level)) {
-		check_level++;
-		if (check_level > 127) {	//hard level cap
-			check_level = 127;
-			break;
-		}
-		level_count++;
-
-		if(GetMercID()) {
-			UpdateMercLevel();
+	if ((long)(set_exp - m_pp.exp) > 0) { // XP INCREASE
+		while (set_exp >= GetEXPForLevel(check_level)) {
+			check_level++;
+			if (check_level > 127) { // hard level cap
+				check_level = 127;
+				break;
+			}
+			level_count++;
 		}
 	}
-	check_level--;
-
+	else { // XP DECREASE
+		while (set_exp < GetEXPForLevel(check_level)) {
+			check_level--;
+			if (check_level < 1) {	// hard level floor
+				check_level = 1;
+				break;
+			}
+			level_count--;
+		}
+	}
 
 	//see if we gained any AAs
 	if (set_aaxp >= max_AAXP) {

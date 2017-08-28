@@ -597,6 +597,7 @@ public:
 	void SendPositionUpdate(uint8 iSendToSelf = 0);
 	void MakeSpawnUpdateNoDelta(PlayerPositionUpdateServer_Struct* spu);
 	void MakeSpawnUpdate(PlayerPositionUpdateServer_Struct* spu);
+	void SetConLevel(uint8 in_level, Client *specific_target);
 	void SendPosition();
 	void SetSpawned() { spawned = true; };
 	bool Spawned() { return spawned; };
