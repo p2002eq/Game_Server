@@ -1459,6 +1459,12 @@ void Mob::SendHPUpdate(bool skip_self /*= false*/, bool force_update_all /*= fal
 	}
 }
 
+// This is to fool a specific client into thinking a mob is a different level to get the right con color
+void Mob::SetConLevel(uint8 in_level, Client *specific_target)
+{
+	SendAppearancePacket(AT_WhoLevel, in_level, false, true, specific_target);
+}
+
 /* Used for mobs standing still - this does not send a delta */
 void Mob::SendPosition() {
 	auto app = new EQApplicationPacket(OP_ClientUpdate, sizeof(PlayerPositionUpdateServer_Struct));
@@ -5075,7 +5081,7 @@ void Mob::SetBodyType(bodyType new_body, bool overwrite_orig) {
 		CreateDespawnPacket(app, true);
 		entity_list.QueueClients(this, app);
 		CreateSpawnPacket(app, this);
-		entity_list.QueueClients(this, app);
+		entity_list.QueueClientsCreateSpawn(this, app);
 		safe_delete(app);
 	}
 }

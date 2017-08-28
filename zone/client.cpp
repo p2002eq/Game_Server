@@ -455,7 +455,7 @@ void Client::SendZoneInPackets()
 
 	CreateSpawnPacket(outapp);
 	outapp->priority = 6;
-	if (!GetHideMe()) entity_list.QueueClients(this, outapp, true);
+	if (!GetHideMe()) entity_list.QueueClientsCreateSpawn(this, outapp, true);
 	safe_delete(outapp);
 	SetSpawned();
 	if (GetPVP())	//force a PVP update until we fix the spawn struct
@@ -3835,7 +3835,7 @@ void Client::SacrificeConfirm(Client *caster)
 void Client::Sacrifice(Client *caster)
 {
 	if (GetLevel() >= RuleI(Spells, SacrificeMinLevel) && GetLevel() <= RuleI(Spells, SacrificeMaxLevel)) {
-		int exploss = (int)(GetLevel() * (GetLevel() / 18.0) * 12000);
+		uint32 exploss = (int)(GetLevel() * (GetLevel() / 18.0) * 12000);
 		if (exploss < GetEXP()) {
 			SetEXP(GetEXP() - exploss, GetAAXP());
 			SendLogoutPackets();
@@ -4063,7 +4063,7 @@ void Client::FixClientXP()
 
 	uint16 level = GetLevel();
 	uint32 totalrequiredxp = GetEXPForLevel(level);
-	float currentxp = GetEXP();
+	uint32 currentxp = GetEXP();
 	uint32 currentaa = GetAAXP();
 
 	if(currentxp < totalrequiredxp)

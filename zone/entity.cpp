@@ -1257,7 +1257,7 @@ void EntityList::SendZoneSpawns(Client *client)
 		}
 
 		app = new EQApplicationPacket;
-		it->second->CastToMob()->CreateSpawnPacket(app); // TODO: Use zonespawns opcode instead
+		it->second->CastToMob()->CreateSpawnPacket(app, client); // TODO: Use zonespawns opcode instead
 		client->QueuePacket(app, true, Client::CLIENT_CONNECTED);
 		safe_delete(app);
 		++it;
@@ -1612,11 +1612,13 @@ void EntityList::QueueCloseClients(Mob *sender, const EQApplicationPacket *app,
 // a different level to get the right con color for p2002 era.
 // Run whenever a player changes levels.
 void EntityList::UpdateConLevels(Client *specific_target) {
-	auto it = npc_list.begin();
-	while (it != npc_list.end()) {
-		uint32 in_level = Mob::GetLevelForClientCon(specific_target->GetLevel(), it->second->GetLevel());
-		it->second->SetConLevel(in_level, specific_target);
-		++it;
+	uint32 in_level;
+
+	auto it_mob = mob_list.begin();
+	while (it_mob != mob_list.end()) {
+		in_level = Mob::GetLevelForClientCon(specific_target->GetLevel(), it_mob->second->GetLevel());
+		it_mob->second->SetConLevel(in_level, specific_target);
+		++it_mob;
 	}
 }
 
