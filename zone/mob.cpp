@@ -1406,7 +1406,7 @@ void Mob::SendHPUpdate(bool skip_self /*= false*/, bool force_update_all /*= fal
 	if(IsClient()){
 		Raid *raid = entity_list.GetRaidByClient(CastToClient());
 		if (raid)
-			raid->SendHPPacketsFrom(this);
+			raid->SendHPManaEndPacketsFrom(this);
 	}
 
 	/* Pet - Update master - group and raid if exists */
@@ -1418,7 +1418,7 @@ void Mob::SendHPUpdate(bool skip_self /*= false*/, bool force_update_all /*= fal
 			group->SendHPPacketsFrom(this);
 		Raid *raid = entity_list.GetRaidByClient(GetOwner()->CastToClient());
 		if(raid)
-			raid->SendHPPacketsFrom(this);
+			raid->SendHPManaEndPacketsFrom(this);
 	}
 
 	/* Send to pet */
@@ -1459,6 +1459,12 @@ void Mob::SendHPUpdate(bool skip_self /*= false*/, bool force_update_all /*= fal
 	}
 }
 
+// This is to fool a specific client into thinking a mob is a different level to get the right con color
+void Mob::SetConLevel(uint8 in_level, Client *specific_target)
+{
+	SendAppearancePacket(AT_WhoLevel, in_level, false, true, specific_target);
+}
+
 /* Used for mobs standing still - this does not send a delta */
 void Mob::SendPosition() {
 	auto app = new EQApplicationPacket(OP_ClientUpdate, sizeof(PlayerPositionUpdateServer_Struct));
@@ -1473,6 +1479,20 @@ void Mob::SendPosition() {
 	else {
 		entity_list.QueueCloseClients(this, app, true, RuleI(Range, MobPositionUpdates), nullptr, false);
 	}
+
+	safe_delete(app);
+}
+
+void Mob::SendPositionUpdateToClient(Client *client) {
+	auto app = new EQApplicationPacket(OP_ClientUpdate, sizeof(PlayerPositionUpdateServer_Struct));
+	PlayerPositionUpdateServer_Struct* spawn_update = (PlayerPositionUpdateServer_Struct*)app->pBuffer;
+
+	if(this->IsMoving())
+		MakeSpawnUpdate(spawn_update);
+	else
+		MakeSpawnUpdateNoDelta(spawn_update);
+
+	client->QueuePacket(app, false);
 
 	safe_delete(app);
 }
@@ -5061,7 +5081,7 @@ void Mob::SetBodyType(bodyType new_body, bool overwrite_orig) {
 		CreateDespawnPacket(app, true);
 		entity_list.QueueClients(this, app);
 		CreateSpawnPacket(app, this);
-		entity_list.QueueClients(this, app);
+		entity_list.QueueClientsCreateSpawn(this, app);
 		safe_delete(app);
 	}
 }

@@ -1910,6 +1910,7 @@ void Mob::ApplySpellsBonuses(uint16 spell_id, uint8 casterlevel, StatBonuses *ne
 			}
 
 			case SE_MovementSpeed:
+				// snare effect will override movement boosts
 				if (effect_value < 0)
 					new_bonus->movementspeed = effect_value;
 				else

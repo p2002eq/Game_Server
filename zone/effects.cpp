@@ -761,6 +761,7 @@ void EntityList::AESpell(Mob *caster, Mob *center, uint16 spell_id, bool affect_
 			continue;
 		if (spells[spell_id].targettype == ST_AreaNPCOnly && !curmob->IsNPC())
 			continue;
+		// untargetable mobs like horses don't get hit by AoEs
 		if (!curmob->IsTargetable())
 			continue;
 		// check PC/NPC only flag 1 = PCs, 2 = NPCs

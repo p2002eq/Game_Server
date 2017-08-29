@@ -1773,7 +1773,7 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial, int level_ove
 					else
 						TargetClient = this->CastToClient();
 
-					if (!entity_list.IsInSameGroupOrRaidGroup(caster->CastToClient(), TargetClient)) {
+					if (TargetClient != this->CastToClient() && !entity_list.IsInSameGroupOrRaidGroup(caster->CastToClient(), TargetClient)) {
 						caster->Message(13, "Your target must be a group member for this spell.");
 						break;
 					}
@@ -2168,7 +2168,6 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial, int level_ove
 							caster->Message(13, "Your target must be a group member for this spell.");
 							break;
 						}
-
 						// clear aggro when summoned in zone
 						if (caster->CalculateDistance(GetX(), GetY(), GetZ()) >= RuleR(Spells, CallOfTheHeroAggroClearDist))
 							entity_list.ClearAggro(this);
@@ -5988,7 +5987,8 @@ bool Mob::TryDeathSave() {
 
 bool Mob::AffectedBySpellExcludingSlot(int slot, int effect)
 {
-	for (int i = 0; i <= EFFECT_COUNT; i++)
+	int buff_count = GetMaxTotalSlots();
+	for (int i = 0; i < buff_count; i++)
 	{
 		if (i == slot)
 			continue;
