@@ -284,7 +284,7 @@ void Client::SetEXP(uint32 set_exp, uint32 set_aaxp, bool isrezzexp) {
 	int8 level_count = 0;
 
 	if ((signed)(set_exp - m_pp.exp) > 0) { // XP INCREASE
-		while (set_exp >= GetEXPForLevel(check_level)) {
+		while (set_exp >= GetEXPForLevel(check_level+1)) {
 			check_level++;
 			if (check_level > 127) { // hard level cap
 				check_level = 127;
