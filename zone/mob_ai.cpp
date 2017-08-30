@@ -2050,7 +2050,7 @@ uint32 Mob::GetLevelForClientCon(uint8 mylevel, uint8 iOtherLevel) {
 }
 
 uint32 Mob::GetLevelCon(uint8 mylevel, uint8 iOtherLevel) {
-	int16 diff = iOtherLevel - mylevel;
+	signed diff = iOtherLevel - mylevel;
 
 	if (diff == 0)
 		return CON_WHITE;
