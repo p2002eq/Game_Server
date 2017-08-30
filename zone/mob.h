@@ -704,6 +704,7 @@ public:
 	uint32 total_damage;
 
 	//More stuff to sort:
+	bool isHorse() const { return IsHorse; };
 	virtual bool IsRaidTarget() const { return false; };
 	virtual bool IsAttackAllowed(Mob *target, bool isSpellAttack = false);
 	bool IsTargeted() const { return (targeted > 0); }
