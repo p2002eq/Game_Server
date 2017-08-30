@@ -1146,7 +1146,7 @@ void Mob::FillSpawnStruct(NewSpawn_Struct* ns, Mob* ForWho)
 	ns->spawn.walkspeed = walkspeed;
 	ns->spawn.class_ = class_;
 	ns->spawn.gender = gender;
-	ns->spawn.level = ForWho ? Mob::GetLevelForClientCon(ForWho->CastToClient()->GetLevel(), level) : level;// ForWho->IsClient() ? Mob::GetLevelForClientCon(ForWho->CastToClient()->GetLevel(), level) : level;
+	ns->spawn.level = ForWho && this->IsNPC() ? Mob::GetLevelForClientCon(ForWho->CastToClient()->GetLevel(), level) : level;// ForWho->IsClient() ? Mob::GetLevelForClientCon(ForWho->CastToClient()->GetLevel(), level) : level;
 	ns->spawn.PlayerState	= m_PlayerState;
 	ns->spawn.deity		= deity;
 	ns->spawn.animation	= 0;

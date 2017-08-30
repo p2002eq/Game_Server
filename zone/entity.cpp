@@ -1612,13 +1612,13 @@ void EntityList::QueueCloseClients(Mob *sender, const EQApplicationPacket *app,
 // a different level to get the right con color for p2002 era.
 // Run whenever a player changes levels.
 void EntityList::UpdateConLevels(Client *specific_target) {
-	uint32 in_level;
+	uint8 in_level;
 
-	auto it_mob = mob_list.begin();
-	while (it_mob != mob_list.end()) {
-		in_level = Mob::GetLevelForClientCon(specific_target->GetLevel(), it_mob->second->GetLevel());
-		it_mob->second->SetConLevel(in_level, specific_target);
-		++it_mob;
+	auto it_npc = npc_list.begin();
+	while (it_npc != npc_list.end()) {
+		in_level = Mob::GetLevelForClientCon(specific_target->GetLevel(), it_npc->second->GetLevel());
+		it_npc->second->SetConLevel(in_level, specific_target);
+		++it_npc;
 	}
 }
 
@@ -1630,7 +1630,8 @@ void EntityList::QueueClientsCreateSpawn(Mob *sender, const EQApplicationPacket 
 		Client *ent = it->second;
 
 		NewSpawn_Struct* ns = (NewSpawn_Struct*)app->pBuffer;
-		ns->spawn.level = Mob::GetLevelForClientCon(ent->GetLevel(), ns->spawn.level);
+		if (ns->spawn.NPC == 1)
+			ns->spawn.level = Mob::GetLevelForClientCon(ent->GetLevel(), ns->spawn.level);
 
 		if ((!ignore_sender || ent != sender))
 			ent->QueuePacket(app, ackreq, Client::CLIENT_CONNECTED);
@@ -1762,6 +1763,17 @@ Corpse *EntityList::GetCorpseByOwner(Client *client)
 		if (it->second->IsPlayerCorpse())
 			if (strcasecmp(it->second->GetOwnerName(), client->GetName()) == 0)
 				return it->second;
+		++it;
+	}
+	return nullptr;
+}
+
+Corpse *EntityList::GetCorpseByOwnerName(const char *name)
+{
+	auto it = corpse_list.begin();
+	while (it != corpse_list.end()) {
+		if (strcasecmp(it->second->GetOwnerName(), name) == 0)
+			return it->second;
 		++it;
 	}
 	return nullptr;
@@ -2851,20 +2863,36 @@ void EntityList::ListNPCCorpses(Client *client)
 	client->Message(0, "%d npc corpses listed.", x);
 }
 
-void EntityList::ListPlayerCorpses(Client *client)
+void EntityList::ListPlayerCorpses(Client *client, Client *target)
 {
 	uint32 x = 0;
 
 	auto it = corpse_list.begin();
 	client->Message(0, "Player Corpses in the zone:");
 	while (it != corpse_list.end()) {
-		if (it->second->IsPlayerCorpse()) {
-			client->Message(0, "  %5d: %s", it->first, it->second->GetName());
+		if (it->second->IsPlayerCorpse() && (!target || strcasecmp(it->second->GetOwnerName(), target->GetName()) == 0)) {
+			client->Message(0, "  %5d: %s - %f, %f, %f, corpse_db_id: %u", it->first, it->second->GetName(), it->second->GetX(), it->second->GetY(), it->second->GetZ(), it->second->GetCorpseDBID());
 			x++;
 		}
 		++it;
 	}
 	client->Message(0, "%d player corpses listed.", x);
+}
+
+void EntityList::ListAllCorpses(Client *client, Mob *target)
+{
+	uint32 x = 0;
+
+	auto it = corpse_list.begin();
+	client->Message(0, "Corpses in the zone:");
+	while (it != corpse_list.end()) {
+		if (!target || strcasecmp(it->second->GetOwnerName(), target->GetName()) == 0) {
+			client->Message(0, "  %5d: %s - %f, %f, %f, corpse_db_id: %u", it->first, it->second->GetName(), it->second->GetX(), it->second->GetY(), it->second->GetZ(), it->second->GetCorpseDBID());
+			x++;
+		}
+		++it;
+	}
+	client->Message(0, "%d corpses listed.", x);
 }
 
 void EntityList::FindPathsToAllNPCs()
