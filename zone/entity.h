@@ -186,6 +186,7 @@ public:
 	Raid *GetRaidByLeaderName(const char *leader);
 
 	Corpse *GetCorpseByOwner(Client* client);
+	Corpse *GetCorpseByOwnerName(const char *name);
 	Corpse *GetCorpseByOwnerWithinRange(Client* client, Mob* center, int range);
 	inline Corpse *GetCorpseByID(uint16 id)
 	{
@@ -385,7 +386,8 @@ public:
 
 	void	ListNPCs(Client* client, const char* arg1 = 0, const char* arg2 = 0, uint8 searchtype = 0);
 	void	ListNPCCorpses(Client* client);
-	void	ListPlayerCorpses(Client* client);
+	void	ListPlayerCorpses(Client* client, Client* target=nullptr);
+	void	ListAllCorpses(Client* client, Mob* target = nullptr);
 	void	FindPathsToAllNPCs();
 	int32	DeleteNPCCorpses();
 	int32	DeletePlayerCorpses();

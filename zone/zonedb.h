@@ -315,6 +315,8 @@ public:
 	bool	NoRentExpired(const char* name);
 
 	/* Corpses  */
+	void		ListCharacterCorpses(Client *target, Client *c, bool buried, bool backup);
+	void		ListCharacterCorpseBackups(Client *target, Client *c);
 	bool		DeleteItemOffCharacterCorpse(uint32 db_id, uint32 equip_slot, uint32 item_id);
 	uint32		GetCharacterCorpseItemCount(uint32 corpse_id);
 	bool		LoadCharacterCorpseData(uint32 corpse_id, PlayerCorpse_Struct* pcs);
@@ -322,7 +324,7 @@ public:
 	Corpse*		SummonBuriedCharacterCorpses(uint32 char_id, uint32 dest_zoneid, uint16 dest_instanceid, const glm::vec4& position);
 	void		MarkCorpseAsRezzed(uint32 dbid);
 	bool		GetDecayTimes(npcDecayTimes_Struct* npcCorpseDecayTimes);
-	bool		BuryCharacterCorpse(uint32 dbid);
+	bool		BuryCharacterCorpse(uint32 dbid, uint8 buryflag = 1);
 	bool		BuryAllCharacterCorpses(uint32 charid);
 	bool		DeleteCharacterCorpse(uint32 dbid);
 	bool		SummonAllCharacterCorpses(uint32 char_id, uint32 dest_zoneid, uint16 dest_instanceid, const glm::vec4& position);
@@ -343,9 +345,10 @@ public:
 	uint32		GetCharacterCorpseItemAt(uint32 corpse_id, uint16 slotid);
 	uint32		GetPlayerCorpseTimeLeft(uint8 corpse, uint8 type);
 	bool		IsValidCorpseBackup(uint32 corpse_id);
-	bool		IsValidCorpse(uint32 corpse_id);
-	bool		IsCorpseBackupOwner(uint32 corpse_id, uint32 char_id);
-	bool		CopyBackupCorpse(uint32 corpse_id);
+	bool		IsValidCorpse(uint32 corpse_id, bool backup = false);
+	bool		IsCorpseOwner(uint32 corpse_id, uint32 char_id, bool backup = false);
+	bool		CopyCorpseToBackup(uint32 corpse_id);
+	bool		RestoreCorpseFromBackup(uint32 corpse_id);
 	Corpse*		SummonCharacterCorpse(uint32 corpse_id, uint32 char_id, uint32 dest_zone_id, uint16 dest_instance_id, const glm::vec4& position);
 
 	/* Faction   */

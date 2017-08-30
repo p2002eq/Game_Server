@@ -3401,6 +3401,234 @@ void command_corpse(Client *c, const Seperator *sep)
 {
 	Mob *target=c->GetTarget();
 
+	// Locks a corpse, preventing anybody from looting it
+	if (strcasecmp(sep->arg[1], "lock") == 0) {
+		if (target == 0 || !target->IsCorpse())
+			c->Message(0, "Error: Target must be a corpse.");
+		else {
+			target->CastToCorpse()->Lock();
+			c->Message(0, "Locking %s...", target->GetName());
+		}
+	}
+	// Unlocks a corpse, preventing normal looting
+	else if (strcasecmp(sep->arg[1], "unlock") == 0) {
+		if (target == 0 || !target->IsCorpse())
+			c->Message(0, "Error: Target must be a corpse.");
+		else {
+			target->CastToCorpse()->UnLock();
+			c->Message(0, "Unlocking %s...", target->GetName());
+		}
+	}
+	// Returns the location of target's corpses in zone.
+	else if (strcasecmp(sep->arg[1], "locate") == 0) {
+		if (target == 0)
+			c->Message(0, "Error: Must have a target to locate their corpse.");
+		else {
+			if (strlen(sep->arg[2]) > 0 && strcasecmp(sep->arg[2], "all") == 0 && target->IsClient()) {
+				database.ListCharacterCorpses(target->CastToClient(), c, false, false);
+			}
+			else
+				entity_list.ListAllCorpses(c, target);
+		}
+	}
+	// Lists all PC corpses in zone with location
+	else if (strcasecmp(sep->arg[1], "listPC") == 0) {
+		entity_list.ListPlayerCorpses(c);
+	}
+	// Lists all NPC corpses in zone with location
+	else if (strcasecmp(sep->arg[1], "listNPC") == 0) {
+		entity_list.ListNPCCorpses(c);
+	}
+	// Depops a corpse with optional bury (1)
+	else if (strcasecmp(sep->arg[1], "depop") == 0) {
+		if (target == 0 || !target->IsPlayerCorpse())
+			c->Message(0, "Error: Target must be a player corpse.");
+		else if (c->Admin() >= commandEditPlayerCorpses && target->IsPlayerCorpse()) {
+			if (!sep->arg[2][0] || atoi(sep->arg[2]) != 0) {
+				c->Message(0, "Burying %s.", target->GetName());
+				target->CastToCorpse()->Bury();
+			}
+			else {
+				c->Message(0, "Depoping %s.", target->GetName());
+				target->CastToCorpse()->DepopPlayerCorpse();
+			}
+		}
+		else
+			c->Message(0, "Insufficient status to depop player corpse.");
+	}
+	else if (strcasecmp(sep->arg[1], "summon") == 0) {
+		Corpse *crps;
+		const char *name;
+
+		if (strlen(sep->arg[2]) > 0) {
+			if (sep->IsNumber(2)) {
+				crps = entity_list.GetCorpseByID(atoi(sep->arg[2]));
+				name = crps->GetOwnerName();
+			}
+			else {
+				name = sep->arg[2];
+				crps = entity_list.GetCorpseByOwnerName(name);
+			}
+		}
+		else {
+			if (target == 0)
+				c->Message(0, "Must have target if not specifying a name of corpse to summon.");
+			else {
+				name = target->GetName();
+				crps = entity_list.GetCorpseByOwner(target->CastToClient());
+			}
+		}
+
+		if (crps) {
+			crps->Summon(c, true, false);
+			c->Message(0, "Summoning corpse of %s...", name);
+		}
+		else {
+			c->Message(0, "No corpse to summon with name %s...", name);
+		}
+	}
+	else if (strcasecmp(sep->arg[1], "buried") == 0) {
+		if (target == 0 || !target->IsClient())
+			c->Message(CC_Default, "Error: Target must be a player to list or summon their buried corpses.");
+		else if (strlen(sep->arg[2]) > 0) {
+			if (strcasecmp(sep->arg[2], "list") == 0) {
+				c->Message(CC_Red, "Listing buried corpses");
+				database.ListCharacterCorpses(target->CastToClient(), c, true, false);
+			}
+			else if (strcasecmp(sep->arg[2], "summon") == 0) {
+				if (c->Admin() >= commandEditPlayerCorpses) {
+					uint32 corpseid;
+					Client *t;
+
+					if (c->GetTarget() && c->GetTarget()->IsClient() && c->GetGM())
+						t = c->GetTarget()->CastToClient();
+					else {
+						c->Message(CC_Default, "You must first turn your GM flag on and select a target!");
+						return;
+					}
+
+					if (!sep->IsNumber(3)) {
+						c->Message(CC_Default, "Usage: #corpse buried summon [corpse_id].");
+						return;
+					}
+					else
+						corpseid = atoi(sep->arg[3]);
+
+					if (!database.IsValidCorpse(corpseid)) {
+						c->Message(CC_Red, "Corpse %i has been found! Please summon or delete it before attempting to restore trying to unbury it.", atoi(sep->arg[2]));
+						return;
+					}
+					else if (!database.IsCorpseOwner(corpseid, t->CharacterID(), false)) {
+						c->Message(CC_Red, "Targetted player is not the owner of the specified corpse!");
+						return;
+					}
+					else {
+						Corpse* PlayerCorpse = database.SummonCharacterCorpse(corpseid, t->CharacterID(), t->GetZoneID(), zone->GetInstanceID(), t->GetPosition());
+						database.BuryCharacterCorpse(corpseid, 0); // unbury corpse
+						if (!PlayerCorpse)
+							c->Message(CC_Default, "Summoning of backup corpse failed. Please escalate this issue.");
+						return;
+					}
+				}
+				else {
+					c->Message(CC_Default, "Insufficient status to summon backup corpses.");
+				}
+			}
+		}
+		else {
+			c->Message(CC_Default, "Must provide argument 'list' or 'summon', ex: #corpse backup list");
+		}
+	}
+	else if (strcasecmp(sep->arg[1], "backup") == 0) {
+		if (target == 0 || !target->IsClient())
+			c->Message(CC_Default, "Error: Target must be a player to list their backups.");
+		else if (strlen(sep->arg[2]) > 0) {
+			if (strcasecmp(sep->arg[2], "list") == 0) {
+				c->Message(CC_Red, "Listing buried corpses");
+				database.ListCharacterCorpses(target->CastToClient(), c, false, true);
+			}
+			else if (strcasecmp(sep->arg[2], "summon") == 0) {
+				if (c->Admin() >= commandEditPlayerCorpses) {
+					uint32 corpseid;
+					Client *t;
+
+					if (c->GetTarget() && c->GetTarget()->IsClient() && c->GetGM())
+						t = c->GetTarget()->CastToClient();
+					else {
+						c->Message(CC_Default, "You must first turn your GM flag on and select a target!");
+						return;
+					}
+
+					if (!sep->IsNumber(3)) {
+						c->Message(CC_Default, "Usage: #corpse backup summon [corpse_id].");
+						return;
+					}
+					else
+						corpseid = atoi(sep->arg[3]);
+
+					// Check if backup corpse exists
+					if (!database.IsValidCorpseBackup(corpseid)) {
+						c->Message(CC_Red, "Backup corpse %i not found.", corpseid);
+						return;
+					}
+					// Check if corpse exists and is not buried (or if it even exists in non-backup table)
+					else if (!database.IsValidCorpse(corpseid, true)) {
+						c->Message(CC_Red, "Corpse %i has been found and is not buried! Please summon or delete it before attempting to restore from a backup.", corpseid);
+						return;
+					}
+					// Check if corpse is owner of target
+					else if (!database.IsCorpseOwner(corpseid, t->CharacterID(), true)) {
+						c->Message(CC_Red, "Targetted player is not the owner of the specified corpse!");
+						return;
+					}
+					else {
+						if (database.RestoreCorpseFromBackup(corpseid)) {
+							Corpse* PlayerCorpse = database.SummonCharacterCorpse(corpseid, t->CharacterID(), t->GetZoneID(), zone->GetInstanceID(), t->GetPosition());
+							database.BuryCharacterCorpse(corpseid, 0); // unbury corpse
+							if (!PlayerCorpse)
+								c->Message(CC_Default, "Summoning of backup corpse failed. Please escalate this issue.");
+							return;
+						}
+						else {
+							c->Message(CC_Red, "There was an error copying corpse %i. Please contact a DB admin.", corpseid);
+							return;
+						}
+					}
+				}
+				else {
+					c->Message(CC_Default, "Insufficient status to summon backup corpses.");
+				}
+			}
+			else {
+				c->Message(CC_Default, "Must provide argument 'list' or 'summon', ex: #corpse backup list");
+			}
+		}
+		else {
+			c->Message(CC_Default, "Must provide argument 'list' or 'summon', ex: #corpse backup list");
+		}
+	}
+	else if (strcasecmp(sep->arg[1], "delete") == 0) {
+		if (target == 0 || !target->IsCorpse()) {
+			c->Message(0, "Error: Target the corpse you wish to delete");
+			return;
+		}
+		if (target->IsNPCCorpse()) {
+			c->Message(0, "Depoping %s.", target->GetName());
+			target->CastToCorpse()->Delete();
+		}
+		else if (target->IsPlayerCorpse() && c->Admin() >= commandEditPlayerCorpses) {
+			c->Message(0, "Deleting %s.", target->GetName());
+			target->CastToCorpse()->Delete();
+		}
+		else if (strlen(sep->arg[2]) > 0 && sep->IsNumber(2)) {
+			database.DeleteCharacterCorpse(atoi(sep->arg[2]));
+		}
+		else
+			c->Message(0, "Insufficient status to delete player corpse.");
+	}
+
+
+	/*
 	if (strcasecmp(sep->arg[1], "DeletePlayerCorpses") == 0 && c->Admin() >= commandEditPlayerCorpses) {
 		int32 tmp = entity_list.DeletePlayerCorpses();
 		if (tmp >= 0)
@@ -3422,12 +3650,6 @@ void command_corpse(Client *c, const Seperator *sep)
 		}
 		else
 			c->Message(0, "Insufficient status to delete player corpse.");
-	}
-	else if (strcasecmp(sep->arg[1], "ListNPC") == 0) {
-		entity_list.ListNPCCorpses(c);
-	}
-	else if (strcasecmp(sep->arg[1], "ListPlayer") == 0) {
-		entity_list.ListPlayerCorpses(c);
 	}
 	else if (strcasecmp(sep->arg[1], "DeleteNPCCorpses") == 0) {
 		int32 tmp = entity_list.DeleteNPCCorpses();
@@ -3465,14 +3687,6 @@ void command_corpse(Client *c, const Seperator *sep)
 			c->Message(0, "Error: Target must be a corpse.");
 		else
 			target->CastToCorpse()->QueryLoot(c);
-	}
-	else if (strcasecmp(sep->arg[1], "lock") == 0) {
-		if (target == 0 || !target->IsCorpse())
-			c->Message(0, "Error: Target must be a corpse.");
-		else {
-			target->CastToCorpse()->Lock();
-			c->Message(0, "Locking %s...",  target->GetName());
-		}
 	}
 	else if (strcasecmp(sep->arg[1], "unlock") == 0) {
 		if (target == 0 || !target->IsCorpse())
@@ -3594,8 +3808,22 @@ void command_corpse(Client *c, const Seperator *sep)
 			c->Message(CC_Default, "Insufficient status to summon backup corpses.");
 		}
 	}
+	*/
+
 	else if (sep->arg[1][0] == 0 || strcasecmp(sep->arg[1], "help") == 0) {
 		c->Message(0, "#Corpse Sub-Commands:");
+		c->Message(0, "  lock - Lock corpse, only GM can loot");
+		c->Message(0, "  unlock - unlocks corpse, allowing anybody to loot");
+		c->Message(0, "  locate (all) - Find Targeted persons corpses in zone and optional (all) for world.");
+		c->Message(0, "  listPC - Show all Player corpse locations in zone");
+		c->Message(0, "  listNPC - Show all NPC corpse locations in zone");
+		c->Message(0, "  depop (1) - Depop target corpse. Optional (1) will bury corpse.");
+		c->Message(0, "  summon - Summon target or name - Example #corpse summon mythsong OR #corpse summon with a target");
+		c->Message(0, "  buried - #corpse buried list, #corpse buried summon");
+		c->Message(0, "  backup - #corpse backup list, #corpse backup summon");
+		c->Message(0, "  delete (Corpsenumber) - Delete a corpse permanently. Corpsenumber optional if no corpse target");
+
+		/*
 		c->Message(0, "  DeleteNPCCorpses");
 		c->Message(0, "  Delete - Delete targetted corpse");
 		c->Message(0, "  ListNPC");
@@ -3611,6 +3839,7 @@ void command_corpse(Client *c, const Seperator *sep)
 		c->Message(0, "  Depop [bury] - Depops single target corpse.");
 		c->Message(0, "  Depopall [bury] - Depops all target player's corpses.");
 		c->Message(0, "Set bury to 0 to skip burying the corpses.");
+		*/
 	}
 	else
 		c->Message(0, "Error, #corpse sub-command not found");

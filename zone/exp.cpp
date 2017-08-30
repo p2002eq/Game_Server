@@ -500,9 +500,8 @@ void Client::SetLevel(uint8 set_level, bool command)
 	QueuePacket(outapp);
 	safe_delete(outapp);
 	this->SendAppearancePacket(AT_WhoLevel, set_level); // who level change
-
+	entity_list.UpdateConLevels(this); // update npc con levels for client
 	Log(Logs::General, Logs::Normal, "Setting Level for %s to %i", GetName(), set_level);
-
 	CalcBonuses();
 
 	if(!RuleB(Character, HealOnLevel)) {
@@ -529,7 +528,6 @@ void Client::SetLevel(uint8 set_level, bool command)
 	UpdateWho();
 	SendManaUpdate();
 	UpdateMercLevel();
-	entity_list.UpdateConLevels(this);
 	Save();
 }
 
