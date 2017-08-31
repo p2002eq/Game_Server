@@ -2032,7 +2032,7 @@ void Mob::AreaRampage(ExtraAttackOptions *opts)
 	m_specialattacks = eSpecialAttacks::None;
 }
 
-uint32 Mob::GetLevelForClientCon(uint8 mylevel, uint8 iOtherLevel) {
+uint8 Mob::GetLevelForClientCon(uint8 mylevel, uint8 iOtherLevel) {
 	signed diff = iOtherLevel - mylevel;
 
 	if (diff >= 0 || mylevel > MAX_CON_LEVELS)
