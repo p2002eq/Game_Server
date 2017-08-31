@@ -406,6 +406,8 @@ int32 Client::GetActSpellCost(uint16 spell_id, int32 cost)
 
 int32 Mob::GetActSpellDuration(uint16 spell_id, int32 duration)
 {
+	if (IsDiscipline(spell_id)) // focuses don't affect discipline duration
+		return duration;
 	int increase = 100;
 	increase += GetFocusEffect(focusSpellDuration, spell_id);
 	int tic_inc = 0;
