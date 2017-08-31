@@ -3419,7 +3419,7 @@ void command_corpse(Client *c, const Seperator *sep)
 			c->Message(0, "Unlocking %s...", target->GetName());
 		}
 	}
-	// Returns the location of target's corpses in zone.
+	// Returns the location of target's corpses in zone or globally
 	else if (strcasecmp(sep->arg[1], "locate") == 0) {
 		if (target == 0)
 			c->Message(0, "Error: Must have a target to locate their corpse.");
@@ -3463,7 +3463,7 @@ void command_corpse(Client *c, const Seperator *sep)
 		if (strlen(sep->arg[2]) > 0) {
 			if (sep->IsNumber(2)) {
 				crps = entity_list.GetCorpseByID(atoi(sep->arg[2]));
-				name = crps->GetOwnerName();
+				name = crps ? crps->GetOwnerName() : sep->arg[2];
 			}
 			else {
 				name = sep->arg[2];
@@ -3481,10 +3481,10 @@ void command_corpse(Client *c, const Seperator *sep)
 
 		if (crps) {
 			crps->Summon(c, true, false);
-			c->Message(0, "Summoning corpse of %s...", name);
+			c->Message(0, "Summoning corpse with name or ID: %s...", name);
 		}
 		else {
-			c->Message(0, "No corpse to summon with name %s...", name);
+			c->Message(0, "No corpse to summon with name or ID: %s...", name);
 		}
 	}
 	else if (strcasecmp(sep->arg[1], "buried") == 0) {
@@ -3544,7 +3544,7 @@ void command_corpse(Client *c, const Seperator *sep)
 			c->Message(CC_Default, "Error: Target must be a player to list their backups.");
 		else if (strlen(sep->arg[2]) > 0) {
 			if (strcasecmp(sep->arg[2], "list") == 0) {
-				c->Message(CC_Red, "Listing buried corpses");
+				c->Message(CC_Red, "Listing backup corpses");
 				database.ListCharacterCorpses(target->CastToClient(), c, false, true);
 			}
 			else if (strcasecmp(sep->arg[2], "summon") == 0) {
@@ -3571,9 +3571,9 @@ void command_corpse(Client *c, const Seperator *sep)
 						c->Message(CC_Red, "Backup corpse %i not found.", corpseid);
 						return;
 					}
-					// Check if corpse exists and is not buried (or if it even exists in non-backup table)
-					else if (!database.IsValidCorpse(corpseid, true)) {
-						c->Message(CC_Red, "Corpse %i has been found and is not buried! Please summon or delete it before attempting to restore from a backup.", corpseid);
+					// Check if corpse exists and is in buried list
+					else if (database.IsValidCorpse(corpseid)) {
+						c->Message(CC_Red, "Corpse %i has been found and is buried! Please summon or delete it before attempting to restore from a backup.", corpseid);
 						return;
 					}
 					// Check if corpse is owner of target

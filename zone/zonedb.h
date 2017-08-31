@@ -345,7 +345,7 @@ public:
 	uint32		GetCharacterCorpseItemAt(uint32 corpse_id, uint16 slotid);
 	uint32		GetPlayerCorpseTimeLeft(uint8 corpse, uint8 type);
 	bool		IsValidCorpseBackup(uint32 corpse_id);
-	bool		IsValidCorpse(uint32 corpse_id, bool backup = false);
+	bool		IsValidCorpse(uint32 corpse_id);
 	bool		IsCorpseOwner(uint32 corpse_id, uint32 char_id, bool backup = false);
 	bool		CopyCorpseToBackup(uint32 corpse_id);
 	bool		RestoreCorpseFromBackup(uint32 corpse_id);
