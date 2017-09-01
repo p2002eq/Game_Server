@@ -4418,8 +4418,11 @@ bool Mob::IsImmuneToSpell(uint16 spell_id, Mob *caster)
 			assert(effect_index >= 0);
 			if(GetLevel() > spells[spell_id].max[effect_index] && spells[spell_id].max[effect_index] != 0)
 			{
-				Log(Logs::Detail, Logs::Spells, "Our level (%d) is higher than the limit of this Charm spell (%d)", GetLevel(), spells[spell_id].max[effect_index]);
-				caster->Message_StringID(MT_Shout, CANNOT_CHARM_YET);
+				int32 aggro = caster->CheckAggroAmount(spell_id, this);
+				aggro > 0 ? AddToHateList(caster, aggro) : AddToHateList(caster, 1, 0, true, false, false, spell_id);
+				caster->Message_StringID(MT_SpellFailure, TARGET_RESISTED, spells[spell_id].name);
+				// Log(Logs::Detail, Logs::Spells, "Our level (%d) is higher than the limit of this Charm spell (%d)", GetLevel(), spells[spell_id].max[effect_index]);
+				// caster->Message_StringID(MT_Shout, CANNOT_CHARM_YET);
 				return true;
 			}
 		}
