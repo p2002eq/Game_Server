@@ -2689,8 +2689,12 @@ void Mob::BardPulse(uint16 spell_id, Mob *caster) {
 			Log(Logs::Detail, Logs::Spells, "Bard Pulse for %d: found buff from caster %d and we are pulsing for %d... are there two bards playing the same song???", spell_id, buffs[buffs_i].casterid, caster->GetID());
 			return;
 		}
+		// some songs have more than 3 tick duration so let's reset it to max duration
+		if (spells[spell_id].buffduration > 3) {
+			buffs[buffs_i].ticsremaining = spells[spell_id].buffduration;
+		}
 		//extend the spell if it will expire before the next pulse
-		if(buffs[buffs_i].ticsremaining <= 3) {
+		else if (buffs[buffs_i].ticsremaining <= 3) {
 			buffs[buffs_i].ticsremaining += 3;
 			Log(Logs::Detail, Logs::Spells, "Bard Song Pulse %d: extending duration in slot %d to %d tics", spell_id, buffs_i, buffs[buffs_i].ticsremaining);
 		}
