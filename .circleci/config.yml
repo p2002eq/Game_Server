@@ -1,0 +1,39 @@
+version: 2
+jobs:
+  build:
+    working_directory: ~/p2002
+    # The primary container is an instance of the first list image listed. Your build commands run in this container.
+    docker:
+      - image: ubuntu:trusty
+    steps:
+      - checkout
+      - run:
+          name: Install Deps
+          command: 'sudo apt-get update -qq && apt-get install -y -qq gcc-4.8 g++-4.8 libmysqlclient-dev libperl-dev libboost-dev liblua5.1-0-dev zlib1g-dev uuid-dev libssl-dev build-essential make cmake'
+
+  test:
+    docker:
+      - image: ubuntu:trusty
+    steps:
+      - checkout
+      - run:
+          name: Test
+          command: npm test
+      - run:
+          name: CMake Env
+          command: 'cmake -G "Unix Makefiles" -DEQEMU_BUILD_TESTS=ON -DEQEMU_BUILD_LOGIN=ON'
+      - run:
+          name: build source
+          command: 'make -j2'
+      - run:
+          name: test
+          command: './bin/tests'
+      
+workflows:
+  version: 2
+  build_and_test:
+    jobs:
+      - build
+      - test:
+          requires:
+            - build
