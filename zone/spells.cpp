@@ -3680,29 +3680,57 @@ bool Mob::SpellOnTarget(uint16 spell_id, Mob *spelltar, bool reflect, bool use_r
 
 	// Prevent double invising, which made you uninvised
 	// Not sure if all 3 should be stacking
-	if(IsEffectInSpell(spell_id, SE_Invisibility))
-	{
-		if(spelltar->invisible)
+	if (IsEffectInSpell(spell_id, SE_Invisibility)) {
+		if (spelltar->IsClient()) {
+			if (IsClient()) {
+				if (spelltar != this && !entity_list.IsInSameGroupOrRaidGroup(spelltar->CastToClient(), this->CastToClient())) {
+					Message(13, "Your target must be a group member for this spell.");
+					return false;
+				}
+			}
+		}
+		else
+			Message(13, "This spell can only be cast on players.");
+
+		if (spelltar->invisible)
 		{
 			spelltar->Message_StringID(MT_SpellFailure, ALREADY_INVIS, GetCleanName());
 			safe_delete(action_packet);
 			return false;
 		}
 	}
+	if (IsEffectInSpell(spell_id, SE_InvisVsUndead)) {
+		if (spelltar->IsClient()) {
+			if (IsClient()) {
+				if (spelltar != this && !entity_list.IsInSameGroupOrRaidGroup(spelltar->CastToClient(), this->CastToClient())) {
+					Message(13, "Your target must be a group member for this spell.");
+					return false;
+				}
+			}
+		}
+		else
+			Message(13, "This spell can only be cast on players.");
 
-	if(IsEffectInSpell(spell_id, SE_InvisVsUndead))
-	{
-		if(spelltar->invisible_undead)
+		if (spelltar->invisible_undead)
 		{
 			spelltar->Message_StringID(MT_SpellFailure, ALREADY_INVIS, GetCleanName());
 			safe_delete(action_packet);
 			return false;
 		}
 	}
+	if (IsEffectInSpell(spell_id, SE_InvisVsAnimals)) {
+		if (spelltar->IsClient()) {
+			if (IsClient()) {
+				if (spelltar != this && !entity_list.IsInSameGroupOrRaidGroup(spelltar->CastToClient(), this->CastToClient())) {
+					Message(13, "Your target must be a group member for this spell.");
+					return false;
+				}
+			}
+		}
+		else
+			Message(13, "This spell can only be cast on players.");
 
-	if(IsEffectInSpell(spell_id, SE_InvisVsAnimals))
-	{
-		if(spelltar->invisible_animals)
+		if (spelltar->invisible_animals)
 		{
 			spelltar->Message_StringID(MT_SpellFailure, ALREADY_INVIS, GetCleanName());
 			safe_delete(action_packet);
