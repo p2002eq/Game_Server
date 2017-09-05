@@ -492,7 +492,7 @@ void ZoneServer::HandleMessage(uint16 opcode, const EQ::Net::Packet &p) {
 				cle->Server()->SendPacket(pack);
 		}
 		else {
-			if (scm->chan_num == 5 || scm->chan_num == 6 || scm->chan_num == 11) {
+			if (scm->chan_num == 4 || scm->chan_num == 5 || scm->chan_num == 6 || scm->chan_num == 11) {
 				if (console) {
 					console->SendChannelMessage(scm, [&scm]() {
 						auto pack = new ServerPacket(ServerOP_ChannelMessage,
