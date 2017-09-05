@@ -1128,7 +1128,7 @@ int32 Mob::CheckAggroAmount(uint16 spell_id, Mob *target, bool isproc)
 		AggroAmount = spells[spell_id].HateAdded;
 
 	if (GetOwner() && IsPet())
-		AggroAmount = AggroAmount * RuleI(Aggro, PetSpellAggroMod) / 100;
+		AggroAmount = 0; //AggroAmount * RuleI(Aggro, PetSpellAggroMod) / 100;
 
 	// hate focus ignored on first action for some reason
 	if (!on_hatelist && AggroAmount > 0) {
@@ -1194,7 +1194,7 @@ int32 Mob::CheckHealAggroAmount(uint16 spell_id, Mob *target, uint32 heal_possib
 		AggroAmount = IsBardSong(spell_id) ? 2 : 9;
 
 	if (GetOwner() && IsPet())
-		AggroAmount = AggroAmount * RuleI(Aggro, PetSpellAggroMod) / 100;
+		AggroAmount = 0; //AggroAmount * RuleI(Aggro, PetSpellAggroMod) / 100;
 
 	if (AggroAmount > 0) {
 		int HateMod = RuleI(Aggro, SpellAggroMod);
