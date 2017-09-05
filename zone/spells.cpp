@@ -1182,13 +1182,14 @@ void Mob::CastedSpellFinished(uint16 spell_id, uint32 target_id, CastingSlot slo
 			if(reg_focus > 0)
 				Log(Logs::Detail, Logs::Spells, "Spell %d: Reagent focus item failed to prevent reagent consumption (%d chance)", spell_id, reg_focus);
 			Client *c = this->CastToClient();
-			int component, component_count, inv_slot_id;
+			int component, component_count, inv_slot_id, no_expend_reagent;
 			bool missingreags = false;
 			for(int t_count = 0; t_count < 4; t_count++) {
 				component = spells[spell_id].components[t_count];
 				component_count = spells[spell_id].component_counts[t_count];
+				no_expend_reagent = spells[spell_id].NoexpendReagent[t_count];
 
-				if (component == -1)
+				if (component == -1 && no_expend_reagent == -1)
 					continue;
 
 				// bard components are requirements for a certain instrument type, not a specific item
@@ -1265,16 +1266,15 @@ void Mob::CastedSpellFinished(uint16 spell_id, uint32 target_id, CastingSlot slo
 
 				// handle the components for traditional casters
 				else {
-					if(c->GetInv().HasItem(component, component_count, invWhereWorn|invWherePersonal) == -1) // item not found
-					{
-						if (!missingreags)
-						{
+					if ( (component != -1 && c->GetInv().HasItem(component, component_count, invWhereWorn | invWherePersonal) == -1) ||
+					     (no_expend_reagent != -1 && c->GetInv().HasItem(no_expend_reagent, 1, invWhereWorn | invWherePersonal) == -1) ) { // item not found
+						if (!missingreags) {
 							c->Message_StringID(13, MISSING_SPELL_COMP);
-							missingreags=true;
+							missingreags = true;
 						}
 
 						const EQEmu::ItemData *item = database.GetItem(component);
-						if(item) {
+						if (item) {
 							c->Message_StringID(13, MISSING_SPELL_COMP_ITEM, item->Name);
 							Log(Logs::Detail, Logs::Spells, "Spell %d: Canceled. Missing required reagent %s (%d)", spell_id, item->Name, component);
 						}
@@ -1307,21 +1307,16 @@ void Mob::CastedSpellFinished(uint16 spell_id, uint32 target_id, CastingSlot slo
 					Log(Logs::Detail, Logs::Spells, "Spell %d: Consuming %d of spell component item id %d", spell_id, component_count, component);
 					// Components found, Deleting
 					// now we go looking for and deleting the items one by one
-					for(int s = 0; s < component_count; s++)
-					{
+					for (int s = 0; s < component_count; s++) {
 						inv_slot_id = c->GetInv().HasItem(component, 1, invWhereWorn|invWherePersonal);
 						if(inv_slot_id != -1)
-						{
 							c->DeleteItemInInventory(inv_slot_id, 1, true);
-						}
-						else
-						{	// some kind of error in the code if this happens
+						else // some kind of error in the code if this happens
 							c->Message(13, "ERROR: reagent item disappeared while processing?");
-						}
 					}
 				}
-				} // end missingreags/consumption
-			} // end `focus did not help us`
+			} // end missingreags/consumption
+		} // end `focus did not help us`
 	} // end IsClient() for reagents
 
 	// this is common to both bard and non bard
