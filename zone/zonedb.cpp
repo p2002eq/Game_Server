@@ -3697,9 +3697,10 @@ uint32 ZoneDatabase::UpdateCharacterCorpse(uint32 db_id, uint32 char_id, const c
                                     dbpc->item_tint.Feet.Color, dbpc->item_tint.Primary.Color, dbpc->item_tint.Secondary.Color,
                                     db_id);
 	auto results = QueryDatabase(query);
+	/*
 	if (backup) {
 		query.insert(25, "_backup");
-	}
+	}*/
 
 	return db_id;
 }
@@ -3845,6 +3846,7 @@ uint32 ZoneDatabase::SaveCharacterCorpse(uint32 charid, const char* charname, ui
 		QueryDatabase(corpse_items_query);
 	}
 
+	/*
 	// handle backup
 	if (backup && (dbpc->itemcount != 0 || dbpc->copper != 0 || dbpc->silver != 0 || dbpc->gold != 0 || dbpc->plat != 0)) {
 		query.insert(36, StringFormat("`id` = %u, ", last_insert_id));
@@ -3855,6 +3857,7 @@ uint32 ZoneDatabase::SaveCharacterCorpse(uint32 charid, const char* charname, ui
 			QueryDatabase(corpse_items_query);
 		}
 	}
+	*/
 
 	return last_insert_id;
 }
@@ -4121,6 +4124,68 @@ bool ZoneDatabase::UnburyCharacterCorpse(uint32 db_id, uint32 new_zone_id, uint1
 	return false;
 }
 
+void ZoneDatabase::ListCharacterCorpses(Client *target, Client *c, bool buried, bool backup) {
+	if (buried && backup) {
+		c->Message(CC_Red, "Error: Buried and backup specified as both true. Fix in code.");
+		return;
+	}
+
+	std::string query;
+	std::string ic_query;
+
+	if (buried)
+		query = StringFormat("SELECT id, zone_id, x, y, z, is_buried FROM character_corpses WHERE `charid` = %d AND `is_buried` = 1", target->CharacterID());
+	else if (backup)
+		query = StringFormat("SELECT id, zone_id, x, y, z, is_buried, is_locked FROM character_corpses_backup WHERE `charid` = %d", target->CharacterID());
+	else
+		query = StringFormat("SELECT id, zone_id, x, y, z, is_buried FROM character_corpses WHERE `charid` = %d", target->CharacterID());
+
+	c->Message(CC_Red, "CorpseID : Zone , x , y , z , Items");
+	auto results = database.QueryDatabase(query);
+	if (!results.Success() || results.RowCount() == 0) {
+		c->Message(CC_Red, "No corpse exist for %s with ID: %i.", target->GetName(), target->CharacterID());
+		return;
+	}
+
+	for (auto row = results.begin(); row != results.end(); ++row) {
+
+		if (buried || (!buried && !backup))
+			ic_query = StringFormat("SELECT COUNT(*) FROM character_corpse_items WHERE `corpse_id` = %s", row[0]);
+		else if (backup)
+			ic_query = StringFormat("SELECT COUNT(*) FROM character_corpse_items_backup WHERE `corpse_id` = %s", row[0]);
+
+		auto ic_results = database.QueryDatabase(ic_query);
+		auto ic_row = ic_results.begin();
+
+		if (backup)
+			c->Message(CC_Yellow, " %s:	%s, %s, %s, %s, Item Count: %s, Backup Summon Count: %s", row[0], database.GetZoneName(atoi(row[1])), row[2], row[3], row[4], ic_row[0], row[6]);
+		else
+			c->Message(CC_Yellow, " %s:	%s, %s, %s, %s, Item Count: %s, Buried: %s", row[0], database.GetZoneName(atoi(row[1])), row[2], row[3], row[4], ic_row[0], strcmp(row[5], "1") == 0 ? "yes": "no");
+	}
+}
+
+void ZoneDatabase::ListCharacterCorpseBackups(Client *target, Client *c) {
+
+	c->Message(CC_Red, "CorpseID : Zone , x , y , z , Items");
+	std::string query = StringFormat("SELECT id, zone_id, x, y, z FROM character_corpses_backup WHERE charid = %d", target->CharacterID());
+	auto results = database.QueryDatabase(query);
+
+	if (!results.Success() || results.RowCount() == 0)
+	{
+		c->Message(CC_Red, "No corpse backups exist for %s with ID: %i.", target->GetName(), target->CharacterID());
+		return;
+	}
+
+	for (auto row = results.begin(); row != results.end(); ++row)
+	{
+		std::string ic_query = StringFormat("SELECT COUNT(*) FROM character_corpse_items_backup WHERE corpse_id = %d", atoi(row[0]));
+		auto ic_results = database.QueryDatabase(ic_query);
+		auto ic_row = ic_results.begin();
+
+		c->Message(CC_Yellow, " %s:	%s, %s, %s, %s, (%s)", row[0], database.GetZoneName(atoi(row[1])), row[2], row[3], row[4], ic_row[0]);
+	}
+}
+
 Corpse* ZoneDatabase::LoadCharacterCorpse(uint32 player_corpse_id) {
 	Corpse* NewCorpse = 0;
 	std::string query = StringFormat(
@@ -4189,11 +4254,14 @@ bool ZoneDatabase::DeleteItemOffCharacterCorpse(uint32 db_id, uint32 equip_slot,
 	return false;
 }
 
-bool ZoneDatabase::BuryCharacterCorpse(uint32 db_id) {
-	std::string query = StringFormat("UPDATE `character_corpses` SET `is_buried` = 1 WHERE `id` = %u", db_id);
+bool ZoneDatabase::BuryCharacterCorpse(uint32 db_id, uint8 bury_flag) {
+	if (bury_flag > 1)
+		bury_flag = 1;
+
+	std::string query = StringFormat("UPDATE `character_corpses` SET `is_buried` = %u WHERE `id` = %u", bury_flag, db_id);
 	auto results = QueryDatabase(query);
-	if (results.Success() && results.RowsAffected() != 0){
-		return true;
+	if (results.Success() && results.RowsAffected() != 0) {
+		return bury_flag ? CopyCorpseToBackup(db_id) : true;
 	}
 	return false;
 }
@@ -4237,8 +4305,12 @@ bool ZoneDatabase::IsValidCorpse(uint32 corpse_id) {
 	return false;
 }
 
-bool ZoneDatabase::IsCorpseBackupOwner(uint32 corpse_id, uint32 char_id) {
-	std::string query = StringFormat("SELECT COUNT(*) FROM `character_corpses_backup` WHERE `id` = %d AND `charid` = %d", corpse_id, char_id);
+bool ZoneDatabase::IsCorpseOwner(uint32 corpse_id, uint32 char_id, bool backup) {
+	std::string query;
+	if (backup)
+		query = StringFormat("SELECT COUNT(*) FROM `character_corpses_backup` WHERE `id` = %d AND `charid` = %d", corpse_id, char_id);
+	else
+		query = StringFormat("SELECT COUNT(*) FROM `character_corpses` WHERE `id` = %d AND `charid` = %d", corpse_id, char_id);
 	auto results = QueryDatabase(query);
 	auto row = results.begin();
 	if (atoi(row[0]) == 1)
@@ -4247,21 +4319,78 @@ bool ZoneDatabase::IsCorpseBackupOwner(uint32 corpse_id, uint32 char_id) {
 	return false;
 }
 
-bool ZoneDatabase::CopyBackupCorpse(uint32 corpse_id) {
-	std::string query = StringFormat("REPLACE INTO `character_corpses` SELECT * from `character_corpses_backup` WHERE `id` = %d", corpse_id);
-	auto results = QueryDatabase(query);
+bool ZoneDatabase::CopyCorpseToBackup(uint32 corpse_id) {
+	std::string query;
+	MySQLRequestResult results;
+
+	query = StringFormat("SELECT `is_locked` FROM `character_corpses_backup` WHERE `id` = %d", corpse_id);
+	results = QueryDatabase(query);
+	auto rows = results.begin();
 	if (!results.Success()) {
 		return false;
 	}
-	std::string tod_query = StringFormat("UPDATE `character_corpses` SET `time_of_death` = NOW() WHERE `id` = %d", corpse_id);
-	auto tod_results = QueryDatabase(tod_query);
-	if (!tod_results.Success()) {
+
+	query = StringFormat("REPLACE INTO `character_corpses_backup` SELECT * from `character_corpses` WHERE `id` = %d", corpse_id);
+	results = QueryDatabase(query);
+	if (!results.Success()) {
 		return false;
 	}
-	std::string ci_query = StringFormat("REPLACE INTO `character_corpse_items` SELECT * from `character_corpse_items_backup` WHERE `corpse_id` = %d", corpse_id);
-	auto ci_results = QueryDatabase(ci_query);
-	if (!ci_results.Success()) {
+
+	query = StringFormat("REPLACE INTO `character_corpses_backup` SET is_locked = %d WHERE `id` = %d", atoi(rows[0]), corpse_id);
+	results = QueryDatabase(query);
+	if (!results.Success()) {
+		return false;
+	}
+
+	query = StringFormat("REPLACE INTO `character_corpse_items_backup` SELECT * from `character_corpse_items` WHERE `corpse_id` = %d", corpse_id);
+	results = QueryDatabase(query);
+	if (!results.Success()) {
 		Log(Logs::Detail, Logs::Error, "CopyBackupCorpse() Error replacing items.");
+		return false;
+	}
+
+	return true;
+}
+
+
+bool ZoneDatabase::RestoreCorpseFromBackup(uint32 corpse_id) {
+	std::string query;
+	MySQLRequestResult results;
+	// check if is_locked is 255 (been summoned from backup 255 times). This is used as a counter for number of times a backup corpse has been summoned.
+	query = StringFormat("SELECT `is_locked` FROM `character_corpses_backup` WHERE `id` = %d", corpse_id);
+	results = QueryDatabase(query);
+	auto rows = results.begin();
+	if (atoi(rows[0]) == 255) {
+		Log(Logs::Detail, Logs::Error, "RestoreCorpseFromBackup() Error backup corpse has been restored 255 times (max)");
+		return false;
+	}
+	// replace character data into corpse table from backup
+	query = StringFormat("REPLACE INTO `character_corpses` SELECT * from `character_corpses_backup` WHERE `id` = %d", corpse_id);
+	results = QueryDatabase(query);
+	if (!results.Success()) {
+		Log(Logs::Detail, Logs::Error, "RestoreCorpseFromBackup() Error replacing into character_corpses from backup.");
+		return false;
+	}
+	// update time of death to now and unlock corpse
+	query = StringFormat("UPDATE `character_corpses` SET time_of_death = NOW(), is_locked = 0 WHERE `id` = %d", corpse_id);
+	results = QueryDatabase(query);
+	if (!results.Success()) {
+		Log(Logs::Detail, Logs::Error, "RestoreCorpseFromBackup() Error updating time of death.");
+		return false;
+	}
+	// replace character item data into corpse item table from backup
+	query = StringFormat("REPLACE INTO `character_corpse_items` SELECT * from `character_corpse_items_backup` WHERE `corpse_id` = %d", corpse_id);
+	results = QueryDatabase(query);
+	if (!results.Success()) {
+		Log(Logs::Detail, Logs::Error, "RestoreCorpseFromBackup() Error replacing items from backup to live");
+		return false;
+	}
+	// update summoned counter for backup corpse
+	query = StringFormat("UPDATE `character_corpses_backup` SET is_locked = %d WHERE `id` = %d", atoi(rows[0]) + 1, corpse_id);
+	results = QueryDatabase(query);
+	if (!results.Success()) {
+		Log(Logs::Detail, Logs::Error, "RestoreCorpseFromBackup() Error incrementing is_locked on backup table.");
+		return false;
 	}
 
 	return true;

@@ -406,6 +406,8 @@ int32 Client::GetActSpellCost(uint16 spell_id, int32 cost)
 
 int32 Mob::GetActSpellDuration(uint16 spell_id, int32 duration)
 {
+	if (IsDiscipline(spell_id)) // focuses don't affect discipline duration
+		return duration;
 	int increase = 100;
 	increase += GetFocusEffect(focusSpellDuration, spell_id);
 	int tic_inc = 0;
@@ -762,7 +764,7 @@ void EntityList::AESpell(Mob *caster, Mob *center, uint16 spell_id, bool affect_
 		if (spells[spell_id].targettype == ST_AreaNPCOnly && !curmob->IsNPC())
 			continue;
 		// untargetable mobs like horses don't get hit by AoEs
-		if (!curmob->IsTargetable())
+		if (!curmob->IsTargetable() || curmob->isHorse())
 			continue;
 		// check PC/NPC only flag 1 = PCs, 2 = NPCs
 		if (spells[spell_id].pcnpc_only_flag == 1 && !curmob->IsClient() && !curmob->IsMerc())

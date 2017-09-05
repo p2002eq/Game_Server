@@ -443,6 +443,14 @@ bool Object::Process(){
 	if(m_ground_spawn && respawn_timer.Check()){
 		RandomSpawn(true);
 	}
+
+	if (user != nullptr && !entity_list.GetClientByCharID(user->CharacterID())) {
+		m_inuse = false;
+		last_user = user;
+		user->SetTradeskillObject(nullptr);
+		user = nullptr;
+	}
+
 	return true;
 }
 
@@ -552,7 +560,6 @@ bool Object::HandleClick(Client* sender, const ClickObject_Struct* click_object)
 		ClickObjectAction_Struct* coa = (ClickObjectAction_Struct*)outapp->pBuffer;
 
 		//TODO: there is prolly a better way to do this.
-		m_inuse = true;
 		coa->type = m_type;
 		coa->unknown16 = 0x0a;
 
@@ -574,26 +581,19 @@ bool Object::HandleClick(Client* sender, const ClickObject_Struct* click_object)
 			}
 		}
 
-		if(sender->IsLooting())
-		{
-			coa->open = 0x00;
-			user = sender;
-		}
-
 		sender->QueuePacket(outapp);
 		safe_delete(outapp);
 
 		//if the object allready had a user, we are done
-		if(user != nullptr)
-			return(false);
+		if (user != nullptr)
+			return false;
 
 		// Starting to use this object
+		m_inuse = true;
 		sender->SetTradeskillObject(this);
-
 		user = sender;
 
 		// Send items inside of container
-
 		if (m_inst && m_inst->IsType(EQEmu::item::ItemClassBag)) {
 
 			//Clear out no-drop and no-rent items first if different player opens it

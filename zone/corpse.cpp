@@ -621,7 +621,7 @@ bool Corpse::Save() {
 void Corpse::Delete() {
 	if (IsPlayerCorpse() && corpse_db_id != 0)
 		database.DeleteCharacterCorpse(corpse_db_id);
-
+	Save();
 	corpse_db_id = 0;
 	player_corpse_depop = true;
 }
@@ -629,6 +629,7 @@ void Corpse::Delete() {
 void Corpse::Bury() {
 	if (IsPlayerCorpse() && corpse_db_id != 0)
 		database.BuryCharacterCorpse(corpse_db_id);
+	Save();
 	corpse_db_id = 0;
 	player_corpse_depop = true;
 }

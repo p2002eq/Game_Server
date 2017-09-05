@@ -1,4 +1,4 @@
-language: cpp
+language: c
 compiler: gcc
 sudo: false
 addons:
@@ -24,9 +24,5 @@ script:
 branches:
   only:
     - master
-    - stable
-notifications:
-  email: false
-  irc:
-    channels: "irc.eqemulator.net#eqemucoders"
+    - dev
 os: linux

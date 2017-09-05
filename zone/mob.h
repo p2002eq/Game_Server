@@ -607,7 +607,7 @@ public:
 		m_Position.z = NewPosition.z; };
 
 	//AI
-	static uint32 GetLevelForClientCon(uint8 mylevel, uint8 iOtherLevel);
+	static uint8 GetLevelForClientCon(uint8 mylevel, uint8 iOtherLevel);
 	static uint32 GetLevelCon(uint8 mylevel, uint8 iOtherLevel);
 	inline uint32 GetLevelCon(uint8 iOtherLevel) const {
 		return this ? GetLevelCon(GetLevel(), iOtherLevel) : CON_GREEN; }
@@ -704,6 +704,7 @@ public:
 	uint32 total_damage;
 
 	//More stuff to sort:
+	bool isHorse() const { return IsHorse; };
 	virtual bool IsRaidTarget() const { return false; };
 	virtual bool IsAttackAllowed(Mob *target, bool isSpellAttack = false);
 	bool IsTargeted() const { return (targeted > 0); }

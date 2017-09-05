@@ -1182,13 +1182,14 @@ void Mob::CastedSpellFinished(uint16 spell_id, uint32 target_id, CastingSlot slo
 			if(reg_focus > 0)
 				Log(Logs::Detail, Logs::Spells, "Spell %d: Reagent focus item failed to prevent reagent consumption (%d chance)", spell_id, reg_focus);
 			Client *c = this->CastToClient();
-			int component, component_count, inv_slot_id;
+			int component, component_count, inv_slot_id, no_expend_reagent;
 			bool missingreags = false;
 			for(int t_count = 0; t_count < 4; t_count++) {
 				component = spells[spell_id].components[t_count];
 				component_count = spells[spell_id].component_counts[t_count];
+				no_expend_reagent = spells[spell_id].NoexpendReagent[t_count];
 
-				if (component == -1)
+				if (component == -1 && no_expend_reagent == -1)
 					continue;
 
 				// bard components are requirements for a certain instrument type, not a specific item
@@ -1265,16 +1266,15 @@ void Mob::CastedSpellFinished(uint16 spell_id, uint32 target_id, CastingSlot slo
 
 				// handle the components for traditional casters
 				else {
-					if(c->GetInv().HasItem(component, component_count, invWhereWorn|invWherePersonal) == -1) // item not found
-					{
-						if (!missingreags)
-						{
+					if ( (component != -1 && c->GetInv().HasItem(component, component_count, invWhereWorn | invWherePersonal) == -1) ||
+					     (no_expend_reagent != -1 && c->GetInv().HasItem(no_expend_reagent, 1, invWhereWorn | invWherePersonal) == -1) ) { // item not found
+						if (!missingreags) {
 							c->Message_StringID(13, MISSING_SPELL_COMP);
-							missingreags=true;
+							missingreags = true;
 						}
 
 						const EQEmu::ItemData *item = database.GetItem(component);
-						if(item) {
+						if (item) {
 							c->Message_StringID(13, MISSING_SPELL_COMP_ITEM, item->Name);
 							Log(Logs::Detail, Logs::Spells, "Spell %d: Canceled. Missing required reagent %s (%d)", spell_id, item->Name, component);
 						}
@@ -1307,21 +1307,16 @@ void Mob::CastedSpellFinished(uint16 spell_id, uint32 target_id, CastingSlot slo
 					Log(Logs::Detail, Logs::Spells, "Spell %d: Consuming %d of spell component item id %d", spell_id, component_count, component);
 					// Components found, Deleting
 					// now we go looking for and deleting the items one by one
-					for(int s = 0; s < component_count; s++)
-					{
+					for (int s = 0; s < component_count; s++) {
 						inv_slot_id = c->GetInv().HasItem(component, 1, invWhereWorn|invWherePersonal);
 						if(inv_slot_id != -1)
-						{
 							c->DeleteItemInInventory(inv_slot_id, 1, true);
-						}
-						else
-						{	// some kind of error in the code if this happens
+						else // some kind of error in the code if this happens
 							c->Message(13, "ERROR: reagent item disappeared while processing?");
-						}
 					}
 				}
-				} // end missingreags/consumption
-			} // end `focus did not help us`
+			} // end missingreags/consumption
+		} // end `focus did not help us`
 	} // end IsClient() for reagents
 
 	// this is common to both bard and non bard
@@ -2689,8 +2684,12 @@ void Mob::BardPulse(uint16 spell_id, Mob *caster) {
 			Log(Logs::Detail, Logs::Spells, "Bard Pulse for %d: found buff from caster %d and we are pulsing for %d... are there two bards playing the same song???", spell_id, buffs[buffs_i].casterid, caster->GetID());
 			return;
 		}
+		// some songs have more than 3 tick duration so let's reset it to max duration
+		if (spells[spell_id].buffduration > 3) {
+			buffs[buffs_i].ticsremaining = spells[spell_id].buffduration;
+		}
 		//extend the spell if it will expire before the next pulse
-		if(buffs[buffs_i].ticsremaining <= 3) {
+		else if (buffs[buffs_i].ticsremaining <= 3) {
 			buffs[buffs_i].ticsremaining += 3;
 			Log(Logs::Detail, Logs::Spells, "Bard Song Pulse %d: extending duration in slot %d to %d tics", spell_id, buffs_i, buffs[buffs_i].ticsremaining);
 		}
@@ -3676,29 +3675,57 @@ bool Mob::SpellOnTarget(uint16 spell_id, Mob *spelltar, bool reflect, bool use_r
 
 	// Prevent double invising, which made you uninvised
 	// Not sure if all 3 should be stacking
-	if(IsEffectInSpell(spell_id, SE_Invisibility))
-	{
-		if(spelltar->invisible)
+	if (IsEffectInSpell(spell_id, SE_Invisibility)) {
+		if (spelltar->IsClient()) {
+			if (IsClient()) {
+				if (spelltar != this && !entity_list.IsInSameGroupOrRaidGroup(spelltar->CastToClient(), this->CastToClient())) {
+					Message(13, "Your target must be a group member for this spell.");
+					return false;
+				}
+			}
+		}
+		else
+			Message(13, "This spell can only be cast on players.");
+
+		if (spelltar->invisible)
 		{
 			spelltar->Message_StringID(MT_SpellFailure, ALREADY_INVIS, GetCleanName());
 			safe_delete(action_packet);
 			return false;
 		}
 	}
+	if (IsEffectInSpell(spell_id, SE_InvisVsUndead)) {
+		if (spelltar->IsClient()) {
+			if (IsClient()) {
+				if (spelltar != this && !entity_list.IsInSameGroupOrRaidGroup(spelltar->CastToClient(), this->CastToClient())) {
+					Message(13, "Your target must be a group member for this spell.");
+					return false;
+				}
+			}
+		}
+		else
+			Message(13, "This spell can only be cast on players.");
 
-	if(IsEffectInSpell(spell_id, SE_InvisVsUndead))
-	{
-		if(spelltar->invisible_undead)
+		if (spelltar->invisible_undead)
 		{
 			spelltar->Message_StringID(MT_SpellFailure, ALREADY_INVIS, GetCleanName());
 			safe_delete(action_packet);
 			return false;
 		}
 	}
+	if (IsEffectInSpell(spell_id, SE_InvisVsAnimals)) {
+		if (spelltar->IsClient()) {
+			if (IsClient()) {
+				if (spelltar != this && !entity_list.IsInSameGroupOrRaidGroup(spelltar->CastToClient(), this->CastToClient())) {
+					Message(13, "Your target must be a group member for this spell.");
+					return false;
+				}
+			}
+		}
+		else
+			Message(13, "This spell can only be cast on players.");
 
-	if(IsEffectInSpell(spell_id, SE_InvisVsAnimals))
-	{
-		if(spelltar->invisible_animals)
+		if (spelltar->invisible_animals)
 		{
 			spelltar->Message_StringID(MT_SpellFailure, ALREADY_INVIS, GetCleanName());
 			safe_delete(action_packet);
@@ -4418,8 +4445,11 @@ bool Mob::IsImmuneToSpell(uint16 spell_id, Mob *caster)
 			assert(effect_index >= 0);
 			if(GetLevel() > spells[spell_id].max[effect_index] && spells[spell_id].max[effect_index] != 0)
 			{
+				int32 aggro = caster->CheckAggroAmount(spell_id, this);
+				aggro > 0 ? AddToHateList(caster, aggro) : AddToHateList(caster, 1, 0, true, false, false, spell_id);
+				caster->Message_StringID(MT_SpellFailure, TARGET_RESISTED, spells[spell_id].name);
 				Log(Logs::Detail, Logs::Spells, "Our level (%d) is higher than the limit of this Charm spell (%d)", GetLevel(), spells[spell_id].max[effect_index]);
-				caster->Message_StringID(MT_Shout, CANNOT_CHARM_YET);
+				// caster->Message_StringID(MT_Shout, CANNOT_CHARM_YET);
 				return true;
 			}
 		}

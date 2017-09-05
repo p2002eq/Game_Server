@@ -2032,8 +2032,8 @@ void Mob::AreaRampage(ExtraAttackOptions *opts)
 	m_specialattacks = eSpecialAttacks::None;
 }
 
-uint32 Mob::GetLevelForClientCon(uint8 mylevel, uint8 iOtherLevel) {
-	int16 diff = iOtherLevel - mylevel;
+uint8 Mob::GetLevelForClientCon(uint8 mylevel, uint8 iOtherLevel) {
+	signed diff = iOtherLevel - mylevel;
 
 	if (diff >= 0 || mylevel > MAX_CON_LEVELS)
 		return iOtherLevel; // white/yellow/red is correct as database level
@@ -2050,7 +2050,7 @@ uint32 Mob::GetLevelForClientCon(uint8 mylevel, uint8 iOtherLevel) {
 }
 
 uint32 Mob::GetLevelCon(uint8 mylevel, uint8 iOtherLevel) {
-	int16 diff = iOtherLevel - mylevel;
+	signed diff = iOtherLevel - mylevel;
 
 	if (diff == 0)
 		return CON_WHITE;

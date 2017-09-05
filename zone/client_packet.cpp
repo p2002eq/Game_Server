@@ -4686,7 +4686,7 @@ void Client::Handle_OP_ClientUpdate(const EQApplicationPacket *app)
 	}
 
 	if (zone->watermap) {
-		if (zone->watermap->InLiquid(glm::vec3(m_Position)))
+		if (zone->watermap->InLiquid(glm::vec3(m_Position)) && is_client_moving)
 			CheckIncreaseSkill(EQEmu::skills::SkillSwimming, nullptr, -17);
 		CheckRegionTypeChanges();
 	}
@@ -4805,7 +4805,7 @@ void Client::Handle_OP_Consider(const EQApplicationPacket *app)
 	// Titan Client appears to have different con levels/colors than what was correct in era for P2002.  Additionally, client seems to ignore the con->level you send it.
 	// To get con levels/colors to match the table in mob_ai.cpp, the below code (P2002ConSystem = True) is used.  This code ignores the client and instead has the server
 	// send the client a messsage.  If (P2002ConSystem = False), the code will revert to relying on the client to display the message, which won't likely match mob_ai.cpp.
-	if (RuleB(World, P2002ConSystem)) {
+	if (RuleB(World, P2002ConSystem) && tmob->IsClient()) {
 			
 		// Get Target Name
 		std::string tar_name = tmob->GetName();
@@ -5667,6 +5667,7 @@ void Client::Handle_OP_EndLootRequest(const EQApplicationPacket *app)
 
 void Client::Handle_OP_EnvDamage(const EQApplicationPacket *app)
 {
+
 	if (!ClientFinishedLoading())
 	{
 		SetHP(GetHP() - 1);
@@ -5683,10 +5684,14 @@ void Client::Handle_OP_EnvDamage(const EQApplicationPacket *app)
 
 	int damage = ed->damage;
 
-	if (ed->dmgtype == 252) {
+	if (ed->dmgtype == 252) { // FALLING DAMAGE
+		if (zone->HasWaterMap()) {
+			auto targetPosition = glm::vec3(this->GetX(), this->GetY(), this->GetZ());
+			if (!zone->watermap->InLiquid(targetPosition))
+				return;
+		}
 
 		int mod = spellbonuses.ReduceFallDamage + itembonuses.ReduceFallDamage + aabonuses.ReduceFallDamage;
-
 		damage -= damage * mod / 100;
 	}
 
