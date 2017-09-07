@@ -14497,7 +14497,26 @@ void Client::Handle_OP_WhoAllRequest(const EQApplicationPacket *app)
 		return;
 	}
 	Who_All_Struct* whoall = (Who_All_Struct*)app->pBuffer;
+	// /*000*/	char	whom[64];
+	// /*064*/	uint32	wrace;		// FF FF = no race
+	// /*068*/	uint32	wclass;		// FF FF = no class
+	// /*072*/	uint32	lvllow;		// FF FF = no numbers
+	// /*076*/	uint32	lvlhigh;	// FF FF = no numbers
+	// /*080*/	uint32	gmlookup;	// FF FF = not doing /who all gm
+	// /*084*/	uint32	guildid;
+	// /*088*/	uint8	unknown076[64];
+	// /*152*/	uint32	type;		// New for SoF. 0 = /who 3 = /who all
 
+	/*
+	std::string str = "";
+	for (int i = 0; i < sizeof(whoall->unknown076); ++i)
+		str += itoa(whoall->unknown076[i]);
+
+	Message(0, StringFormat("%s , %u , %u, %u, %u, %u, %u, %s, %u",
+		whoall->whom, whoall->wrace, whoall->wclass, whoall->lvllow, whoall->lvlhigh,
+		whoall->gmlookup, whoall->guildid, str, whoall->type).c_str());
+	*/
+	
 	if (whoall->type == 0) // SoF only, for regular /who
 		entity_list.ZoneWho(this, whoall);
 	else

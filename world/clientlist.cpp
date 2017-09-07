@@ -586,15 +586,21 @@ void ClientList::SendWhoAll(uint32 fromid,const char* to, int16 admin, Who_All_S
 		))
 	))
 ) {
-			if((countcle->Anon()>0 && admin>=countcle->Admin() && admin>0) || countcle->Anon()==0 ){
+			// these blocks can all be condensed but it's simpler to conceptualize this way
+			if ((countcle->Anon()>0 && admin>=countcle->Admin() && admin>0) || countcle->Anon()==0 ){
 				totalusers++;
 				if(totalusers<=20 || admin>=100)
 					totallength=totallength+strlen(countcle->name())+strlen(countcle->AccountName())+strlen(guild_mgr.GetGuildName(countcle->GuildID()))+5;
 			}
-			else if((countcle->Anon()>0 && admin<=countcle->Admin()) || (countcle->Anon()==0 && !countcle->GetGM())) {
+			else if (((countcle->Anon()==1 && admin<=countcle->Admin()) && whomlen !=0 && strncasecmp(countcle->name(), whom->whom, whomlen) == 0) || (countcle->Anon()==0 && !countcle->GetGM())) {
 				totalusers++;
 				if(totalusers<=20 || admin>=100)
 					totallength=totallength+strlen(countcle->name())+strlen(guild_mgr.GetGuildName(countcle->GuildID()))+5;
+			}
+			else if (((countcle->Anon()==2 && admin<=countcle->Admin()) && whomlen != 0 && (strncasecmp(countcle->name(), whom->whom, whomlen) == 0 || strncasecmp(guild_mgr.GetGuildName(countcle->GuildID()), whom->whom, whomlen) == 0)) || (countcle->Anon() == 0 && !countcle->GetGM())) {
+				totalusers++;
+				if (totalusers <= 20 || admin >= 100)
+					totallength = totallength + strlen(countcle->name()) + strlen(guild_mgr.GetGuildName(countcle->GuildID())) + 5;
 			}
 		}
 		countclients.Advance();
@@ -672,7 +678,18 @@ void ClientList::SendWhoAll(uint32 fromid,const char* to, int16 admin, Who_All_S
 					rankstring=0;
 					iterator.Advance();
 					continue;
-				} else if (cle->GetGM()) {
+				}
+				else if (cle->Anon() == 1 && cle->Admin()<=admin && whomlen !=0 && strncasecmp(cle->name(), whom->whom, whomlen) != 0) { //hide gms that are anon from lesser gms and normal players, cut off at 20
+					rankstring = 0;
+					iterator.Advance();
+					continue;
+				}
+				else if (cle->Anon() == 2 && cle->Admin()<=admin && whomlen !=0 && strncasecmp(cle->name(), whom->whom, whomlen) != 0 && strncasecmp(guild_mgr.GetGuildName(cle->GuildID()), whom->whom, whomlen) != 0) { //hide gms that are anon from lesser gms and normal players, cut off at 20
+					rankstring = 0;
+					iterator.Advance();
+					continue;
+				}
+				else if (cle->GetGM()) {
 					if (cle->Admin() >=250)
 						rankstring=5021;
 					else if (cle->Admin() >= 200)
