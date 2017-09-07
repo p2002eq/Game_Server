@@ -3321,7 +3321,7 @@ void EntityList::AddHealAggro(Mob *target, Mob *caster, uint16 hate)
 
 	for (auto &e : npc_list) {
 		auto &npc = e.second;
-		if (!npc->CheckAggro(target) || npc->IsFeared())
+		if (!npc->CheckAggro(target) || npc->IsFeared() || npc->IsPet())
 			continue;
 
 		// 50% chance for heals/runes/beneficial spells to not add any hate
