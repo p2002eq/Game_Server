@@ -3660,7 +3660,7 @@ void Client::Handle_OP_BazaarSearch(const EQApplicationPacket *app)
 		BazaarSearch_Struct* bss = (BazaarSearch_Struct*)app->pBuffer;
 
 		this->SendBazaarResults(bss->TraderID, bss->Class_, bss->Race, bss->ItemStat, bss->Slot, bss->Type,
-			bss->Name, bss->MinPrice * 1000, bss->MaxPrice * 1000);
+			bss->Name, bss->Minlevel, bss->MaxLlevel, bss->MinPrice * 1000, bss->MaxPrice * 1000);
 	}
 	else if (app->size == sizeof(BazaarWelcome_Struct)) {
 

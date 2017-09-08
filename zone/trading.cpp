@@ -1752,7 +1752,7 @@ void Client::SendBazaarWelcome()
 }
 
 void Client::SendBazaarResults(uint32 TraderID, uint32 Class_, uint32 Race, uint32 ItemStat, uint32 Slot, uint32 Type,
-					char Name[64], uint32 MinPrice, uint32 MaxPrice) {
+					char Name[64], uint32 MinLevel, uint32 MaxLevel, uint32 MinPrice, uint32 MaxPrice) {
 
 	std::string searchValues = " COUNT(item_id), trader.*, items.name ";
 	std::string searchCriteria = " WHERE trader.item_id = items.id ";
@@ -1769,6 +1769,12 @@ void Client::SendBazaarResults(uint32 TraderID, uint32 Class_, uint32 Race, uint
 
 	if(MaxPrice != 0)
 		searchCriteria.append(StringFormat(" AND trader.item_cost <= %i", MaxPrice));
+
+	if (MinLevel > 1)
+		searchCriteria.append(StringFormat(" AND (items.reqlevel != 0 OR items.reclevel != 0) AND (items.reqlevel <= %i OR items.reclevel <= %i)", MinLevel, MinLevel));
+
+	//if (MaxLevel > 1)
+	//	searchCriteria.append(StringFormat(" AND (items.reqlevel >= %i OR items.reclevel >= %i)", MaxLevel, MaxLevel));
 
 	if(strlen(Name) > 0) {
 		char *safeName = RemoveApostrophes(Name);
@@ -1910,8 +1916,8 @@ void Client::SendBazaarResults(uint32 TraderID, uint32 Class_, uint32 Race, uint
 			break;
 
 		case STAT_HASTE:
-			searchCriteria.append(" AND items.haste > 0");
-			searchValues.append(", items.haste");
+			searchCriteria.append(" AND items.worneffect = 998");
+			searchValues.append(", items.wornlevel");
 			break;
 
 		case STAT_DAMAGE_SHIELD:
