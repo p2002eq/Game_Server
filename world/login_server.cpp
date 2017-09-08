@@ -91,6 +91,8 @@ void LoginServer::ProcessUsertoWorldReq(uint16_t opcode, EQ::Net::Packet &p) {
 		utwrs->response = -1;
 	if (status == -2)
 		utwrs->response = -2;
+	if (client_list.CheckAccountActive(id) && status < RuleI(World, ExemptAccountLimitStatus))
+		utwrs->response = -4;
 
 	utwrs->worldid = utwr->worldid;
 	SendPacket(outpack);

@@ -261,6 +261,21 @@ void ClientList::DisconnectByIP(uint32 iIP) {
 	}
 }
 
+bool ClientList::CheckAccountActive(uint32 iAccID, ClientListEntry *cle) {
+
+	ClientListEntry* countCLEIPs = 0;
+	LinkedListIterator<ClientListEntry*> iterator(clientlist);
+	iterator.Reset();
+
+	while (iterator.MoreElements()) {
+		if (iterator.GetData()->AccountID() == iAccID && iterator.GetData()->Online() >= CLE_Status_Zoning && (cle == nullptr || cle != iterator.GetData())) {
+			return true;
+		}
+		iterator.Advance();
+	}
+	return false;
+}
+
 ClientListEntry* ClientList::FindCharacter(const char* name) {
 	LinkedListIterator<ClientListEntry*> iterator(clientlist);
 
