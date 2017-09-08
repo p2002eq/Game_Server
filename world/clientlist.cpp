@@ -586,15 +586,23 @@ void ClientList::SendWhoAll(uint32 fromid,const char* to, int16 admin, Who_All_S
 		))
 	))
 ) {
-			if((countcle->Anon()>0 && admin>=countcle->Admin() && admin>0) || countcle->Anon()==0 ){
+			// these blocks can all be condensed but it's simpler to conceptualize this way
+			if ((countcle->Anon()>0 && admin>=countcle->Admin() && admin>0) || countcle->Anon()==0 ){
 				totalusers++;
 				if(totalusers<=20 || admin>=100)
 					totallength=totallength+strlen(countcle->name())+strlen(countcle->AccountName())+strlen(guild_mgr.GetGuildName(countcle->GuildID()))+5;
 			}
-			else if((countcle->Anon()>0 && admin<=countcle->Admin()) || (countcle->Anon()==0 && !countcle->GetGM())) {
+			else if (((countcle->Anon()==1 && admin<=countcle->Admin()) && whomlen !=0 && strncasecmp(countcle->name(), whom->whom, whomlen) == 0)) {
 				totalusers++;
 				if(totalusers<=20 || admin>=100)
-					totallength=totallength+strlen(countcle->name())+strlen(guild_mgr.GetGuildName(countcle->GuildID()))+5;
+					totallength = totallength + strlen(countcle->name()) + strlen(countcle->AccountName()) + strlen(guild_mgr.GetGuildName(countcle->GuildID())) + 5;
+					// totallength=totallength+strlen(countcle->name())+strlen(guild_mgr.GetGuildName(countcle->GuildID()))+5;
+			}
+			else if (((countcle->Anon()==2 && admin<=countcle->Admin()) && whomlen != 0 && (strncasecmp(countcle->name(), whom->whom, whomlen) == 0 || strncasecmp(guild_mgr.GetGuildName(countcle->GuildID()), whom->whom, whomlen) == 0))) {
+				totalusers++;
+				if (totalusers <= 20 || admin >= 100)
+					totallength = totallength + strlen(countcle->name()) + strlen(countcle->AccountName()) + strlen(guild_mgr.GetGuildName(countcle->GuildID())) + 5;
+					// totallength = totallength + strlen(countcle->name()) + strlen(guild_mgr.GetGuildName(countcle->GuildID())) + 5;
 			}
 		}
 		countclients.Advance();
@@ -666,57 +674,69 @@ void ClientList::SendWhoAll(uint32 fromid,const char* to, int16 admin, Who_All_S
 		))
 	))
 ) {
-			line[0] = 0;
-			uint32 rankstring=0xFFFFFFFF;
-				if((cle->Anon()==1 && cle->GetGM() && cle->Admin()>admin) || (idx>=20 && admin<100)){ //hide gms that are anon from lesser gms and normal players, cut off at 20
-					rankstring=0;
-					iterator.Advance();
-					continue;
-				} else if (cle->GetGM()) {
-					if (cle->Admin() >=250)
-						rankstring=5021;
-					else if (cle->Admin() >= 200)
-						rankstring=5020;
-					else if (cle->Admin() >= 180)
-						rankstring=5019;
-					else if (cle->Admin() >= 170)
-						rankstring=5018;
-					else if (cle->Admin() >= 160)
-						rankstring=5017;
-					else if (cle->Admin() >= 150)
-						rankstring=5016;
-					else if (cle->Admin() >= 100)
-						rankstring=5015;
-					else if (cle->Admin() >= 95)
-						rankstring=5014;
-					else if (cle->Admin() >= 90)
-						rankstring=5013;
-					else if (cle->Admin() >= 85)
-						rankstring=5012;
-					else if (cle->Admin() >= 81)
-						rankstring=5011;
-					else if (cle->Admin() >= 80)
-						rankstring=5010;
-					else if (cle->Admin() >= 50)
-						rankstring=5009;
-					else if (cle->Admin() >= 20)
-						rankstring=5008;
-					else if (cle->Admin() >= 10)
-						rankstring=5007;
-				}
-			idx++;
-			char guildbuffer[67]={0};
-			if (cle->GuildID() != GUILD_NONE && cle->GuildID()>0)
-				sprintf(guildbuffer,"<%s>", guild_mgr.GetGuildName(cle->GuildID()));
-			uint32 formatstring=5025;
-			if(cle->Anon()==1 && (admin<cle->Admin() || admin==0))
-				formatstring=5024;
-			else if(cle->Anon()==1 && admin>=cle->Admin() && admin>0)
-				formatstring=5022;
-			else if(cle->Anon()==2 && (admin<cle->Admin() || admin==0))
-				formatstring=5023;//display guild
-			else if(cle->Anon()==2 && admin>=cle->Admin() && admin>0)
-				formatstring=5022;//display everything
+	line[0] = 0;
+	uint32 rankstring=0xFFFFFFFF;
+	// These lines can be simplified but easier to conceptualize this way
+	if((cle->Anon()==1 && cle->GetGM() && cle->Admin()>admin) || (idx>=20 && admin<100)){ //hide gms that are anon from lesser gms and normal players, cut off at 20
+		rankstring=0;
+		iterator.Advance();
+		continue;
+	}
+	else if (cle->Anon() == 1 && cle->Admin()>=admin && (whomlen == 0 || (whomlen !=0 && strncasecmp(cle->name(), whom->whom, whomlen) != 0))) {
+		rankstring = 0;
+		iterator.Advance();
+		continue;
+	}
+	else if (cle->Anon() == 2 && cle->Admin()>=admin && (whomlen == 0 || (whomlen !=0 && strncasecmp(cle->name(), whom->whom, whomlen) != 0 && strncasecmp(guild_mgr.GetGuildName(cle->GuildID()), whom->whom, whomlen) != 0))) {
+		rankstring = 0;
+		iterator.Advance();
+		continue;
+	}
+	else if (cle->GetGM()) {
+		if (cle->Admin() >=250)
+			rankstring=5021;
+		else if (cle->Admin() >= 200)
+			rankstring=5020;
+		else if (cle->Admin() >= 180)
+			rankstring=5019;
+		else if (cle->Admin() >= 170)
+			rankstring=5018;
+		else if (cle->Admin() >= 160)
+			rankstring=5017;
+		else if (cle->Admin() >= 150)
+			rankstring=5016;
+		else if (cle->Admin() >= 100)
+			rankstring=5015;
+		else if (cle->Admin() >= 95)
+			rankstring=5014;
+		else if (cle->Admin() >= 90)
+			rankstring=5013;
+		else if (cle->Admin() >= 85)
+			rankstring=5012;
+		else if (cle->Admin() >= 81)
+			rankstring=5011;
+		else if (cle->Admin() >= 80)
+			rankstring=5010;
+		else if (cle->Admin() >= 50)
+			rankstring=5009;
+		else if (cle->Admin() >= 20)
+			rankstring=5008;
+		else if (cle->Admin() >= 10)
+			rankstring=5007;
+	}
+	idx++;
+	char guildbuffer[67]={0};
+	if (cle->GuildID() != GUILD_NONE && cle->GuildID()>0)
+		sprintf(guildbuffer,"<%s>", guild_mgr.GetGuildName(cle->GuildID()));
+	uint32 formatstring=5025;
+	if(cle->Anon()==1 && (admin<cle->Admin() || admin==0))
+		formatstring=5024;
+	else if(cle->Anon()==1 && admin>=cle->Admin() && admin>0)
+		formatstring=5022;
+	else if(cle->Anon()==2 && (admin<cle->Admin() || admin==0))
+		formatstring=5023;//display guild
+	else if(cle->Anon()==2 && admin>=cle->Admin() && admin>0)
+		formatstring=5022;//display everything
 
 	//war* wars2 = (war*)pack2->pBuffer;
 
