@@ -57,6 +57,7 @@ public:
 	ClientListEntry* FindCLEByAccountID(uint32 iAccID);
 	ClientListEntry* FindCLEByCharacterID(uint32 iCharID);
 	ClientListEntry* GetCLE(uint32 iID);
+	bool	CheckAccountActive(uint32 iAccID, ClientListEntry* cle = nullptr);
 	void	GetCLEIP(uint32 iIP);
 	uint32	GetCLEIPCount(uint32 iLSAccountID);
 	void	DisconnectByIP(uint32 iIP);

@@ -180,6 +180,9 @@ void WorldServer::ProcessUsertoWorldResp(uint16_t opcode, const EQ::Net::Packet 
 		case -3:
 			per->Message = 303;
 			break;
+		case -4:
+			per->Message = 111;
+			break;
 		}
 
 		if (server.options.IsTraceOn())
