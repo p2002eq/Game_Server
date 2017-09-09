@@ -2810,9 +2810,9 @@ bool Client::BindWound(Mob *bindmob, bool start, bool fail)
 								percent_base = 70;
 						}
 
-						int percent_bonus = 0;
-						if (percent_base >= 70)
-							percent_bonus = spellbonuses.MaxBindWound + itembonuses.MaxBindWound + aabonuses.MaxBindWound;
+						//int percent_bonus = 0;
+						//if (percent_base >= 70)
+						int percent_bonus = spellbonuses.MaxBindWound + itembonuses.MaxBindWound + aabonuses.MaxBindWound;
 
 						int max_percent = percent_base + percent_bonus;
 						if (max_percent < 0)
