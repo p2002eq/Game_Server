@@ -436,6 +436,8 @@ RULE_INT(Combat, ThrowingCritDifficulty, 1100) // lower is easier
 RULE_BOOL(Combat, NPCCanCrit, false) // true allows non PC pet NPCs to crit
 RULE_BOOL(Combat, UseIntervalAC, true)
 RULE_INT(Combat, PetAttackMagicLevel, 30)
+RULE_INT(Combat, LevelDifferenceRollCheck, 20)
+RULE_REAL(Combat, LevelDifferenceRollBonus, 0.5)
 RULE_BOOL(Combat, EnableFearPathing, true)
 RULE_REAL(Combat, FleeMultiplier, 2.0) // Determines how quickly a NPC will slow down while fleeing. Decrease multiplier to slow NPC down quicker.
 RULE_INT(Combat, FleeHPRatio, 25) //HP % when a NPC begins to flee.
