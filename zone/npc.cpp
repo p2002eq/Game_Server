@@ -1566,7 +1566,7 @@ void NPC::Disarm(Client* client, int chance) {
 		if (zone->random.Int(0, 1000) <= chance) {
 			weapon = database.GetItem(equipment[eslot]);
 			if (weapon) {
-				if (!weapon->Magic && !weapon->NoDrop) {
+				if (!weapon->Magic && weapon->NoDrop == 255) {
 					int16 charges = -1;
 					ItemList::iterator cur, end;
 					cur = itemlist.begin();
