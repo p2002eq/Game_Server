@@ -275,7 +275,7 @@ public:
 					const char *message9 = nullptr);
 	void Tell_StringID(uint32 string_id, const char *who, const char *message);
 	void SendColoredText(uint32 color, std::string message);
-	void SendBazaarResults(uint32 trader_id,uint32 class_,uint32 race,uint32 stat,uint32 slot,uint32 type,char name[64],uint32 minprice,uint32 maxprice);
+	void SendBazaarResults(uint32 trader_id,uint32 class_,uint32 race,uint32 stat,uint32 slot,uint32 type,char name[64],uint32 minlevel, uint32 maxlevel, uint32 minprice,uint32 maxprice);
 	void SendTraderItem(uint32 item_id,uint16 quantity);
 	uint16 FindTraderItem(int32 SerialNumber,uint16 Quantity);
 	uint32 FindTraderItemSerialNumber(int32 ItemID);
@@ -759,6 +759,7 @@ public:
 
 	void NPCSpawn(NPC *target_npc, const char *identifier, uint32 extra = 0);
 
+	void Disarm(Client* disarmer, int chance);
 	bool BindWound(Mob* bindmob, bool start, bool fail = false);
 	void SetTradeskillObject(Object* object) { m_tradeskill_object = object; }
 	Object* GetTradeskillObject() { return m_tradeskill_object; }

@@ -113,11 +113,11 @@ int Mob::GetBaseSkillDamage(EQEmu::skills::SkillType skill, Mob *target)
 		if (IsClient()) {
 			if (HasShieldEquiped())
 				inst = CastToClient()->GetInv().GetItem(EQEmu::inventory::slotSecondary);
-			// else if (HasTwoHanderEquipped())
-			// 	inst = CastToClient()->GetInv().GetItem(EQEmu::inventory::slotPrimary);
+			else if (HasTwoHanderEquipped())
+				inst = CastToClient()->GetInv().GetItem(EQEmu::inventory::slotShoulders);
 		}
 		if (inst)
-			ac_bonus = inst->GetItemArmorClass(true) / 25.0f;
+			ac_bonus = inst->GetItemArmorClass(true) / RuleR(Combat, BashACBonusDivisor);
 		else
 			return 0; // return 0 in cases where we don't have an item
 		// if (ac_bonus > skill_bonus)
