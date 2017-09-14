@@ -124,6 +124,7 @@ public:
 
 	void	LoadZoneDoors(const char* zone, int16 version);
 	bool	LoadZoneObjects();
+	bool	IsSpecialBindLocation(const glm::vec4& location);
 	bool	LoadGroundSpawns();
 	void	ReloadStaticData();
 
