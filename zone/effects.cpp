@@ -740,11 +740,11 @@ void EntityList::AESpell(Mob *caster, Mob *center, uint16 spell_id, bool affect_
 		max_targets_allowed = *max_targets;
 	else if (spells[spell_id].aemaxtargets)
 		max_targets_allowed = spells[spell_id].aemaxtargets;
-	else if (IsTargetableAESpell(spell_id) && bad && !isnpc) {
-		// targeted AoE will hit target mob and three other mobs
-		caster->SpellOnTarget(spell_id, center, false, true, resist_adjust);
-		max_targets_allowed = 3;
-	}
+	else if (IsTargetableAESpell(spell_id) && bad && !isnpc)
+		max_targets_allowed = 3; // targeted AoE will hit target mob and three other mobs so 4 total
+
+	// cast on center
+	caster->SpellOnTarget(spell_id, center, false, true, resist_adjust);
 
 	int iCounter = 0;
 
