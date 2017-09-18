@@ -10188,10 +10188,11 @@ void Client::Handle_OP_PetCommands(const EQApplicationPacket *app)
 				zone->AddAggroMob();
 				// classic acts like qattack
 				int hate = 1;
-				if (mypet->IsEngaged()) {
-					auto top = mypet->GetHateMost();
-					if (top && top != target)
-						hate += mypet->GetHateAmount(top) - mypet->GetHateAmount(target) + 100; // should be enough to cause target change
+				if (!mypet->IsEngaged()) {
+					mypet->SetPetTargetLockID(target->GetID());
+					//auto top = mypet->GetHateMost();
+					//if (top && top != target)
+					//	hate += mypet->GetHateAmount(top) - mypet->GetHateAmount(target) + 100; // should be enough to cause target change
 				}
 				mypet->AddToHateList(target, hate, 0, true, false, false, SPELL_UNKNOWN, true);
 				Message_StringID(MT_PetResponse, PET_ATTACKING, mypet->GetCleanName(), target->GetCleanName());
@@ -10238,6 +10239,7 @@ void Client::Handle_OP_PetCommands(const EQApplicationPacket *app)
 
 		if ((mypet->GetPetType() == petAnimation && aabonuses.PetCommands[PetCommand]) || mypet->GetPetType() != petAnimation) {
 			mypet->SayTo_StringID(this, MT_PetResponse, PET_CALMING);
+			mypet->SetPetTargetLockID(0);
 			mypet->WipeHateList();
 			mypet->SetTarget(nullptr);
 			if (mypet->IsPetStop()) {

@@ -1032,7 +1032,9 @@ void Mob::AI_Process() {
 					}
 				}
 				else {
-					if (!ImprovedTaunt())
+					if (IsPet() && GetPetTargetLockID())
+						SetTarget(hate_list.GetEntOnHateListByID(GetPetTargetLockID()));
+					else if (!ImprovedTaunt())
 						SetTarget(hate_list.GetEntWithMostHateOnList(this));
 				}
 
