@@ -4687,8 +4687,14 @@ void Client::Handle_OP_ClientUpdate(const EQApplicationPacket *app)
 	}
 
 	if (zone->watermap) {
-		if (zone->watermap->InLiquid(glm::vec3(m_Position)) && is_client_moving)
+		if (zone->watermap->InLiquid(glm::vec3(m_Position)) && is_client_moving) {
 			CheckIncreaseSkill(EQEmu::skills::SkillSwimming, nullptr, -17);
+			// Dismount horses when entering water
+			if (GetHorseId()) {
+				SetHorseId(0);
+				BuffFadeByEffect(SE_SummonHorse);
+			}
+		}
 		CheckRegionTypeChanges();
 	}
 
