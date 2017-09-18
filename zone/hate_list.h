@@ -42,6 +42,7 @@ public:
 	Mob *GetClosestEntOnHateList(Mob *hater);
 	Mob *GetDamageTopOnHateList(Mob *hater);
 	Mob *GetEntWithMostHateOnList(Mob *center, Mob *skip = nullptr);
+	Mob *GetEntOnHateListByID(uint16 mobId);
 	Mob *GetRandomEntOnHateList();
 	Mob *GetEntWithMostHateOnList();
 
