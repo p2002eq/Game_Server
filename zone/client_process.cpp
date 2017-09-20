@@ -646,7 +646,7 @@ bool Client::Process() {
 				continue;
 
 			if (mob->CheckWillAggro(this) && !mob->CheckAggro(this)) {
-				mob->AddToHateList(this, 25);
+				mob->AddToHateList(this, 0);
 			}
 			npc_scan_count++;
 		}
