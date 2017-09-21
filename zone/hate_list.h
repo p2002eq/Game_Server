@@ -65,7 +65,7 @@ public:
 	void SetHateAmountOnEnt(Mob *other, uint32 in_hate, uint32 in_damage);
 	void SetHateOwner(Mob *new_hate_owner) { hate_owner = new_hate_owner; }
 	void SpellCast(Mob *caster, uint32 spell_id, float range, Mob *ae_center = nullptr);
-	void WipeHateList();
+	void WipeHateList(bool npc_only = false);
 
 
 protected:
