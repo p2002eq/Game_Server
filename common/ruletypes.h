@@ -524,6 +524,7 @@ RULE_BOOL(Combat, ProjectileDmgOnImpact, true) //If enabled, projectiles (ie arr
 RULE_BOOL(Combat, MeleePush, true) // enable melee push
 RULE_INT(Combat, MeleePushChance, 50) // (NPCs) chance the target will be pushed. Made up, 100 actually isn't that bad
 RULE_REAL(Combat, MeleePushForceClient, 0.00) // percent to add or remove from push for players
+RULE_REAL(Combat, MeleePushSizeMod, 10.00)
 RULE_REAL(Combat, MeleePushForcePet, 0.00) // percent to add or remove from push for pets
 RULE_BOOL(Combat, UseLiveCombatRounds, true) // turn this false if you don't want to worry about fixing up combat rounds for NPCs
 RULE_INT(Combat, NPCAssistCap, 5) // Maxiumium number of NPCs that will assist another NPC at once
