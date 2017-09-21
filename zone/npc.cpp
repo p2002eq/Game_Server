@@ -716,9 +716,16 @@ bool NPC::Process()
 			assist_cap_timer.Disable();
 	}
 
-	if (assist_timer.Check() && IsEngaged() && !Charmed() && !HasAssistAggro() &&
+	if (assist_timer.Check() && IsEngaged() && !Charmed() &&// !HasAssistAggro() &&
 	    NPCAssistCap() < RuleI(Combat, NPCAssistCap)) {
-		entity_list.AIYellForHelp(this, GetTarget());
+
+		auto hatelist = this->GetHateList();
+		for (auto it = hatelist.begin(); it != hatelist.end(); ++it) {
+			struct_HateList *entry = (*it);
+			entity_list.AIYellForHelp(this, entry->entity_on_hatelist);
+		}
+
+		//entity_list.AIYellForHelp(this, GetTarget());
 		if (NPCAssistCap() > 0 && !assist_cap_timer.Enabled())
 			assist_cap_timer.Start(RuleI(Combat, NPCAssistCapTimer));
 	}

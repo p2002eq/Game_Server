@@ -507,7 +507,7 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial, int level_ove
 								// break charmed pets before moving to not poof pet (exploitable otherwise)
 								if (HasPet() && GetPet()->IsCharmed())
 									GetPet()->BuffFadeByEffect(SE_Charm);
-								CastToClient()->MovePC(zone->GetZoneID(), zone->GetInstanceID(), x, y, z, heading, 0, EvacToSafeCoords);
+								CastToClient()->MovePC(zone->GetZoneID(), zone->GetInstanceID(), x, y, z, heading, 0, ZoneToSafeCoords);
 							} else
 								GMMove(x, y, z, heading);
 							entity_list.ClearAggro(this);
@@ -966,7 +966,7 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial, int level_ove
 						}
 						if(!zone->IsCity())
 						{
-							if(caster != this)
+							if(caster != this && !zone->IsSpecialBindLocation(GetPosition()))
 							{
 								Message_StringID(MT_SpellFailure, CANNOT_BIND);
 								break;

@@ -287,8 +287,8 @@ bool Mob::CheckWillAggro(Mob *mob) {
 	}
 
 	// Don't aggro new clients if we are already engaged unless PROX_AGGRO is set
-	if ((IsEngaged() && (!GetSpecialAbility(PROX_AGGRO) && GetBodyType() != BT_Undead)) ||
-		((GetSpecialAbility(PROX_AGGRO) || GetBodyType() == BT_Undead) && !CombatRange(mob))) {
+	if ((IsEngaged() && (!GetSpecialAbility(PROX_AGGRO) && GetBodyType() != BT_Undead))) {
+		//((GetSpecialAbility(PROX_AGGRO) || GetBodyType() == BT_Undead) && !CombatRange(mob))) {
 		Log(Logs::Moderate, Logs::Aggro,
 			"%s is in combat, and does not have prox_aggro, or does and is out of combat range with %s",
 			GetName(), mob->GetName());
@@ -453,7 +453,7 @@ void EntityList::AIYellForHelp(Mob* sender, Mob* attacker) {
 //			&& mob->IsAIControlled()
 			&& mob->GetPrimaryFaction() != 0
 			&& DistanceSquared(mob->GetPosition(), sender->GetPosition()) <= r
-			&& !mob->IsEngaged()
+			//&& !mob->IsEngaged()
 			&& ((!mob->IsPet()) || (mob->IsPet() && mob->GetOwner() && !mob->GetOwner()->IsClient()))
 				// If we're a pet we don't react to any calls for help if our owner is a client
 			)

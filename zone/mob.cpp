@@ -2139,9 +2139,9 @@ void Mob::SendAppearancePacket(uint32 type, uint32 value, bool WholeZone, bool i
 	if (WholeZone)
 		entity_list.QueueClients(this, outapp, iIgnoreSelf);
 	else if(specific_target != nullptr)
-		specific_target->QueuePacket(outapp, false, Client::CLIENT_CONNECTED);
+		specific_target->QueuePacket(outapp, true, Client::CLIENT_CONNECTED);
 	else if (this->IsClient())
-		this->CastToClient()->QueuePacket(outapp, false, Client::CLIENT_CONNECTED);
+		this->CastToClient()->QueuePacket(outapp, true, Client::CLIENT_CONNECTED);
 	safe_delete(outapp);
 }
 
@@ -2835,6 +2835,8 @@ bool Mob::RemoveFromHateList(Mob* mob)
 	}
 	if(GetTarget() == mob)
 	{
+		if (IsPet() && GetPetTargetLockID())
+			SetPetTargetLockID(0);
 		SetTarget(hate_list.GetEntWithMostHateOnList(this));
 	}
 

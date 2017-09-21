@@ -281,6 +281,40 @@ bool Zone::LoadZoneObjects()
 	return true;
 }
 
+bool Zone::IsSpecialBindLocation(const glm::vec4& location) {
+	glm::vec2 corner1;
+	glm::vec2 corner2;
+	switch (GetZoneID()) {
+		case 13: // NORTH KARANA
+			corner1 = glm::vec2(-234, -741);
+			corner2 = glm::vec2(-127, -525);
+			break;
+		case 37: // OASIS OF MARR
+			corner1 = glm::vec2(90, 656);
+			corner2 = glm::vec2(-58, 471);
+			break;
+		case 92: // FRONTIER MOUNTAINS
+			corner1 = glm::vec2(1554, -2106);
+			corner2 = glm::vec2(1206, -2333);
+			break;
+		case 78: // FIELD OF BONE
+			corner1 = glm::vec2(265, -2213);
+			corner2 = glm::vec2(-506, -1255);
+			break;
+		case 93: // OVERTHERE
+			corner1 = glm::vec2(3937, 3614);
+			corner2 = glm::vec2(2034, 2324);
+			break;
+		case 84: // FIRIONA VIE
+			corner1 = glm::vec2(1065, -2609);
+			corner2 = glm::vec2(3511, -4534);
+			break;
+		default:
+			return false;
+	}
+	return IsWithinAxisAlignedBox(glm::vec2(location.x, location.y), corner1, corner2);
+}
+
 //this also just loads into entity_list, not really into zone
 bool Zone::LoadGroundSpawns() {
 	Ground_Spawns groundspawn;
