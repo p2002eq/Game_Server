@@ -399,7 +399,7 @@ public:
 	void	UpdateHoTT(Mob* target);
 
 	void	Process();
-	void	ClearAggro(Mob* targ);
+	void	ClearAggro(Mob* targ, bool clear_caster_id = false);
 	void	ClearFeignAggro(Mob* targ);
 	void	ClearZoneFeignAggro(Client* targ);
 	void	AggroZone(Mob* who, uint32 hate = 0);
