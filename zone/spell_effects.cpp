@@ -5945,7 +5945,7 @@ bool Mob::TryDeathSave() {
 					entity_list.MessageClose_StringID(this, false, 200, MT_CritMelee, DEATH_PACT, GetCleanName());
 
 				SendHPUpdate();
-				//BuffFadeBySlot(buffSlot);
+				BuffFadeBySlot(buffSlot);
 				return true;
 			}
 			else if (UD_HealMod) {
