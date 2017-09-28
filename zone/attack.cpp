@@ -3614,7 +3614,7 @@ void Mob::CommonDamage(Mob* attacker, int &damage, const uint16 spell_id, const 
 			// update NPC stuff
 			float size_mod = GetSize() / RuleR(Combat, MeleePushSizeMod);
 			auto new_pos = glm::vec3(GetX() + (a->force * std::sin(a->meleepush_xy)) + (size_mod * std::sin(a->meleepush_xy)),
-				GetY() + (a->force * std::cos(a->meleepush_xy)) + (size_mod * std::sin(a->meleepush_xy)), m_Position.z);
+				GetY() + (a->force * std::cos(a->meleepush_xy)) + (size_mod * std::cos(a->meleepush_xy)), m_Position.z);
 			if (zone->zonemap && zone->zonemap->CheckLoS(glm::vec3(m_Position), new_pos)) { // If we have LoS on the new loc it should be reachable.
 				if (IsNPC()) {
 					// Is this adequate?
