@@ -505,12 +505,16 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial, int level_ove
 #endif
 							if(IsClient()) {
 								// break charmed pets before moving to not poof pet (exploitable otherwise)
-								if (HasPet() && GetPet()->IsCharmed())
-									GetPet()->BuffFadeByEffect(SE_Charm);
+								if (HasPet()) {
+									if (GetPet()->IsCharmed())
+										GetPet()->BuffFadeByEffect(SE_Charm);
+									else
+										GetPet()->Depop();
+								}
 								CastToClient()->MovePC(zone->GetZoneID(), zone->GetInstanceID(), x, y, z, heading, 0, SummonPCEvac);
 							} else
 								GMMove(x, y, z, heading);
-							entity_list.ClearAggro(this);
+							entity_list.ClearAggro(this, true);
 					}
 					else {
 #ifdef SPELL_EFFECT_SPAM
@@ -2170,7 +2174,7 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial, int level_ove
 						}
 						// clear aggro when summoned in zone
 						if (caster->CalculateDistance(GetX(), GetY(), GetZ()) >= RuleR(Spells, CallOfTheHeroAggroClearDist))
-							entity_list.ClearAggro(this);
+							entity_list.ClearAggro(this, true);
 					}
 
 					CastToClient()->MovePC(zone->GetZoneID(), zone->GetInstanceID(), caster->GetX(),
