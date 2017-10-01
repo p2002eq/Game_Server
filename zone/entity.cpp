@@ -791,7 +791,7 @@ void EntityList::CheckSpawnQueue()
 			outapp = new EQApplicationPacket;
 			ns = iterator.GetData();
 			Mob::CreateSpawnPacket(outapp, ns);
-			QueueClientsCreateSpawn(0, outapp);
+			QueueClientsCreateSpawn(nullptr, outapp);
 			auto it = npc_list.find(ns->spawn.spawnId);
 			if (it == npc_list.end()) {
 				// We must of despawned, hope that's the reason!
@@ -1623,16 +1623,22 @@ void EntityList::UpdateConLevels(Client *specific_target) {
 //sender can be null
 void EntityList::QueueClientsCreateSpawn(Mob *sender, const EQApplicationPacket *app, bool ignore_sender, bool ackreq)
 {
+	uint8 con_level;
 	auto it = client_list.begin();
 	while (it != client_list.end()) {
 		Client *ent = it->second;
 
 		NewSpawn_Struct* ns = (NewSpawn_Struct*)app->pBuffer;
-		if (ns->spawn.NPC == 1)
-			ns->spawn.level = Mob::GetLevelForClientCon(ent->GetLevel(), ns->spawn.level);
+		//if (ns->spawn.NPC == 1)
+			//ns->spawn.level = Mob::GetLevelForClientCon(ent->GetLevel(), ns->spawn.level);
 
-		if ((!ignore_sender || ent != sender))
+		if ((!ignore_sender || ent != sender)) {
 			ent->QueuePacket(app, ackreq, Client::CLIENT_CONNECTED);
+			auto it_npc = npc_list.find(ns->spawn.spawnId);
+			con_level = Mob::GetLevelForClientCon(ent->GetLevel(), it_npc->second->GetLevel());
+			it_npc->second->SetConLevel(con_level, ent);
+			// ent->Message(0, "Spawning %s with con level %i", it_npc->second->GetName(), con_level);
+		}
 
 		++it;
 	}
