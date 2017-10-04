@@ -505,12 +505,16 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial, int level_ove
 #endif
 							if(IsClient()) {
 								// break charmed pets before moving to not poof pet (exploitable otherwise)
-								if (HasPet() && GetPet()->IsCharmed())
-									GetPet()->BuffFadeByEffect(SE_Charm);
+								if (HasPet()) {
+									if (GetPet()->IsCharmed())
+										GetPet()->BuffFadeByEffect(SE_Charm);
+									else
+										GetPet()->Depop();
+								}
 								CastToClient()->MovePC(zone->GetZoneID(), zone->GetInstanceID(), x, y, z, heading, 0, SummonPCEvac);
 							} else
 								GMMove(x, y, z, heading);
-							entity_list.ClearAggro(this);
+							entity_list.ClearAggro(this, true);
 					}
 					else {
 #ifdef SPELL_EFFECT_SPAM
@@ -2170,7 +2174,7 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial, int level_ove
 						}
 						// clear aggro when summoned in zone
 						if (caster->CalculateDistance(GetX(), GetY(), GetZ()) >= RuleR(Spells, CallOfTheHeroAggroClearDist))
-							entity_list.ClearAggro(this);
+							entity_list.ClearAggro(this, true);
 					}
 
 					CastToClient()->MovePC(zone->GetZoneID(), zone->GetInstanceID(), caster->GetX(),
@@ -3528,8 +3532,7 @@ void Mob::DoBuffTic(const Buffs_Struct &buff, int slot, Mob *caster)
 					if (caster->IsClient()) {
 						if (!caster->CastToClient()->GetFeigned())
 							AddToHateList(caster, -effect_value);
-					} else if (!IsClient()) // Allow NPC's to generate hate if casted on other
-								// NPC's.
+					} else if (!IsClient()) // Allow NPC's to generate hate if casted on other NPC's
 						AddToHateList(caster, -effect_value);
 				}
 
@@ -3634,6 +3637,11 @@ void Mob::DoBuffTic(const Buffs_Struct &buff, int slot, Mob *caster)
 		case SE_Charm: {
 			if (!caster || !PassCharismaCheck(caster, buff.spellid)) {
 				BuffFadeByEffect(SE_Charm);
+				// Remove from hate list of any NPC's hate list and remove all NPCs this hate list
+				if (IsNPC()) {
+					entity_list.RemoveFromHateLists(this);
+					WipeHateList(true);
+				}
 			}
 
 			break;
@@ -5941,7 +5949,7 @@ bool Mob::TryDeathSave() {
 					entity_list.MessageClose_StringID(this, false, 200, MT_CritMelee, DEATH_PACT, GetCleanName());
 
 				SendHPUpdate();
-				//BuffFadeBySlot(buffSlot);
+				BuffFadeBySlot(buffSlot);
 				return true;
 			}
 			else if (UD_HealMod) {

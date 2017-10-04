@@ -2562,7 +2562,7 @@ void Mob::AddToHateList(Mob* other, uint32 hate /*= 0*/, int32 damage /*= 0*/, b
 	if (other == this)
 		return;
 
-	if (damage < 0) {
+	if (damage < 0 && !iYellForHelp) {
 		hate = 1;
 	}
 
@@ -2590,8 +2590,10 @@ void Mob::AddToHateList(Mob* other, uint32 hate /*= 0*/, int32 damage /*= 0*/, b
 		}
 		else {
 			hate += RuleI(Aggro, InitialAggroBonus); // Bonus Initial Aggro
-			//Log(Logs::Detail, Logs::Combat, "InitialAggroBonus: %d", RuleI(Aggro, InitialAggroBonus));
-			
+			//if (other->IsCharmed()) { // charmed mobs get double initial aggro
+			//	hate += RuleI(Aggro, InitialAggroBonus);
+			//}
+			Log(Logs::Detail, Logs::Combat, "InitialAggroBonus: %d", RuleI(Aggro, InitialAggroBonus));
 		}
 	}
 
@@ -3603,21 +3605,23 @@ void Mob::CommonDamage(Mob* attacker, int &damage, const uint16 spell_id, const 
 			a->special = 2;
 		else
 			a->special = 0;
-		a->meleepush_xy = attacker ? attacker->GetHeading() * 2.0f : 0.0f;
+		a->meleepush_xy = attacker ? attacker->GetHeading() * 2.0f / 256.0f * 3.14159265f : 0.0f;
 		if (RuleB(Combat, MeleePush) && damage > 0 && !IsRooted() &&
 			(IsClient() || zone->random.Roll(RuleI(Combat, MeleePushChance)))) {
 			a->force = EQEmu::skills::GetSkillMeleePushForce(skill_used);
-			if (RuleR(Combat, MeleePushForceClient) && IsClient())
+			if (RuleR(Combat, MeleePushForceClient) && attacker->IsClient())
 				a->force += a->force*RuleR(Combat, MeleePushForceClient);
-			if (RuleR(Combat, MeleePushForcePet) && IsPet())
+			if (RuleR(Combat, MeleePushForcePet) && attacker->IsPet())
 				a->force += a->force*RuleR(Combat, MeleePushForcePet);
 			// update NPC stuff
-			auto new_pos = glm::vec3(m_Position.x + (a->force * std::sin(a->meleepush_xy) + m_Delta.x),
-				m_Position.y + (a->force * std::cos(a->meleepush_xy) + m_Delta.y), m_Position.z);
+			float size_mod = GetSize() / RuleR(Combat, MeleePushSizeMod);
+			auto new_pos = glm::vec3(GetX() + (a->force * std::sin(a->meleepush_xy)) + (size_mod * std::sin(a->meleepush_xy)),
+				GetY() + (a->force * std::cos(a->meleepush_xy)) + (size_mod * std::cos(a->meleepush_xy)), m_Position.z);
 			if (zone->zonemap && zone->zonemap->CheckLoS(glm::vec3(m_Position), new_pos)) { // If we have LoS on the new loc it should be reachable.
 				if (IsNPC()) {
 					// Is this adequate?
-
+					new_pos.x -= size_mod * std::sin(a->meleepush_xy);
+					new_pos.y -= size_mod * std::cos(a->meleepush_xy);
 					Teleport(new_pos);
 					if (position_update_melee_push_timer.Check()) {
 						SendPositionUpdate();

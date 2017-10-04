@@ -1442,14 +1442,15 @@ bool Client::OPCharCreate(char *name, CharCreate_Struct *cc)
 	pp.hunger_level = 6000;
 	pp.thirst_level = 6000;
 
+	/* Set default skills for everybody */
+	pp.skills[EQEmu::skills::SkillSwimming] = RuleI(Skills, SwimmingStartValue);
+	pp.skills[EQEmu::skills::SkillSenseHeading] = RuleI(Skills, SenseHeadingStartValue);
+
 	/* Set Racial and Class specific language and skills */
 	SetRacialLanguages(&pp);
 	SetRaceStartingSkills(&pp);
 	SetClassStartingSkills(&pp);
 	SetClassLanguages(&pp);
-
-	pp.skills[EQEmu::skills::SkillSwimming] = RuleI(Skills, SwimmingStartValue);
-	pp.skills[EQEmu::skills::SkillSenseHeading] = RuleI(Skills, SenseHeadingStartValue);
 
 //	strcpy(pp.servername, WorldConfig::get()->ShortName.c_str());
 
@@ -1520,7 +1521,7 @@ bool Client::OPCharCreate(char *name, CharCreate_Struct *cc)
 	pp.binds[4].z = pp.z;
 	pp.binds[4].heading = pp.heading;
 
-	/*  Will either be the same as home or tutorial if enabled. */
+	/*  Will either be the same as home or tutorial if enabled.
 	if(RuleB(World, StartZoneSameAsBindOnCreation))	{
 		pp.binds[0].zoneId = pp.zone_id;
 		pp.binds[0].x = pp.x;
@@ -1528,6 +1529,7 @@ bool Client::OPCharCreate(char *name, CharCreate_Struct *cc)
 		pp.binds[0].z = pp.z;
 		pp.binds[0].heading = pp.heading;
 	}
+	*/
 
 	Log(Logs::Detail, Logs::World_Server,"Current location: %s (%d)  %0.2f, %0.2f, %0.2f, %0.2f",
 		database.GetZoneName(pp.zone_id), pp.zone_id, pp.x, pp.y, pp.z, pp.heading);
@@ -1842,7 +1844,6 @@ void Client::SetRaceStartingSkills( PlayerProfile_Struct *pp )
 	switch( pp->race )
 	{
 	case BARBARIAN:
-	case DWARF:
 	case ERUDITE:
 	case HALF_ELF:
 	case HIGH_ELF:
@@ -1852,6 +1853,11 @@ void Client::SetRaceStartingSkills( PlayerProfile_Struct *pp )
 	case DRAKKIN:	//Drakkin are supposed to get a starting AA Skill
 		{
 			// No Race Specific Skills
+			break;
+		}
+	case DWARF:
+		{
+			pp->skills[EQEmu::skills::SkillSenseHeading] = 50;
 			break;
 		}
 	case DARK_ELF:

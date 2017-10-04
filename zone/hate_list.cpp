@@ -57,26 +57,28 @@ void HateList::IsEntityInFrenzyMode()
 	}
 }
 
-void HateList::WipeHateList()
+void HateList::WipeHateList(bool npc_only)
 {
 	auto iterator = list.begin();
 
 	while (iterator != list.end())
 	{
 		Mob* m = (*iterator)->entity_on_hatelist;
-		if (m)
-		{
-			parse->EventNPC(EVENT_HATE_LIST, hate_owner->CastToNPC(), m, "0", 0);
-
-			if (m->IsClient()) {
-				m->CastToClient()->DecrementAggroCount();
-				// P2002 doesn't use XTarget
-				//m->CastToClient()->RemoveXTarget(hate_owner, true);
+		if (m && (m->IsClient() || (m->IsPet() && m->GetOwner()->IsClient())) && npc_only)
+			iterator++;
+		else {
+			if (m)
+			{
+				parse->EventNPC(EVENT_HATE_LIST, hate_owner->CastToNPC(), m, "0", 0);
+				if (m->IsClient()) {
+					m->CastToClient()->DecrementAggroCount();
+					// P2002 doesn't use XTarget
+					//m->CastToClient()->RemoveXTarget(hate_owner, true);
+				}
 			}
+			delete (*iterator);
+			iterator = list.erase(iterator);
 		}
-		delete (*iterator);
-		iterator = list.erase(iterator);
-
 	}
 }
 
@@ -398,7 +400,8 @@ Mob *HateList::GetEntWithMostHateOnList(Mob *center, Mob *skip)
 					if (center->GetTarget() == cur->entity_on_hatelist)
 						aggro_mod += RuleI(Aggro, CurrentTargetAggroMod);
 					if (RuleI(Aggro, MeleeRangeAggroMod) != 0) {
-						if (center->CombatRange(cur->entity_on_hatelist)) {
+						if (center->CombatRange(cur->entity_on_hatelist) ||
+						((cur->entity_on_hatelist->IsCharmed() && center->CombatRange(cur->entity_on_hatelist, RuleR(Aggro, CharmedPetAggroRadiusMod))))) {
 							aggro_mod += RuleI(Aggro, MeleeRangeAggroMod);
 						}
 					}

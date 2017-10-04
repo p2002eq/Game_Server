@@ -524,6 +524,7 @@ RULE_BOOL(Combat, ProjectileDmgOnImpact, true) //If enabled, projectiles (ie arr
 RULE_BOOL(Combat, MeleePush, true) // enable melee push
 RULE_INT(Combat, MeleePushChance, 50) // (NPCs) chance the target will be pushed. Made up, 100 actually isn't that bad
 RULE_REAL(Combat, MeleePushForceClient, 0.00) // percent to add or remove from push for players
+RULE_REAL(Combat, MeleePushSizeMod, 0.75)
 RULE_REAL(Combat, MeleePushForcePet, 0.00) // percent to add or remove from push for pets
 RULE_BOOL(Combat, UseLiveCombatRounds, true) // turn this false if you don't want to worry about fixing up combat rounds for NPCs
 RULE_INT(Combat, NPCAssistCap, 5) // Maxiumium number of NPCs that will assist another NPC at once
@@ -585,6 +586,7 @@ RULE_BOOL(Aggro, UndeadAlwaysAggro, true) // should undead always aggro?
 RULE_INT(Aggro, ClientAggroCheckInterval, 6) // Interval in which clients actually check for aggro - in seconds
 RULE_INT(Aggro, InitialAggroBonus, 100) // Initial Aggro Bonus, Default 100
 RULE_BOOL(Aggro, PetsTriggerAggro, false)
+RULE_REAL(Aggro, CharmedPetAggroRadiusMod, 5.0) // 5x combat distance check for charmed pets
 RULE_CATEGORY_END()
 
 RULE_CATEGORY(TaskSystem)

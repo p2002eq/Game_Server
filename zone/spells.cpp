@@ -4009,14 +4009,15 @@ bool Mob::SpellOnTarget(uint16 spell_id, Mob *spelltar, bool reflect, bool use_r
 			spelltar->GetName(), aggro_amount);
 		if (aggro_amount > 0) {
 			spelltar->AddToHateList(this, aggro_amount);
-		} else {
+		}
+		else {
 			int32 newhate = spelltar->GetHateAmount(this) + aggro_amount;
 			spelltar->SetHateAmountOnEnt(this, std::max(newhate, 1));
 		}
-	} else if (IsBeneficialSpell(spell_id) && !IsSummonPCSpell(spell_id)) {
-		entity_list.AddHealAggro(
-		    spelltar, this,
-		    CheckHealAggroAmount(spell_id, spelltar, (spelltar->GetMaxHP() - spelltar->GetHP())));
+	}
+	else if (IsBeneficialSpell(spell_id) && !IsSummonPCSpell(spell_id)) {
+		entity_list.AddHealAggro(spelltar, this,
+			CheckHealAggroAmount(spell_id, spelltar, (spelltar->GetMaxHP() - spelltar->GetHP())));
 	}
 
 	// make sure spelltar is high enough level for the buff
@@ -4316,6 +4317,26 @@ void Mob::BuffFadeByEffect(int effectid, int skipslot)
 
 	//we tell BuffFadeBySlot not to recalc, so we can do it only once when were done
 	CalcBonuses();
+}
+
+void Mob::BuffDetachCaster(Mob *caster)
+{
+	if (!caster)
+		return;
+
+	int buff_count = GetMaxTotalSlots();
+	for (int j = 0; j < buff_count; j++) {
+		if (buffs[j].spellid != SPELL_UNKNOWN) {
+			if (IsDetrimentalSpell(buffs[j].spellid))
+			{
+				//this is a pretty terrible way to do this but
+				//there really isn't another way till I rewrite the basics
+				Mob* c = entity_list.GetMob(buffs[j].casterid);
+				if (c && c == caster)
+					buffs[j].casterid = 0;
+			}
+		}
+	}
 }
 
 // checks if 'this' can be affected by spell_id from caster

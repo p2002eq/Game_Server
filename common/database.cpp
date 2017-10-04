@@ -890,9 +890,11 @@ bool Database::SaveCharacterCreate(uint32 character_id, uint32 account_id, Playe
 	);
 	auto results = QueryDatabase(query);
 	/* Save Bind Points */
-	query = StringFormat("REPLACE INTO `%s` (id, zone_id, instance_id, x, y, z, heading) VALUES (%u, %u, %u, %f, %f, %f, %f, %i)",
-						 CHARACTER_BIND_TABLE.c_str(), character_id, pp->binds[0].zoneId, 0, pp->binds[0].x, pp->binds[0].y, pp->binds[0].z, pp->binds[0].heading
-	); results = QueryDatabase(query);
+	SaveCharacterBindPoint(character_id, pp->binds[0]);
+
+	//query = StringFormat("REPLACE INTO `%s` (id, zone_id, instance_id, x, y, z, heading) VALUES (%u, %u, %u, %f, %f, %f, %f, %i)",
+	//					 CHARACTER_BIND_TABLE.c_str(), character_id, pp->binds[0].zoneId, 0, pp->binds[0].x, pp->binds[0].y, pp->binds[0].z, pp->binds[0].heading
+	//); results = QueryDatabase(query);
 
         /* HoTT Ability */
         if(RuleB(Character, GrantHoTTOnCreate))
