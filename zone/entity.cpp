@@ -1635,8 +1635,11 @@ void EntityList::QueueClientsCreateSpawn(Mob *sender, const EQApplicationPacket 
 		if ((!ignore_sender || ent != sender)) {
 			ent->QueuePacket(app, ackreq, Client::CLIENT_CONNECTED);
 			auto it_npc = npc_list.find(ns->spawn.spawnId);
-			con_level = Mob::GetLevelForClientCon(ent->GetLevel(), it_npc->second->GetLevel());
-			it_npc->second->SetConLevel(con_level, ent);
+			if (it_npc != npc_list.end() && ent != nullptr) {
+				con_level = Mob::GetLevelForClientCon(ent->GetLevel(), it_npc->second->GetLevel());
+				it_npc->second->SetConLevel(con_level, ent);
+			}
+
 			// ent->Message(0, "Spawning %s with con level %i", it_npc->second->GetName(), con_level);
 		}
 
