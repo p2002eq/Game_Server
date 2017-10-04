@@ -852,7 +852,7 @@ bool Mob::IsBeneficialAllowed(Mob *target)
 	return false;
 }
 
-bool Mob::CombatRange(Mob* other)
+bool Mob::CombatRange(Mob* other, float fixed_size_mod)
 {
 	if(!other)
 		return(false);
@@ -894,6 +894,7 @@ bool Mob::CombatRange(Mob* other)
 		size_mod *= 2.25;
 	}
 	size_mod *= RuleR(Combat,HitBoxMod);		// used for testing sizemods on different races.
+	size_mod *= fixed_size_mod;					// used to extend the size_mod
 
 	// prevention of ridiculously sized hit boxes
 	if (size_mod > 10000)

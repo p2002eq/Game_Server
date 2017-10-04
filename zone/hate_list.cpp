@@ -400,7 +400,8 @@ Mob *HateList::GetEntWithMostHateOnList(Mob *center, Mob *skip)
 					if (center->GetTarget() == cur->entity_on_hatelist)
 						aggro_mod += RuleI(Aggro, CurrentTargetAggroMod);
 					if (RuleI(Aggro, MeleeRangeAggroMod) != 0) {
-						if (center->CombatRange(cur->entity_on_hatelist)) {
+						if (center->CombatRange(cur->entity_on_hatelist) ||
+						((cur->entity_on_hatelist->IsCharmed() && center->CombatRange(cur->entity_on_hatelist, RuleR(Aggro, CharmedPetAggroRadiusMod))))) {
 							aggro_mod += RuleI(Aggro, MeleeRangeAggroMod);
 						}
 					}

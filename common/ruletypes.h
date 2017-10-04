@@ -586,6 +586,7 @@ RULE_BOOL(Aggro, UndeadAlwaysAggro, true) // should undead always aggro?
 RULE_INT(Aggro, ClientAggroCheckInterval, 6) // Interval in which clients actually check for aggro - in seconds
 RULE_INT(Aggro, InitialAggroBonus, 100) // Initial Aggro Bonus, Default 100
 RULE_BOOL(Aggro, PetsTriggerAggro, false)
+RULE_REAL(Aggro, CharmedPetAggroRadiusMod, 5.0) // 5x combat distance check for charmed pets
 RULE_CATEGORY_END()
 
 RULE_CATEGORY(TaskSystem)
