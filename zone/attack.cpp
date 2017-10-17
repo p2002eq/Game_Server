@@ -3407,6 +3407,20 @@ void Mob::CommonDamage(Mob* attacker, int &damage, const uint16 spell_id, const 
 				// emote goes with every one ... even npcs
 				entity_list.MessageClose(this, true, RuleI(Range, SpellMessages), MT_Emote, "%s beams a smile at %s", attacker->GetCleanName(), this->GetCleanName());
 			}
+
+			if (shielder[0].shielder_id && spell_id == SPELL_UNKNOWN) {
+				Client* shielder_client = entity_list.GetMob(shielder[0].shielder_id)->CastToClient();
+				if (shielder_client) {
+					float dmg_mod = (75. - shielder[0].shielder_bonus / 100.);
+					if (dmg_mod < 0.5)
+						dmg_mod = 0.5;
+
+					int shielder_dmg = (int) damage*dmg_mod;
+					shielder_client->Damage(attacker, shielder_dmg, spell_id, skill_used, avoidable, buffslot, iBuffTic, special);
+					damage = damage / 2;
+				}
+			}
+
 		}	//end `if there is some damage being done and theres anattacker person involved`
 
 		Mob *pet = GetPet();

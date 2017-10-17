@@ -50,6 +50,7 @@ enum : int {	//values for pTimerType
 
 	pTimerItemStart = 100,
 	pTimerItemEnd = 200, //I don't think any items would use one this high but hey, incase.
+	pTimerShield = 201,
 	pTimerPeqzoneReuse = 900,
 	pTimerMercReuse = 901,
 	pTimerMercSuspend = 902,

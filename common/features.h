@@ -131,6 +131,7 @@ enum {	//reuse times
 	TauntReuseTime = 5,
 	InstillDoubtReuseTime = 9,
 	FishingReuseTime = 11,
+	ShieldReuseTime = 15,
 	ForagingReuseTime = 50,
 	MendReuseTime = 290,
 	BashReuseTime = 5,

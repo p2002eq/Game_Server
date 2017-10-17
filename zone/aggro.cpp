@@ -273,7 +273,7 @@ bool Mob::CheckWillAggro(Mob *mob) {
 		t3 = 0 - t3;
 	if(( t1 > iAggroRange)
 		|| ( t2 > iAggroRange)
-		|| ( t3 > iAggroRange)
+		|| ( t3 > (iAggroRange - mob->GetSize()))
 		|| (mob->IsInvisible(this))
 		|| (mob->IsClient() &&
 			(!mob->CastToClient()->Connected()
@@ -968,7 +968,7 @@ bool Mob::CheckLosFN(float posX, float posY, float posZ, float mobSize) {
 
 	oloc.x = posX;
 	oloc.y = posY;
-	oloc.z = posZ + (mobSize==0.0?LOS_DEFAULT_HEIGHT:mobSize)/2 * SEE_POSITION;
+	oloc.z = posZ; //+ (mobSize==0.0?LOS_DEFAULT_HEIGHT:mobSize)/2 * SEE_POSITION;
 
 #if LOSDEBUG>=5
 	Log(Logs::General, Logs::None, "LOS from (%.2f, %.2f, %.2f) to (%.2f, %.2f, %.2f) sizes: (%.2f, %.2f)", myloc.x, myloc.y, myloc.z, oloc.x, oloc.y, oloc.z, GetSize(), mobSize);
