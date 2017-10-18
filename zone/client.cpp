@@ -130,6 +130,7 @@ Client::Client(EQStreamInterface* ieqs)
 	dead_timer(2000),
 	global_channel_timer(1000),
 	shield_timer(500),
+	shield_duration_timer(12000), // add AA bonus
 	fishing_timer(8000),
 	endupkeep_timer(1000),
 	forget_timer(0),
@@ -224,6 +225,7 @@ Client::Client(EQStreamInterface* ieqs)
 	position_update_same_count = 0;
 	fishing_timer.Disable();
 	shield_timer.Disable();
+	shield_duration_timer.Disable();
 	dead_timer.Disable();
 	camp_timer.Disable();
 	autosave_timer.Disable();
@@ -378,13 +380,7 @@ Client::~Client() {
 	}
 
 	if (shield_target) {
-		for (int y = 0; y < 2; y++) {
-			if (shield_target->shielder[y].shielder_id == GetID()) {
-				shield_target->shielder[y].shielder_id = 0;
-				shield_target->shielder[y].shielder_bonus = 0;
-			}
-		}
-		shield_target = nullptr;
+		ShieldClear();
 	}
 
 	if(GetTarget())
@@ -3472,6 +3468,18 @@ float Client::CalcPriceMod(Mob* other, bool reverse)
 	chaformula /= 100; //Convert to 0.10
 	chaformula += 1; //Convert to 1.10;
 	return chaformula; //Returns 1.10, expensive stuff!
+}
+
+void Client::ShieldClear() {
+	entity_list.MessageClose_StringID(this, false, 100, 0,
+		END_SHIELDING, GetCleanName(), shield_target->GetCleanName());
+	for (int y = 0; y < 2; y++) {
+		if (shield_target->shielder[y].shielder_id == GetID()) {
+			shield_target->shielder[y].shielder_id = 0;
+			shield_target->shielder[y].shielder_bonus = 0;
+		}
+	}
+	shield_target = 0;
 }
 
 //neat idea from winter's roar, not implemented

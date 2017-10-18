@@ -12485,83 +12485,85 @@ void Client::Handle_OP_SetTitle(const EQApplicationPacket *app)
 
 void Client::Handle_OP_Shielding(const EQApplicationPacket *app)
 {
-	// Shield disabled for our era
-	return;
 	if (app->size != sizeof(Shielding_Struct)) {
 		Log(Logs::General, Logs::Error, "OP size error: OP_Shielding expected:%i got:%i", sizeof(Shielding_Struct), app->size);
 		return;
 	}
-	if (GetClass() != WARRIOR)
-	{
+
+	if (GetClass() != WARRIOR && GetLevel() < 30)
+		return;
+
+	if (!p_timers.Expired(&database, pTimerShield, false)) {
+		Message(13, "Ability recovery time not yet met.");
 		return;
 	}
 
+	// end current shielding
 	if (shield_target)
-	{
-		entity_list.MessageClose_StringID(this, false, 100, 0,
-			END_SHIELDING, GetName(), shield_target->GetName());
-		for (int y = 0; y < 2; y++)
-		{
-			if (shield_target->shielder[y].shielder_id == GetID())
-			{
-				shield_target->shielder[y].shielder_id = 0;
-				shield_target->shielder[y].shielder_bonus = 0;
-			}
-		}
-	}
+		ShieldClear();
+
+	// set new shield target
 	Shielding_Struct* shield = (Shielding_Struct*)app->pBuffer;
 	shield_target = entity_list.GetMob(shield->target_id);
-	bool ack = false;
-	EQEmu::ItemInstance* inst = GetInv().GetItem(EQEmu::inventory::slotSecondary);
 	if (!shield_target)
 		return;
-	if (inst)
-	{
-		const EQEmu::ItemData* shield = inst->GetItem();
-		if (shield && shield->ItemType == EQEmu::item::ItemTypeShield)
-		{
-			for (int x = 0; x < 2; x++)
-			{
-				if (shield_target->shielder[x].shielder_id == 0)
-				{
-					entity_list.MessageClose_StringID(this, false, 100, 0,
-						START_SHIELDING, GetName(), shield_target->GetName());
-					shield_target->shielder[x].shielder_id = GetID();
-					int shieldbonus = shield->AC * 2;
-					switch (GetAA(197))
-					{
-					case 1:
-						shieldbonus = shieldbonus * 115 / 100;
-						break;
-					case 2:
-						shieldbonus = shieldbonus * 125 / 100;
-						break;
-					case 3:
-						shieldbonus = shieldbonus * 150 / 100;
-						break;
-					}
-					shield_target->shielder[x].shielder_bonus = shieldbonus;
-					shield_timer.Start();
-					ack = true;
-					break;
-				}
-			}
-		}
-		else
-		{
-			Message(0, "You must have a shield equipped to shield a target!");
-			shield_target = 0;
-			return;
-		}
-	}
-	else
-	{
-		Message(0, "You must have a shield equipped to shield a target!");
-		shield_target = 0;
+
+	// check if target is in range
+	if (!this->CombatRange(shield_target, 2.0)) {
+		Message(13, "Your target is out of range.");
 		return;
 	}
-	if (!ack)
+
+	bool ack = false;
+
+	// calculate shield bonus for shielder (>=50ac = 50% damage)
+	uint16 shieldbonus = 0;
+	EQEmu::ItemInstance* inst = GetInv().GetItem(EQEmu::inventory::slotSecondary);
+	if (inst) {
+		const EQEmu::ItemData* shield = inst->GetItem();
+		if (shield && shield->IsTypeShield()) {
+			shieldbonus = shield->AC / 2;
+		}
+	}
+
+	// calculate duration bonus (TODO - take values from database)
+	int shield_duration_bonus = 0;
+	switch (GetAA(197)) {
+		case 1:
+			shield_duration_bonus = 12000;
+			break;
+		case 2:
+			shield_duration_bonus = 24000;
+			break;
+		case 3:
+			shield_duration_bonus = 36000;
+			break;
+	}
+
+	for (int x = 0; x < 2; x++)
 	{
+		if (shield_target->shielder[x].shielder_id == 0)
+		{
+			entity_list.MessageClose_StringID(this, false, 100, 0,
+				START_SHIELDING, GetName(), shield_target->GetName());
+
+			shield_target->shielder[x].shielder_id = GetID();
+			shield_target->shielder[x].shielder_bonus = shieldbonus;
+
+			// start timers
+			p_timers.Start(pTimerShield, ShieldReuseTime - 1);
+			shield_timer.Start();
+			if (shield_duration_bonus)
+				shield_duration_timer.SetTimer(12000 + shield_duration_bonus);
+			shield_duration_timer.Start();
+
+			ack = true;
+			break;
+		}
+	}
+
+
+	if (!ack) {
 		Message_StringID(0, ALREADY_SHIELDED);
 		shield_target = 0;
 		return;
