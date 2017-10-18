@@ -1304,7 +1304,7 @@ void Mob::AI_Process() {
 				if (AI_PursueCastCheck()) {
 					//we did something, so do not process movement.
 				}
-				else if (AI_movement_timer->Check())
+				else if (AI_movement_timer->Check() && target)
 				{
 					if (!IsRooted()) {
 						Log(Logs::Detail, Logs::AI, "Pursuing %s while engaged.", target->GetName());
@@ -1519,7 +1519,8 @@ void NPC::AI_DoMovement() {
 				|| roambox_movingto_x < roambox_min_x
 				|| roambox_movingto_y > roambox_max_y
 				|| roambox_movingto_y < roambox_min_y
-				) {
+				)
+		{
 			float movedist = roambox_distance * roambox_distance;
 			float movex = zone->random.Real(0, movedist);
 			float movey = movedist - movex;
@@ -1540,28 +1541,26 @@ void NPC::AI_DoMovement() {
 				roambox_movingto_x = zone->random.Real(roambox_min_x + 1, roambox_max_x - 1);
 			if (roambox_movingto_y > roambox_max_y || roambox_movingto_y < roambox_min_y)
 				roambox_movingto_y = zone->random.Real(roambox_min_y + 1, roambox_max_y - 1);
-			Log(Logs::Detail, Logs::AI,
-				"Roam Box: d=%.3f (%.3f->%.3f,%.3f->%.3f): Go To (%.3f,%.3f)",
-				roambox_distance, roambox_min_x, roambox_max_x, roambox_min_y,
-				roambox_max_y, roambox_movingto_x, roambox_movingto_y);
 		}
+		Log(Logs::Detail, Logs::AI, "Roam Box: d=%.3f (%.3f->%.3f,%.3f->%.3f): Go To (%.3f,%.3f)",
+			roambox_distance, roambox_min_x, roambox_max_x, roambox_min_y, roambox_max_y, roambox_movingto_x, roambox_movingto_y);
 
-		// Keep calling with updates, using wherever we are in Z.
-		if (!MakeNewPositionAndSendUpdate(roambox_movingto_x,
-				roambox_movingto_y, m_Position.z, walksp))
+		float new_z = this->FindGroundZ(m_Position.x, m_Position.y, 5) + this->GetZOffset();
+
+		if (!CalculateNewPosition2(roambox_movingto_x, roambox_movingto_y, new_z, walksp, true))
 		{
-			this->FixZ(); // FixZ on final arrival point.
 			roambox_movingto_x = roambox_max_x + 1; // force update
 			pLastFightingDelayMoving = Timer::GetCurrentTime() + RandomTimer(roambox_min_delay, roambox_delay);
 			SetMoving(false);
-			SendPosition();    // makes mobs stop clientside
+			SendPosition();	// makes mobs stop clientside
 		}
-	} else if (roamer) {
+	}
+	else if (roamer)
+	{
 		if (AI_walking_timer->Check()) {
 			movetimercompleted = true;
 			AI_walking_timer->Disable();
 		}
-
 
 		int32 gridno = CastToNPC()->GetGrid();
 
