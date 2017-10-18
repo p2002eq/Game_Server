@@ -769,6 +769,7 @@ public:
 	void TryTwincast(Mob *caster, Mob *target, uint32 spell_id);
 	void TrySympatheticProc(Mob *target, uint32 spell_id);
 	bool TryFadeEffect(int slot);
+	void DispelMagic(Mob* caster);
 	uint16 GetSpellEffectResistChance(uint16 spell_id);
 	int16 GetHealRate(uint16 spell_id, Mob* caster = nullptr);
 	int32 GetVulnerability(Mob* caster, uint32 spell_id, uint32 ticsremaining);
