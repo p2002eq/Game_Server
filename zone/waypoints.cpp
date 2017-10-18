@@ -836,7 +836,7 @@ void Mob::SendToFixZ(float new_x, float new_y, float new_z) {
 	}
 }
 
-void Mob::FixZ() {
+void Mob::FixZ(int32 z_find_offset /*= 5*/) {
 
 	BenchTimer timer;
 	timer.reset();
@@ -847,7 +847,7 @@ void Mob::FixZ() {
 			(zone->HasWaterMap() && !zone->watermap->InWater(glm::vec3(m_Position))))
 		{
 			/* Any more than 5 in the offset makes NPC's hop/snap to ceiling in small corridors */
-			float new_z = this->FindGroundZ(m_Position.x, m_Position.y, 5);
+			float new_z = this->FindGroundZ(m_Position.x, m_Position.y, z_find_offset);
 			new_z += (this->GetSize() / 1.55);
 
 			auto duration = timer.elapsed();
