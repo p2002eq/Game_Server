@@ -496,6 +496,7 @@ public:
 		strn0cpy(name, GetName(), 64); return; };
 	inline Mob* GetTarget() const { return target; }
 	virtual void SetTarget(Mob* mob);
+	virtual bool UseOwnersResistances(uint16 spell_id);
 	inline bool HasTargetReflection() const { return (target && target != this && target->target == this); }
 	virtual inline float GetHPRatio() const { return max_hp == 0 ? 0 : (float(cur_hp)/float(max_hp)*100.00); }
 	virtual inline int GetIntHPRatio() const { return max_hp == 0 ? 0 : static_cast<int>(cur_hp * 100 / max_hp); }

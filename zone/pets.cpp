@@ -548,6 +548,20 @@ Mob* Mob::GetPet() {
 	return(tmp);
 }
 
+// Special cases where pet should use its own resistances
+bool Mob::UseOwnersResistances(uint16 spell_id) {
+	bool flag = true;
+	if (IsPet() && !IsCharmed()) {
+		if (IsFearSpell(spell_id) && spellbonuses.Fearless) {
+			flag = false;
+		}
+	}
+	else {
+		flag = false;
+	}
+	return flag;
+}
+
 void Mob::SetPet(Mob* newpet) {
 	Mob* oldpet = GetPet();
 	if (oldpet) {
