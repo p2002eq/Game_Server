@@ -12485,12 +12485,11 @@ void Client::Handle_OP_SetTitle(const EQApplicationPacket *app)
 
 void Client::Handle_OP_Shielding(const EQApplicationPacket *app)
 {
-	// Shield disabled for our era
-	//return;
 	if (app->size != sizeof(Shielding_Struct)) {
 		Log(Logs::General, Logs::Error, "OP size error: OP_Shielding expected:%i got:%i", sizeof(Shielding_Struct), app->size);
 		return;
 	}
+
 	if (GetClass() != WARRIOR && GetLevel() < 30)
 		return;
 
@@ -12508,6 +12507,7 @@ void Client::Handle_OP_Shielding(const EQApplicationPacket *app)
 	shield_target = entity_list.GetMob(shield->target_id);
 	if (!shield_target)
 		return;
+
 	// check if target is in range
 	if (!this->CombatRange(shield_target, 2.0)) {
 		Message(13, "Your target is out of range.");
@@ -12516,15 +12516,17 @@ void Client::Handle_OP_Shielding(const EQApplicationPacket *app)
 
 	bool ack = false;
 
-	int shieldbonus = 0;
+	// calculate shield bonus for shielder (>=50ac = 50% damage)
+	uint16 shieldbonus = 0;
 	EQEmu::ItemInstance* inst = GetInv().GetItem(EQEmu::inventory::slotSecondary);
 	if (inst) {
 		const EQEmu::ItemData* shield = inst->GetItem();
-		if (shield && shield->ItemType == EQEmu::item::ItemTypeShield) {
-			int shieldbonus = shield->AC / 2;
+		if (shield && shield->IsTypeShield()) {
+			shieldbonus = shield->AC / 2;
 		}
 	}
 
+	// calculate duration bonus (TODO - take values from database)
 	int shield_duration_bonus = 0;
 	switch (GetAA(197)) {
 		case 1:
@@ -12544,8 +12546,8 @@ void Client::Handle_OP_Shielding(const EQApplicationPacket *app)
 		{
 			entity_list.MessageClose_StringID(this, false, 100, 0,
 				START_SHIELDING, GetName(), shield_target->GetName());
+
 			shield_target->shielder[x].shielder_id = GetID();
-			
 			shield_target->shielder[x].shielder_bonus = shieldbonus;
 
 			// start timers

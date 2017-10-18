@@ -18,7 +18,7 @@
 #define _BECOMENPCPET(x) (x && x->CastToMob()->GetOwner() && x->CastToMob()->GetOwner()->IsClient() && x->CastToMob()->GetOwner()->CastToClient()->IsBecomeNPC())
 
 //LOS Parameters:
-#define HEAD_POSITION 0.5f	//ratio of GetSize() where NPCs see from
+#define HEAD_POSITION 0.9f	//ratio of GetSize() where NPCs see from
 #define SEE_POSITION 0.5f	//ratio of GetSize() where NPCs try to see for LOS
 #define CHECK_LOS_STEP 1.0f
 
