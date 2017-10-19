@@ -226,17 +226,17 @@ RULE_INT(World, TitaniumStartZoneID, -1) //Sets the Starting Zone for Titanium C
 RULE_INT(World, ExpansionSettings, 16383) // Sets the expansion settings for the server, This is sent on login to world and affects client expansion settings. Defaults to all expansions enabled up to TSS.
 RULE_BOOL(World, UseClientBasedExpansionSettings, true) // if true it will overrule World, ExpansionSettings and set someone's expansion based on the client they're using
 RULE_INT(World, PVPSettings, 0) // Sets the PVP settings for the server, 1 = Rallos Zek RuleSet, 2 = Tallon/Vallon Zek Ruleset, 4 = Sullon Zek Ruleset, 6 = Discord Ruleset, anything above 6 is the Discord Ruleset without the no-drop restrictions removed. TODO: Edit IsAttackAllowed in Zone to accomodate for these rules.
-RULE_BOOL (World, IsGMPetitionWindowEnabled, false)
-RULE_INT (World, FVNoDropFlag, 0) // Sets the Firiona Vie settings on the client. If set to 2, the flag will be set for GMs only, allowing trading of no-drop items.
-RULE_BOOL (World, IPLimitDisconnectAll, false)
+RULE_BOOL(World, IsGMPetitionWindowEnabled, false)
+RULE_INT(World, FVNoDropFlag, 0) // Sets the Firiona Vie settings on the client. If set to 2, the flag will be set for GMs only, allowing trading of no-drop items.
+RULE_BOOL(World, IPLimitDisconnectAll, false)
 RULE_BOOL(World, MaxClientsSimplifiedLogic, false) // New logic that only uses ExemptMaxClientsStatus and MaxClientsPerIP. Done on the loginserver. This mimics the P99-style special IP rules.
-RULE_INT (World, TellQueueSize, 20)
+RULE_INT(World, TellQueueSize, 20)
 RULE_BOOL(World, StartZoneSameAsBindOnCreation, true) //Should the start zone ALWAYS be the same location as your bind?
 RULE_BOOL(World, P2002ConSystem, true) // Controls whether the Client (False) or Server (True) Handles sending the Con message.  This was added to allow the Con message to match mob_ai.cpp and the P2002 era appropriate level ranges.
 RULE_CATEGORY_END()
 
 RULE_CATEGORY(Zone)
-RULE_REAL ( Zone, GroupEXPRange, 500 )
+RULE_REAL(Zone, GroupEXPRange, 500)
 RULE_INT(Zone, ClientLinkdeadMS, 180000) //the time a client remains link dead on the server after a sudden disconnection
 RULE_INT(Zone, GraveyardTimeMS, 1200000) //ms time until a player corpse is moved to a zone's graveyard, if one is specified for the zone
 RULE_BOOL(Zone, EnableShadowrest, 1) // enables or disables the shadowrest zone feature for player corpses. Default is turned on.
@@ -269,15 +269,15 @@ RULE_BOOL(Zone, EnableZoneControllerGlobals, false) // Enables the ability to us
 RULE_INT(Zone, GlobalLootMultiplier, 1) // Sets Global Loot drop multiplier for database based drops, useful for double, triple loot etc.
 RULE_CATEGORY_END()
 
-RULE_CATEGORY( AlKabor )
-RULE_BOOL( AlKabor, AllowTickSplit, false) //AK behavior is true
-RULE_BOOL ( AlKabor, StripBuffsOnLowHP, true) //AK behavior is true
-RULE_BOOL ( AlKabor, OutOfRangeGroupXPBonus, true) //AK behavior is true
-RULE_BOOL ( AlKabor, GroupEXPBonuses, false) //AK behavior is true
-RULE_BOOL ( AlKabor, Count6thGroupMember, false) //AK behavior is false
-RULE_BOOL ( AlKabor, GreensGiveXPToGroup, true) //AK behavior is true
-RULE_BOOL( AlKabor, AllowCharmPetRaidTanks, true) // AK behavior is true.  If false, NPCs will ignore charmed pets once MaxEntitiesCharmTanks players get on an NPC's hate list as per April 2003 patch.
-RULE_INT( AlKabor, MaxEntitiesCharmTanks, 8) // If AllowCharmPetRaidTanks is false, this is the max number of entities on an NPC's hate list before the NPC will ignore charmed pets.  April 2003 patch set this to 4 on Live.
+RULE_CATEGORY(AlKabor)
+RULE_BOOL(AlKabor, AllowTickSplit, false) //AK behavior is true
+RULE_BOOL(AlKabor, StripBuffsOnLowHP, true) //AK behavior is true
+RULE_BOOL(AlKabor, OutOfRangeGroupXPBonus, true) //AK behavior is true
+RULE_BOOL(AlKabor, GroupEXPBonuses, false) //AK behavior is true
+RULE_BOOL(AlKabor, Count6thGroupMember, false) //AK behavior is false
+RULE_BOOL(AlKabor, GreensGiveXPToGroup, true) //AK behavior is true
+RULE_BOOL(AlKabor, AllowCharmPetRaidTanks, true) // AK behavior is true.  If false, NPCs will ignore charmed pets once MaxEntitiesCharmTanks players get on an NPC's hate list as per April 2003 patch.
+RULE_INT(AlKabor, MaxEntitiesCharmTanks, 8) // If AllowCharmPetRaidTanks is false, this is the max number of entities on an NPC's hate list before the NPC will ignore charmed pets.  April 2003 patch set this to 4 on Live.
 RULE_CATEGORY_END()
 
 RULE_CATEGORY(Map)
@@ -324,6 +324,11 @@ RULE_INT(Pathing, CullNodesFromStart, 1)		// Checks LOS from Start point to seco
 RULE_INT(Pathing, CullNodesFromEnd, 1)		// Checks LOS from End point to second to last node for this many nodes and removes last node if there is LOS
 RULE_REAL(Pathing, CandidateNodeRangeXY, 400)		// When searching for path start/end nodes, only nodes within this range will be considered.
 RULE_REAL(Pathing, CandidateNodeRangeZ, 10)		// When searching for path start/end nodes, only nodes within this range will be considered.
+
+RULE_REAL(Pathing, NoHazardsAccurateStepSize, 10.0)
+RULE_REAL(Pathing, NoHazardsAccurateZDiff, 15.0)
+RULE_BOOL(Pathing, UseNoHazardsAccurate, false)
+
 RULE_CATEGORY_END()
 
 RULE_CATEGORY(Watermap)

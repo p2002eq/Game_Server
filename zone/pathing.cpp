@@ -1137,6 +1137,8 @@ int PathManager::FindNearestPathNode(glm::vec3 Position)
 
 bool PathManager::NoHazards(glm::vec3 From, glm::vec3 To)
 {
+	if (RuleB(Pathing, UseNoHazardsAccurate))
+		return NoHazardsAccurate(From, To);
 	// Test the Z coordinate at the mid point.
 	//
 	glm::vec3 MidPoint((From.x + To.x) / 2, (From.y + To.y) / 2, From.z);
@@ -1163,7 +1165,7 @@ bool PathManager::NoHazardsAccurate(glm::vec3 From, glm::vec3 To)
 	float stepx, stepy, stepz, curx, cury, curz;
 	glm::vec3 cur = From;
 	float last_z = From.z;
-	float step_size = 1.0;
+	float step_size = RuleR(Pathing, NoHazardsAccurateStepSize);
 
 	curx = From.x;
 	cury = From.y;
@@ -1181,7 +1183,7 @@ bool PathManager::NoHazardsAccurate(glm::vec3 From, glm::vec3 To)
 
 		glm::vec3 TestPoint(curx, cury, curz);
 		float NewZ = zone->zonemap->FindBestZ(TestPoint, nullptr);
-		if (std::abs(NewZ - last_z) > 5.0f) {
+		if (std::abs(NewZ - last_z) > RuleR(Pathing, NoHazardsAccurateZDiff)) {
 			Log(Logs::Detail, Logs::Pathing, "  HAZARD DETECTED moving from %8.3f, %8.3f, %8.3f to %8.3f, %8.3f, %8.3f. Best Z %8.3f, Z Change is %8.3f",
 				From.x, From.y, From.z, TestPoint.x, TestPoint.y, TestPoint.z, NewZ, NewZ - From.z);
 			return false;
