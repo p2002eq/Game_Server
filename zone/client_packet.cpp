@@ -12527,7 +12527,7 @@ void Client::Handle_OP_Shielding(const EQApplicationPacket *app)
 	}
 
 	// calculate duration bonus (TODO - take values from database)
-	int shield_duration_bonus = 0;
+	uint32 shield_duration_bonus = 0;
 	switch (GetAA(197)) {
 		case 1:
 			shield_duration_bonus = 12000;
