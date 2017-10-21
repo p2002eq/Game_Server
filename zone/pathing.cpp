@@ -81,6 +81,7 @@ PathManager* PathManager::LoadPathFile(const char* ZoneName)
 PathManager::PathManager()
 {
 	PathNodes = nullptr;
+	PathNodesMap = nullptr;
 	ClosedListFlag = nullptr;
 	Head.PathNodeCount = 0;
 	Head.version = 2;
@@ -91,6 +92,7 @@ PathManager::~PathManager()
 {
 	safe_delete_array(PathNodes);
 	safe_delete_array(ClosedListFlag);
+	safe_delete(PathNodesMap);
 }
 
 bool PathManager::loadPaths(FILE *PathFile)
@@ -100,8 +102,7 @@ bool PathManager::loadPaths(FILE *PathFile)
 
 	fread(&Magic, 9, 1, PathFile);
 
-	if(strncmp(Magic, "EQEMUPATH", 9))
-	{
+	if (strncmp(Magic, "EQEMUPATH", 9)) {
 		Log(Logs::General, Logs::Error, "Bad Magic String in .path file.");
 		return false;
 	}
@@ -111,14 +112,12 @@ bool PathManager::loadPaths(FILE *PathFile)
 	Log(Logs::General, Logs::Status, "Path File Header: Version %ld, PathNodes %ld",
 				(long)Head.version, (long)Head.PathNodeCount);
 
-	if(Head.version != 2)
-	{
+	if(Head.version != 2) {
 		Log(Logs::General, Logs::Error, "Unsupported path file version.");
 		return false;
 	}
 
 	PathNodes = new PathNode[Head.PathNodeCount];
-
 	fread(PathNodes, sizeof(PathNode), Head.PathNodeCount, PathFile);
 
 	ClosedListFlag = new int[Head.PathNodeCount];
@@ -131,23 +130,21 @@ bool PathManager::loadPaths(FILE *PathFile)
 
 	bool PathFileValid = true;
 
-	for(uint32 i = 0; i < Head.PathNodeCount; ++i)
-	{
-		for(uint32 j = 0; j < PATHNODENEIGHBOURS; ++j)
-		{
-			if(PathNodes[i].Neighbours[j].id > MaxNodeID)
-			{
+	for (uint32 i = 0; i < Head.PathNodeCount; ++i) {
+		for (uint32 j = 0; j < PATHNODENEIGHBOURS; ++j) {
+			if (PathNodes[i].Neighbours[j].id > MaxNodeID) {
 				Log(Logs::General, Logs::Error, "Path Node %i, Neighbour %i (%i) out of range.", i, j, PathNodes[i].Neighbours[j].id);
-
 				PathFileValid = false;
 			}
 		}
 	}
 
-	if(!PathFileValid)
-	{
+	if(!PathFileValid) {
 		safe_delete_array(PathNodes);
 	}
+
+	SortNodes();
+	ResortConnections();
 
 	return PathFileValid;
 }
@@ -190,18 +187,16 @@ glm::vec3 PathManager::GetPathNodeCoordinates(int NodeNumber, bool BestZ)
 {
 	glm::vec3 Result;
 
-	if(NodeNumber < Head.PathNodeCount)
-	{
-		Result = PathNodes[NodeNumber].v;
+	if (NodeNumber < Head.PathNodeCount) {
+		Result = PathNodesMap->at(NodeNumber)->v;
 
-		if(!BestZ)
+		if (!BestZ)
 			return Result;
 
-		Result.z = PathNodes[NodeNumber].bestz;
+		Result.z = PathNodesMap->at(NodeNumber)->bestz;
 	}
 
 	return Result;
-
 }
 
 std::deque<int> PathManager::FindRoute(int startID, int endID)
@@ -224,6 +219,12 @@ std::deque<int> PathManager::FindRoute(int startID, int endID)
 
 	OpenList.push_back(AStarEntry);
 
+	/*
+	std::map<int, PathNode> pathnodemap;
+	for (int i = 0; i < Head.PathNodeCount; ++i) {
+		pathnodemap[PathNodes[i].id] = PathNodes[i];
+	}*/
+
 	while(!OpenList.empty())
 	{
 		// The OpenList is maintained in sorted order, lowest to highest cost.
@@ -238,13 +239,13 @@ std::deque<int> PathManager::FindRoute(int startID, int endID)
 
 		for(int i = 0; i < PATHNODENEIGHBOURS; ++i)
 		{
-			if(PathNodes[CurrentNode.PathNodeID].Neighbours[i].id == -1)
+			if(PathNodesMap->at(CurrentNode.PathNodeID)->Neighbours[i].id == -1)
 				break;
 
-			if(PathNodes[CurrentNode.PathNodeID].Neighbours[i].id == CurrentNode.Parent)
+			if(PathNodesMap->at(CurrentNode.PathNodeID)->Neighbours[i].id == CurrentNode.Parent)
 				continue;
 
-			if(PathNodes[CurrentNode.PathNodeID].Neighbours[i].id == endID)
+			if(PathNodesMap->at(CurrentNode.PathNodeID)->Neighbours[i].id == endID)
 			{
 				Route.push_back(CurrentNode.PathNodeID);
 
@@ -272,26 +273,25 @@ std::deque<int> PathManager::FindRoute(int startID, int endID)
 
 				return Route;
 			}
-			if(ClosedListFlag[PathNodes[CurrentNode.PathNodeID].Neighbours[i].id])
+			if(ClosedListFlag[PathNodesMap->at(CurrentNode.PathNodeID)->Neighbours[i].id])
 				continue;
 
-			AStarEntry.PathNodeID = PathNodes[CurrentNode.PathNodeID].Neighbours[i].id;
+			AStarEntry.PathNodeID = PathNodesMap->at(CurrentNode.PathNodeID)->Neighbours[i].id;
 
 			AStarEntry.Parent = CurrentNode.PathNodeID;
 
-			AStarEntry.Teleport = PathNodes[CurrentNode.PathNodeID].Neighbours[i].Teleport;
+			AStarEntry.Teleport = PathNodesMap->at(CurrentNode.PathNodeID)->Neighbours[i].Teleport;
 
 			// HCost is the estimated cost to get from this node to the end.
-			AStarEntry.HCost = VectorDistance(PathNodes[PathNodes[CurrentNode.PathNodeID].Neighbours[i].id].v,
-											PathNodes[endID].v);
+			AStarEntry.HCost = VectorDistance(PathNodesMap->at(PathNodesMap->at(CurrentNode.PathNodeID)->Neighbours[i].id)->v, PathNodesMap->at(endID)->v);
 
-			AStarEntry.GCost = CurrentNode.GCost + PathNodes[CurrentNode.PathNodeID].Neighbours[i].distance;
+			AStarEntry.GCost = CurrentNode.GCost + PathNodesMap->at(CurrentNode.PathNodeID)->Neighbours[i].distance;
 
 			float FCost = AStarEntry.HCost + AStarEntry.GCost;
 #ifdef PATHDEBUG
 			printf("Node: %i, Open Neighbour %i has HCost %8.3f, GCost %8.3f (Total Cost: %8.3f)\n",
 					CurrentNode.PathNodeID,
-					PathNodes[CurrentNode.PathNodeID].Neighbours[i].id,
+					PathNodesMap->at(CurrentNode.PathNodeID)->Neighbours[i].id,
 					AStarEntry.HCost,
 					AStarEntry.GCost,
 					AStarEntry.HCost + AStarEntry.GCost);
@@ -303,11 +303,11 @@ std::deque<int> PathManager::FindRoute(int startID, int endID)
 
 			for(OpenListIterator = OpenList.begin(); OpenListIterator != OpenList.end(); ++OpenListIterator)
 			{
-				if((*OpenListIterator).PathNodeID == PathNodes[CurrentNode.PathNodeID].Neighbours[i].id)
+				if((*OpenListIterator).PathNodeID == PathNodesMap->at(CurrentNode.PathNodeID)->Neighbours[i].id)
 				{
 					AlreadyInOpenList = true;
 
-					float GCostToNode = CurrentNode.GCost + PathNodes[CurrentNode.PathNodeID].Neighbours[i].distance;
+					float GCostToNode = CurrentNode.GCost + PathNodesMap->at(CurrentNode.PathNodeID)->Neighbours[i].distance;
 
 					if(GCostToNode < (*OpenListIterator).GCost)
 					{
@@ -315,7 +315,7 @@ std::deque<int> PathManager::FindRoute(int startID, int endID)
 
 						(*OpenListIterator).GCost = GCostToNode;
 
-						(*OpenListIterator).Teleport = PathNodes[CurrentNode.PathNodeID].Neighbours[i].Teleport;
+						(*OpenListIterator).Teleport = PathNodesMap->at(CurrentNode.PathNodeID)->Neighbours[i].Teleport;
 					}
 					break;
 				}
@@ -368,26 +368,22 @@ std::deque<int> PathManager::FindRoute(glm::vec3 Start, glm::vec3 End)
 
 	PathNodeSortStruct TempNode;
 
-	for(uint32 i = 0 ; i < Head.PathNodeCount; ++i)
-	{
+	for (uint32 i = 0 ; i < Head.PathNodeCount; ++i) {
 		if ((std::abs(Start.x - PathNodes[i].v.x) <= CandidateNodeRangeXY) &&
 		    (std::abs(Start.y - PathNodes[i].v.y) <= CandidateNodeRangeXY) &&
 		    (std::abs(Start.z - PathNodes[i].v.z) <= CandidateNodeRangeZ)) {
 			TempNode.id = i;
 			TempNode.Distance = VectorDistanceNoRoot(Start, PathNodes[i].v);
 			SortedByDistance.push_back(TempNode);
-
 		}
 	}
 
 	std::sort(SortedByDistance.begin(), SortedByDistance.end(), path_compare);
 
-	for(auto Iterator = SortedByDistance.begin(); Iterator != SortedByDistance.end(); ++Iterator)
-	{
+	for (auto Iterator = SortedByDistance.begin(); Iterator != SortedByDistance.end(); ++Iterator) {
 		Log(Logs::Detail, Logs::Pathing, "Checking Reachability of Node %i from Start Position.", PathNodes[(*Iterator).id].id);
 
-		if(!zone->zonemap->LineIntersectsZone(Start, PathNodes[(*Iterator).id].v, 1.0f, nullptr))
-		{
+		if(!zone->zonemap->LineIntersectsZone(Start, PathNodesMap->at((*Iterator).id)->v, 1.0f, nullptr)) {
 			ClosestPathNodeToStart = (*Iterator).id;
 			break;
 		}
@@ -543,7 +539,6 @@ const char* DigitToWord(int i)
 
 void PathManager::SpawnPathNodes()
 {
-
 	for(uint32 i = 0; i < Head.PathNodeCount; ++i)
 	{
 		auto npc_type = new NPCType;
@@ -585,10 +580,10 @@ void PathManager::SpawnPathNodes()
 
 		npc_type->findable = 1;
         auto position = glm::vec4(PathNodes[i].v.x, PathNodes[i].v.y, PathNodes[i].v.z, 0.0f);
-	auto npc = new NPC(npc_type, nullptr, position, FlyMode1);
-	npc->GiveNPCTypeData(npc_type);
+		auto npc = new NPC(npc_type, nullptr, position, FlyMode1);
+		npc->GiveNPCTypeData(npc_type);
 
-	entity_list.AddNPC(npc, true, true);
+		entity_list.AddNPC(npc, true, true);
 	}
 }
 
@@ -1336,7 +1331,7 @@ void Client::SendPathPacket(std::vector<FindPerson_Point> &points) {
 
 PathNode* PathManager::FindPathNodeByCoordinates(float x, float y, float z)
 {
-	for(uint32 i = 0; i < Head.PathNodeCount; ++i)
+	for (uint32 i = 0; i < Head.PathNodeCount; ++i)
 		if((PathNodes[i].v.x == x) && (PathNodes[i].v.y == y) && (PathNodes[i].v.z == z))
 			return &PathNodes[i];
 
@@ -1455,6 +1450,8 @@ void PathManager::NodeInfo(Client *c)
 
 void PathManager::DumpPath(std::string filename)
 {
+	SortNodes();
+	ResortConnections();
 	std::ofstream o_file;
 	std::string file_to_write = StringFormat("%s%s", Config->MapDir.c_str(), filename.c_str());
 	o_file.open(file_to_write.c_str(), std::ios_base::binary | std::ios_base::trunc | std::ios_base::out);
@@ -1467,33 +1464,56 @@ void PathManager::DumpPath(std::string filename)
 int32 PathManager::AddNode(float x, float y, float z, float best_z, int32 requested_id)
 {
 	int32 new_id = -1;
-	if(requested_id != 0)
-	{
+	if (requested_id != 0) {
 		new_id = requested_id;
-		for(uint32 i = 0; i < Head.PathNodeCount; ++i)
-		{
-			if(PathNodes[i].id == requested_id)
-			{
+		for (uint32 i = 0; i < Head.PathNodeCount; ++i) {
+			if (PathNodes[i].id == requested_id) {
 				new_id = -1;
 				break;
 			}
 		}
 	}
 
-	if(new_id == -1)
-	{
-		for(uint32 i = 0; i < Head.PathNodeCount; ++i)
-		{
-			if(PathNodes[i].id - new_id > 1) {
-				new_id = PathNodes[i].id - 1;
-				break;
+	// Find max ID number in use
+	// Iterate over 0 to max ID to find an unused ID
+	// If none found, use max ID + 1
+	int max_id = -1;
+	for (uint32 i = 0; i < Head.PathNodeCount; ++i) {
+		if (max_id == -1 || PathNodes[i].id > max_id)
+			max_id = PathNodes[i].id;
+	}
+	for (uint32 i = 0; i <= max_id; ++i) {
+		if (!PathNodesMap->count(i)) {
+			new_id = i;
+			break;
+		}
+	}
+	if (new_id == -1)
+		new_id = max_id + 1;
+
+	/*
+	bool id_taken = false;
+	if (new_id == -1) {
+		for (uint32 i = 0; i < Head.PathNodeCount; ++i) {
+			if (PathNodes[i].id - new_id > 1) {
+				id_taken = false;
+				for (uint32 x = 0; x < Head.PathNodeCount; ++x) {
+					if (PathNodes[x].id == PathNodes[i].id - 1)
+						id_taken = true;
+						break;
+				}
+				if (!id_taken) {
+					new_id = PathNodes[i].id - 1;
+					break;
+				}
 			}
 
-			if(PathNodes[i].id > new_id)
+			if (PathNodes[i].id > new_id)
 				new_id = PathNodes[i].id;
 		}
 		new_id++;
 	}
+	*/
 
 	PathNode new_node;
 	new_node.v.x = x;
@@ -1510,24 +1530,20 @@ int32 PathManager::AddNode(float x, float y, float z, float best_z, int32 reques
 	}
 
 	Head.PathNodeCount++;
-	if(Head.PathNodeCount > 1)
-	{
+	if (Head.PathNodeCount > 1) {
 		auto t_PathNodes = new PathNode[Head.PathNodeCount];
-		for(uint32 x = 0; x < (Head.PathNodeCount - 1); ++x)
-		{
+		for (uint32 x = 0; x < (Head.PathNodeCount - 1); ++x) {
 			t_PathNodes[x].v.x = PathNodes[x].v.x;
 			t_PathNodes[x].v.y = PathNodes[x].v.y;
 			t_PathNodes[x].v.z = PathNodes[x].v.z;
 			t_PathNodes[x].bestz = PathNodes[x].bestz;
 			t_PathNodes[x].id = PathNodes[x].id;
-			for(int n = 0; n < PATHNODENEIGHBOURS; ++n)
-			{
+			for (int n = 0; n < PATHNODENEIGHBOURS; ++n) {
 				t_PathNodes[x].Neighbours[n].distance = PathNodes[x].Neighbours[n].distance;
 				t_PathNodes[x].Neighbours[n].DoorID = PathNodes[x].Neighbours[n].DoorID;
 				t_PathNodes[x].Neighbours[n].id = PathNodes[x].Neighbours[n].id;
 				t_PathNodes[x].Neighbours[n].Teleport = PathNodes[x].Neighbours[n].Teleport;
 			}
-
 		}
 
 		int32 index = (Head.PathNodeCount - 1);
@@ -1547,11 +1563,14 @@ int32 PathManager::AddNode(float x, float y, float z, float best_z, int32 reques
 		delete[] PathNodes;
 		PathNodes = t_PathNodes;
 
+		SortNodes();
+		ResortConnections();
+
 		auto npc_type = new NPCType;
 		memset(npc_type, 0, sizeof(NPCType));
-		if(new_id < 10)
+		if (new_id < 10)
 			sprintf(npc_type->name, "%s", DigitToWord(new_id));
-		else if(new_id < 100)
+		else if (new_id < 100)
 			sprintf(npc_type->name, "%s_%s", DigitToWord(new_id/10), DigitToWord(new_id % 10));
 		else
 			sprintf(npc_type->name, "%s_%s_%s", DigitToWord(new_id/100), DigitToWord((new_id % 100)/10),
@@ -1584,16 +1603,15 @@ int32 PathManager::AddNode(float x, float y, float z, float best_z, int32 reques
 		npc_type->findable = 1;
 
         auto position = glm::vec4(new_node.v.x, new_node.v.y, new_node.v.z, 0.0f);
-	auto npc = new NPC(npc_type, nullptr, position, FlyMode1);
-	npc->GiveNPCTypeData(npc_type);
-	entity_list.AddNPC(npc, true, true);
+		auto npc = new NPC(npc_type, nullptr, position, FlyMode1);
+		npc->GiveNPCTypeData(npc_type);
+		entity_list.AddNPC(npc, true, true);
 
-	safe_delete_array(ClosedListFlag);
-	ClosedListFlag = new int[Head.PathNodeCount];
-	return new_id;
+		safe_delete_array(ClosedListFlag);
+		ClosedListFlag = new int[Head.PathNodeCount];
+		return new_id;
 	}
-	else
-	{
+	else {
 		PathNodes = new PathNode[Head.PathNodeCount];
 		PathNodes[0].v.x = new_node.v.x;
 		PathNodes[0].v.y = new_node.v.y;
@@ -1608,15 +1626,12 @@ int32 PathManager::AddNode(float x, float y, float z, float best_z, int32 reques
 			PathNodes[0].Neighbours[n].Teleport = new_node.Neighbours[n].Teleport;
 		}
 
+		SortNodes();
+		ResortConnections();
+
 		auto npc_type = new NPCType;
 		memset(npc_type, 0, sizeof(NPCType));
-		if(new_id < 10)
-			sprintf(npc_type->name, "%s", DigitToWord(new_id));
-		else if(new_id < 100)
-			sprintf(npc_type->name, "%s_%s", DigitToWord(new_id/10), DigitToWord(new_id % 10));
-		else
-			sprintf(npc_type->name, "%s_%s_%s", DigitToWord(new_id/100), DigitToWord((new_id % 100)/10),
-				DigitToWord(((new_id % 100) %10)));
+		SetNodeNPCName(npc_type->name, new_id);
 
 		sprintf(npc_type->lastname, "%i", new_id);
 		npc_type->cur_hp = 4000000;
@@ -1645,35 +1660,56 @@ int32 PathManager::AddNode(float x, float y, float z, float best_z, int32 reques
 		npc_type->findable = 1;
 
         auto position = glm::vec4(new_node.v.x, new_node.v.y, new_node.v.z, 0.0f);
-	auto npc = new NPC(npc_type, nullptr, position, FlyMode1);
-	npc->GiveNPCTypeData(npc_type);
-	entity_list.AddNPC(npc, true, true);
+		auto npc = new NPC(npc_type, nullptr, position, FlyMode1);
+		npc->GiveNPCTypeData(npc_type);
+		entity_list.AddNPC(npc, true, true);
 
-	ClosedListFlag = new int[Head.PathNodeCount];
+		ClosedListFlag = new int[Head.PathNodeCount];
 
-	return new_id;
+		return new_id;
 	}
+}
+
+Mob* PathManager::GetNodeNPC(const char* name) {
+	std::unordered_map<uint16, Mob*> npc_list = entity_list.GetMobList();
+	auto it = npc_list.begin();
+	while (it != npc_list.end()) {
+		if (!strcmp(it->second->GetName(), name))
+			return it->second;
+		if (!strcmp(it->second->GetLastName(), name))
+			return it->second;
+		++it;
+	}
+	return nullptr;
+}
+
+void PathManager::SetNodeNPCName(char* name, int32 new_id) {
+	if (new_id < 10)
+		sprintf(name, "%s", DigitToWord(new_id));
+	else if (new_id < 100)
+		sprintf(name, "%s_%s", DigitToWord(new_id / 10), DigitToWord(new_id % 10));
+	else
+		sprintf(name, "%s_%s_%s", DigitToWord(new_id / 100), DigitToWord((new_id % 100) / 10),
+			DigitToWord(((new_id % 100) % 10)));
 }
 
 bool PathManager::DeleteNode(Client *c)
 {
-	if(!c)
-	{
+	if (!c)
 		return false;
-	}
 
-	if(!c->GetTarget())
-	{
+	if (!c->GetTarget()) {
 		c->Message(0, "You must target a node.");
 		return false;
 	}
 
 	PathNode *Node = zone->pathing->FindPathNodeByCoordinates(c->GetTarget()->GetX(), c->GetTarget()->GetY(), c->GetTarget()->GetZ());
-	if(!Node)
-	{
+	if (!Node) {
+		c->Message(0, "Unable to find targeted node");
 		return false;
 	}
 
+	c->Message(0, "Attempting to delete node...");
 	return DeleteNode(Node->id);
 }
 
@@ -1685,21 +1721,18 @@ bool PathManager::DeleteNode(int32 id)
 	//else if the size is 1 just delete our current list and set it to zero.
 	//go through and delete all ref in neighbors...
 
-	if(Head.PathNodeCount > 1)
-	{
+	if (Head.PathNodeCount > 1) {
+		zone->pathing->DepopPathNodes();
 		auto t_PathNodes = new PathNode[Head.PathNodeCount - 1];
 		uint32 index = 0;
-		for(uint32 x = 0; x < Head.PathNodeCount; x++)
-		{
-			if(PathNodes[x].id != id)
-			{
+		for (uint32 x = 0; x < Head.PathNodeCount; x++) {
+			if (PathNodes[x].id != id) {
 				t_PathNodes[index].id = PathNodes[x].id;
 				t_PathNodes[index].v.x = PathNodes[x].v.x;
 				t_PathNodes[index].v.y = PathNodes[x].v.y;
 				t_PathNodes[index].v.z = PathNodes[x].v.z;
 				t_PathNodes[index].bestz = PathNodes[x].bestz;
-				for(int n = 0; n < PATHNODENEIGHBOURS; ++n)
-				{
+				for (int n = 0; n < PATHNODENEIGHBOURS; ++n) {
 					t_PathNodes[index].Neighbours[n].distance = PathNodes[x].Neighbours[n].distance;
 					t_PathNodes[index].Neighbours[n].DoorID = PathNodes[x].Neighbours[n].DoorID;
 					t_PathNodes[index].Neighbours[n].id = PathNodes[x].Neighbours[n].id;
@@ -1712,12 +1745,9 @@ bool PathManager::DeleteNode(int32 id)
 		delete[] PathNodes;
 		PathNodes = t_PathNodes;
 
-		for(uint32 y = 0; y < Head.PathNodeCount; ++y)
-		{
-			for(int n = 0; n < PATHNODENEIGHBOURS; ++n)
-			{
-				if(PathNodes[y].Neighbours[n].id == id)
-				{
+		for (uint32 y = 0; y < Head.PathNodeCount; ++y) {
+			for (int n = 0; n < PATHNODENEIGHBOURS; ++n) {
+				if (PathNodes[y].Neighbours[n].id == id) {
 					PathNodes[y].Neighbours[n].Teleport = 0;
 					PathNodes[y].Neighbours[n].DoorID = -1;
 					PathNodes[y].Neighbours[n].distance = 0.0;
@@ -1725,33 +1755,47 @@ bool PathManager::DeleteNode(int32 id)
 				}
 			}
 		}
+
+		SortNodes();
+		ResortConnections();
 		safe_delete_array(ClosedListFlag);
 		ClosedListFlag = new int[Head.PathNodeCount];
 	}
-	else
-	{
+	else {
 		delete[] PathNodes;
 		PathNodes = nullptr;
 	}
+
+	zone->pathing->SpawnPathNodes();
+
 	return true;
 }
 
-void PathManager::ConnectNodeToNode(Client *c, int32 Node2, int32 teleport, int32 doorid)
+void PathManager::ConnectNodeToNode(Client *c, int32 Node2, int32 teleport, int32 doorid, bool nearest)
 {
-	if(!c)
-	{
+	if (!c) {
 		return;
 	}
 
-	if(!c->GetTarget())
-	{
+	PathNode* Node;
+
+	if (!c->GetTarget() && !nearest) {
 		c->Message(0, "You must target a node.");
 		return;
 	}
+	else if (nearest) {
+		glm::vec3 Position(c->GetX(), c->GetY(), c->GetZ());
+		Node = zone->pathing->PathNodesMap->at(zone->pathing->FindNearestPathNode(Position));
+		if (Node2 == -1) { // use target
+			Node2 = zone->pathing->FindPathNodeByCoordinates(c->GetTarget()->GetX(), c->GetTarget()->GetY(), c->GetTarget()->GetZ())->id;
+		}
+	}
+	else {
+		Node = zone->pathing->FindPathNodeByCoordinates(c->GetTarget()->GetX(), c->GetTarget()->GetY(), c->GetTarget()->GetZ());
+	}
 
-	PathNode *Node = zone->pathing->FindPathNodeByCoordinates(c->GetTarget()->GetX(), c->GetTarget()->GetY(), c->GetTarget()->GetZ());
-	if(!Node)
-	{
+	if (!Node) {
+		c->Message(0, "Unable to locate path node.");
 		return;
 	}
 
@@ -1767,40 +1811,34 @@ void PathManager::ConnectNodeToNode(int32 Node1, int32 Node2, int32 teleport, in
 {
 	PathNode *a = nullptr;
 	PathNode *b = nullptr;
-	for(uint32 x = 0; x < Head.PathNodeCount; ++x)
-	{
-		if(PathNodes[x].id == Node1)
-		{
+	for (uint32 x = 0; x < Head.PathNodeCount; ++x) {
+		if (PathNodes[x].id == Node1) {
 			a = &PathNodes[x];
-			if(b)
+			if (b)
 				break;
 		}
-		else if(PathNodes[x].id == Node2)
-		{
+		else if (PathNodes[x].id == Node2) {
 			b = &PathNodes[x];
 			if(a)
 				break;
 		}
 	}
 
-	if(a == nullptr || b == nullptr)
+	if (a == nullptr || b == nullptr)
 		return;
 
 	bool connect_a_to_b = true;
-	if(NodesConnected(a, b))
+	if (NodesConnected(a, b))
 		connect_a_to_b = false;
 
 	bool connect_b_to_a = true;
-	if(NodesConnected(b, a))
+	if (NodesConnected(b, a))
 		connect_b_to_a = false;
 
 
-	if(connect_a_to_b)
-	{
-		for(int a_i = 0; a_i < PATHNODENEIGHBOURS; ++a_i)
-		{
-			if(a->Neighbours[a_i].id == -1)
-			{
+	if (connect_a_to_b) {
+		for (int a_i = 0; a_i < PATHNODENEIGHBOURS; ++a_i) {
+			if (a->Neighbours[a_i].id == -1) {
 				a->Neighbours[a_i].id = b->id;
 				a->Neighbours[a_i].DoorID = doorid;
 				a->Neighbours[a_i].Teleport = teleport;
@@ -1810,12 +1848,9 @@ void PathManager::ConnectNodeToNode(int32 Node1, int32 Node2, int32 teleport, in
 		}
 	}
 
-	if(connect_b_to_a)
-	{
-		for(int b_i = 0; b_i < PATHNODENEIGHBOURS; ++b_i)
-		{
-			if(b->Neighbours[b_i].id == -1)
-			{
+	if (connect_b_to_a) {
+		for (int b_i = 0; b_i < PATHNODENEIGHBOURS; ++b_i) {
+			if(b->Neighbours[b_i].id == -1) {
 				b->Neighbours[b_i].id = a->id;
 				b->Neighbours[b_i].DoorID = doorid;
 				b->Neighbours[b_i].Teleport = teleport;
@@ -1828,26 +1863,23 @@ void PathManager::ConnectNodeToNode(int32 Node1, int32 Node2, int32 teleport, in
 
 void PathManager::ConnectNode(Client *c, int32 Node2, int32 teleport, int32 doorid)
 {
-	if(!c)
-	{
+	if (!c) {
 		return;
 	}
 
-	if(!c->GetTarget())
-	{
+	if (!c->GetTarget()) {
 		c->Message(0, "You must target a node.");
 		return;
 	}
 
 	PathNode *Node = zone->pathing->FindPathNodeByCoordinates(c->GetTarget()->GetX(), c->GetTarget()->GetY(), c->GetTarget()->GetZ());
-	if(!Node)
-	{
+	if(!Node) {
 		return;
 	}
 
 	c->Message(0, "Connecting %i to %i", Node->id, Node2);
 
-	if(doorid == 0)
+	if (doorid == 0)
 		ConnectNode(Node->id, Node2, teleport);
 	else
 		ConnectNode(Node->id, Node2, teleport, doorid);
@@ -1857,35 +1889,29 @@ void PathManager::ConnectNode(int32 Node1, int32 Node2, int32 teleport, int32 do
 {
 	PathNode *a = nullptr;
 	PathNode *b = nullptr;
-	for(uint32 x = 0; x < Head.PathNodeCount; ++x)
-	{
-		if(PathNodes[x].id == Node1)
-		{
+	for(uint32 x = 0; x < Head.PathNodeCount; ++x) {
+		if (PathNodes[x].id == Node1) {
 			a = &PathNodes[x];
-			if(b)
+			if (b)
 				break;
 		}
-		else if(PathNodes[x].id == Node2)
-		{
+		else if (PathNodes[x].id == Node2) {
 			b = &PathNodes[x];
-			if(a)
+			if (a)
 				break;
 		}
 	}
 
-	if(a == nullptr || b == nullptr)
+	if (a == nullptr || b == nullptr)
 		return;
 
 	bool connect_a_to_b = true;
-	if(NodesConnected(a, b))
+	if (NodesConnected(a, b))
 		connect_a_to_b = false;
 
-	if(connect_a_to_b)
-	{
-		for(int a_i = 0; a_i < PATHNODENEIGHBOURS; ++a_i)
-		{
-			if(a->Neighbours[a_i].id == -1)
-			{
+	if (connect_a_to_b) {
+		for (int a_i = 0; a_i < PATHNODENEIGHBOURS; ++a_i) {
+			if (a->Neighbours[a_i].id == -1) {
 				a->Neighbours[a_i].id = b->id;
 				a->Neighbours[a_i].DoorID = doorid;
 				a->Neighbours[a_i].Teleport = teleport;
@@ -1898,20 +1924,17 @@ void PathManager::ConnectNode(int32 Node1, int32 Node2, int32 teleport, int32 do
 
 void PathManager::DisconnectNodeToNode(Client *c, int32 Node2)
 {
-	if(!c)
-	{
+	if (!c) {
 		return;
 	}
 
-	if(!c->GetTarget())
-	{
+	if (!c->GetTarget()) {
 		c->Message(0, "You must target a node.");
 		return;
 	}
 
 	PathNode *Node = zone->pathing->FindPathNodeByCoordinates(c->GetTarget()->GetX(), c->GetTarget()->GetY(), c->GetTarget()->GetZ());
-	if(!Node)
-	{
+	if (!Node) {
 		return;
 	}
 
@@ -1922,39 +1945,33 @@ void PathManager::DisconnectNodeToNode(int32 Node1, int32 Node2)
 {
 	PathNode *a = nullptr;
 	PathNode *b = nullptr;
-	for(uint32 x = 0; x < Head.PathNodeCount; ++x)
-	{
-		if(PathNodes[x].id == Node1)
-		{
+	for (uint32 x = 0; x < Head.PathNodeCount; ++x) {
+		if (PathNodes[x].id == Node1) {
 			a = &PathNodes[x];
-			if(b)
+			if (b)
 				break;
-		}
-		else if(PathNodes[x].id == Node2)
-		{
+		} 
+		else if(PathNodes[x].id == Node2) {
 			b = &PathNodes[x];
-			if(a)
+			if (a)
 				break;
 		}
 	}
 
-	if(a == nullptr || b == nullptr)
+	if (a == nullptr || b == nullptr)
 		return;
 
 	bool disconnect_a_from_b = false;
-	if(NodesConnected(a, b))
+	if (NodesConnected(a, b))
 		disconnect_a_from_b = true;
 
 	bool disconnect_b_from_a = false;
-	if(NodesConnected(b, a))
+	if (NodesConnected(b, a))
 		disconnect_b_from_a = true;
 
-	if(disconnect_a_from_b)
-	{
-		for(int a_i = 0; a_i < PATHNODENEIGHBOURS; ++a_i)
-		{
-			if(a->Neighbours[a_i].id == b->id)
-			{
+	if (disconnect_a_from_b) {
+		for (int a_i = 0; a_i < PATHNODENEIGHBOURS; ++a_i) {
+			if (a->Neighbours[a_i].id == b->id) {
 				a->Neighbours[a_i].distance = 0.0;
 				a->Neighbours[a_i].DoorID = -1;
 				a->Neighbours[a_i].id = -1;
@@ -1964,12 +1981,9 @@ void PathManager::DisconnectNodeToNode(int32 Node1, int32 Node2)
 		}
 	}
 
-	if(disconnect_b_from_a)
-	{
-		for(int b_i = 0; b_i < PATHNODENEIGHBOURS; ++b_i)
-		{
-			if(b->Neighbours[b_i].id == a->id)
-			{
+	if (disconnect_b_from_a) {
+		for (int b_i = 0; b_i < PATHNODENEIGHBOURS; ++b_i) {
+			if (b->Neighbours[b_i].id == a->id) {
 				b->Neighbours[b_i].distance = 0.0;
 				b->Neighbours[b_i].DoorID = -1;
 				b->Neighbours[b_i].id = -1;
@@ -1982,20 +1996,17 @@ void PathManager::DisconnectNodeToNode(int32 Node1, int32 Node2)
 
 void PathManager::MoveNode(Client *c)
 {
-	if(!c)
-	{
+	if (!c) {
 		return;
 	}
 
-	if(!c->GetTarget())
-	{
+	if (!c->GetTarget()) {
 		c->Message(0, "You must target a node.");
 		return;
 	}
 
 	PathNode *Node = zone->pathing->FindPathNodeByCoordinates(c->GetTarget()->GetX(), c->GetTarget()->GetY(), c->GetTarget()->GetZ());
-	if(!Node)
-	{
+	if (!Node) {
 		return;
 	}
 
@@ -2003,53 +2014,48 @@ void PathManager::MoveNode(Client *c)
 	Node->v.y = c->GetY();
 	Node->v.z = c->GetZ();
 
-	if(zone->zonemap)
-	{
+	if (zone->zonemap) {
 		glm::vec3 loc(c->GetX(), c->GetY(), c->GetZ());
 		Node->bestz = zone->zonemap->FindBestZ(loc, nullptr);
 	}
-	else
-	{
+	else {
 		Node->bestz = Node->v.z;
 	}
+
+	Mob* toMove = GetNodeNPC(c->GetTarget()->GetLastName());
+	if (toMove)
+		toMove->GMMove(c->GetX(), c->GetY(), c->GetZ(), 0);
 }
 
 void PathManager::DisconnectAll(Client *c)
 {
-	if(!c)
-	{
+	if (!c) {
 		return;
 	}
 
-	if(!c->GetTarget())
-	{
+	if (!c->GetTarget()) {
 		c->Message(0, "You must target a node.");
 		return;
 	}
 
 	PathNode *Node = zone->pathing->FindPathNodeByCoordinates(c->GetTarget()->GetX(), c->GetTarget()->GetY(), c->GetTarget()->GetZ());
-	if(!Node)
-	{
+	if (!Node) {
 		return;
 	}
 
-	for(int x = 0; x < PATHNODENEIGHBOURS; ++x)
-	{
+	for (int x = 0; x < PATHNODENEIGHBOURS; ++x) {
 		Node->Neighbours[x].distance = 0;
 		Node->Neighbours[x].Teleport = 0;
 		Node->Neighbours[x].DoorID = -1;
 		Node->Neighbours[x].id = -1;
 	}
 
-	for(uint32 i = 0; i < Head.PathNodeCount; ++i)
-	{
-		if(PathNodes[i].id == Node->id)
+	for (uint32 i = 0; i < Head.PathNodeCount; ++i) {
+		if (PathNodes[i].id == Node->id)
 			continue;
 
-		for(int ix = 0; ix < PATHNODENEIGHBOURS; ++ix)
-		{
-			if(PathNodes[i].Neighbours[ix].id == Node->id)
-			{
+		for (int ix = 0; ix < PATHNODENEIGHBOURS; ++ix) {
+			if (PathNodes[i].Neighbours[ix].id == Node->id) {
 				PathNodes[i].Neighbours[ix].distance = 0;
 				PathNodes[i].Neighbours[ix].Teleport = 0;
 				PathNodes[i].Neighbours[ix].id = -1;
@@ -2062,15 +2068,14 @@ void PathManager::DisconnectAll(Client *c)
 //checks if anything in a points to b
 bool PathManager::NodesConnected(PathNode *a, PathNode *b)
 {
-	if(!a)
+	if (!a)
 		return false;
 
-	if(!b)
+	if (!b)
 		return false;
 
-	for(int x = 0; x < PATHNODENEIGHBOURS; ++x)
-	{
-		if(a->Neighbours[x].id == b->id)
+	for (int x = 0; x < PATHNODENEIGHBOURS; ++x) {
+		if (a->Neighbours[x].id == b->id)
 			return true;
 	}
 	return false;
@@ -2078,8 +2083,7 @@ bool PathManager::NodesConnected(PathNode *a, PathNode *b)
 
 bool PathManager::CheckLosFN(glm::vec3 a, glm::vec3 b)
 {
-	if(zone->zonemap)
-	{
+	if(zone->zonemap) {
 		glm::vec3 hit;
 
 		glm::vec3 myloc;
@@ -2094,8 +2098,7 @@ bool PathManager::CheckLosFN(glm::vec3 a, glm::vec3 b)
 		oloc.z = b.z;
 
 
-		if(zone->zonemap->LineIntersectsZone(myloc, oloc, 1.0f, nullptr))
-		{
+		if(zone->zonemap->LineIntersectsZone(myloc, oloc, 1.0f, nullptr)) {
 			return false;
 		}
 	}
@@ -2104,12 +2107,9 @@ bool PathManager::CheckLosFN(glm::vec3 a, glm::vec3 b)
 
 void PathManager::ProcessNodesAndSave(std::string filename)
 {
-	if(zone->zonemap)
-	{
-		for(uint32 i = 0; i < Head.PathNodeCount; ++i)
-		{
-			for(int in = 0; in < PATHNODENEIGHBOURS; ++in)
-			{
+	if(zone->zonemap) {
+		for (uint32 i = 0; i < Head.PathNodeCount; ++i) {
+			for (int in = 0; in < PATHNODENEIGHBOURS; ++in) {
 				PathNodes[i].Neighbours[in].distance = 0.0;
 				PathNodes[i].Neighbours[in].DoorID = -1;
 				PathNodes[i].Neighbours[in].id = -1;
@@ -2117,21 +2117,15 @@ void PathManager::ProcessNodesAndSave(std::string filename)
 			}
 		}
 
-		for(uint32 x = 0; x < Head.PathNodeCount; ++x)
-		{
-			for(uint32 y = 0; y < Head.PathNodeCount; ++y)
-			{
-				if(y == x) //can't connect to ourselves.
+		for (uint32 x = 0; x < Head.PathNodeCount; ++x) {
+			for (uint32 y = 0; y < Head.PathNodeCount; ++y) {
+				if (y == x) //can't connect to ourselves.
 					continue;
 
-				if(!NodesConnected(&PathNodes[x], &PathNodes[y]))
-				{
-					if(VectorDistance(PathNodes[x].v, PathNodes[y].v) <= 200)
-					{
-						if(CheckLosFN(PathNodes[x].v, PathNodes[y].v))
-						{
-							if(NoHazardsAccurate(PathNodes[x].v, PathNodes[y].v))
-							{
+				if (!NodesConnected(&PathNodes[x], &PathNodes[y])) {
+					if (VectorDistance(PathNodes[x].v, PathNodes[y].v) <= 200) {
+						if (CheckLosFN(PathNodes[x].v, PathNodes[y].v)) {
+							if (NoHazardsAccurate(PathNodes[x].v, PathNodes[y].v)) {
 								ConnectNodeToNode(PathNodes[x].id, PathNodes[y].id, 0, 0);
 							}
 						}
@@ -2146,21 +2140,17 @@ void PathManager::ProcessNodesAndSave(std::string filename)
 void PathManager::ResortConnections()
 {
 	NeighbourNode Neigh[PATHNODENEIGHBOURS];
-	for(uint32 x = 0; x < Head.PathNodeCount; ++x)
-	{
+	for (uint32 x = 0; x < Head.PathNodeCount; ++x) {
 		int index = 0;
-		for(int y = 0; y < PATHNODENEIGHBOURS; ++y)
-		{
+		for (int y = 0; y < PATHNODENEIGHBOURS; ++y) {
 			Neigh[y].distance = 0;
 			Neigh[y].DoorID = -1;
 			Neigh[y].id = -1;
 			Neigh[y].Teleport = 0;
 		}
 
-		for(int z = 0; z < PATHNODENEIGHBOURS; ++z)
-		{
-			if(PathNodes[x].Neighbours[z].id != -1)
-			{
+		for (int z = 0; z < PATHNODENEIGHBOURS; ++z) {
+			if (PathNodes[x].Neighbours[z].id != -1) {
 				Neigh[index].id = PathNodes[x].Neighbours[z].id;
 				Neigh[index].distance = PathNodes[x].Neighbours[z].distance;
 				Neigh[index].DoorID = PathNodes[x].Neighbours[z].DoorID;
@@ -2169,16 +2159,14 @@ void PathManager::ResortConnections()
 			}
 		}
 
-		for(int i = 0; i < PATHNODENEIGHBOURS; ++i)
-		{
+		for (int i = 0; i < PATHNODENEIGHBOURS; ++i) {
 			PathNodes[x].Neighbours[i].distance = 0;
 			PathNodes[x].Neighbours[i].DoorID = -1;
 			PathNodes[x].Neighbours[i].id = -1;
 			PathNodes[x].Neighbours[i].Teleport = 0;
 		}
 
-		for(int z = 0; z < PATHNODENEIGHBOURS; ++z)
-		{
+		for (int z = 0; z < PATHNODENEIGHBOURS; ++z) {
 			PathNodes[x].Neighbours[z].distance = Neigh[z].distance;
 			PathNodes[x].Neighbours[z].DoorID = Neigh[z].DoorID;
 			PathNodes[x].Neighbours[z].id = Neigh[z].id;
@@ -2226,11 +2214,26 @@ struct InternalPathSort
 	int16 new_id;
 };
 
+void PathManager::MakeNewPathMap() {
+	safe_delete(PathNodesMap);
+	PathNodesMap = new std::unordered_map<int, PathNode*>;
+	for (uint32 i = 0; i < Head.PathNodeCount; ++i) {
+		PathNodesMap->insert({ PathNodes[i].id, &PathNodes[i] });
+	}
+}
+
+void PathManager::DepopPathNodes() {
+	for (auto local_it = PathNodesMap->begin(); local_it != PathNodesMap->end(); ++local_it) {
+		Mob* toMove = GetNodeNPC(std::to_string(local_it->second->id).c_str());
+		if (toMove)
+			toMove->Depop();
+	}
+}
+
 void PathManager::SortNodes()
 {
 	std::vector<InternalPathSort> sorted_vals;
-	for(uint32 x = 0; x < Head.PathNodeCount; ++x)
-	{
+	for (uint32 x = 0; x < Head.PathNodeCount; ++x) {
 		InternalPathSort tmp;
 		tmp.old_id = PathNodes[x].id;
 		sorted_vals.push_back(tmp);
@@ -2238,14 +2241,10 @@ void PathManager::SortNodes()
 
 	auto t_PathNodes = new PathNode[Head.PathNodeCount];
 	memcpy(t_PathNodes, PathNodes, sizeof(PathNode)*Head.PathNodeCount);
-	for(uint32 i = 0; i < Head.PathNodeCount; ++i)
-	{
-		for(size_t j = 0; j < sorted_vals.size(); ++j)
-		{
-			if(sorted_vals[j].old_id == PathNodes[i].id)
-			{
-				if(i != PathNodes[i].id)
-				{
+	for (uint32 i = 0; i < Head.PathNodeCount; ++i) {
+		for (size_t j = 0; j < sorted_vals.size(); ++j) {
+			if (sorted_vals[j].old_id == PathNodes[i].id) {
+				if (i != PathNodes[i].id) {
 					printf("Assigning new id of index %i differs from old id %i\n", i, PathNodes[i].id);
 				}
 				sorted_vals[j].new_id = i;
@@ -2254,25 +2253,18 @@ void PathManager::SortNodes()
 		t_PathNodes[i].id = i;
 	}
 
-	for(uint32 y = 0; y < Head.PathNodeCount; ++y)
-	{
-		for(int z = 0; z < PATHNODENEIGHBOURS; ++z)
-		{
-			if(PathNodes[y].Neighbours[z].id != -1)
-			{
+	for (uint32 y = 0; y < Head.PathNodeCount; ++y) {
+		for (int z = 0; z < PATHNODENEIGHBOURS; ++z) {
+			if (PathNodes[y].Neighbours[z].id != -1) {
 				int new_val = -1;
-				for(size_t c = 0; c < sorted_vals.size(); ++c)
-				{
-					if(PathNodes[y].Neighbours[z].id == sorted_vals[c].old_id)
-					{
+				for (size_t c = 0; c < sorted_vals.size(); ++c) {
+					if (PathNodes[y].Neighbours[z].id == sorted_vals[c].old_id) {
 						new_val = sorted_vals[c].new_id;
 						break;
 					}
 				}
-				if(new_val != -1)
-				{
-					if(t_PathNodes[y].Neighbours[z].id != new_val)
-					{
+				if (new_val != -1) {
+					if (t_PathNodes[y].Neighbours[z].id != new_val) {
 						printf("changing neighbor value to %i from %i\n", new_val, t_PathNodes[y].Neighbours[z].id);
 					}
 					t_PathNodes[y].Neighbours[z].id = new_val;
@@ -2282,5 +2274,6 @@ void PathManager::SortNodes()
 	}
 	safe_delete_array(PathNodes);
 	PathNodes = t_PathNodes;
+	MakeNewPathMap();
 }
 

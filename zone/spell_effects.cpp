@@ -499,22 +499,22 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial, int level_ove
 					// Greater Decession = 3244
 					// Egress = 1566
 
-					if(!target_zone) {
+					if (!target_zone) {
 #ifdef SPELL_EFFECT_SPAM
 						Log(Logs::General, Logs::None, "Succor/Evacuation Spell In Same Zone.");
 #endif
-							if(IsClient()) {
-								// break charmed pets before moving to not poof pet (exploitable otherwise)
-								if (HasPet()) {
-									if (GetPet()->IsCharmed())
-										GetPet()->BuffFadeByEffect(SE_Charm);
-									else
-										GetPet()->Depop();
-								}
-								CastToClient()->MovePC(zone->GetZoneID(), zone->GetInstanceID(), x, y, z, heading, 0, SummonPCEvac);
-							} else
-								GMMove(x, y, z, heading);
+						if (IsClient()) {
+							// break charmed pets before moving to not poof pet (exploitable otherwise)
+							if (HasPet()) {
+								if (GetPet()->IsCharmed())
+									GetPet()->BuffFadeByEffect(SE_Charm);
+								else
+									GetPet()->Depop();
+							}
 							entity_list.ClearAggro(this, true);
+							CastToClient()->MovePC(zone->GetZoneID(), zone->GetInstanceID(), x, y, z, heading, 0, SummonPCEvac);
+						} else
+							GMMove(x, y, z, heading);
 					}
 					else {
 #ifdef SPELL_EFFECT_SPAM
