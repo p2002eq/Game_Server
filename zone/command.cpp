@@ -7324,6 +7324,7 @@ void command_path(Client *c, const Seperator *sep)
 				return;
 
 			zone->pathing->DumpPath(sep->arg[2]);
+			c->Message(0, StringFormat("Saved path file to %s", sep->arg[2]).c_str());
 		}
 		return;
 	}

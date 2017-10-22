@@ -188,12 +188,12 @@ glm::vec3 PathManager::GetPathNodeCoordinates(int NodeNumber, bool BestZ)
 	glm::vec3 Result;
 
 	if (NodeNumber < Head.PathNodeCount) {
-		Result = PathNodesMap->at(NodeNumber)->v;
+		Result = PathNodes[NodeNumber].v;
 
 		if (!BestZ)
 			return Result;
 
-		Result.z = PathNodesMap->at(NodeNumber)->bestz;
+		Result.z = PathNodes[NodeNumber].bestz;
 	}
 
 	return Result;
@@ -239,13 +239,13 @@ std::deque<int> PathManager::FindRoute(int startID, int endID)
 
 		for(int i = 0; i < PATHNODENEIGHBOURS; ++i)
 		{
-			if(PathNodesMap->at(CurrentNode.PathNodeID)->Neighbours[i].id == -1)
+			if (PathNodes[CurrentNode.PathNodeID].Neighbours[i].id == -1)
 				break;
 
-			if(PathNodesMap->at(CurrentNode.PathNodeID)->Neighbours[i].id == CurrentNode.Parent)
+			if (PathNodes[CurrentNode.PathNodeID].Neighbours[i].id == CurrentNode.Parent)
 				continue;
 
-			if(PathNodesMap->at(CurrentNode.PathNodeID)->Neighbours[i].id == endID)
+			if (PathNodes[CurrentNode.PathNodeID].Neighbours[i].id == endID)
 			{
 				Route.push_back(CurrentNode.PathNodeID);
 
@@ -273,25 +273,25 @@ std::deque<int> PathManager::FindRoute(int startID, int endID)
 
 				return Route;
 			}
-			if(ClosedListFlag[PathNodesMap->at(CurrentNode.PathNodeID)->Neighbours[i].id])
+			if (ClosedListFlag[PathNodes[CurrentNode.PathNodeID].Neighbours[i].id])
 				continue;
 
-			AStarEntry.PathNodeID = PathNodesMap->at(CurrentNode.PathNodeID)->Neighbours[i].id;
+			AStarEntry.PathNodeID = PathNodes[CurrentNode.PathNodeID].Neighbours[i].id;
 
 			AStarEntry.Parent = CurrentNode.PathNodeID;
 
-			AStarEntry.Teleport = PathNodesMap->at(CurrentNode.PathNodeID)->Neighbours[i].Teleport;
+			AStarEntry.Teleport = PathNodes[CurrentNode.PathNodeID].Neighbours[i].Teleport;
 
 			// HCost is the estimated cost to get from this node to the end.
-			AStarEntry.HCost = VectorDistance(PathNodesMap->at(PathNodesMap->at(CurrentNode.PathNodeID)->Neighbours[i].id)->v, PathNodesMap->at(endID)->v);
+			AStarEntry.HCost = VectorDistance(PathNodes[PathNodes[CurrentNode.PathNodeID].Neighbours[i].id].v, PathNodes[endID].v);
 
-			AStarEntry.GCost = CurrentNode.GCost + PathNodesMap->at(CurrentNode.PathNodeID)->Neighbours[i].distance;
+			AStarEntry.GCost = CurrentNode.GCost + PathNodes[CurrentNode.PathNodeID].Neighbours[i].distance;
 
 			float FCost = AStarEntry.HCost + AStarEntry.GCost;
 #ifdef PATHDEBUG
 			printf("Node: %i, Open Neighbour %i has HCost %8.3f, GCost %8.3f (Total Cost: %8.3f)\n",
 					CurrentNode.PathNodeID,
-					PathNodesMap->at(CurrentNode.PathNodeID)->Neighbours[i].id,
+					PathNodes[CurrentNode.PathNodeID].Neighbours[i].id,
 					AStarEntry.HCost,
 					AStarEntry.GCost,
 					AStarEntry.HCost + AStarEntry.GCost);
@@ -303,11 +303,11 @@ std::deque<int> PathManager::FindRoute(int startID, int endID)
 
 			for(OpenListIterator = OpenList.begin(); OpenListIterator != OpenList.end(); ++OpenListIterator)
 			{
-				if((*OpenListIterator).PathNodeID == PathNodesMap->at(CurrentNode.PathNodeID)->Neighbours[i].id)
+				if ((*OpenListIterator).PathNodeID == PathNodes[CurrentNode.PathNodeID].Neighbours[i].id)
 				{
 					AlreadyInOpenList = true;
 
-					float GCostToNode = CurrentNode.GCost + PathNodesMap->at(CurrentNode.PathNodeID)->Neighbours[i].distance;
+					float GCostToNode = CurrentNode.GCost + PathNodes[CurrentNode.PathNodeID].Neighbours[i].distance;
 
 					if(GCostToNode < (*OpenListIterator).GCost)
 					{
@@ -315,7 +315,7 @@ std::deque<int> PathManager::FindRoute(int startID, int endID)
 
 						(*OpenListIterator).GCost = GCostToNode;
 
-						(*OpenListIterator).Teleport = PathNodesMap->at(CurrentNode.PathNodeID)->Neighbours[i].Teleport;
+						(*OpenListIterator).Teleport = PathNodes[CurrentNode.PathNodeID].Neighbours[i].Teleport;
 					}
 					break;
 				}
@@ -383,7 +383,7 @@ std::deque<int> PathManager::FindRoute(glm::vec3 Start, glm::vec3 End)
 	for (auto Iterator = SortedByDistance.begin(); Iterator != SortedByDistance.end(); ++Iterator) {
 		Log(Logs::Detail, Logs::Pathing, "Checking Reachability of Node %i from Start Position.", PathNodes[(*Iterator).id].id);
 
-		if(!zone->zonemap->LineIntersectsZone(Start, PathNodesMap->at((*Iterator).id)->v, 1.0f, nullptr)) {
+		if (!zone->zonemap->LineIntersectsZone(Start, PathNodes[(*Iterator).id].v, 1.0f, nullptr)) {
 			ClosestPathNodeToStart = (*Iterator).id;
 			break;
 		}
@@ -1785,7 +1785,7 @@ void PathManager::ConnectNodeToNode(Client *c, int32 Node2, int32 teleport, int3
 	}
 	else if (nearest) {
 		glm::vec3 Position(c->GetX(), c->GetY(), c->GetZ());
-		Node = zone->pathing->PathNodesMap->at(zone->pathing->FindNearestPathNode(Position));
+		Node = &zone->pathing->PathNodes[zone->pathing->FindNearestPathNode(Position)];
 		if (Node2 == -1) { // use target
 			Node2 = zone->pathing->FindPathNodeByCoordinates(c->GetTarget()->GetX(), c->GetTarget()->GetY(), c->GetTarget()->GetZ())->id;
 		}
