@@ -81,7 +81,6 @@ PathManager* PathManager::LoadPathFile(const char* ZoneName)
 PathManager::PathManager()
 {
 	PathNodes = nullptr;
-	PathNodesMap = nullptr;
 	ClosedListFlag = nullptr;
 	Head.PathNodeCount = 0;
 	Head.version = 2;
@@ -92,7 +91,6 @@ PathManager::~PathManager()
 {
 	safe_delete_array(PathNodes);
 	safe_delete_array(ClosedListFlag);
-	safe_delete(PathNodesMap);
 }
 
 bool PathManager::loadPaths(FILE *PathFile)
@@ -215,12 +213,6 @@ std::deque<int> PathManager::FindRoute(int startID, int endID)
 	AStarEntry.Teleport = false;
 
 	OpenList.push_back(AStarEntry);
-
-	/*
-	std::map<int, PathNode> pathnodemap;
-	for (int i = 0; i < Head.PathNodeCount; ++i) {
-		pathnodemap[PathNodes[i].id] = PathNodes[i];
-	}*/
 
 	while(!OpenList.empty())
 	{
@@ -1447,6 +1439,8 @@ void PathManager::NodeInfo(Client *c)
 
 void PathManager::DumpPath(std::string filename)
 {
+	SortNodes();
+	ResortConnections();
 	std::ofstream o_file;
 	std::string file_to_write = StringFormat("%s%s", Config->MapDir.c_str(), filename.c_str());
 	o_file.open(file_to_write.c_str(), std::ios_base::binary | std::ios_base::trunc | std::ios_base::out);
@@ -1459,48 +1453,26 @@ void PathManager::DumpPath(std::string filename)
 int32 PathManager::AddNode(float x, float y, float z, float best_z, int32 requested_id)
 {
 	int32 new_id = -1;
-	if (requested_id != 0) {
+	if (requested_id != 0)
+	{
 		new_id = requested_id;
-		for (uint32 i = 0; i < Head.PathNodeCount; ++i) {
-			if (PathNodes[i].id == requested_id) {
+		for (uint32 i = 0; i < Head.PathNodeCount; ++i)
+		{
+			if (PathNodes[i].id == requested_id)
+			{
 				new_id = -1;
 				break;
 			}
 		}
 	}
 
-	// Find max ID number in use
-	// Iterate over 0 to max ID to find an unused ID
-	// If none found, use max ID + 1
-	int max_id = -1;
-	for (uint32 i = 0; i < Head.PathNodeCount; ++i) {
-		if (max_id == -1 || PathNodes[i].id > max_id)
-			max_id = PathNodes[i].id;
-	}
-	for (uint32 i = 0; i <= max_id; ++i) {
-		if (!PathNodesMap->count(i)) {
-			new_id = i;
-			break;
-		}
-	}
 	if (new_id == -1)
-		new_id = max_id + 1;
-
-	/*
-	bool id_taken = false;
-	if (new_id == -1) {
-		for (uint32 i = 0; i < Head.PathNodeCount; ++i) {
+	{
+		for (uint32 i = 0; i < Head.PathNodeCount; ++i)
+		{
 			if (PathNodes[i].id - new_id > 1) {
-				id_taken = false;
-				for (uint32 x = 0; x < Head.PathNodeCount; ++x) {
-					if (PathNodes[x].id == PathNodes[i].id - 1)
-						id_taken = true;
-						break;
-				}
-				if (!id_taken) {
-					new_id = PathNodes[i].id - 1;
-					break;
-				}
+				new_id = PathNodes[i].id - 1;
+				break;
 			}
 
 			if (PathNodes[i].id > new_id)
@@ -1508,7 +1480,6 @@ int32 PathManager::AddNode(float x, float y, float z, float best_z, int32 reques
 		}
 		new_id++;
 	}
-	*/
 
 	PathNode new_node;
 	new_node.v.x = x;
@@ -2214,17 +2185,9 @@ struct InternalPathSort
 	int16 new_id;
 };
 
-void PathManager::MakeNewPathMap() {
-	safe_delete(PathNodesMap);
-	PathNodesMap = new std::unordered_map<int, PathNode*>;
-	for (uint32 i = 0; i < Head.PathNodeCount; ++i) {
-		PathNodesMap->insert({ PathNodes[i].id, &PathNodes[i] });
-	}
-}
-
 void PathManager::DepopPathNodes() {
-	for (auto local_it = PathNodesMap->begin(); local_it != PathNodesMap->end(); ++local_it) {
-		Mob* toMove = GetNodeNPC(std::to_string(local_it->second->id).c_str());
+	for (uint32 i = 0; i < Head.PathNodeCount; ++i) {
+		Mob* toMove = GetNodeNPC(std::to_string(PathNodes[i].id).c_str());
 		if (toMove)
 			toMove->Depop();
 	}
@@ -2274,6 +2237,4 @@ void PathManager::SortNodes()
 	}
 	safe_delete_array(PathNodes);
 	PathNodes = t_PathNodes;
-	MakeNewPathMap();
 }
-
