@@ -96,11 +96,11 @@ public:
 	void ProcessNodesAndSave(std::string filename);
 	void ResortConnections();
 	void QuickConnect(Client *c, bool set = false);
-	void MakeNewPathMap();
 	void SortNodes();
 	Mob* GetNodeNPC(const char* name);
 	void DepopPathNodes();
 	void SetNodeNPCName(char* name, int32 new_id);
+	void NoNeighbors(Client *c);
 
 private:
 	PathFileHeader Head;

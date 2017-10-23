@@ -1333,6 +1333,23 @@ int PathManager::GetRandomPathNode()
 
 }
 
+void PathManager::NoNeighbors(Client *c) {
+	bool noNeighbors;
+	for (uint32 i = 0; i < Head.PathNodeCount; ++i) {
+		PathNode* a = &PathNodes[i];
+		noNeighbors = true;
+		for (int a_i = 0; a_i < PATHNODENEIGHBOURS; ++a_i) {
+			if (a->Neighbours[a_i].id != -1) {
+				noNeighbors = false;
+				break;
+			}
+		}
+		if (noNeighbors)
+			c->Message(0, StringFormat("Pathing node: %i at (%.2f, %.2f, %.2f) has no neighbors.",
+				a->id, a->v.x, a->v.y, a->v.z).c_str());
+	}
+}
+
 void PathManager::ShowPathNodeNeighbours(Client *c)
 {
 	if(!c || !c->GetTarget())
