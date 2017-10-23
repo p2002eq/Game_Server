@@ -4,7 +4,6 @@
 #include "map.h"
 #include "zone_config.h"
 #include <deque>
-#include <unordered_map>
 
 extern const ZoneConfig *Config;
 
@@ -106,7 +105,6 @@ public:
 private:
 	PathFileHeader Head;
 	PathNode *PathNodes;
-	std::unordered_map<int, PathNode*> *PathNodesMap;
 	int QuickConnectTarget;
 	int *ClosedListFlag;
 };
