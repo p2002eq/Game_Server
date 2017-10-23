@@ -1753,14 +1753,15 @@ void PathManager::ConnectNodeToNode(Client *c, int32 Node2, int32 teleport, int3
 		glm::vec3 Position(c->GetX(), c->GetY(), c->GetZ());
 		Node = &zone->pathing->PathNodes[zone->pathing->FindNearestPathNode(Position)];
 		if (Node2 == -1) { // use target
-			Node2 = zone->pathing->FindPathNodeByCoordinates(c->GetTarget()->GetX(), c->GetTarget()->GetY(), c->GetTarget()->GetZ())->id;
+			PathNode* tmp_node = zone->pathing->FindPathNodeByCoordinates(c->GetTarget()->GetX(), c->GetTarget()->GetY(), c->GetTarget()->GetZ());
+			Node2 = tmp_node ? tmp_node->id : -1;
 		}
 	}
 	else {
 		Node = zone->pathing->FindPathNodeByCoordinates(c->GetTarget()->GetX(), c->GetTarget()->GetY(), c->GetTarget()->GetZ());
 	}
 
-	if (!Node) {
+	if (!Node || Node2 == -1) {
 		c->Message(0, "Unable to locate path node.");
 		return;
 	}
