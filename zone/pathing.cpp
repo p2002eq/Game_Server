@@ -143,9 +143,6 @@ bool PathManager::loadPaths(FILE *PathFile)
 		safe_delete_array(PathNodes);
 	}
 
-	SortNodes();
-	ResortConnections();
-
 	return PathFileValid;
 }
 
@@ -1450,8 +1447,6 @@ void PathManager::NodeInfo(Client *c)
 
 void PathManager::DumpPath(std::string filename)
 {
-	SortNodes();
-	ResortConnections();
 	std::ofstream o_file;
 	std::string file_to_write = StringFormat("%s%s", Config->MapDir.c_str(), filename.c_str());
 	o_file.open(file_to_write.c_str(), std::ios_base::binary | std::ios_base::trunc | std::ios_base::out);
@@ -1796,6 +1791,11 @@ void PathManager::ConnectNodeToNode(Client *c, int32 Node2, int32 teleport, int3
 
 	if (!Node) {
 		c->Message(0, "Unable to locate path node.");
+		return;
+	}
+
+	if (Node->id == Node2) {
+		c->Message(0, "Can't link a node to itself");
 		return;
 	}
 
