@@ -453,7 +453,7 @@ void Mob::MakePoweredPet(uint16 spell_id, const char* pettype, int16 petpower,
 	{
 		Mob* target = GetTarget();
 
-		if (target){
+		if (target) {
 			npc->AddToHateList(target, 1);
 			npc->SetPetTargetLockID(target->GetID());
 			npc->SetSpecialAbility(IMMUNE_AGGRO, 1);

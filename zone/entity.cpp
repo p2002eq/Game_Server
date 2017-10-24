@@ -1431,6 +1431,9 @@ void EntityList::RemoveFromTargets(Mob *mob, bool RemoveFromXTargets)
 		}*/
 
 		m->RemoveFromHateList(mob);
+		if (m->IsPet() && m->GetPetType() == petTargetLock) {
+			m->Depop();
+		}
 	}
 }
 
