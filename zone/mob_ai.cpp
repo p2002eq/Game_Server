@@ -57,7 +57,11 @@ bool NPC::AICastSpell(Mob* tar, uint8 iChance, uint32 iSpellTypes) {
 	if(AI_HasSpells() == false)
 		return false;
 
-	if (iChance < 100) {
+	// Rooted mobs were just standing around when tar out of range.
+	// Any sane mob would cast if they can.
+	bool cast_only_option = (IsRooted() && !CombatRange(tar));
+
+	if (!cast_only_option && iChance < 100) {
 		if (zone->random.Int(0, 100) >= iChance)
 			return false;
 	}
@@ -1300,7 +1304,7 @@ void Mob::AI_Process() {
 				if (AI_PursueCastCheck()) {
 					//we did something, so do not process movement.
 				}
-				else if (AI_movement_timer->Check())
+				else if (AI_movement_timer->Check() && target)
 				{
 					if (!IsRooted()) {
 						Log(Logs::Detail, Logs::AI, "Pursuing %s while engaged.", target->GetName());
@@ -1515,7 +1519,8 @@ void NPC::AI_DoMovement() {
 				|| roambox_movingto_x < roambox_min_x
 				|| roambox_movingto_y > roambox_max_y
 				|| roambox_movingto_y < roambox_min_y
-				) {
+				)
+		{
 			float movedist = roambox_distance * roambox_distance;
 			float movex = zone->random.Real(0, movedist);
 			float movey = movedist - movex;
@@ -1537,25 +1542,25 @@ void NPC::AI_DoMovement() {
 			if (roambox_movingto_y > roambox_max_y || roambox_movingto_y < roambox_min_y)
 				roambox_movingto_y = zone->random.Real(roambox_min_y + 1, roambox_max_y - 1);
 		}
-
 		Log(Logs::Detail, Logs::AI, "Roam Box: d=%.3f (%.3f->%.3f,%.3f->%.3f): Go To (%.3f,%.3f)",
-			roambox_distance, roambox_min_x, roambox_max_x, roambox_min_y, roambox_max_y, roambox_movingto_x,
-			roambox_movingto_y);
-		float new_z = this->FindGroundZ(m_Position.x, m_Position.y, 5);
-		new_z += (this->GetSize() / 1.55);
+			roambox_distance, roambox_min_x, roambox_max_x, roambox_min_y, roambox_max_y, roambox_movingto_x, roambox_movingto_y);
 
-		if (!CalculateNewPosition2(roambox_movingto_x, roambox_movingto_y, new_z, walksp, true)) {
+		float new_z = this->FindGroundZ(m_Position.x, m_Position.y, 5) + this->GetZOffset();
+
+		if (!CalculateNewPosition2(roambox_movingto_x, roambox_movingto_y, new_z, walksp, true))
+		{
 			roambox_movingto_x = roambox_max_x + 1; // force update
 			pLastFightingDelayMoving = Timer::GetCurrentTime() + RandomTimer(roambox_min_delay, roambox_delay);
 			SetMoving(false);
-			SendPosition();    // makes mobs stop clientside
+			SendPosition();	// makes mobs stop clientside
 		}
-	} else if (roamer) {
+	}
+	else if (roamer)
+	{
 		if (AI_walking_timer->Check()) {
 			movetimercompleted = true;
 			AI_walking_timer->Disable();
 		}
-
 
 		int32 gridno = CastToNPC()->GetGrid();
 

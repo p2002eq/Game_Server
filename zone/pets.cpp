@@ -453,7 +453,7 @@ void Mob::MakePoweredPet(uint16 spell_id, const char* pettype, int16 petpower,
 	{
 		Mob* target = GetTarget();
 
-		if (target){
+		if (target) {
 			npc->AddToHateList(target, 1);
 			npc->SetPetTargetLockID(target->GetID());
 			npc->SetSpecialAbility(IMMUNE_AGGRO, 1);
@@ -546,6 +546,20 @@ Mob* Mob::GetPet() {
 	}
 
 	return(tmp);
+}
+
+// Special cases where pet should use its own resistances
+bool Mob::UseOwnersResistances(uint16 spell_id) {
+	bool flag = true;
+	if (IsPet() && !IsCharmed()) {
+		if (IsFearSpell(spell_id) && spellbonuses.Fearless) {
+			flag = false;
+		}
+	}
+	else {
+		flag = false;
+	}
+	return flag;
 }
 
 void Mob::SetPet(Mob* newpet) {

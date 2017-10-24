@@ -496,6 +496,7 @@ public:
 		strn0cpy(name, GetName(), 64); return; };
 	inline Mob* GetTarget() const { return target; }
 	virtual void SetTarget(Mob* mob);
+	virtual bool UseOwnersResistances(uint16 spell_id);
 	inline bool HasTargetReflection() const { return (target && target != this && target->target == this); }
 	virtual inline float GetHPRatio() const { return max_hp == 0 ? 0 : (float(cur_hp)/float(max_hp)*100.00); }
 	virtual inline int GetIntHPRatio() const { return max_hp == 0 ? 0 : static_cast<int>(cur_hp * 100 / max_hp); }
@@ -769,6 +770,7 @@ public:
 	void TryTwincast(Mob *caster, Mob *target, uint32 spell_id);
 	void TrySympatheticProc(Mob *target, uint32 spell_id);
 	bool TryFadeEffect(int slot);
+	void DispelMagic(Mob* caster);
 	uint16 GetSpellEffectResistChance(uint16 spell_id);
 	int16 GetHealRate(uint16 spell_id, Mob* caster = nullptr);
 	int32 GetVulnerability(Mob* caster, uint32 spell_id, uint32 ticsremaining);
@@ -1003,7 +1005,8 @@ public:
 	float				GetGroundZ(float new_x, float new_y, float z_offset=0.0);
 	void				SendTo(float new_x, float new_y, float new_z);
 	void				SendToFixZ(float new_x, float new_y, float new_z);
-	void				FixZ();
+	float				GetZOffset() const;
+	void				FixZ(int32 z_find_offset = 5);
 	void				NPCSpecialAttacks(const char* parse, int permtag, bool reset = true, bool remove = false);
 	inline uint32		DontHealMeBefore() const { return pDontHealMeBefore; }
 	inline uint32		DontBuffMeBefore() const { return pDontBuffMeBefore; }

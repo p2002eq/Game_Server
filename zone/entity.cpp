@@ -648,6 +648,8 @@ void EntityList::AddNPC(NPC *npc, bool SendSpawnPacket, bool dontqueue)
 
 	parse->EventNPC(EVENT_SPAWN, npc, nullptr, "", 0);
 
+	npc->FixZ(1);
+
 	uint16 emoteid = npc->GetEmoteID();
 	if (emoteid != 0)
 		npc->DoNPCEmote(ONSPAWN, emoteid);
@@ -1429,6 +1431,9 @@ void EntityList::RemoveFromTargets(Mob *mob, bool RemoveFromXTargets)
 		}*/
 
 		m->RemoveFromHateList(mob);
+		if (m->IsPet() && m->GetPetType() == petTargetLock) {
+			m->Depop();
+		}
 	}
 }
 

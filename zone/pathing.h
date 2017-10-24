@@ -83,7 +83,7 @@ public:
 	int32 AddNode(float x, float y, float z, float best_z, int32 requested_id = 0); //return -1 on failure, else returns the id of this node
 	bool DeleteNode(Client *c);
 	bool DeleteNode(int32 id); //returns true on success, false on failure, tries to delete a node from this map
-	void ConnectNodeToNode(Client *c, int32 Node2, int32 teleport = 0, int32 doorid = -1); //connects a node both ways
+	void ConnectNodeToNode(Client *c, int32 Node2, int32 teleport = 0, int32 doorid = -1, bool nearest = false); //connects a node both ways
 	void ConnectNodeToNode(int32 Node1, int32 Node2, int32 teleport = 0, int32 doorid = -1);
 	void ConnectNode(Client *c, int32 Node2, int32 teleport = 0, int32 doorid = -1); //connects a node one way
 	void ConnectNode(int32 Node1, int32 Node2, int32 teleport = 0, int32 doorid = -1);
@@ -97,12 +97,15 @@ public:
 	void ResortConnections();
 	void QuickConnect(Client *c, bool set = false);
 	void SortNodes();
+	Mob* GetNodeNPC(const char* name);
+	void DepopPathNodes();
+	void SetNodeNPCName(char* name, int32 new_id);
+	void NoNeighbors(Client *c);
 
 private:
 	PathFileHeader Head;
 	PathNode *PathNodes;
 	int QuickConnectTarget;
-
 	int *ClosedListFlag;
 };
 

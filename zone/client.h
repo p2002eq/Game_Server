@@ -864,6 +864,8 @@ public:
 	bool CheckTradeLoreConflict(Client* other);
 	bool CheckTradeNonDroppable();
 	void LinkDead();
+
+	void ShieldClear();
 	void Insight(uint32 t_id);
 	bool CheckDoubleAttack();
 	bool CheckTripleAttack();
@@ -1475,6 +1477,7 @@ private:
 	Timer dead_timer;
 	Timer global_channel_timer;
 	Timer shield_timer;
+	Timer shield_duration_timer;
 	Timer fishing_timer;
 	Timer endupkeep_timer;
 	Timer forget_timer; // our 2 min everybody forgets you timer

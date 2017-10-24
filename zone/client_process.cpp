@@ -505,31 +505,24 @@ bool Client::Process() {
 				DoGravityEffect();
 		}
 
-		if (shield_timer.Check())
-		{
-			if (shield_target)
-			{
-				if (!CombatRange(shield_target))
-				{
-					entity_list.MessageClose_StringID(this, false, 100, 0,
-						END_SHIELDING, GetCleanName(), shield_target->GetCleanName());
-					for (int y = 0; y < 2; y++)
-					{
-						if (shield_target->shielder[y].shielder_id == GetID())
-						{
-							shield_target->shielder[y].shielder_id = 0;
-							shield_target->shielder[y].shielder_bonus = 0;
-						}
-					}
-					shield_target = 0;
-					shield_timer.Disable();
+		if (shield_timer.Check()) {
+			if (shield_target) {
+				if (!CombatRange(shield_target, 2.0)) {
+					ShieldClear();
 				}
 			}
-			else
-			{
+			else {
 				shield_target = 0;
-				shield_timer.Disable();
 			}
+		}
+
+		if (shield_duration_timer.Check()) {
+			ShieldClear();
+		}
+
+		if (!shield_target) {
+			shield_timer.Disable();
+			shield_duration_timer.Disable();
 		}
 
 		SpellProcess();

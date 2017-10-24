@@ -445,6 +445,9 @@ void EntityList::AIYellForHelp(Mob* sender, Mob* attacker) {
 
 		float r = mob->GetAssistRange();
 		r = r * r;
+		float z_diff = mob->GetZ() - sender->GetZ();
+		if (z_diff < 0)
+			z_diff = 0 - z_diff;
 
 		if (
 			mob != sender
@@ -452,6 +455,7 @@ void EntityList::AIYellForHelp(Mob* sender, Mob* attacker) {
 //			&& !mob->IsCorpse()
 //			&& mob->IsAIControlled()
 			&& mob->GetPrimaryFaction() != 0
+			&& z_diff < RuleR(Aggro, YellForHelpZIndex)
 			&& DistanceSquared(mob->GetPosition(), sender->GetPosition()) <= r
 			//&& !mob->IsEngaged()
 			&& ((!mob->IsPet()) || (mob->IsPet() && mob->GetOwner() && !mob->GetOwner()->IsClient()))

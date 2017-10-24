@@ -499,22 +499,22 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial, int level_ove
 					// Greater Decession = 3244
 					// Egress = 1566
 
-					if(!target_zone) {
+					if (!target_zone) {
 #ifdef SPELL_EFFECT_SPAM
 						Log(Logs::General, Logs::None, "Succor/Evacuation Spell In Same Zone.");
 #endif
-							if(IsClient()) {
-								// break charmed pets before moving to not poof pet (exploitable otherwise)
-								if (HasPet()) {
-									if (GetPet()->IsCharmed())
-										GetPet()->BuffFadeByEffect(SE_Charm);
-									else
-										GetPet()->Depop();
-								}
-								CastToClient()->MovePC(zone->GetZoneID(), zone->GetInstanceID(), x, y, z, heading, 0, SummonPCEvac);
-							} else
-								GMMove(x, y, z, heading);
+						if (IsClient()) {
+							// break charmed pets before moving to not poof pet (exploitable otherwise)
+							if (HasPet()) {
+								if (GetPet()->IsCharmed())
+									GetPet()->BuffFadeByEffect(SE_Charm);
+								else
+									GetPet()->Depop();
+							}
 							entity_list.ClearAggro(this, true);
+							CastToClient()->MovePC(zone->GetZoneID(), zone->GetInstanceID(), x, y, z, heading, 0, SummonPCEvac);
+						} else
+							GMMove(x, y, z, heading);
 					}
 					else {
 #ifdef SPELL_EFFECT_SPAM
@@ -1075,24 +1075,13 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial, int level_ove
 #ifdef SPELL_EFFECT_SPAM
 				snprintf(effect_desc, _EDLEN, "Cancel Magic: %d", effect_value);
 #endif
-				if(GetSpecialAbility(UNDISPELLABLE)){
+				if (GetSpecialAbility(UNDISPELLABLE)) {
 					if (caster)
 						caster->Message_StringID(MT_SpellFailure, SPELL_NO_EFFECT, spells[spell_id].name);
 					break;
 				}
 
-				int buff_count = GetMaxTotalSlots();
-				for(int slot = 0; slot < buff_count; slot++) {
-					if(	buffs[slot].spellid != SPELL_UNKNOWN &&
-						spells[buffs[slot].spellid].dispel_flag == 0 &&
-						!IsDiscipline(buffs[slot].spellid))
-					{
-						if (caster && TryDispel(caster->GetLevel(),buffs[slot].casterlevel, effect_value)){
-							BuffFadeBySlot(slot);
-							slot = buff_count;
-						}
-					}
-				}
+				DispelMagic(caster);
 				break;
 			}
 
@@ -6212,6 +6201,20 @@ bool Mob::PassLimitClass(uint32 Classes_, uint16 Class_)
 		Classes_ >>= 1;
 	}
 	return false;
+}
+
+void Mob::DispelMagic(Mob* caster) {
+	for (int slot = 0; slot < GetMaxTotalSlots(); slot++) {
+		if (buffs[slot].spellid != SPELL_UNKNOWN &&
+			spells[buffs[slot].spellid].dispel_flag == 0 &&
+			!IsDiscipline(buffs[slot].spellid))
+		{
+			if (caster) {
+				BuffFadeBySlot(slot);
+				break;
+			}
+		}
+	}
 }
 
 uint16 Mob::GetSpellEffectResistChance(uint16 spell_id)

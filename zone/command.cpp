@@ -7292,19 +7292,22 @@ void command_path(Client *c, const Seperator *sep)
 		c->Message(0, "#path dump file_name: Dumps the current zone->pathing to a file of your naming.");
 		c->Message(0, "#path add [requested_id]: Adds a node at your current location will try to take the requested id if possible.");
 		c->Message(0, "#path connect connect_to_id [is_teleport] [door_id]: Connects the currently targeted node to connect_to_id's node and connects that node back (requires shownode target).");
+		c->Message(0, "#path nconnect: Connects the currently targeted node with the node closest to your position");
 		c->Message(0, "#path sconnect connect_to_id [is_teleport] [door_id]: Connects the currently targeted node to connect_to_id's node (requires shownode target).");
 		c->Message(0, "#path qconnect [set]: short cut connect, connects the targeted node to the node you set with #path qconnect set (requires shownode target).");
 		c->Message(0, "#path disconnect [all]/disconnect_from_id: Disconnects the currently targeted node to disconnect from disconnect from id's node (requires shownode target), if passed all as the second argument it will disconnect this node from every other node.");
+		c->Message(0, "#path noneighbors: Print all nodes that have no neighbors.");
+		c->Message(0, "#path route node_id node_id: Prints route from supplied node ids. Useful to debug pathing.");
 		c->Message(0, "#path move: Moves your targeted node to your current position");
-		c->Message(0, "#path process file_name: processes the map file and tries to automatically generate a rudimentary path setup and then dumps the current zone->pathing to a file of your naming.");
 		c->Message(0, "#path resort [nodes]: resorts the connections/nodes after you've manually altered them so they'll work.");
+		c->Message(0, "------------- Don't use unless you know what you're doing -------------");
+		c->Message(0, "#path process file_name: processes the map file and tries to automatically generate a rudimentary path setup and then dumps the current zone->pathing to a file of your naming.");
 		return;
 	}
 	if(!strcasecmp(sep->arg[1], "shownodes"))
 	{
 		if(zone->pathing)
 			zone->pathing->SpawnPathNodes();
-
 		return;
 	}
 
@@ -7325,6 +7328,22 @@ void command_path(Client *c, const Seperator *sep)
 				return;
 
 			zone->pathing->DumpPath(sep->arg[2]);
+			c->Message(0, StringFormat("Saved path file to %s", sep->arg[2]).c_str());
+		}
+		return;
+	}
+
+	if (!strcasecmp(sep->arg[1], "refresh")) {
+		if (zone->pathing) {
+			zone->pathing->DepopPathNodes();
+			zone->pathing->SpawnPathNodes();
+		}
+		return;
+	}
+
+	if (!strcasecmp(sep->arg[1], "noneighbors")) {
+		if (zone->pathing) {
+			zone->pathing->NoNeighbors(c);
 		}
 		return;
 	}
@@ -7387,57 +7406,58 @@ void command_path(Client *c, const Seperator *sep)
 		return;
 	}
 
-	if(!strcasecmp(sep->arg[1], "remove"))
-	{
-		if(zone->pathing)
-		{
-			if(zone->pathing->DeleteNode(c))
-			{
+	if (!strcasecmp(sep->arg[1], "remove")) {
+		if (zone->pathing) {
+			if (zone->pathing->DeleteNode(c)) {
 				c->Message(0, "Removed Node.");
 			}
-			else
-			{
+			else {
 				c->Message(0, "Unable to Remove Node.");
 			}
 		}
 		return;
 	}
 
-	if(!strcasecmp(sep->arg[1], "connect"))
-	{
-		if(zone->pathing)
-		{
+	if (!strcasecmp(sep->arg[1], "nconnect")) {
+		int32 node2;
+		if (zone->pathing) {
+			if (sep->arg[2][0] != '\0')
+				node2 = atoi(sep->arg[2]);
+			else
+				node2 = -1;
+			zone->pathing->ConnectNodeToNode(c, node2, atoi(sep->arg[3]), atoi(sep->arg[4]), true);
+		}
+		return;
+	}
+
+	if (!strcasecmp(sep->arg[1], "connect")) {
+		if (zone->pathing) {
 			zone->pathing->ConnectNodeToNode(c, atoi(sep->arg[2]), atoi(sep->arg[3]), atoi(sep->arg[4]));
 		}
 		return;
 	}
 
-	if(!strcasecmp(sep->arg[1], "sconnect"))
+	if (!strcasecmp(sep->arg[1], "sconnect"))
 	{
-		if(zone->pathing)
-		{
+		if (zone->pathing) {
 			zone->pathing->ConnectNode(c, atoi(sep->arg[2]), atoi(sep->arg[3]), atoi(sep->arg[4]));
 		}
 		return;
 	}
 
-	if(!strcasecmp(sep->arg[1], "qconnect"))
-	{
-		if(zone->pathing)
-		{
-			if(!strcasecmp(sep->arg[2], "set"))
-			{
+	if (!strcasecmp(sep->arg[1], "qconnect")) {
+		if (zone->pathing) {
+			if (!strcasecmp(sep->arg[2], "set")) {
 				zone->pathing->QuickConnect(c, true);
 			}
-			else
-			{
+			else {
 				zone->pathing->QuickConnect(c, false);
 			}
 		}
 		return;
 	}
 
-	if(!strcasecmp(sep->arg[1], "disconnect"))
+	if (!strcasecmp(sep->arg[1], "disconnect"))
 	{
 		if(zone->pathing)
 		{
@@ -7496,51 +7516,51 @@ void command_path(Client *c, const Seperator *sep)
 
 	if(!strcasecmp(sep->arg[1], "hazard"))
 	{
-		if(zone->pathing)
+	if (zone->pathing)
+	{
+		if (c && c->GetTarget())
 		{
-			if(c && c->GetTarget())
+			if (zone->pathing->NoHazardsAccurate(glm::vec3(c->GetX(), c->GetY(), c->GetZ()),
+				glm::vec3(c->GetTarget()->GetX(), c->GetTarget()->GetY(), c->GetTarget()->GetZ())))
 			{
-				if (zone->pathing->NoHazardsAccurate(glm::vec3(c->GetX(), c->GetY(), c->GetZ()),
-					glm::vec3(c->GetTarget()->GetX(), c->GetTarget()->GetY(), c->GetTarget()->GetZ())))
-				{
-					c->Message(0, "No hazards.");
-				}
-				else
-				{
-					c->Message(0, "Hazard Detected...");
-				}
+				c->Message(0, "No hazards.");
+			}
+			else
+			{
+				c->Message(0, "Hazard Detected...");
 			}
 		}
-		return;
+	}
+	return;
 	}
 
-	if(!strcasecmp(sep->arg[1], "print"))
+	if (!strcasecmp(sep->arg[1], "print"))
 	{
-		if(zone->pathing)
+		if (zone->pathing)
 		{
 			zone->pathing->PrintPathing();
 		}
 		return;
 	}
 
-	if(!strcasecmp(sep->arg[1], "showneighbours") || !strcasecmp(sep->arg[1], "showneighbors"))
+	if (!strcasecmp(sep->arg[1], "showneighbours") || !strcasecmp(sep->arg[1], "showneighbors"))
 	{
-		if(!c->GetTarget())
+		if (!c->GetTarget())
 		{
 			c->Message(0, "First #path shownodes to spawn the pathnodes, and then target one of them.");
 			return;
 		}
-		if(zone->pathing)
+		if (zone->pathing)
 		{
 			zone->pathing->ShowPathNodeNeighbours(c);
 			return;
 		}
 	}
-	if(!strcasecmp(sep->arg[1], "meshtest"))
+	if (!strcasecmp(sep->arg[1], "meshtest"))
 	{
-		if(zone->pathing)
+		if (zone->pathing)
 		{
-			if(!strcasecmp(sep->arg[2], "simple"))
+			if (!strcasecmp(sep->arg[2], "simple"))
 			{
 				c->Message(0, "You may go linkdead. Results will be in the log file.");
 				zone->pathing->SimpleMeshTest();
@@ -7555,9 +7575,9 @@ void command_path(Client *c, const Seperator *sep)
 		}
 	}
 
-	if(!strcasecmp(sep->arg[1], "allspawns"))
+	if (!strcasecmp(sep->arg[1], "allspawns"))
 	{
-		if(zone->pathing)
+		if (zone->pathing)
 		{
 			c->Message(0, "You may go linkdead. Results will be in the log file.");
 			entity_list.FindPathsToAllNPCs();
@@ -7565,15 +7585,15 @@ void command_path(Client *c, const Seperator *sep)
 		}
 	}
 
-	if(!strcasecmp(sep->arg[1], "nearest"))
+	if (!strcasecmp(sep->arg[1], "nearest"))
 	{
-		if(!c->GetTarget() || !c->GetTarget()->IsMob())
+		if (!c->GetTarget() || !c->GetTarget()->IsMob())
 		{
 			c->Message(0, "You must target something.");
 			return;
 		}
 
-		if(zone->pathing)
+		if (zone->pathing)
 		{
 			Mob *m = c->GetTarget();
 
@@ -7581,11 +7601,42 @@ void command_path(Client *c, const Seperator *sep)
 
 			int Node = zone->pathing->FindNearestPathNode(Position);
 
-			if(Node == -1)
+			if (Node == -1)
 				c->Message(0, "Unable to locate a path node within range.");
 			else
-				c->Message(0, "Nearest path node is %i",  Node);
+				c->Message(0, "Nearest path node is %i", Node);
 
+			return;
+		}
+	}
+
+	if (!strcasecmp(sep->arg[1], "route"))
+	{
+		if (zone->pathing)
+		{
+			int from, to;
+			if (sep->arg[2][0] != '\0' && sep->arg[3][0] != '\0') {
+				from = atoi(sep->arg[2]);
+				to = atoi(sep->arg[3]);
+			}
+			else if (c->GetTarget()) {
+				from = zone->pathing->FindNearestPathNode(c->GetPosition());
+				to = zone->pathing->FindNearestPathNode(c->GetTarget()->GetPosition());
+			}
+			else {
+				c->Message(0, "Invalid input: target a node or specify two IDs to see route between them");
+				return;
+			}
+			std::deque<int> Route = zone->pathing->FindRoute(from, to);
+			if (Route.empty()) {
+				c->Message(0, StringFormat("No route available %i --> %i", atoi(sep->arg[2]), atoi(sep->arg[3])).c_str());
+			}
+			else {
+				c->Message(0, "Following below route");
+				for (auto Iterator = Route.begin(); Iterator != Route.end(); ++Iterator) {
+					c->Message(0, StringFormat("%i", (*Iterator)).c_str());
+				}
+			}
 			return;
 		}
 	}
