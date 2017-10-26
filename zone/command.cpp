@@ -7301,8 +7301,7 @@ void command_path(Client *c, const Seperator *sep)
 		c->Message(0, "#path move: Moves your targeted node to your current position");
 		c->Message(0, "#path resort [nodes]: resorts the connections/nodes after you've manually altered them so they'll work.");
 		c->Message(0, "------------- Don't use unless you know what you're doing -------------");
-		c->Message(0, "#path disconnectallnodes IknowwhatIamdoing: removes all connections for every node.");
-		c->Message(0, "#path process IknowwhatIamdoing file_name: processes the map file and tries to automatically generate a rudimentary path setup and then dumps the current zone->pathing to a file of your naming.");
+		c->Message(0, "#path process file_name: processes the map file and tries to automatically generate a rudimentary path setup and then dumps the current zone->pathing to a file of your naming.");
 		return;
 	}
 	if(!strcasecmp(sep->arg[1], "shownodes"))
@@ -7474,18 +7473,6 @@ void command_path(Client *c, const Seperator *sep)
 		return;
 	}
 
-	if (!strcasecmp(sep->arg[1], "disconnectallnodes")) {
-		if (zone->pathing) {
-			if (!strcasecmp(sep->arg[2], "IknowwhatIamdoing")) {
-				zone->pathing->DisconnectAll(c, true);
-			}
-			else {
-				c->Message(0, "You probably don't know you are doing. Sorry can't use this command");
-				return;
-			}
-		}
-		return;
-	}
 
 	if(!strcasecmp(sep->arg[1], "move"))
 	{
@@ -7496,18 +7483,15 @@ void command_path(Client *c, const Seperator *sep)
 		return;
 	}
 
-	if (!strcasecmp(sep->arg[1], "process")) {
-		if (zone->pathing) {
-			if (sep->arg[2][0] == '\0' || sep->arg[3][0] == '\0')
+	if(!strcasecmp(sep->arg[1], "process"))
+	{
+		if(zone->pathing)
+		{
+			if(sep->arg[2][0] == '\0')
 				return;
-			if (!strcasecmp(sep->arg[2], "IknowwhatIamdoing")) {
-				zone->pathing->ProcessNodesAndSave(sep->arg[3]);
-				c->Message(0, "Path processed...");
-			}
-			else {
-				c->Message(0, "If you know what you are doing, type command as #path process IknowwhatIamdoing filename.path");
-				return;
-			}
+
+			zone->pathing->ProcessNodesAndSave(sep->arg[2]);
+			c->Message(0, "Path processed...");
 		}
 		return;
 	}

@@ -90,8 +90,7 @@ public:
 	void DisconnectNodeToNode(Client *c, int32 Node2);
 	void DisconnectNodeToNode(int32 Node1, int32 Node2);
 	void MoveNode(Client *c);
-	void DisconnectAll(Client *c, bool allnodes = false);
-	void DisconnectAll(PathNode* node);
+	void DisconnectAll(Client *c);
 	bool NodesConnected(PathNode *a, PathNode *b);
 	void DumpPath(std::string filename);
 	void ProcessNodesAndSave(std::string filename);

@@ -2016,30 +2016,22 @@ void PathManager::MoveNode(Client *c)
 		toMove->GMMove(c->GetX(), c->GetY(), c->GetZ(), 0);
 }
 
-void PathManager::DisconnectAll(Client *c, bool allnodes)
+void PathManager::DisconnectAll(Client *c)
 {
-	if (!c)
+	if (!c) {
 		return;
+	}
 
 	if (!c->GetTarget()) {
 		c->Message(0, "You must target a node.");
 		return;
 	}
 
-	if (allnodes) {
-		for (uint32 i = 0; i < Head.PathNodeCount; ++i) {
-			DisconnectAll(&PathNodes[i]);
-		}
+	PathNode *Node = zone->pathing->FindPathNodeByCoordinates(c->GetTarget()->GetX(), c->GetTarget()->GetY(), c->GetTarget()->GetZ());
+	if (!Node) {
+		return;
 	}
-	else {
-		PathNode *Node = zone->pathing->FindPathNodeByCoordinates(c->GetTarget()->GetX(), c->GetTarget()->GetY(), c->GetTarget()->GetZ());
-		if (!Node)
-			return;
-		DisconnectAll(Node);
-	}
-}
 
-void PathManager::DisconnectAll(PathNode* Node) {
 	for (int x = 0; x < PATHNODENEIGHBOURS; ++x) {
 		Node->Neighbours[x].distance = 0;
 		Node->Neighbours[x].Teleport = 0;
