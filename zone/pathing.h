@@ -101,10 +101,12 @@ public:
 	void DepopPathNodes();
 	void SetNodeNPCName(char* name, int32 new_id);
 	void NoNeighbors(Client *c);
+	void ResetRouteCache();
 
 private:
 	PathFileHeader Head;
 	PathNode *PathNodes;
+	std::deque<int> *RouteCache;
 	int QuickConnectTarget;
 	int *ClosedListFlag;
 };
