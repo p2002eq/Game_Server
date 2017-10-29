@@ -203,6 +203,7 @@ public:
 	bool	RemoveQuestLootItems(int16 itemid);
 	bool	QuestLootCount(uint16 itemid1, uint16 itemid2, uint16 itemid3, uint16 itemid4);
 	void	RemoveItem(ServerLootItem_Struct* item_data);
+	void	DisplayRoamBox(Client* client);
 
 	inline uint32	GetCopper()		const { return copper; }
 	inline uint32	GetSilver()		const { return silver; }

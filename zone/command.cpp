@@ -407,6 +407,8 @@ int command_init(void)
 		command_add("wp", "[add/delete] [grid_num] [pause] [wp_num] [-h] - Add/delete a waypoint to/from a wandering grid", 170, command_wp) ||
 		command_add("wpadd", "[pause] [-h] - Add your current location as a waypoint to your NPC target's AI path", 170, command_wpadd) ||
 		command_add("wpinfo", "- Show waypoint info about your NPC target", 170, command_wpinfo) ||
+		command_add("roambox", "- Show waypoint info about your NPC target", 170, command_roambox) ||
+		command_add("underworld", "- Show all mobs under the world", 170, command_underworld) ||
 		command_add("xpinfo", "- Show XP info about your current target", 250, command_xpinfo) ||
 		command_add("xtargets",  "Show your targets Extended Targets and optionally set how many xtargets they can have.",  250, command_xtargets) ||
 		command_add("zclip", "[min] [max] - modifies and resends zhdr packet", 80, command_zclip) ||
@@ -5900,6 +5902,21 @@ void command_wpinfo(Client *c, const Seperator *sep)
 
 	NPC *n = t->CastToNPC();
 	n->DisplayWaypointInfo(c);
+}
+
+void command_roambox(Client *c, const Seperator *sep) {
+	Mob *t = c->GetTarget();
+
+	if (t == nullptr || !t->IsNPC()) {
+		c->Message(0, "You must target an NPC to use this.");
+		return;
+	}
+
+	t->CastToNPC()->DisplayRoamBox(c);
+}
+
+void command_underworld(Client *c, const Seperator *sep) {
+	entity_list.GetUnderworldMobs(c);
 }
 
 void command_wpadd(Client *c, const Seperator *sep)
