@@ -1562,9 +1562,7 @@ int32 PathManager::AddNode(float x, float y, float z, float best_z, int32 reques
 
 		SortNodes();
 		ResortConnections();
-		for (int j = index; j < index * Head.PathNodeCount + Head.PathNodeCount; ++j) {
-			RouteCache[j] = std::deque<int>();
-		}
+		ResetRouteCache();
 
 		auto npc_type = new NPCType;
 		memset(npc_type, 0, sizeof(NPCType));
@@ -1628,9 +1626,7 @@ int32 PathManager::AddNode(float x, float y, float z, float best_z, int32 reques
 
 		SortNodes();
 		ResortConnections();
-		for (int j = 0; j < Head.PathNodeCount; ++j) {
-			RouteCache[j] = std::deque<int>();
-		}
+		ResetRouteCache();
 
 		auto npc_type = new NPCType;
 		memset(npc_type, 0, sizeof(NPCType));
