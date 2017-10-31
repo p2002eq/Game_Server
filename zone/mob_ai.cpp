@@ -2027,9 +2027,9 @@ void Mob::AreaRampage(ExtraAttackOptions *opts)
 {
 	int index_hit = 0;
 	if (!IsPet()) { // do not know every pet AA so thought it safer to add this
-		entity_list.MessageClose_StringID(this, true, 200, MT_NPCRampage, AE_RAMPAGE, GetCleanName());
+		entity_list.MessageClose_StringID(this, true, 200, MT_NPCRampage, NPC_RAMPAGE, GetCleanName());
 	} else {
-		entity_list.MessageClose_StringID(this, true, 200, MT_PetFlurry, AE_RAMPAGE, GetCleanName());
+		entity_list.MessageClose_StringID(this, true, 200, MT_PetFlurry, NPC_RAMPAGE, GetCleanName());
 	}
 
 	int rampage_targets = GetSpecialAbilityParam(SPECATK_AREA_RAMPAGE, 1);
