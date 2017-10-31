@@ -2240,6 +2240,22 @@ void EntityList::RemoveAllMobs()
 	}
 }
 
+void EntityList::GetUnderworldMobs(Client* c) {
+	float best_z;
+	float underworld = zone->newzone_data.underworld;
+
+	auto it = npc_list.begin();
+	while (it != npc_list.end()) {
+		Mob* mob = it->second;
+		best_z = mob->FindGroundZ(mob->GetX(), mob->GetY(), mob->GetZOffset());
+		if (mob->GetZ() <= underworld || std::abs(mob->GetZ() - best_z) > 100) {
+			best_z = mob->FindGroundZ(mob->GetX(), mob->GetY(), mob->GetZOffset());
+			c->Message(0, StringFormat("%s was under the world at %f. Best Z calculated at %f. Moving.", mob->GetCleanName(), mob->GetZ(), best_z).c_str());
+			mob->CalculateNewPosition2(mob->GetX(), mob->GetY(), best_z, 0);
+		}
+	}
+}
+
 void EntityList::RemoveAllClients()
 {
 	// doesn't clear the data

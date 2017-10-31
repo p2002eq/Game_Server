@@ -407,6 +407,8 @@ int command_init(void)
 		command_add("wp", "[add/delete] [grid_num] [pause] [wp_num] [-h] - Add/delete a waypoint to/from a wandering grid", 170, command_wp) ||
 		command_add("wpadd", "[pause] [-h] - Add your current location as a waypoint to your NPC target's AI path", 170, command_wpadd) ||
 		command_add("wpinfo", "- Show waypoint info about your NPC target", 170, command_wpinfo) ||
+		command_add("roambox", "- Show waypoint info about your NPC target", 170, command_roambox) ||
+		command_add("underworld", "- Show all mobs under the world", 170, command_underworld) ||
 		command_add("xpinfo", "- Show XP info about your current target", 250, command_xpinfo) ||
 		command_add("xtargets",  "Show your targets Extended Targets and optionally set how many xtargets they can have.",  250, command_xtargets) ||
 		command_add("zclip", "[min] [max] - modifies and resends zhdr packet", 80, command_zclip) ||
@@ -5902,6 +5904,21 @@ void command_wpinfo(Client *c, const Seperator *sep)
 	n->DisplayWaypointInfo(c);
 }
 
+void command_roambox(Client *c, const Seperator *sep) {
+	Mob *t = c->GetTarget();
+
+	if (t == nullptr || !t->IsNPC()) {
+		c->Message(0, "You must target an NPC to use this.");
+		return;
+	}
+
+	t->CastToNPC()->DisplayRoamBox(c);
+}
+
+void command_underworld(Client *c, const Seperator *sep) {
+	entity_list.GetUnderworldMobs(c);
+}
+
 void command_wpadd(Client *c, const Seperator *sep)
 {
 	int	type1=0,
@@ -7301,7 +7318,8 @@ void command_path(Client *c, const Seperator *sep)
 		c->Message(0, "#path move: Moves your targeted node to your current position");
 		c->Message(0, "#path resort [nodes]: resorts the connections/nodes after you've manually altered them so they'll work.");
 		c->Message(0, "------------- Don't use unless you know what you're doing -------------");
-		c->Message(0, "#path process file_name: processes the map file and tries to automatically generate a rudimentary path setup and then dumps the current zone->pathing to a file of your naming.");
+		c->Message(0, "#path disconnectallnodes IknowwhatIamdoing: removes all connections for every node.");
+		c->Message(0, "#path process IknowwhatIamdoing file_name: processes the map file and tries to automatically generate a rudimentary path setup and then dumps the current zone->pathing to a file of your naming.");
 		return;
 	}
 	if(!strcasecmp(sep->arg[1], "shownodes"))
@@ -7473,6 +7491,18 @@ void command_path(Client *c, const Seperator *sep)
 		return;
 	}
 
+	if (!strcasecmp(sep->arg[1], "disconnectallnodes")) {
+		if (zone->pathing) {
+			if (!strcasecmp(sep->arg[2], "IknowwhatIamdoing")) {
+				zone->pathing->DisconnectAll(c, true);
+			}
+			else {
+				c->Message(0, "You probably don't know you are doing. Sorry can't use this command");
+				return;
+			}
+		}
+		return;
+	}
 
 	if(!strcasecmp(sep->arg[1], "move"))
 	{
@@ -7483,15 +7513,18 @@ void command_path(Client *c, const Seperator *sep)
 		return;
 	}
 
-	if(!strcasecmp(sep->arg[1], "process"))
-	{
-		if(zone->pathing)
-		{
-			if(sep->arg[2][0] == '\0')
+	if (!strcasecmp(sep->arg[1], "process")) {
+		if (zone->pathing) {
+			if (sep->arg[2][0] == '\0' || sep->arg[3][0] == '\0')
 				return;
-
-			zone->pathing->ProcessNodesAndSave(sep->arg[2]);
-			c->Message(0, "Path processed...");
+			if (!strcasecmp(sep->arg[2], "IknowwhatIamdoing")) {
+				zone->pathing->ProcessNodesAndSave(sep->arg[3]);
+				c->Message(0, "Path processed...");
+			}
+			else {
+				c->Message(0, "If you know what you are doing, type command as #path process IknowwhatIamdoing filename.path");
+				return;
+			}
 		}
 		return;
 	}

@@ -82,6 +82,7 @@ PathManager::PathManager()
 {
 	PathNodes = nullptr;
 	ClosedListFlag = nullptr;
+	RouteCache = nullptr;
 	Head.PathNodeCount = 0;
 	Head.version = 2;
 	QuickConnectTarget = -1;
@@ -91,6 +92,7 @@ PathManager::~PathManager()
 {
 	safe_delete_array(PathNodes);
 	safe_delete_array(ClosedListFlag);
+	safe_delete_array(RouteCache);
 }
 
 bool PathManager::loadPaths(FILE *PathFile)
@@ -140,6 +142,8 @@ bool PathManager::loadPaths(FILE *PathFile)
 	if(!PathFileValid) {
 		safe_delete_array(PathNodes);
 	}
+
+	ResetRouteCache();
 
 	return PathFileValid;
 }
@@ -198,11 +202,17 @@ std::deque<int> PathManager::FindRoute(int startID, int endID)
 {
 	Log(Logs::Detail, Logs::Pathing, "FindRoute from node %i to %i", startID, endID);
 
+	int cache_index = startID * Head.PathNodeCount + endID;
+	std::deque<int> Route = RouteCache[cache_index];
+
+	if (!Route.empty()) {
+		Log(Logs::Detail, Logs::Pathing, "Cache hit for node %i to %i", startID, endID);
+		return Route;
+	}
+
 	memset(ClosedListFlag, 0, sizeof(int) * Head.PathNodeCount);
 
 	std::deque<AStarNode> OpenList, ClosedList;
-
-	std::deque<int>Route;
 
 	AStarNode AStarEntry, CurrentNode;
 
@@ -259,7 +269,8 @@ std::deque<int> PathManager::FindRoute(int startID, int endID)
 						}
 					}
 				}
-
+				// Cache route first
+				RouteCache[cache_index] = Route;
 				return Route;
 			}
 			if (ClosedListFlag[PathNodes[CurrentNode.PathNodeID].Neighbours[i].id])
@@ -1087,11 +1098,13 @@ int PathManager::FindNearestPathNode(glm::vec3 Position)
 
 	PathNodeSortStruct TempNode;
 
+	float bestZ = zone->zonemap->FindBestZ(Position, nullptr);
+
 	for(uint32 i = 0 ; i < Head.PathNodeCount; ++i)
 	{
 		if ((std::abs(Position.x - PathNodes[i].v.x) <= CandidateNodeRangeXY) &&
 		    (std::abs(Position.y - PathNodes[i].v.y) <= CandidateNodeRangeXY) &&
-		    (std::abs(Position.z - PathNodes[i].v.z) <= CandidateNodeRangeZ)) {
+		    (std::abs(bestZ - PathNodes[i].v.z) <= CandidateNodeRangeZ)) {
 			TempNode.id = i;
 			TempNode.Distance = VectorDistanceNoRoot(Position, PathNodes[i].v);
 			SortedByDistance.push_back(TempNode);
@@ -1458,6 +1471,7 @@ void PathManager::DumpPath(std::string filename)
 {
 	SortNodes();
 	ResortConnections();
+	ResetRouteCache();
 	std::ofstream o_file;
 	std::string file_to_write = StringFormat("%s%s", Config->MapDir.c_str(), filename.c_str());
 	o_file.open(file_to_write.c_str(), std::ios_base::binary | std::ios_base::trunc | std::ios_base::out);
@@ -1548,6 +1562,7 @@ int32 PathManager::AddNode(float x, float y, float z, float best_z, int32 reques
 
 		SortNodes();
 		ResortConnections();
+		ResetRouteCache();
 
 		auto npc_type = new NPCType;
 		memset(npc_type, 0, sizeof(NPCType));
@@ -1611,6 +1626,7 @@ int32 PathManager::AddNode(float x, float y, float z, float best_z, int32 reques
 
 		SortNodes();
 		ResortConnections();
+		ResetRouteCache();
 
 		auto npc_type = new NPCType;
 		memset(npc_type, 0, sizeof(NPCType));
@@ -1741,6 +1757,7 @@ bool PathManager::DeleteNode(int32 id)
 
 		SortNodes();
 		ResortConnections();
+		ResetRouteCache();
 		safe_delete_array(ClosedListFlag);
 		ClosedListFlag = new int[Head.PathNodeCount];
 	}
@@ -2016,22 +2033,30 @@ void PathManager::MoveNode(Client *c)
 		toMove->GMMove(c->GetX(), c->GetY(), c->GetZ(), 0);
 }
 
-void PathManager::DisconnectAll(Client *c)
+void PathManager::DisconnectAll(Client *c, bool allnodes)
 {
-	if (!c) {
+	if (!c)
 		return;
-	}
 
 	if (!c->GetTarget()) {
 		c->Message(0, "You must target a node.");
 		return;
 	}
 
-	PathNode *Node = zone->pathing->FindPathNodeByCoordinates(c->GetTarget()->GetX(), c->GetTarget()->GetY(), c->GetTarget()->GetZ());
-	if (!Node) {
-		return;
+	if (allnodes) {
+		for (uint32 i = 0; i < Head.PathNodeCount; ++i) {
+			DisconnectAll(&PathNodes[i]);
+		}
 	}
+	else {
+		PathNode *Node = zone->pathing->FindPathNodeByCoordinates(c->GetTarget()->GetX(), c->GetTarget()->GetY(), c->GetTarget()->GetZ());
+		if (!Node)
+			return;
+		DisconnectAll(Node);
+	}
+}
 
+void PathManager::DisconnectAll(PathNode* Node) {
 	for (int x = 0; x < PATHNODENEIGHBOURS; ++x) {
 		Node->Neighbours[x].distance = 0;
 		Node->Neighbours[x].Teleport = 0;
@@ -2126,44 +2151,6 @@ void PathManager::ProcessNodesAndSave(std::string filename)
 	DumpPath(filename);
 }
 
-void PathManager::ResortConnections()
-{
-	NeighbourNode Neigh[PATHNODENEIGHBOURS];
-	for (uint32 x = 0; x < Head.PathNodeCount; ++x) {
-		int index = 0;
-		for (int y = 0; y < PATHNODENEIGHBOURS; ++y) {
-			Neigh[y].distance = 0;
-			Neigh[y].DoorID = -1;
-			Neigh[y].id = -1;
-			Neigh[y].Teleport = 0;
-		}
-
-		for (int z = 0; z < PATHNODENEIGHBOURS; ++z) {
-			if (PathNodes[x].Neighbours[z].id != -1) {
-				Neigh[index].id = PathNodes[x].Neighbours[z].id;
-				Neigh[index].distance = PathNodes[x].Neighbours[z].distance;
-				Neigh[index].DoorID = PathNodes[x].Neighbours[z].DoorID;
-				Neigh[index].Teleport = PathNodes[x].Neighbours[z].Teleport;
-				index++;
-			}
-		}
-
-		for (int i = 0; i < PATHNODENEIGHBOURS; ++i) {
-			PathNodes[x].Neighbours[i].distance = 0;
-			PathNodes[x].Neighbours[i].DoorID = -1;
-			PathNodes[x].Neighbours[i].id = -1;
-			PathNodes[x].Neighbours[i].Teleport = 0;
-		}
-
-		for (int z = 0; z < PATHNODENEIGHBOURS; ++z) {
-			PathNodes[x].Neighbours[z].distance = Neigh[z].distance;
-			PathNodes[x].Neighbours[z].DoorID = Neigh[z].DoorID;
-			PathNodes[x].Neighbours[z].id = Neigh[z].id;
-			PathNodes[x].Neighbours[z].Teleport = Neigh[z].Teleport;
-		}
-	}
-}
-
 void PathManager::QuickConnect(Client *c, bool set)
 {
 	if(!c)
@@ -2211,6 +2198,16 @@ void PathManager::DepopPathNodes() {
 	}
 }
 
+void PathManager::ResetRouteCache() {
+	int size = Head.PathNodeCount * Head.PathNodeCount;
+	safe_delete_array(RouteCache);
+	RouteCache = new std::deque<int>[size];
+	memset(RouteCache, 0, sizeof(std::deque<int>) * size);
+	for (int i = 0; i < size; ++i) {
+		RouteCache[i] = std::deque<int>();
+	}
+}
+
 void PathManager::SortNodes()
 {
 	std::vector<InternalPathSort> sorted_vals;
@@ -2255,4 +2252,42 @@ void PathManager::SortNodes()
 	}
 	safe_delete_array(PathNodes);
 	PathNodes = t_PathNodes;
+}
+
+void PathManager::ResortConnections()
+{
+	NeighbourNode Neigh[PATHNODENEIGHBOURS];
+	for (uint32 x = 0; x < Head.PathNodeCount; ++x) {
+		int index = 0;
+		for (int y = 0; y < PATHNODENEIGHBOURS; ++y) {
+			Neigh[y].distance = 0;
+			Neigh[y].DoorID = -1;
+			Neigh[y].id = -1;
+			Neigh[y].Teleport = 0;
+		}
+
+		for (int z = 0; z < PATHNODENEIGHBOURS; ++z) {
+			if (PathNodes[x].Neighbours[z].id != -1) {
+				Neigh[index].id = PathNodes[x].Neighbours[z].id;
+				Neigh[index].distance = PathNodes[x].Neighbours[z].distance;
+				Neigh[index].DoorID = PathNodes[x].Neighbours[z].DoorID;
+				Neigh[index].Teleport = PathNodes[x].Neighbours[z].Teleport;
+				index++;
+			}
+		}
+
+		for (int i = 0; i < PATHNODENEIGHBOURS; ++i) {
+			PathNodes[x].Neighbours[i].distance = 0;
+			PathNodes[x].Neighbours[i].DoorID = -1;
+			PathNodes[x].Neighbours[i].id = -1;
+			PathNodes[x].Neighbours[i].Teleport = 0;
+		}
+
+		for (int z = 0; z < PATHNODENEIGHBOURS; ++z) {
+			PathNodes[x].Neighbours[z].distance = Neigh[z].distance;
+			PathNodes[x].Neighbours[z].DoorID = Neigh[z].DoorID;
+			PathNodes[x].Neighbours[z].id = Neigh[z].id;
+			PathNodes[x].Neighbours[z].Teleport = Neigh[z].Teleport;
+		}
+	}
 }

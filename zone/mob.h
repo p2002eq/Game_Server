@@ -1164,7 +1164,7 @@ public:
 	void ResetAssistCap() { npc_assist_cap = 0; }
 	int GetWeaponDamage(Mob *against, const EQEmu::ItemData *weapon_item);
 	int GetWeaponDamage(Mob *against, const EQEmu::ItemInstance *weapon_item, uint32 *hate = nullptr);
-
+	float FindGroundZ(float new_x, float new_y, float z_offset = 0.0);
 	float last_z;
 
 	// Bots HealRotation methods
@@ -1324,7 +1324,6 @@ protected:
 	int GetBaseSkillDamage(EQEmu::skills::SkillType skill, Mob *target = nullptr);
 	virtual int16 GetFocusEffect(focusType type, uint16 spell_id) { return 0; }
 	void CalculateNewFearpoint();
-	float FindGroundZ(float new_x, float new_y, float z_offset=0.0);
 	glm::vec3 UpdatePath(float ToX, float ToY, float ToZ, float Speed, bool &WaypointChange, bool &NodeReached);
 	void PrintRoute();
 

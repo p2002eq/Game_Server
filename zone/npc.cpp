@@ -716,16 +716,9 @@ bool NPC::Process()
 			assist_cap_timer.Disable();
 	}
 
-	if (assist_timer.Check() && IsEngaged() && !Charmed() &&// !HasAssistAggro() &&
+	if (assist_timer.Check() && IsEngaged() && !Charmed() && !HasAssistAggro() &&
 	    NPCAssistCap() < RuleI(Combat, NPCAssistCap)) {
-
-		auto hatelist = this->GetHateList();
-		for (auto it = hatelist.begin(); it != hatelist.end(); ++it) {
-			struct_HateList *entry = (*it);
-			entity_list.AIYellForHelp(this, entry->entity_on_hatelist);
-		}
-
-		//entity_list.AIYellForHelp(this, GetTarget());
+		entity_list.AIYellForHelp(this, GetTarget());
 		if (NPCAssistCap() > 0 && !assist_cap_timer.Enabled())
 			assist_cap_timer.Start(RuleI(Combat, NPCAssistCapTimer));
 	}
@@ -2726,6 +2719,11 @@ bool NPC::AddQuestLoot(int16 itemid)
 		return false;
 
 	return true;
+}
+
+void NPC::DisplayRoamBox(Client* c) {
+	c->Message(0, "Roam Box: d=%.3f (%.3f->%.3f,%.3f->%.3f): Go To (%.3f,%.3f)",
+		roambox_distance, roambox_min_x, roambox_max_x, roambox_min_y, roambox_max_y, roambox_movingto_x, roambox_movingto_y);
 }
 
 void NPC::DeleteQuestLoot(int16 itemid1, int16 itemid2, int16 itemid3, int16 itemid4)
