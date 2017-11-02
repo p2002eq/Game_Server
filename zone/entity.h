@@ -341,6 +341,7 @@ public:
 	void	GroupMessage(uint32 gid, const char *from, const char *message);
 	void	ExpeditionWarning(uint32 minutes_left);
 
+	void	DepopTargetLockedPets(Mob *mob);
 	void	RemoveFromTargets(Mob* mob, bool RemoveFromXTargets = false);
 	void	RemoveFromXTargets(Mob* mob);
 	void	RemoveFromAutoXTargets(Mob* mob);

@@ -2204,6 +2204,7 @@ bool NPC::Death(Mob* killer_mob, int32 damage, uint16 spell, EQEmu::skills::Skil
 
 	Mob* killer = GetHateDamageTop(this);
 
+	entity_list.DepopTargetLockedPets(this); // like unswerving hammer pets
 	entity_list.RemoveFromTargets(this, p_depop);
 
 	if (p_depop == true)
