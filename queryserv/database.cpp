@@ -126,9 +126,9 @@ void Database::AddSpeech(const char* from, const char* to, const char* message, 
 void Database::LogPlayerDropItem(QSPlayerDropItem_Struct* QS) {
 
 	std::string query = StringFormat("INSERT INTO `qs_player_drop_record` SET `time` = NOW(), "
-									 "`char_id` = '%i', `pickup` = '%i', "
+									 "`char_id` = '%i', `ground_id` = '%i', `pickup` = '%i', "
 									 "`zone_id` = '%i', `x` = '%i', `y` = '%i', `z` = '%i' ", 
-									 QS->char_id, QS->pickup, QS->zone_id, QS->x, QS->y, QS->z);
+									 QS->char_id, QS->ground_id, QS->pickup, QS->zone_id, QS->x, QS->y, QS->z);
 
 	auto results = QueryDatabase(query);
 	if (!results.Success()) {

@@ -1164,6 +1164,7 @@ struct QSDropItems_Struct {
 struct QSPlayerDropItem_Struct {
 	uint32 char_id;
 	bool pickup; // 0 drop, 1 pickup
+	uint32 ground_id;
 	uint32 zone_id;
 	int x;
 	int y;
