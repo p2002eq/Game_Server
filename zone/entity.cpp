@@ -1304,6 +1304,7 @@ void EntityList::SendZoneSpawnsBulk(Client *client)
 			}
 
 			spawn->SendArmorAppearance(client);
+			spawn->SendAppearancePacket(AT_Size, (uint32)spawn->GetSize());
 #else
 			/* original code kept for spawn packet research */
 			int32 race = spawn->GetRace();
