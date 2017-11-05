@@ -4,6 +4,7 @@
 #include "map.h"
 #include "zone_config.h"
 #include <deque>
+#include <vector>
 
 extern const ZoneConfig *Config;
 
@@ -107,7 +108,7 @@ public:
 private:
 	PathFileHeader Head;
 	PathNode *PathNodes;
-	std::deque<int> *RouteCache;
+	std::vector<std::deque<int>> *RouteCache;
 	int QuickConnectTarget;
 	int *ClosedListFlag;
 };
