@@ -1077,6 +1077,7 @@ void Client::OPRezzAnswer(uint32 Action, uint32 SpellID, uint16 ZoneID, uint16 I
 
 		//Was sending the packet back to initiate client zone...
 		//but that could be abusable, so lets go through proper channels
+		entity_list.ClearAggro(this, true);
 		MovePC(ZoneID, InstanceID, x, y, z, GetHeading(), 0, ZoneSolicited);
 		// P2002 doesn't have XTarget
 		// entity_list.RefreshClientXTargets(this);

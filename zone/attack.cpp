@@ -2204,6 +2204,7 @@ bool NPC::Death(Mob* killer_mob, int32 damage, uint16 spell, EQEmu::skills::Skil
 
 	Mob* killer = GetHateDamageTop(this);
 
+	entity_list.DepopTargetLockedPets(this); // like unswerving hammer pets
 	entity_list.RemoveFromTargets(this, p_depop);
 
 	if (p_depop == true)
@@ -3439,6 +3440,8 @@ void Mob::CommonDamage(Mob* attacker, int &damage, const uint16 spell_id, const 
 
 		//see if any runes want to reduce this damage
 		if (spell_id == SPELL_UNKNOWN) {
+			if (IsClient())
+				CommonBreakInvisible();
 			damage = ReduceDamage(damage);
 			Log(Logs::Detail, Logs::Combat, "Melee Damage reduced to %d", damage);
 			damage = ReduceAllDamage(damage);
@@ -3446,7 +3449,6 @@ void Mob::CommonDamage(Mob* attacker, int &damage, const uint16 spell_id, const 
 
 			if (skill_used)
 				CheckNumHitsRemaining(NumHit::IncomingHitSuccess);
-
 		}
 		else {
 			int32 origdmg = damage;
@@ -3463,15 +3465,10 @@ void Mob::CommonDamage(Mob* attacker, int &damage, const uint16 spell_id, const 
 			TryTriggerThreshHold(damage, SE_TriggerSpellThreshold, attacker);
 		}
 
-		if (IsClient())
-			CommonBreakInvisible();
-
-		/*
 		if (IsClient() && CastToClient()->sneaking) {
 			CastToClient()->sneaking = false;
 			SendAppearancePacket(AT_Sneak, 0);
 		}
-		*/
 
 		if (attacker && attacker->IsClient() && attacker->CastToClient()->sneaking) {
 			attacker->CastToClient()->sneaking = false;

@@ -1304,6 +1304,7 @@ void EntityList::SendZoneSpawnsBulk(Client *client)
 			}
 
 			spawn->SendArmorAppearance(client);
+			spawn->SendAppearancePacket(AT_Size, (uint32)spawn->GetSize());
 #else
 			/* original code kept for spawn packet research */
 			int32 race = spawn->GetRace();
@@ -1411,6 +1412,17 @@ void EntityList::ReplaceWithTarget(Mob *pOldMob, Mob *pNewTarget)
 	}
 }
 
+void EntityList::DepopTargetLockedPets(Mob *mob) {
+	auto iterator = mob->GetHateList().begin();
+	while (iterator != mob->GetHateList().end()) {
+		Mob* entity = (*iterator)->entity_on_hatelist;
+		if (entity != nullptr && entity->IsNPC() && entity->CastToNPC()->IsPet() && entity->CastToNPC()->GetPetType() == petTargetLock) {
+			entity->Depop();
+		}
+		++iterator;
+	}
+}
+
 void EntityList::RemoveFromTargets(Mob *mob, bool RemoveFromXTargets)
 {
 	auto it = mob_list.begin();
@@ -1431,9 +1443,6 @@ void EntityList::RemoveFromTargets(Mob *mob, bool RemoveFromXTargets)
 		}*/
 
 		m->RemoveFromHateList(mob);
-		if (m->IsPet() && m->GetPetType() == petTargetLock) {
-			m->Depop();
-		}
 	}
 }
 
@@ -3173,8 +3182,12 @@ void EntityList::ClearAggro(Mob* targ, bool clear_caster_id)
 		c = targ->CastToClient();
 	auto it = npc_list.begin();
 	while (it != npc_list.end()) {
-		if (clear_caster_id)
+		if (clear_caster_id) {
 			it->second->BuffDetachCaster(targ);
+			if (it->second->GetTarget() == c)
+				it->second->StopCasting();
+		}
+
 		if (it->second->CheckAggro(targ)) {
 			/*
 			if (c)

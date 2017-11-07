@@ -3324,8 +3324,8 @@ int Mob::AddBuff(Mob *caster, uint16 spell_id, int duration, int32 level_overrid
 				Log(Logs::Detail, Logs::Spells, "Adding buff %d will overwrite spell %d in slot %d with caster level %d",
 						spell_id, curbuf.spellid, buffslot, curbuf.casterlevel);
 				// If this is the first buff it would override, use its slot
-				if (!will_overwrite && !IsDisciplineBuff(spell_id))
-					emptyslot = buffslot;
+				//if (!will_overwrite && !IsDisciplineBuff(spell_id))
+				//	emptyslot = buffslot;
 				will_overwrite = true;
 				overwrite_slots.push_back(buffslot);
 			}
@@ -5839,16 +5839,13 @@ void Mob::SendBuffsToClient(Client *c)
 	}
 }
 
-EQApplicationPacket *Mob::MakeBuffsPacket(bool for_target)
-{
+EQApplicationPacket *Mob::MakeBuffsPacket(bool for_target) {
 	uint32 count = 0;
 	// for self we want all buffs, for target, we want to skip song window buffs
 	// since NPCs and pets don't have a song window, we still see it for them :P
 	uint32 buff_count = for_target ? GetMaxBuffSlots() : GetMaxTotalSlots();
-	for(int i = 0; i < buff_count; ++i)
-	{
-		if(buffs[i].spellid != SPELL_UNKNOWN)
-		{
+	for (int i = 0; i < buff_count; ++i) {
+		if (buffs[i].spellid != SPELL_UNKNOWN) {
 			++count;
 		}
 	}
@@ -5856,12 +5853,10 @@ EQApplicationPacket *Mob::MakeBuffsPacket(bool for_target)
 	EQApplicationPacket* outapp = nullptr;
 
 	//Create it for a targeting window, else create it for a create buff packet.
-	if(for_target)
-	{
+	if (for_target) {
 		outapp = new EQApplicationPacket(OP_TargetBuffs, sizeof(BuffIcon_Struct) + sizeof(BuffIconEntry_Struct) * count);
 	}
-	else
-	{
+	else {
 		outapp = new EQApplicationPacket(OP_BuffCreate, sizeof(BuffIcon_Struct) + sizeof(BuffIconEntry_Struct) * count);
 	}
 	BuffIcon_Struct *buff = (BuffIcon_Struct*)outapp->pBuffer;
