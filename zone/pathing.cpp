@@ -92,7 +92,7 @@ PathManager::~PathManager()
 {
 	safe_delete_array(PathNodes);
 	safe_delete_array(ClosedListFlag);
-	safe_delete(RouteCache);
+	safe_delete_array(RouteCache);
 }
 
 bool PathManager::loadPaths(FILE *PathFile)
@@ -203,7 +203,7 @@ std::deque<int> PathManager::FindRoute(int startID, int endID)
 	Log(Logs::Detail, Logs::Pathing, "FindRoute from node %i to %i", startID, endID);
 
 	int cache_index = startID * Head.PathNodeCount + endID;
-	std::deque<int> Route = RouteCache->at(cache_index);
+	std::deque<int> Route = RouteCache[cache_index];
 
 	if (!Route.empty()) {
 		Log(Logs::Detail, Logs::Pathing, "Cache hit for node %i to %i", startID, endID);
@@ -270,7 +270,7 @@ std::deque<int> PathManager::FindRoute(int startID, int endID)
 					}
 				}
 				// Cache route first
-				RouteCache->at(cache_index) = Route;
+				RouteCache[cache_index] = Route;
 				return Route;
 			}
 			if (ClosedListFlag[PathNodes[CurrentNode.PathNodeID].Neighbours[i].id])
@@ -1562,8 +1562,7 @@ int32 PathManager::AddNode(float x, float y, float z, float best_z, int32 reques
 
 		SortNodes();
 		ResortConnections();
-		for (int j = 0; j < Head.PathNodeCount; ++j)
-			RouteCache->push_back(std::deque<int>());
+		// ResetRouteCache();
 
 		auto npc_type = new NPCType;
 		memset(npc_type, 0, sizeof(NPCType));
@@ -1627,8 +1626,7 @@ int32 PathManager::AddNode(float x, float y, float z, float best_z, int32 reques
 
 		SortNodes();
 		ResortConnections();
-		for (int j = 0; j < Head.PathNodeCount; ++j)
-			RouteCache->push_back(std::deque<int>());
+		// ResetRouteCache();
 
 		auto npc_type = new NPCType;
 		memset(npc_type, 0, sizeof(NPCType));
@@ -1759,8 +1757,7 @@ bool PathManager::DeleteNode(int32 id)
 
 		SortNodes();
 		ResortConnections();
-		for (int j = 0; j < Head.PathNodeCount; ++j)
-			RouteCache->pop_back();
+		// ResetRouteCache();
 		safe_delete_array(ClosedListFlag);
 		ClosedListFlag = new int[Head.PathNodeCount];
 	}
@@ -2203,11 +2200,11 @@ void PathManager::DepopPathNodes() {
 
 void PathManager::ResetRouteCache() {
 	int size = Head.PathNodeCount * Head.PathNodeCount;
-	safe_delete(RouteCache);
-	RouteCache = new std::vector<std::deque<int>>;
-	RouteCache->resize(size);
+	safe_delete_array(RouteCache);
+	RouteCache = new std::deque<int>[size];
+	memset(RouteCache, 0, sizeof(std::deque<int>) * size);
 	for (int i = 0; i < size; ++i) {
-		RouteCache->push_back(std::deque<int>());
+		RouteCache[i] = std::deque<int>();
 	}
 }
 
