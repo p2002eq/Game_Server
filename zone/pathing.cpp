@@ -143,7 +143,7 @@ bool PathManager::loadPaths(FILE *PathFile)
 		safe_delete_array(PathNodes);
 	}
 
-	ResetRouteCache();
+	// ResetRouteCache();
 
 	return PathFileValid;
 }
@@ -203,12 +203,13 @@ std::deque<int> PathManager::FindRoute(int startID, int endID)
 	Log(Logs::Detail, Logs::Pathing, "FindRoute from node %i to %i", startID, endID);
 
 	int cache_index = startID * Head.PathNodeCount + endID;
-	std::deque<int> Route = RouteCache[cache_index];
+	std::deque<int> Route; // = RouteCache[cache_index];
 
+	/*
 	if (!Route.empty()) {
 		Log(Logs::Detail, Logs::Pathing, "Cache hit for node %i to %i", startID, endID);
 		return Route;
-	}
+	}*/
 
 	memset(ClosedListFlag, 0, sizeof(int) * Head.PathNodeCount);
 
@@ -270,7 +271,7 @@ std::deque<int> PathManager::FindRoute(int startID, int endID)
 					}
 				}
 				// Cache route first
-				RouteCache[cache_index] = Route;
+				// RouteCache[cache_index] = Route;
 				return Route;
 			}
 			if (ClosedListFlag[PathNodes[CurrentNode.PathNodeID].Neighbours[i].id])
@@ -1471,7 +1472,7 @@ void PathManager::DumpPath(std::string filename)
 {
 	SortNodes();
 	ResortConnections();
-	ResetRouteCache();
+	// ResetRouteCache();
 	std::ofstream o_file;
 	std::string file_to_write = StringFormat("%s%s", Config->MapDir.c_str(), filename.c_str());
 	o_file.open(file_to_write.c_str(), std::ios_base::binary | std::ios_base::trunc | std::ios_base::out);
