@@ -1,0 +1,16 @@
+version: '2'
+services:
+  eqemu:
+    build: .
+    volumes:
+      - .:/eqemu
+  db:
+    image: mariadb:5.5
+    environment:
+      - MYSQL_ROOT_PASSWORD=password
+      - MYSQL_DATABASE=eqemu
+    volumes:
+      - /tmp/eqemu_database:/var/lib/mysql
+      - ./:/project
+    ports:
+      - "3306:3306"
