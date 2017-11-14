@@ -2331,6 +2331,7 @@ bool NPC::Death(Mob* killer_mob, int32 damage, uint16 spell, EQEmu::skills::Skil
 				QS->s1.NPCID = this->GetNPCTypeID();
 				QS->s1.ZoneID = this->GetZoneID();
 				QS->s1.Type = 2; // Raid Fight
+				QS->s1.InstanceID = zone->GetInstanceID();
 				for (int i = 0; i < MAX_RAID_MEMBERS; i++) {
 					if (kr->members[i].member != nullptr && kr->members[i].member->IsClient()) { // If Group Member is Client
 						Client *c = kr->members[i].member;
