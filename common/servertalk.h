@@ -1200,6 +1200,7 @@ struct QSPlayerLogHandin_Struct {
 struct QSPlayerLogNPCKillSub_Struct{
 	uint32 NPCID;
 	uint32 ZoneID;
+	uint32 InstanceID;
 	uint32 Type;
 };
 
