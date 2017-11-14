@@ -3623,7 +3623,12 @@ void Mob::CommonDamage(Mob* attacker, int &damage, const uint16 spell_id, const 
 			a->special = 2;
 		else
 			a->special = 0;
-		a->meleepush_xy = attacker ? attacker->GetHeading() * 2.0f / 256.0f * 3.14159265f : 0.0f;
+
+		if (IsClient())
+			a->meleepush_xy = attacker ? attacker->GetHeading() * 360.0f / 256.0f : 0.0f;
+		else
+			a->meleepush_xy = attacker ? attacker->GetHeading() * 2.0f / 256.0f * 3.14159265f : 0.0f;
+
 		if (RuleB(Combat, MeleePush) && damage > 0 && !IsRooted() &&
 			(IsClient() || zone->random.Roll(RuleI(Combat, MeleePushChance)))) {
 			a->force = EQEmu::skills::GetSkillMeleePushForce(skill_used);
