@@ -511,8 +511,7 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial, int level_ove
 								else
 									GetPet()->Depop();
 							}
-							entity_list.ClearAggro(this, true);
-							CastToClient()->MovePC(zone->GetZoneID(), zone->GetInstanceID(), x, y, z, heading, 0, SummonPCEvac);
+							CastToClient()->MovePC(zone->GetZoneID(), zone->GetInstanceID(), x, y, z, heading, 0, ZoneToSafeCoords);
 						} else
 							GMMove(x, y, z, heading);
 					}
