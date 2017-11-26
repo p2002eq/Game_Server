@@ -448,7 +448,7 @@ float Mob::CalculateHeadingToTarget(float in_x, float in_y) {
 	return (256 * (360 - angle) / 360.0f);
 }
 
-bool Mob::MakeNewPositionAndSendUpdate(float x, float y, float z, int speed) {
+bool Mob::MakeNewPositionAndSendUpdate(float x, float y, float z, int speed, bool checkZ) {
 	if (GetID() == 0)
 		return true;
 
@@ -459,7 +459,7 @@ bool Mob::MakeNewPositionAndSendUpdate(float x, float y, float z, int speed) {
 	}
 
 	if ((m_Position.x - x == 0) && (m_Position.y - y == 0)) {//spawn is at target coords
-		if (m_Position.z - z != 0) {
+		if (checkZ && m_Position.z - z != 0) {
 			m_Position.z = z;
 			Log(Logs::Detail, Logs::AI, "Calc Position2 (%.3f, %.3f, %.3f): Jumping pure Z.", x, y, z);
 			return true;
@@ -624,7 +624,7 @@ bool Mob::MakeNewPositionAndSendUpdate(float x, float y, float z, int speed) {
 }
 
 bool Mob::CalculateNewPosition2(float x, float y, float z, int speed, bool checkZ, bool calcHeading) {
-	return MakeNewPositionAndSendUpdate(x, y, z, speed);
+	return MakeNewPositionAndSendUpdate(x, y, z, speed, checkZ);
 }
 
 bool Mob::CalculateNewPosition(float x, float y, float z, int speed, bool checkZ, bool calcHeading) {
