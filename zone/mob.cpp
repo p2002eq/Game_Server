@@ -106,6 +106,9 @@ Mob::Mob(const char* in_name,
 		bardsong_timer(6000),
 		gravity_timer(1000),
 		viral_timer(0),
+		shield_timer(500),
+		shield_reuse_timer(1000),
+		shield_duration_timer(12000),
 		m_FearWalkTarget(-999999.0f,-999999.0f,-999999.0f),
 		m_TargetLocation(glm::vec3()),
 		m_TargetV(glm::vec3()),
@@ -6071,6 +6074,107 @@ void Mob::CommonBreakInvisible()
 {
 	BreakInvisibleSpells();
 	CancelSneakHide();
+}
+
+void Mob::ShieldClear() {
+	if (shield_target) {
+		entity_list.MessageClose_StringID(this, false, 100, 0,
+			END_SHIELDING, GetCleanName(), shield_target->GetCleanName());
+		for (int y = 0; y < 2; y++) {
+			if (shield_target->shielder[y].shielder_id == GetID()) {
+				shield_target->shielder[y].shielder_id = 0;
+				shield_target->shielder[y].shielder_bonus = 0;
+			}
+		}
+	}
+	shield_target = 0;
+}
+
+void Mob::Shield(Mob* target) {
+
+	if (!target)
+		return;
+
+	// end current shielding
+	ShieldClear();
+
+	if (IsClient() && GetClass() != WARRIOR && GetLevel() < 30)
+		return;
+
+	if (IsClient() && !CastToClient()->p_timers.Expired(&database, pTimerShield, false)) {
+		Message(13, "Ability recovery time not yet met.");
+		return;
+	}
+
+	// check if target is in range
+	if (!this->CombatRange(target, 2.0)) {
+		if (IsClient())
+			Message(13, "Your target is out of range.");
+		return;
+	}
+
+	shield_target = target;
+	bool ack = false;
+
+	// calculate shield bonus for shielder (>=50ac = 50% damage)
+	uint16 shieldbonus = 0;
+	uint32 shield_duration_bonus = 0;
+	if (IsClient()) {
+		EQEmu::ItemInstance* inst = CastToClient()->GetInv().GetItem(EQEmu::inventory::slotSecondary);
+		if (inst) {
+			const EQEmu::ItemData* shield = inst->GetItem();
+			if (shield && shield->IsTypeShield()) {
+				shieldbonus = shield->AC / 2;
+			}
+		}
+		// calculate duration bonus (TODO - take values from database)
+		switch (GetAA(197)) {
+		case 1:
+			shield_duration_bonus = 12000;
+			break;
+		case 2:
+			shield_duration_bonus = 24000;
+			break;
+		case 3:
+			shield_duration_bonus = 36000;
+			break;
+		}
+	}
+	else {
+		shieldbonus = 25;
+	}
+
+	for (int x = 0; x < 2; x++)
+	{
+		if (shield_target->shielder[x].shielder_id == 0)
+		{
+			entity_list.MessageClose_StringID(this, false, 100, 0,
+				START_SHIELDING, GetName(), shield_target->GetName());
+
+			shield_target->shielder[x].shielder_id = GetID();
+			shield_target->shielder[x].shielder_bonus = shieldbonus;
+
+			// start timers
+			if (IsClient()) {
+				CastToClient()->p_timers.Start(pTimerShield, ShieldReuseTime - 1);
+			}
+
+			shield_timer.Start();
+			if (shield_duration_bonus)
+				shield_duration_timer.SetTimer(12000 + shield_duration_bonus);
+			shield_duration_timer.Start();
+
+			ack = true;
+			break;
+		}
+	}
+
+	if (!ack) {
+		Message_StringID(0, ALREADY_SHIELDED);
+		shield_target = 0;
+		return;
+	}
+	return;
 }
 
 #ifdef BOTS
