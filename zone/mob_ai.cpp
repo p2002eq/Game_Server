@@ -1138,7 +1138,8 @@ void Mob::AI_Process() {
 				if (shield_reuse_timer.Check()) {
 					Mob* target = entity_list.GetTargetToShield(this->CastToNPC())->CastToMob();
 					if (target) {
-						Shield(target);
+						float range = (float) GetSpecialAbilityParam(SPECATK_SHIELD, 1);
+						Shield(target, range ? range : 2.0);
 						shield_reuse_timer.Disable();
 						int	timer = GetSpecialAbilityParam(SPECATK_SHIELD, 0);
 						shield_reuse_timer.SetTimer((timer ? timer : RuleI(NPC, DefaultShieldReuseTimer)) * 1000);

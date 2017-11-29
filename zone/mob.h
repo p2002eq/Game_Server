@@ -1035,7 +1035,7 @@ public:
 
 	bool CheckWillAggro(Mob *mob);
 
-	void Shield(Mob* mob);
+	void Shield(Mob* mob, float range_multiplier = 2.0);
 	void ShieldClear();
 	void InstillDoubt(Mob *who);
 	int16 GetResist(uint8 type) const;

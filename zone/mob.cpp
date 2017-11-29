@@ -6090,7 +6090,7 @@ void Mob::ShieldClear() {
 	shield_target = 0;
 }
 
-void Mob::Shield(Mob* target) {
+void Mob::Shield(Mob* target, float range_multiplier) {
 
 	if (!target)
 		return;
@@ -6107,7 +6107,7 @@ void Mob::Shield(Mob* target) {
 	}
 
 	// check if target is in range
-	if (!this->CombatRange(target, 2.0)) {
+	if (!this->CombatRange(target, range_multiplier)) {
 		if (IsClient())
 			Message(13, "Your target is out of range.");
 		return;
