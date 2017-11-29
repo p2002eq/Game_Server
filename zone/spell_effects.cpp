@@ -511,8 +511,7 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial, int level_ove
 								else
 									GetPet()->Depop();
 							}
-							entity_list.ClearAggro(this, true);
-							CastToClient()->MovePC(zone->GetZoneID(), zone->GetInstanceID(), x, y, z, heading, 0, SummonPCEvac);
+							CastToClient()->MovePC(zone->GetZoneID(), zone->GetInstanceID(), x, y, z, heading, 0, EvacToSafeCoords);
 						} else
 							GMMove(x, y, z, heading);
 					}
@@ -6933,11 +6932,11 @@ void Client::BreakFeignDeathWhenCastOn(bool IsResisted)
 		int chance = spellbonuses.FeignedCastOnChance + itembonuses.FeignedCastOnChance + aabonuses.FeignedCastOnChance;
 
 		if (IsResisted) {
-			chance *= RuleR(Spells, BreakFeignDeathWhenCastOn);
+			chance += RuleR(Spells, BreakFeignDeathWhenCastOn);
 		}
 
 		if(chance && (zone->random.Roll(chance))){
-			Message_StringID(MT_SpellFailure,FD_CAST_ON_NO_BREAK);
+			Message_StringID(MT_SpellFailure, FD_CAST_ON_NO_BREAK);
 			return;
 		}
 	
