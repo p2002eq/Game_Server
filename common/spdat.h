@@ -34,6 +34,7 @@
 
 // Some discipline IDs.
 #define DISC_UNHOLY_AURA 4520
+#define DISC_HOLYFORGE 4500
 
 #define EFFECT_COUNT 12
 #define MAX_SPELL_TRIGGER 12	// One for each slot(only 6 for AA since AA use 2)
