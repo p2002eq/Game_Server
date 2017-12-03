@@ -355,7 +355,7 @@ bool NPC::AIDoSpellCast(uint8 i, Mob* tar, int32 mana_cost, uint32* oDontDoAgain
 }
 
 NPC* EntityList::GetTargetToShield(NPC* shielder) {
-	//Only iterate through NPCs
+	// Only iterate through NPCs
 	NPC* toShield = nullptr;
 	for (auto it = npc_list.begin(); it != npc_list.end(); ++it) {
 		NPC* mob = it->second;
@@ -369,7 +369,10 @@ NPC* EntityList::GetTargetToShield(NPC* shielder) {
 		if (!shielder->CombatRange(mob, 2.0))
 			continue;
 
-		if (!toShield || mob->GetHPRatio() < toShield->GetHPRatio()) {
+		if (mob->GetHPRatio() > RuleR(NPC, ShieldStartHPRatio))
+			continue;
+
+		if (!toShield || mob->GetDamage() > toShield->GetDamage()) {
 			toShield = mob;
 		}
 	}
@@ -1115,6 +1118,7 @@ void Mob::AI_Process() {
 		}
 
 		StartEnrage();
+
 		if (GetSpecialAbility(SPECATK_SHIELD)) {
 
 			if (shield_timer.Check()) {

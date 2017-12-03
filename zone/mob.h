@@ -538,6 +538,7 @@ public:
 	inline virtual int32 GetDelayDeath() const { return 0; }
 	inline int32 GetHP() const { return cur_hp; }
 	inline int32 GetMaxHP() const { return max_hp; }
+	inline int32 GetDamage() const { return max_hp - cur_hp; }
 	virtual int32 CalcMaxHP();
 	inline int32 GetMaxMana() const { return max_mana; }
 	inline int32 GetMana() const { return current_mana; }
