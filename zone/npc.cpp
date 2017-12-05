@@ -599,8 +599,10 @@ bool NPC::Process()
 	// Dirty fix for mobs going under the world. Reset them to spawn point.
 	if (!IsEngaged() && IsTrackable()) {
 		if (GetZ() <= zone->newzone_data.underworld) {
-			Teleport(glm::vec3(respawn2->GetX(), respawn2->GetY(), respawn2->GetZ()));
-			SendPositionUpdate();
+			if (respawn2) {
+				Teleport(glm::vec3(respawn2->GetX(), respawn2->GetY(), respawn2->GetZ()));
+				SendPositionUpdate();
+			}
 		}
 	}
 
