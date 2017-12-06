@@ -599,8 +599,10 @@ bool NPC::Process()
 	// Dirty fix for mobs going under the world. Reset them to spawn point.
 	if (!IsEngaged() && IsTrackable()) {
 		if (GetZ() <= zone->newzone_data.underworld) {
-			Teleport(glm::vec3(respawn2->GetX(), respawn2->GetY(), respawn2->GetZ()));
-			SendPositionUpdate();
+			if (respawn2) {
+				Teleport(glm::vec3(respawn2->GetX(), respawn2->GetY(), respawn2->GetZ()));
+				SendPositionUpdate();
+			}
 		}
 	}
 
@@ -1756,7 +1758,9 @@ void Mob::NPCSpecialAttacks(const char* parse, int permtag, bool reset, bool rem
 			case 'h':
 				SetSpecialAbility(FLEE_PERCENT, remove ? 0 : 1);
 				break;
-
+			case 's':
+				SetSpecialAbility(SPECATK_SHIELD, remove ? 0 : 1);
+				break;
 			default:
 				break;
 		}
@@ -1922,6 +1926,10 @@ bool Mob::HasNPCSpecialAtk(const char* parse) {
 				break;
 			case 'h':
 				if(!GetSpecialAbility(FLEE_PERCENT))
+					HasAllAttacks = false;
+				break;
+			case 's':
+				if (!GetSpecialAbility(SPECATK_SHIELD))
 					HasAllAttacks = false;
 				break;
 			default:

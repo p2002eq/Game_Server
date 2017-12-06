@@ -6936,7 +6936,7 @@ void Client::BreakFeignDeathWhenCastOn(bool IsResisted)
 		}
 
 		if(chance && (zone->random.Roll(chance))){
-			Message_StringID(MT_SpellFailure, FD_CAST_ON_NO_BREAK);
+			// Message_StringID(MT_SpellFailure, FD_CAST_ON_NO_BREAK);
 			return;
 		}
 	
