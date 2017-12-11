@@ -538,6 +538,7 @@ public:
 	inline virtual int32 GetDelayDeath() const { return 0; }
 	inline int32 GetHP() const { return cur_hp; }
 	inline int32 GetMaxHP() const { return max_hp; }
+	inline int32 GetDamage() const { return max_hp - cur_hp; }
 	virtual int32 CalcMaxHP();
 	inline int32 GetMaxMana() const { return max_mana; }
 	inline int32 GetMana() const { return current_mana; }
@@ -1035,6 +1036,8 @@ public:
 
 	bool CheckWillAggro(Mob *mob);
 
+	void Shield(Mob* mob, float range_multiplier = 2.0);
+	void ShieldClear();
 	void InstillDoubt(Mob *who);
 	int16 GetResist(uint8 type) const;
 	Mob* GetShieldTarget() const { return shield_target; }
@@ -1351,6 +1354,9 @@ protected:
 	uint8 pRunAnimSpeed;
 	bool m_is_running;
 
+	Timer shield_timer;
+	Timer shield_reuse_timer;
+	Timer shield_duration_timer;
 	Timer attack_timer;
 	Timer attack_dw_timer;
 	Timer ranged_timer;

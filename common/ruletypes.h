@@ -549,6 +549,8 @@ RULE_INT(Combat, PCAccAvoidMod2ScaleFactor, 75) // Scale Factor for PC Accuracy 
 RULE_CATEGORY_END()
 
 RULE_CATEGORY(NPC)
+RULE_INT(NPC, DefaultShieldReuseTimer, 60)
+RULE_REAL(NPC, ShieldStartHPRatio, 95.0)
 RULE_INT(NPC, MinorNPCCorpseDecayTimeMS, 450000) //level<55
 RULE_INT(NPC, MajorNPCCorpseDecayTimeMS, 1500000) //level>=55
 RULE_INT(NPC, CorpseUnlockTimer, 150000)

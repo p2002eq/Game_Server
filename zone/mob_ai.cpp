@@ -354,6 +354,31 @@ bool NPC::AIDoSpellCast(uint8 i, Mob* tar, int32 mana_cost, uint32* oDontDoAgain
 	return CastSpell(AIspells[i].spellid, tar->GetID(), EQEmu::CastingSlot::Gem2, AIspells[i].manacost == -2 ? 0 : -1, mana_cost, oDontDoAgainBefore, -1, -1, 0, &(AIspells[i].resist_adjust));
 }
 
+NPC* EntityList::GetTargetToShield(NPC* shielder) {
+	// Only iterate through NPCs
+	NPC* toShield = nullptr;
+	for (auto it = npc_list.begin(); it != npc_list.end(); ++it) {
+		NPC* mob = it->second;
+
+		if (mob == shielder)
+			continue;
+
+		if (mob->GetReverseFactionCon(shielder) >= FACTION_KINDLY)
+			continue;
+
+		if (!shielder->CombatRange(mob, 2.0))
+			continue;
+
+		if (mob->GetHPRatio() > RuleR(NPC, ShieldStartHPRatio))
+			continue;
+
+		if (!toShield || mob->GetDamage() > toShield->GetDamage()) {
+			toShield = mob;
+		}
+	}
+	return toShield;
+}
+
 bool EntityList::AICheckCloseBeneficialSpells(NPC* caster, uint8 iChance, float iRange, uint32 iSpellTypes) {
 	if((iSpellTypes & SpellTypes_Detrimental) != 0) {
 		//according to live, you can buff and heal through walls...
@@ -1093,6 +1118,40 @@ void Mob::AI_Process() {
 		}
 
 		StartEnrage();
+
+		if (GetSpecialAbility(SPECATK_SHIELD)) {
+
+			if (shield_timer.Check()) {
+				if (shield_target) {
+					if (!CombatRange(shield_target, 2.0)) {
+						ShieldClear();
+					}
+				}
+				else {
+					shield_target = 0;
+				}
+			}
+
+			if (shield_duration_timer.Check()) {
+				ShieldClear();
+			}
+
+			if (!shield_target) {
+				shield_timer.Disable();
+				shield_duration_timer.Disable();
+				if (shield_reuse_timer.Check()) {
+					Mob* target = entity_list.GetTargetToShield(this->CastToNPC())->CastToMob();
+					if (target) {
+						float range = (float) GetSpecialAbilityParam(SPECATK_SHIELD, 1);
+						Shield(target, range ? range : 2.0);
+						shield_reuse_timer.Disable();
+						int	timer = GetSpecialAbilityParam(SPECATK_SHIELD, 0);
+						shield_reuse_timer.SetTimer((timer ? timer : RuleI(NPC, DefaultShieldReuseTimer)) * 1000);
+						shield_reuse_timer.Start();
+					}
+				}
+			}
+		}
 
 		bool is_combat_range = CombatRange(target);
 

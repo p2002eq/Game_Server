@@ -421,15 +421,16 @@ public:
 
 	void	CheckClientAggro(Client *around);
 	Mob*	AICheckNPCtoNPCAggro(Mob* sender, float iAggroRange, float iAssistRange);
-	int	GetHatedCount(Mob *attacker, Mob *exclude);
+	int		GetHatedCount(Mob *attacker, Mob *exclude);
 	void	AIYellForHelp(Mob* sender, Mob* attacker);
 	bool	AICheckCloseBeneficialSpells(NPC* caster, uint8 iChance, float iRange, uint32 iSpellTypes);
 	bool	Merc_AICheckCloseBeneficialSpells(Merc* caster, uint8 iChance, float iRange, uint32 iSpellTypes);
 	Mob*	GetTargetForMez(Mob* caster);
 	uint32	CheckNPCsClose(Mob *center);
+	NPC*	GetTargetToShield(NPC* shielder);
 
 	Corpse* GetClosestCorpse(Mob* sender, const char *Name);
-	NPC* GetClosestBanker(Mob* sender, uint32 &distance);
+	NPC*	GetClosestBanker(Mob* sender, uint32 &distance);
 	void	CameraEffect(uint32 duration, uint32 intensity);
 	Mob*	GetClosestMobByBodyType(Mob* sender, bodyType BodyType);
 	void	ForceGroupUpdate(uint32 gid);
