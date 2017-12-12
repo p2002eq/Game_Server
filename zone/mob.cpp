@@ -6095,6 +6095,10 @@ void Mob::Shield(Mob* target, float range_multiplier) {
 	if (!target)
 		return;
 
+	if (IsClient() && !target->IsClient())
+		Message(13, "You must target a player to use this ability.");
+		return;
+
 	// end current shielding
 	ShieldClear();
 
