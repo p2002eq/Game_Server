@@ -5630,6 +5630,20 @@ bool Mob::UseBardSpellLogic(uint16 spell_id, int slot)
 	);
 }
 
+uint32 Mob::SpellRecastMod(uint32 spell_id, uint32 base_recast) {
+	switch (spell_id) {
+		case 4585: {
+			const SPDat_Spell_Struct &spell = spells[spell_id];
+			uint8 level_to_use = spell.classes[GetClass() - 1];
+			base_recast -= (GetLevel() - level_to_use) * 60000;
+			if (base_recast < 1800000)
+				base_recast = 1800000;
+			break;
+		}
+	}
+	return base_recast;
+}
+
 int Mob::GetCasterLevel(uint16 spell_id) {
 	int level = GetLevel();
 	// Bards receive effective casting level increases to resists/effect. They don't receive benefit from spells like intellectual superiority, however.
