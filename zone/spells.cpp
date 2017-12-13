@@ -2070,37 +2070,35 @@ bool Mob::SpellFinished(uint16 spell_id, Mob *spell_target, CastingSlot slot, ui
 	if(!IsValidSpell(spell_id))
 		return false;
 
-	if( spells[spell_id].zonetype == 1 && !zone->CanCastOutdoor()){
-		if(IsClient()){
-				if(!CastToClient()->GetGM()){
-					Message_StringID(13, CAST_OUTDOORS);
-					return false;
-				}
+	if (spells[spell_id].zonetype == 1 && !zone->CanCastOutdoor()) {
+		if (IsClient()) {
+			if (!CastToClient()->GetGM()) {
+				Message_StringID(13, CAST_OUTDOORS);
+				return false;
 			}
 		}
+	}
 
-	if(IsEffectInSpell(spell_id, SE_Levitate) && !zone->CanLevitate()){
-			if(IsClient()){
-				if(!CastToClient()->GetGM()){
-					Message(13, "You can't levitate in this zone.");
-					return false;
-				}
+	if (IsEffectInSpell(spell_id, SE_Levitate) && !zone->CanLevitate()) {
+		if (IsClient()) {
+			if (!CastToClient()->GetGM()) {
+				Message(13, "You can't levitate in this zone.");
+				return false;
 			}
 		}
+	}
 
-	if(IsClient() && !CastToClient()->GetGM()){
-
-		if(zone->IsSpellBlocked(spell_id, glm::vec3(GetPosition()))){
+	if (IsClient() && !CastToClient()->GetGM()) {
+		if (zone->IsSpellBlocked(spell_id, glm::vec3(GetPosition()))) {
 			const char *msg = zone->GetSpellBlockedMessage(spell_id, glm::vec3(GetPosition()));
-			if(msg){
+			if (msg) {
 				Message(13, msg);
 				return false;
 			}
-			else{
+			else {
 				Message(13, "You can't cast this spell here.");
 				return false;
 			}
-
 		}
 	}
 
@@ -5649,6 +5647,8 @@ uint32 Mob::SpellRecastMod(uint32 spell_id, uint32 base_recast) {
 				base_recast = 1800;
 			break;
 		}
+		default:
+			break;
 	}
 	return base_recast;
 }
