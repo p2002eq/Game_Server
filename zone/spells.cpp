@@ -3158,6 +3158,15 @@ int Mob::CheckStackConflict(uint16 spellid1, int caster_level1, uint16 spellid2,
 				continue;
 		}
 
+		// DoTs won't overwrite regeneration but will block regeneration spells.
+		if (spells[spellid1].buffduration > 0 && spells[spellid2].buffduration > 0 &&
+			effect1 == SE_CurrentHP && effect2 == SE_CurrentHP) {
+			if (!sp1_detrimental && sp2_detrimental)
+				continue;
+			else if (sp1_detrimental && !sp2_detrimental)
+				return -1;
+		}
+
 		// some spells are hard to compare just on value. attack speed spells
 		// have a value that's a percentage for instance
 		if
@@ -5628,6 +5637,20 @@ bool Mob::UseBardSpellLogic(uint16 spell_id, int slot)
 		slot <= MAX_PP_MEMSPELL &&
 		IsBardSong(spell_id)
 	);
+}
+
+uint32 Mob::SpellRecastMod(uint32 spell_id, uint32 base_recast) {
+	switch (spell_id) {
+		case 4585: {
+			const SPDat_Spell_Struct &spell = spells[spell_id];
+			uint8 level_to_use = spell.classes[GetClass() - 1];
+			base_recast -= (GetLevel() - level_to_use) * 60;
+			if (base_recast < 1800)
+				base_recast = 1800;
+			break;
+		}
+	}
+	return base_recast;
 }
 
 int Mob::GetCasterLevel(uint16 spell_id) {
