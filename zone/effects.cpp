@@ -658,6 +658,8 @@ bool Client::UseDiscipline(uint32 spell_id, uint32 target) {
 			reduced_recast -= focus;
 		}
 
+		reduced_recast = SpellRecastMod(spell_id, reduced_recast);
+
 		if (reduced_recast > 0)
 			CastSpell(spell_id, target, EQEmu::CastingSlot::Discipline, -1, -1, 0, -1, (uint32)DiscTimer, reduced_recast);
 		else{
