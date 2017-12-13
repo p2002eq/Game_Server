@@ -2,15 +2,33 @@ version: '2'
 services:
   eqemu:
     build: .
+    links:
+      - db
     volumes:
       - .:/eqemu
+    hostname: 'eqemu-server-dev'
+    ports:
+      # Loginserver
+      - '127.0.0.1:5998:5998'
+      - '127.0.0.1:5998:5998/udp'
+      # Zone ports, adjust as necessary
+      - '127.0.0.1:7000-7100:7000-7100'
+      - '127.0.0.1:7000-7100:7000-7100/udp'
+      # Optional: port binding for localhost peqeditor
+      - '127.0.0.1:8080:8080'
+      # World server
+      - '127.0.0.1:9000:9000'
+      - '127.0.0.1:9000:9000/udp'
+      - '127.0.0.1:9080:9080'
   db:
     image: mariadb:5.5
+    hostname: 'eqemu-database-dev'
     environment:
       - MYSQL_ROOT_PASSWORD=password
       - MYSQL_DATABASE=eqemu
     volumes:
       - /tmp/eqemu_database:/var/lib/mysql
+      - /tmp/eqemu_socket:/var/run/mysqld
       - ./:/project
     ports:
       - "3306:3306"
