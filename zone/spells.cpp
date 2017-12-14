@@ -2070,37 +2070,35 @@ bool Mob::SpellFinished(uint16 spell_id, Mob *spell_target, CastingSlot slot, ui
 	if(!IsValidSpell(spell_id))
 		return false;
 
-	if( spells[spell_id].zonetype == 1 && !zone->CanCastOutdoor()){
-		if(IsClient()){
-				if(!CastToClient()->GetGM()){
-					Message_StringID(13, CAST_OUTDOORS);
-					return false;
-				}
+	if (spells[spell_id].zonetype == 1 && !zone->CanCastOutdoor()) {
+		if (IsClient()) {
+			if (!CastToClient()->GetGM()) {
+				Message_StringID(13, CAST_OUTDOORS);
+				return false;
 			}
 		}
+	}
 
-	if(IsEffectInSpell(spell_id, SE_Levitate) && !zone->CanLevitate()){
-			if(IsClient()){
-				if(!CastToClient()->GetGM()){
-					Message(13, "You can't levitate in this zone.");
-					return false;
-				}
+	if (IsEffectInSpell(spell_id, SE_Levitate) && !zone->CanLevitate()) {
+		if (IsClient()) {
+			if (!CastToClient()->GetGM()) {
+				Message(13, "You can't levitate in this zone.");
+				return false;
 			}
 		}
+	}
 
-	if(IsClient() && !CastToClient()->GetGM()){
-
-		if(zone->IsSpellBlocked(spell_id, glm::vec3(GetPosition()))){
+	if (IsClient() && !CastToClient()->GetGM()) {
+		if (zone->IsSpellBlocked(spell_id, glm::vec3(GetPosition()))) {
 			const char *msg = zone->GetSpellBlockedMessage(spell_id, glm::vec3(GetPosition()));
-			if(msg){
+			if (msg) {
 				Message(13, msg);
 				return false;
 			}
-			else{
+			else {
 				Message(13, "You can't cast this spell here.");
 				return false;
 			}
-
 		}
 	}
 
@@ -3156,6 +3154,15 @@ int Mob::CheckStackConflict(uint16 spellid1, int caster_level1, uint16 spellid2,
 				return -1;
 			else if (sp2_value < 0 && sp1_value > 0)
 				continue;
+		}
+
+		// DoTs won't overwrite regeneration but will block regeneration spells.
+		if (spells[spellid1].buffduration > 0 && spells[spellid2].buffduration > 0 &&
+			effect1 == SE_CurrentHP && effect2 == SE_CurrentHP) {
+			if (!sp1_detrimental && sp2_detrimental)
+				continue;
+			else if (sp1_detrimental && !sp2_detrimental)
+				return -1;
 		}
 
 		// some spells are hard to compare just on value. attack speed spells
@@ -5628,6 +5635,22 @@ bool Mob::UseBardSpellLogic(uint16 spell_id, int slot)
 		slot <= MAX_PP_MEMSPELL &&
 		IsBardSong(spell_id)
 	);
+}
+
+uint32 Mob::SpellRecastMod(uint32 spell_id, uint32 base_recast) {
+	switch (spell_id) {
+		case 4585: {
+			const SPDat_Spell_Struct &spell = spells[spell_id];
+			uint8 level_to_use = spell.classes[GetClass() - 1];
+			base_recast -= (GetLevel() - level_to_use) * 60;
+			if (base_recast < 1800)
+				base_recast = 1800;
+			break;
+		}
+		default:
+			break;
+	}
+	return base_recast;
 }
 
 int Mob::GetCasterLevel(uint16 spell_id) {
