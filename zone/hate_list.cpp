@@ -157,18 +157,26 @@ Mob* HateList::GetDamageTopOnHateList(Mob* hater)
 	return current;
 }
 
-Mob* HateList::GetClosestEntOnHateList(Mob *hater) {
+Mob* HateList::GetClosestEntOnHateList(Mob *hater, bool clients_first) {
 	Mob* close_entity = nullptr;
 	float close_distance = 99999.9f;
-	float this_distance;
+	float hatelist_distance;
 
 	auto iterator = list.begin();
 	while (iterator != list.end()) {
-		this_distance = DistanceSquaredNoZ((*iterator)->entity_on_hatelist->GetPosition(), hater->GetPosition());
-		if ((*iterator)->entity_on_hatelist != nullptr && this_distance <= close_distance) {
-			close_distance = this_distance;
-			close_entity = (*iterator)->entity_on_hatelist;
+		hatelist_distance = DistanceSquaredNoZ((*iterator)->entity_on_hatelist->GetPosition(), hater->GetPosition());
+		Mob* hatelist_entity = (*iterator)->entity_on_hatelist;
+		if (hatelist_entity != nullptr) {
+			if (close_entity == nullptr
+			|| (hatelist_entity->IsClient() && close_entity->IsNPC() && hatelist_entity->CombatRange(hater))
+			|| (hatelist_entity->IsNPC() && close_entity->IsClient() && !close_entity->CombatRange(hater))
+			|| (hatelist_distance <= close_distance && ( (close_entity->IsClient() && hatelist_entity->IsClient()) 
+														|| (close_entity->IsNPC() && hatelist_entity->IsNPC())))) {
+				close_distance = hatelist_distance;
+				close_entity = hatelist_entity;
+			}
 		}
+
 		++iterator;
 	}
 
