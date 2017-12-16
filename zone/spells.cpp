@@ -4023,8 +4023,46 @@ bool Mob::SpellOnTarget(uint16 spell_id, Mob *spelltar, bool reflect, bool use_r
 		}
 	}
 	else if (IsBeneficialSpell(spell_id) && !IsSummonPCSpell(spell_id)) {
-		entity_list.AddHealAggro(spelltar, this,
-			CheckHealAggroAmount(spell_id, spelltar, (spelltar->GetMaxHP() - spelltar->GetHP())));
+
+		int32 aggro_amount = CheckHealAggroAmount(spell_id, spelltar, (spelltar->GetMaxHP() - spelltar->GetHP()));
+
+		if(!isproc) {
+			// if the spell is not a proc it should attempt to generate aggro
+			// This is what is refered to as the witness check
+			// the witness check as far as P2002 knows is 40-50% change based on some articles and research
+			// An old cleric thread from early 2004 has some clerics running tests, and they also came up with the 50% chance for heals to aggro, testing on low level NPCs: http://www.eqclerics.org/forums/show...t=17872&page=3
+			// however their sample sizes are small. The data does indicate that rates are not the same for every spell. Endure Fire for example was witnessed at a lower rate (about 40-45%) than most other spells I had tested-- those were around 50
+			
+			int chance = 30;
+			
+			if(IsBuffSpell(spell_id)) {
+				chance = 20;
+			}
+
+			if (IsHealOverTimeSpell(spell_id) || IsCompleteHealSpell(spell_id) || IsFastHealSpell(spell_id) || IsVeryFastHealSpell(spell_id)) {
+				chance += 10;
+			}
+
+			// Its indicated that it maybe skill based and not level based so lets use specialization to add more chance.
+			float skill = GetSpecializeSkillValue(spell_id);
+			if (skill > 200 and skill < 235) {
+				chance += 5;
+			} else if (skill > 235) {
+				chance += 10;
+			} else {
+				chance += 3;
+			}
+
+			if (zone->random.Roll(chance)) {
+				entity_list.AddHealAggro(spelltar, this, aggro_amount);
+			}
+		} else {
+			// Aggro from procs is capped at 400
+			if (aggro_amount > 400) {
+				aggro_amount = 400;
+			}
+			entity_list.AddHealAggro(spelltar, this, aggro_amount);
+		}
 	}
 
 	// make sure spelltar is high enough level for the buff

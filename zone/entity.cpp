@@ -3369,24 +3369,15 @@ void EntityList::AddHealAggro(Mob *target, Mob *caster, uint16 hate)
 
 	for (auto &e : npc_list) {
 		auto &npc = e.second;
-		if (!npc->CheckAggro(target) || npc->IsFeared() || npc->IsPet())
+		if (!npc->CheckAggro(target) || npc->IsFeared() || npc->IsPet()) {
 			continue;
+		}
 
-		// P2002 Change
-		// Scott-Cocain This is not something at exsisted in our era and explains why rune is not working as intended on aggro weapons
-		// P2002 Change
-		// 50% chance for heals/runes/beneficial spells to not add any hate
-		//if (zone->random.Roll(50)) // witness check -- place holder
-			// This is either a level check (con color check?) or a stat roll
-			//continue;
-		// P2002 Change
-		// Scott-cocain This is a patch not past our intended era
-		// P2002 Change
-		//if ((npc->IsMezzed() || npc->IsStunned()) && hate > 4) // patch notes say stunned/mezzed NPCs get a fraction of the hate
-			//npc->AddToHateList(caster, hate / 4); // made up number
-		//else
-			//npc->AddToHateList(caster, hate);
-		npc->AddToHateList(caster, hate);
+		if ((npc->IsMezzed() || npc->IsStunned()) && hate > 4) { // patch notes say stunned/mezzed NPCs get a fraction of the hate
+			npc->AddToHateList(caster, hate / 4);
+		} else {
+			npc->AddToHateList(caster, hate);
+		}
 	}
 }
 
