@@ -3374,8 +3374,11 @@ void EntityList::AddHealAggro(Mob *target, Mob *caster, uint16 hate)
 		}
 
 		if ((npc->IsMezzed() || npc->IsStunned()) && hate > 4) { // patch notes say stunned/mezzed NPCs get a fraction of the hate
-			npc->AddToHateList(caster, hate / 4);
+			int32 aggro_amount = hate / 4;
+			Log(Logs::Detail, Logs::Aggro, "Mezzed Mezzed mob heal aggro amount: %d", aggro_amount);
+			npc->AddToHateList(caster, aggro_amount);
 		} else {
+			Log(Logs::Detail, Logs::Aggro, "Adding Heal aggro amount: %d", hate);
 			npc->AddToHateList(caster, hate);
 		}
 	}

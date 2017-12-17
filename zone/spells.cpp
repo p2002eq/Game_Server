@@ -4037,30 +4037,37 @@ bool Mob::SpellOnTarget(uint16 spell_id, Mob *spelltar, bool reflect, bool use_r
 			
 			if(IsBuffSpell(spell_id)) {
 				chance = 20;
+				Log(Logs::Detail, Logs::Aggro, "Buff Spell setting base witness chance to 20%");
 			}
 
 			if (IsHealOverTimeSpell(spell_id) || IsCompleteHealSpell(spell_id) || IsFastHealSpell(spell_id) || IsVeryFastHealSpell(spell_id)) {
 				chance += 10;
+				Log(Logs::Detail, Logs::Aggro, "Heal Spell increating witness chance by 10");
 			}
 
 			// Its indicated that it maybe skill based and not level based so lets use specialization to add more chance.
 			float skill = GetSpecializeSkillValue(spell_id);
 			if (skill > 200 and skill < 235) {
+				Log(Logs::Detail, Logs::Aggro, "Spell skill between 200 and 235 increating witness chance by 5");
 				chance += 5;
 			} else if (skill > 235) {
+				Log(Logs::Detail, Logs::Aggro, "Spell skill over 235 increating witness chance by 10");
 				chance += 10;
 			} else {
-				chance += 3;
+				Log(Logs::Detail, Logs::Aggro, "No Specialization in this Spell Skill no chance increae");
 			}
 
+			Log(Logs::Detail, Logs::Aggro, "Witness Chance: %d", chance);
 			if (zone->random.Roll(chance)) {
+				Log(Logs::Detail, Logs::Aggro, "Witness Check passed no aggro given");
 				entity_list.AddHealAggro(spelltar, this, aggro_amount);
 			}
 		} else {
 			// Aggro from procs is capped at 400
-			if (aggro_amount > 400) {
-				aggro_amount = 400;
+			if (aggro_amount > RuleI(Aggro, MaxScalingProcAggro)) {
+				aggro_amount = RuleI(Aggro, MaxScalingProcAggro);
 			}
+			Log(Logs::Detail, Logs::Aggro, "Adding bebefical spell aggro amount %d to %s", aggro_amount, spelltar->GetCleanName());
 			entity_list.AddHealAggro(spelltar, this, aggro_amount);
 		}
 	}
