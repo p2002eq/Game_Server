@@ -4296,11 +4296,15 @@ void Mob::TryCriticalHit(Mob *defender, DamageHitInfo &hit, ExtraAttackOptions *
 				defender->GetBodyType() == BT_Vampire)) {
 				int holyforge_bonus = 0;
 				if (CastToClient()->FindBuff(DISC_HOLYFORGE)) {
+						Log(Logs::Detail, Logs::Combat, "Holyforge enabled");
 						holyforge_bonus = 2;
 				}
 				int SlayRateBonus = aabonuses.SlayUndead[0] + itembonuses.SlayUndead[0] + spellbonuses.SlayUndead[0] + holyforge_bonus;
+
+					Log(Logs::Detail, Logs::Combat, "SlayBonus: %d", SlayRateBonus);
 				if (SlayRateBonus) {
 					float slayChance = static_cast<float>(SlayRateBonus) / 100.0f;
+					Log(Logs::Detail, Logs::Combat, "SlayChance: %d", slayChance);
 					if (zone->random.Roll(slayChance)) {
 						int SlayDmgBonus = std::max(
 						{ aabonuses.SlayUndead[1], itembonuses.SlayUndead[1], spellbonuses.SlayUndead[1], holyforge_bonus });
