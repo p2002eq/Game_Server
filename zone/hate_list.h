@@ -39,7 +39,7 @@ public:
 	HateList();
 	~HateList();
 
-	Mob *GetClosestEntOnHateList(Mob *hater);
+	Mob *GetClosestEntOnHateList(Mob *hater, bool clients_first = true);
 	Mob *GetDamageTopOnHateList(Mob *hater);
 	Mob *GetEntWithMostHateOnList(Mob *center, Mob *skip = nullptr);
 	Mob *GetEntOnHateListByID(uint16 mobId);

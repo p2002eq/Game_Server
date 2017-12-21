@@ -2070,37 +2070,35 @@ bool Mob::SpellFinished(uint16 spell_id, Mob *spell_target, CastingSlot slot, ui
 	if(!IsValidSpell(spell_id))
 		return false;
 
-	if( spells[spell_id].zonetype == 1 && !zone->CanCastOutdoor()){
-		if(IsClient()){
-				if(!CastToClient()->GetGM()){
-					Message_StringID(13, CAST_OUTDOORS);
-					return false;
-				}
+	if (spells[spell_id].zonetype == 1 && !zone->CanCastOutdoor()) {
+		if (IsClient()) {
+			if (!CastToClient()->GetGM()) {
+				Message_StringID(13, CAST_OUTDOORS);
+				return false;
 			}
 		}
+	}
 
-	if(IsEffectInSpell(spell_id, SE_Levitate) && !zone->CanLevitate()){
-			if(IsClient()){
-				if(!CastToClient()->GetGM()){
-					Message(13, "You can't levitate in this zone.");
-					return false;
-				}
+	if (IsEffectInSpell(spell_id, SE_Levitate) && !zone->CanLevitate()) {
+		if (IsClient()) {
+			if (!CastToClient()->GetGM()) {
+				Message(13, "You can't levitate in this zone.");
+				return false;
 			}
 		}
+	}
 
-	if(IsClient() && !CastToClient()->GetGM()){
-
-		if(zone->IsSpellBlocked(spell_id, glm::vec3(GetPosition()))){
+	if (IsClient() && !CastToClient()->GetGM()) {
+		if (zone->IsSpellBlocked(spell_id, glm::vec3(GetPosition()))) {
 			const char *msg = zone->GetSpellBlockedMessage(spell_id, glm::vec3(GetPosition()));
-			if(msg){
+			if (msg) {
 				Message(13, msg);
 				return false;
 			}
-			else{
+			else {
 				Message(13, "You can't cast this spell here.");
 				return false;
 			}
-
 		}
 	}
 
@@ -4025,8 +4023,54 @@ bool Mob::SpellOnTarget(uint16 spell_id, Mob *spelltar, bool reflect, bool use_r
 		}
 	}
 	else if (IsBeneficialSpell(spell_id) && !IsSummonPCSpell(spell_id)) {
-		entity_list.AddHealAggro(spelltar, this,
-			CheckHealAggroAmount(spell_id, spelltar, (spelltar->GetMaxHP() - spelltar->GetHP())));
+
+		int32 aggro_amount = CheckHealAggroAmount(spell_id, spelltar, (spelltar->GetMaxHP() - spelltar->GetHP()));
+
+		if(!isproc) {
+			// if the spell is not a proc it should attempt to generate aggro
+			// This is what is refered to as the witness check
+			// the witness check as far as P2002 knows is 40-50% change based on some articles and research
+			// An old cleric thread from early 2004 has some clerics running tests, and they also came up with the 50% chance for heals to aggro, testing on low level NPCs: http://www.eqclerics.org/forums/show...t=17872&page=3
+			// however their sample sizes are small. The data does indicate that rates are not the same for every spell. Endure Fire for example was witnessed at a lower rate (about 40-45%) than most other spells I had tested-- those were around 50
+			
+			int chance = 30;
+			
+			if(IsBuffSpell(spell_id)) {
+				chance = 20;
+				Log(Logs::Detail, Logs::Aggro, "Buff Spell setting base witness chance to 20%");
+			}
+
+			if (IsHealOverTimeSpell(spell_id) || IsCompleteHealSpell(spell_id) || IsFastHealSpell(spell_id) || IsVeryFastHealSpell(spell_id)) {
+				chance += 10;
+				Log(Logs::Detail, Logs::Aggro, "Heal Spell increating witness chance by 10");
+			}
+
+			// Its indicated that it maybe skill based and not level based so lets use specialization to add more chance.
+			float skill = GetSpecializeSkillValue(spell_id);
+			if (skill > 200 and skill < 235) {
+				Log(Logs::Detail, Logs::Aggro, "Spell skill between 200 and 235 increating witness chance by 5");
+				chance += 5;
+			} else if (skill > 235) {
+				Log(Logs::Detail, Logs::Aggro, "Spell skill over 235 increating witness chance by 10");
+				chance += 10;
+			} else {
+				Log(Logs::Detail, Logs::Aggro, "No Specialization in this Spell Skill no chance increase");
+			}
+
+			Log(Logs::Detail, Logs::Aggro, "Witness Chance: %d", chance);
+			// Roll the witness check if we are a client
+			if (IsClient() && zone->random.Roll(chance)) {
+				Log(Logs::Detail, Logs::Aggro, "Witness Check passed no aggro given");
+				entity_list.AddHealAggro(spelltar, this, aggro_amount);
+			}
+		} else {
+			// Aggro from procs is capped at 400
+			if (aggro_amount > RuleI(Aggro, MaxScalingProcAggro)) {
+				aggro_amount = RuleI(Aggro, MaxScalingProcAggro);
+			}
+			Log(Logs::Detail, Logs::Aggro, "Adding benefical spell aggro amount %d to %s", aggro_amount, spelltar->GetCleanName());
+			entity_list.AddHealAggro(spelltar, this, aggro_amount);
+		}
 	}
 
 	// make sure spelltar is high enough level for the buff
@@ -5649,6 +5693,8 @@ uint32 Mob::SpellRecastMod(uint32 spell_id, uint32 base_recast) {
 				base_recast = 1800;
 			break;
 		}
+		default:
+			break;
 	}
 	return base_recast;
 }
