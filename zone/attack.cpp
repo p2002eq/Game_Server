@@ -4251,12 +4251,13 @@ void Mob::TryCriticalHit(Mob *defender, DamageHitInfo &hit, ExtraAttackOptions *
 	// We either require an innate crit chance or some SPA 169 to crit
 	bool innate_crit = false;
 	int crit_chance = GetCriticalChanceBonus(hit.skill);
-	if ((GetClass() == WARRIOR || GetClass() == BERSERKER) && GetLevel() >= 12)
+	if ((GetClass() == WARRIOR || GetClass() == BERSERKER) && GetLevel() >= 12) {
 		innate_crit = true;
-	else if (GetClass() == RANGER && GetLevel() >= 12 && hit.skill == EQEmu::skills::SkillArchery)
+	} else if (GetClass() == RANGER && GetLevel() >= 12 && hit.skill == EQEmu::skills::SkillArchery) {
 		innate_crit = true;
-	else if (GetClass() == ROGUE && GetLevel() >= 12 && hit.skill == EQEmu::skills::SkillThrowing)
+	} else if (GetClass() == ROGUE && GetLevel() >= 12 && hit.skill == EQEmu::skills::SkillThrowing) {
 		innate_crit = true;
+	}
 
 	// we have a chance to crit!
 	if (innate_crit || crit_chance) {
@@ -4293,12 +4294,20 @@ void Mob::TryCriticalHit(Mob *defender, DamageHitInfo &hit, ExtraAttackOptions *
 			// 1: Try Slay Undead - On P2002 Slay Undead is a critical conversion, not a flat chance per hit
 			if (defender && (defender->GetBodyType() == BT_Undead || defender->GetBodyType() == BT_SummonedUndead ||
 				defender->GetBodyType() == BT_Vampire)) {
-				int SlayRateBonus = aabonuses.SlayUndead[0] + itembonuses.SlayUndead[0] + spellbonuses.SlayUndead[0];
+				int holyforge_bonus = 0;
+				if (CastToClient()->FindBuff(DISC_HOLYFORGE)) {
+						Log(Logs::Detail, Logs::Combat, "Holyforge enabled");
+						holyforge_bonus = 2;
+				}
+				int SlayRateBonus = aabonuses.SlayUndead[0] + itembonuses.SlayUndead[0] + spellbonuses.SlayUndead[0] + holyforge_bonus;
+
+					Log(Logs::Detail, Logs::Combat, "SlayBonus: %d", SlayRateBonus);
 				if (SlayRateBonus) {
 					float slayChance = static_cast<float>(SlayRateBonus) / 100.0f;
+					Log(Logs::Detail, Logs::Combat, "SlayChance: %d", slayChance);
 					if (zone->random.Roll(slayChance)) {
 						int SlayDmgBonus = std::max(
-						{ aabonuses.SlayUndead[1], itembonuses.SlayUndead[1], spellbonuses.SlayUndead[1] });
+						{ aabonuses.SlayUndead[1], itembonuses.SlayUndead[1], spellbonuses.SlayUndead[1], holyforge_bonus });
 						hit.damage_done = std::max(hit.damage_done, hit.base_damage) + 5;
 						hit.damage_done = (hit.damage_done * SlayDmgBonus * crit_mod) / 100;
 
