@@ -6092,23 +6092,25 @@ void Mob::ShieldClear() {
 
 void Mob::Shield(Mob* target, float range_multiplier) {
 
-	if (!target)
+	if (!target) {
+		if (IsClient())
+			Message(13, "You must target a player to use this ability.");
 		return;
+	}
 
-	if (IsClient() && GetClass() != WARRIOR && GetLevel() < 30)
+	if (IsClient() && GetClass() != WARRIOR && GetLevel() < 30) {
 		return;
+	}
 
-	if (IsClient() && !target->IsClient())
+	if (IsClient() && !target->IsClient()) {
 		Message(13, "You must target a player to use this ability.");
 		return;
+	}
 
 	if (IsClient() && !CastToClient()->p_timers.Expired(&database, pTimerShield, false)) {
 		Message(13, "Ability recovery time not yet met.");
 		return;
 	}
-
-	// end current shielding
-	ShieldClear();
 
 	// check if target is in range
 	if (!this->CombatRange(target, range_multiplier)) {
@@ -6116,6 +6118,9 @@ void Mob::Shield(Mob* target, float range_multiplier) {
 			Message(13, "Your target is out of range.");
 		return;
 	}
+
+	// end current shielding
+	ShieldClear();
 
 	shield_target = target;
 	bool ack = false;
