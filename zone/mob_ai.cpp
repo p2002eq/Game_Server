@@ -184,7 +184,7 @@ bool NPC::AICastSpell(Mob* tar, uint8 iChance, uint32 iSpellTypes) {
 					case SpellType_Slow:
 					case SpellType_Debuff: {
 						Mob * debuffee = GetHateRandom();
-                        if (debuffee && manaR >= 10 && zone->random.Roll(70))
+                        if (debuffee && manaR >= 10 && zone->random.Roll(75))
                         { 
                             if (spells[AIspells[i].spellid].priority >= AI_SPELL_MAX_PRIORITY || debuffee->CanBuffStack(AIspells[i].spellid, GetLevel(), true) >= 0)
                             {
@@ -201,7 +201,7 @@ bool NPC::AICastSpell(Mob* tar, uint8 iChance, uint32 iSpellTypes) {
 						break;
 					}
 					case SpellType_Nuke: {
-						if (manaR >= 10 && zone->random.Roll(70))
+						if (manaR >= 10 && zone->random.Roll(75))
                         {
 							if (spells[AIspells[i].spellid].priority >= AI_SPELL_MAX_PRIORITY || tar->CanBuffStack(AIspells[i].spellid, GetLevel(), true) >= 0)
                             {
@@ -219,11 +219,12 @@ bool NPC::AICastSpell(Mob* tar, uint8 iChance, uint32 iSpellTypes) {
 					}
                                          
 					case SpellType_Dispel: {
-						if(zone->random.Roll(15))
+						if(zone->random.Roll(5))
 						{
 							if(spells[AIspells[i].spellid].targettype != ST_AECaster && !checked_los) {
-								if(!CheckLosFN(tar))
+								if(!CheckLosFN(tar)) {
 									return(false);	//cannot see target... we assume that no spell is going to work since we will only be casting detrimental spells in this call
+								}
 								checked_los = true;
 							}
 							if(tar->CountDispellableBuffs() > 0)
