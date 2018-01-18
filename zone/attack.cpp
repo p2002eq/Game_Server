@@ -4353,7 +4353,7 @@ void Mob::TryCriticalHit(Mob *defender, DamageHitInfo &hit, ExtraAttackOptions *
 			"Crit info: %d scaled from: %d", hit.damage_done, og_damage);
 	// a lot of good info: http://giline.versus.jp/shiden/damage_e.htm, http://giline.versus.jp/shiden/su.htm
  
-	Log(Logs::Detail, Logs::Combat, "is undead for slay %b", IsUndeadForSlay());
+	Log(Logs::Detail, Logs::Combat, "is undead for slay %s", IsUndeadForSlay()?"true":"false");
 	// 1: Try Slay Undead
 	if (defender->IsUndeadForSlay())
 	{
