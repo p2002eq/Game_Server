@@ -4367,7 +4367,9 @@ void Mob::TryCriticalHit(Mob *defender, DamageHitInfo &hit, ExtraAttackOptions *
 	if (defender->IsUndeadForSlay())
 	{
 		Log(Logs::Detail, Logs::Combat, "Trying Undead slay");
-		if(zone->random.Int(GetUndeadSlayRate())) {
+		float chance = GetUndeadSlayRate() / 100.0f;
+		if(zone->random.Roll(chance) {
+			Log(Logs::Detail, Logs::Combat, "Slayundead success");
 			DoUndeadSlay(hit, crit_mod);
 			return;
 		}
