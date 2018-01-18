@@ -4366,9 +4366,11 @@ void Mob::TryCriticalHit(Mob *defender, DamageHitInfo &hit, ExtraAttackOptions *
 	// 1: Try Slay Undead
 	if (defender->IsUndeadForSlay())
 	{
-	Log(Logs::Detail, Logs::Combat, "Trying Undead slay");
-		DoUndeadSlay(hit, crit_mod);
-		return;
+		Log(Logs::Detail, Logs::Combat, "Trying Undead slay");
+		if(zone->random.Int(GetUndeadSlayRate())) {
+			DoUndeadSlay(hit, crit_mod);
+			return;
+		}
 	}
 
 	// step 3: check deadly strike
