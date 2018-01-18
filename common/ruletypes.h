@@ -573,6 +573,7 @@ RULE_INT(NPC, NPCToNPCAggroTimerMax, 6000)
 RULE_BOOL(NPC, IgnoreQuestLoot, false)
 RULE_BOOL(NPC, UseClassAsLastName, true) // Uses class archetype as LastName for npcs with none
 RULE_BOOL(NPC, NewLevelScaling, true) // Better level scaling, use old if new formulas would break your server
+RULE_BOOL(NPC, CastOutOfEraSpells, false)
 RULE_CATEGORY_END()
 
 RULE_CATEGORY(Aggro)
