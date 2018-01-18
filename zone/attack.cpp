@@ -4332,6 +4332,7 @@ void Mob::TryCriticalHit(Mob *defender, DamageHitInfo &hit, ExtraAttackOptions *
 		return;
 	}
 #endif
+
 	// is there no damage
 	if (hit.damage_done < 1 || !defender) { return; }
 
@@ -4341,6 +4342,10 @@ void Mob::TryCriticalHit(Mob *defender, DamageHitInfo &hit, ExtraAttackOptions *
 		TryPetCriticalHit(defender, hit);
 		return;
 	}
+
+	if (IsNPC()) { return; } // Npc's can not crit in our era
+
+
 	// are we criting?
 	if (!RollMeleeCritCheck(defender, hit.skill)) { return; };
 
@@ -4361,9 +4366,11 @@ void Mob::TryCriticalHit(Mob *defender, DamageHitInfo &hit, ExtraAttackOptions *
 	// 1: Try Slay Undead
 	if (defender->IsUndeadForSlay())
 	{
-	Log(Logs::Detail, Logs::Combat, "Trying Undead slay");
-		DoUndeadSlay(hit, crit_mod);
-		return;
+		Log(Logs::Detail, Logs::Combat, "Trying Undead slay");
+		if(zone->random.Int(GetUndeadSlayRate())) {
+			DoUndeadSlay(hit, crit_mod);
+			return;
+		}
 	}
 
 	// step 3: check deadly strike
