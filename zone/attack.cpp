@@ -4297,16 +4297,14 @@ void Mob::DoUndeadSlay(DamageHitInfo &hit, int crit_mod)
 	Log(Logs::Detail, Logs::Combat,
 			"Slayundead damage %d", hit.damage_done);
 
-
-
 	int slay_sex;
 	switch(GetGender()) {
-		case MALE:
-			slay_sex = MALE_SLAYUNDEAD;
-			break;
 		case FEMALE:
-		default:
 			slay_sex = FEMALE_SLAYUNDEAD;
+			break;
+		case MALE:
+		default:
+			slay_sex = MALE_SLAYUNDEAD;
 			break;
 	}
 
