@@ -10537,6 +10537,15 @@ void command_showbonusstats(Client *c, const Seperator *sep)
 			c->Message(0, "  Accuracy: %i%%   Divine Save: %i%%", c->GetTarget()->GetSpellBonuses().Accuracy, c->GetTarget()->GetSpellBonuses().DivineSaveChance);
 			c->Message(0, "  Flurry: %i%%     HitChance: %i%% ", c->GetTarget()->GetSpellBonuses().FlurryChance, c->GetTarget()->GetSpellBonuses().HitChance / 15);
 		}
+		if (bAll || (strcasecmp(sep->arg[1], "aa") == 0)) {
+			c->Message(0, " Ambidexterity: %i%% ", c->GetTarget()->GetAABonuses().Ambidexterity);
+			if (c->GetTarget()->IsPet()) {
+				c->Message(0, " PetFlurry: %i%% ", c->GetTarget()->GetAABonuses().PetFlurry);
+				c->Message(0, " PC_Pet_Flurry: %i%% ", c->GetTarget()->GetAABonuses().PC_Pet_Flurry);
+				c->Message(0, " PC_Pet_Rampage: %i%% ", c->GetTarget()->GetAABonuses().PC_Pet_Rampage);
+				c->Message(0, " PetCriticalHit: %i%% ", c->GetTarget()->GetAABonuses().PetCriticalHit);
+			}
+		}
 		c->Message(0, "  Effective Casting Level: %i", c->GetTarget()->GetCasterLevel(0));
 	}
 }
