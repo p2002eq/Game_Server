@@ -2302,7 +2302,7 @@ bool NPC::AI_AddNPCSpells(uint32 iDBSpellsID) {
 
 	for (i=0; i<spell_list->numentries; i++) {
 		if (GetLevel() >= spell_list->entries[i].minlevel && GetLevel() <= spell_list->entries[i].maxlevel && spell_list->entries[i].spellid > 0) {
-			if(GetLevel() > 60 && parentlist->entries[i].minlevel > 60 && !RuleB(NPC, CastOutOfEraSpells)) { continue; } // This was added to stop luclin 60+ npcs from casting POP spells until we release pop
+			if(GetLevel() > 60 && spell_list->entries[i].minlevel > 60 && !RuleB(NPC, CastOutOfEraSpells)) { continue; } // This was added to stop luclin 60+ npcs from casting POP spells until we release pop
 			AddSpellToNPCList(spell_list->entries[i].priority,
 				spell_list->entries[i].spellid, spell_list->entries[i].type,
 				spell_list->entries[i].manacost, spell_list->entries[i].recast_delay,
