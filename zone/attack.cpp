@@ -4222,7 +4222,9 @@ bool Mob::RollMeleeCritCheck(Mob *defender, EQEmu::skills::SkillType skill)
 	int crit_chance = GetCriticalChanceBonus(skill);
 	// Paladin check
 	if (defender->IsUndeadForSlay()) {
+		Log(Logs::Detail, Logs::Combat, "Slayundead crit chance before rate adjustment: %d", crit_chance);
 		crit_chance = crit_chance + GetUndeadSlayRate();
+		Log(Logs::Detail, Logs::Combat, "Slayundead rate alone: %d", GetUndeadSlayRate());
 		Log(Logs::Detail, Logs::Combat, "Slayundead rate: %d", crit_chance);
 	}
 	if (GetClass() == WARRIOR && GetLevel() >= 12) {
@@ -4287,13 +4289,13 @@ void Mob::DoUndeadSlay(DamageHitInfo &hit, int crit_mod)
 	int SlayDmgBonus = std::max(
 			{ aabonuses.SlayUndead[1], itembonuses.SlayUndead[1], spellbonuses.SlayUndead[1] });
 	Log(Logs::Detail, Logs::Combat,
-			"Slayundead bonus", SlayDmgBonus);
+			"Slayundead bonus %d", SlayDmgBonus);
 
 	hit.damage_done = std::max(hit.damage_done, hit.base_damage) + 5;
 	hit.damage_done = (hit.damage_done * SlayDmgBonus * crit_mod) / 100;
 	
 	Log(Logs::Detail, Logs::Combat,
-			"Slayundead damage", hit.damage_done);
+			"Slayundead damage %d", hit.damage_done);
 
 
 
