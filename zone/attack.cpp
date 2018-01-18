@@ -4293,20 +4293,19 @@ void Mob::DoUndeadSlay(DamageHitInfo &hit, int crit_mod)
 
 	hit.damage_done = std::max(hit.damage_done, hit.base_damage) + 5;
 	hit.damage_done = (hit.damage_done * SlayDmgBonus * crit_mod) / 100;
+	hit.damage_done = static_cast<int>(hit.damage_done * RuleR(Combat, SlayDamageAdjustment));
 	
 	Log(Logs::Detail, Logs::Combat,
 			"Slayundead damage %d", hit.damage_done);
 
-
-
 	int slay_sex;
 	switch(GetGender()) {
-		case MALE:
-			slay_sex = MALE_SLAYUNDEAD;
-			break;
 		case FEMALE:
-		default:
 			slay_sex = FEMALE_SLAYUNDEAD;
+			break;
+		case MALE:
+		default:
+			slay_sex = MALE_SLAYUNDEAD;
 			break;
 	}
 
