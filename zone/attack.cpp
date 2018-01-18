@@ -4223,6 +4223,7 @@ bool Mob::RollMeleeCritCheck(Mob *defender, EQEmu::skills::SkillType skill)
 	// Paladin check
 	if (defender->IsUndeadForSlay()) {
 		crit_chance = crit_chance + GetUndeadSlayRate();
+		Log(Logs::Detail, Logs::Combat, "Slayundead rate: %d", crit_chance);
 	}
 	if (GetClass() == WARRIOR && GetLevel() >= 12) {
 		innate_crit = true;
@@ -4285,9 +4286,16 @@ void Mob::DoUndeadSlay(DamageHitInfo &hit, int crit_mod)
 
 	int SlayDmgBonus = std::max(
 			{ aabonuses.SlayUndead[1], itembonuses.SlayUndead[1], spellbonuses.SlayUndead[1] });
+	Log(Logs::Detail, Logs::Combat,
+			"Slayundead bonus", SlayDmgBonus);
 
 	hit.damage_done = std::max(hit.damage_done, hit.base_damage) + 5;
 	hit.damage_done = (hit.damage_done * SlayDmgBonus * crit_mod) / 100;
+	
+	Log(Logs::Detail, Logs::Combat,
+			"Slayundead damage", hit.damage_done);
+
+
 
 	int slay_sex;
 	switch(GetGender()) {
@@ -4344,10 +4352,12 @@ void Mob::TryCriticalHit(Mob *defender, DamageHitInfo &hit, ExtraAttackOptions *
 	Log(Logs::Detail, Logs::Combat,
 			"Crit info: %d scaled from: %d", hit.damage_done, og_damage);
 	// a lot of good info: http://giline.versus.jp/shiden/damage_e.htm, http://giline.versus.jp/shiden/su.htm
-
+ 
+	Log(Logs::Detail, Logs::Combat, "is undead for slay %b", IsUndeadForSlay());
 	// 1: Try Slay Undead
 	if (defender->IsUndeadForSlay())
 	{
+	Log(Logs::Detail, Logs::Combat, "Trying Undead slay");
 		DoUndeadSlay(hit, crit_mod);
 		return;
 	}
