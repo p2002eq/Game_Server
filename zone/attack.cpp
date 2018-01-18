@@ -4301,9 +4301,11 @@ void Mob::DoUndeadSlay(DamageHitInfo &hit, int crit_mod)
 	switch(GetGender()) {
 		case MALE:
 			slay_sex = MALE_SLAYUNDEAD;
+			break;
 		case FEMALE:
 		default:
 			slay_sex = FEMALE_SLAYUNDEAD;
+			break;
 	}
 
 	entity_list.FilteredMessageClose_StringID(
