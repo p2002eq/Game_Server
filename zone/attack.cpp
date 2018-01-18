@@ -4332,6 +4332,7 @@ void Mob::TryCriticalHit(Mob *defender, DamageHitInfo &hit, ExtraAttackOptions *
 		return;
 	}
 #endif
+
 	// is there no damage
 	if (hit.damage_done < 1 || !defender) { return; }
 
@@ -4341,6 +4342,10 @@ void Mob::TryCriticalHit(Mob *defender, DamageHitInfo &hit, ExtraAttackOptions *
 		TryPetCriticalHit(defender, hit);
 		return;
 	}
+
+	if (IsNPC()) { return; } // Npc's can not crit in our era
+
+
 	// are we criting?
 	if (!RollMeleeCritCheck(defender, hit.skill)) { return; };
 
