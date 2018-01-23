@@ -1746,6 +1746,7 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial, int level_ove
 #endif
 				if(IsClient())	// NPCs can't ride
 				{
+					CastToClient()->SetFeigned(false);
 					CastToClient()->SummonHorse(spell_id);
 				}
 
