@@ -3624,18 +3624,25 @@ void Mob::CommonDamage(Mob* attacker, int &damage, const uint16 spell_id, const 
 		else
 			a->special = 0;
 
-		if (IsClient())
+		if (IsClient()) {
 			a->meleepush_xy = attacker ? attacker->GetHeading() * 360.0f / 256.0f : 0.0f;
-		else
+		} else {
 			a->meleepush_xy = attacker ? attacker->GetHeading() * 2.0f / 256.0f * 3.14159265f : 0.0f;
+		}
 
 		if (RuleB(Combat, MeleePush) && damage > 0 && !IsRooted() &&
 			(IsClient() || zone->random.Roll(RuleI(Combat, MeleePushChance)))) {
 			a->force = EQEmu::skills::GetSkillMeleePushForce(skill_used);
-			if (RuleR(Combat, MeleePushForceClient) && attacker->IsClient())
+			if (RuleR(Combat, MeleePushForceClient) && attacker->IsClient()) {
 				a->force += a->force*RuleR(Combat, MeleePushForceClient);
-			if (RuleR(Combat, MeleePushForcePet) && attacker->IsPet())
+			}
+			if (RuleR(Combat, MeleePushForcePet) && attacker->IsPet()) {
 				a->force += a->force*RuleR(Combat, MeleePushForcePet);
+			}
+			// dont push if we are damaging self
+			if (GetID() == attacker->GetID() && spell_id != SPELL_UNKNOWN) {
+				a->force = 0.0f;	
+			}
 			// update NPC stuff
 			float size_mod = GetSize() / RuleR(Combat, MeleePushSizeMod);
 			auto new_pos = glm::vec3(GetX() + (a->force * std::sin(a->meleepush_xy)) + (size_mod * std::sin(a->meleepush_xy)),
