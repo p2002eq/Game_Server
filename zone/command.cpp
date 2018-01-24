@@ -10536,6 +10536,10 @@ void command_showbonusstats(Client *c, const Seperator *sep)
 			c->Message(0, "  Target Spell Bonuses:");
 			c->Message(0, "  Accuracy: %i%%   Divine Save: %i%%", c->GetTarget()->GetSpellBonuses().Accuracy, c->GetTarget()->GetSpellBonuses().DivineSaveChance);
 			c->Message(0, "  Flurry: %i%%     HitChance: %i%% ", c->GetTarget()->GetSpellBonuses().FlurryChance, c->GetTarget()->GetSpellBonuses().HitChance / 15);
+			c->Message(0, " Crit: %i%%", c->GetTarget()->GetSpellBonuses().CriticalHitChance);
+			if (c->GetTarget()->GetClass() == PALADIN) {
+				c->Message(0, "Slay Rate: %i%%m Slay Damage Mod: %i%%", c->GetTarget()->GetSpellBonuses().SlayUndead[0], c->GetTarget()->GetSpellBonuses().SlayUndead[1]);
+			}
 		}
 		if (bAll || (strcasecmp(sep->arg[1], "aa") == 0)) {
 			c->Message(0, " Ambidexterity: %i%% ", c->GetTarget()->GetAABonuses().Ambidexterity);
