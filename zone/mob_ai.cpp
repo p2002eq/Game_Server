@@ -47,7 +47,7 @@ extern Zone *zone;
 #endif
 
 //NOTE: do NOT pass in beneficial and detrimental spell types into the same call here!
-bool NPC::AICastSpell(Mob* tar, uint8 iChance, uint32 iSpellTypes) {
+bool NPC::AICastSpell(Mob* tar, uint8 iChance, uint32 iSpellTypes, bool bInnates) {
 	if (!tar)
 		return false;
 
@@ -61,7 +61,8 @@ bool NPC::AICastSpell(Mob* tar, uint8 iChance, uint32 iSpellTypes) {
 	// Any sane mob would cast if they can.
 	bool cast_only_option = (IsRooted() && !CombatRange(tar));
 
-	if (!cast_only_option && iChance < 100) {
+	// innates are always attempted
+	if (!cast_only_option && iChance < 100 && !bInnates) {
 		if (zone->random.Int(0, 100) >= iChance)
 			return false;
 	}
@@ -84,6 +85,12 @@ bool NPC::AICastSpell(Mob* tar, uint8 iChance, uint32 iSpellTypes) {
 			//return false;
 			continue;
 		}
+
+		if ((AIspells[i].priority == 0 && !bInnates) || (AIspells[i].priority != 0 && bInnates)) {
+			// so "innate" spells are special and spammed a bit
+			// we define an innate spell as a spell with priority 0
+			continue;
+		}
 		if (iSpellTypes & AIspells[i].type) {
 			// manacost has special values, -1 is no mana cost, -2 is instant cast (no mana)
 			int32 mana_cost = AIspells[i].manacost;
@@ -99,7 +106,7 @@ bool NPC::AICastSpell(Mob* tar, uint8 iChance, uint32 iSpellTypes) {
 				dist2 <= spells[AIspells[i].spellid].range*spells[AIspells[i].spellid].range
 				)
 				&& (mana_cost <= GetMana() || GetMana() == GetMaxMana())
-				&& (AIspells[i].time_cancast + (zone->random.Int(0, 4) * 1000)) <= Timer::GetCurrentTime() //break up the spelling casting over a period of time.
+				&& (AIspells[i].time_cancast + (zone->random.Int(0, 4) * 500)) <= Timer::GetCurrentTime() //break up the spelling casting over a period of time.
 				) {
 
 #if MobAI_DEBUG_Spells >= 21
@@ -126,7 +133,7 @@ bool NPC::AICastSpell(Mob* tar, uint8 iChance, uint32 iSpellTypes) {
 					}
 					case SpellType_Root: {
 						Mob *rootee = GetHateRandom();
-						if (rootee && !rootee->IsRooted() && zone->random.Roll(50)
+						if (rootee && !rootee->IsRooted() && !rootee->IsFeared() && (bInnates || zone->random.Roll(50))
 							&& rootee->DontRootMeBefore() < Timer::GetCurrentTime()
 							&& rootee->CanBuffStack(AIspells[i].spellid, GetLevel(), true) >= 0
 							) {
@@ -165,7 +172,7 @@ bool NPC::AICastSpell(Mob* tar, uint8 iChance, uint32 iSpellTypes) {
 					}
 
 					case SpellType_InCombatBuff: {
-						if(zone->random.Roll(50))
+						if(bInnates || zone->random.Roll(50))
 						{
 							AIDoSpellCast(i, tar, mana_cost);
 							return true;
@@ -184,42 +191,36 @@ bool NPC::AICastSpell(Mob* tar, uint8 iChance, uint32 iSpellTypes) {
 					case SpellType_Slow:
 					case SpellType_Debuff: {
 						Mob * debuffee = GetHateRandom();
-                        if (debuffee && manaR >= 10 && zone->random.Roll(75))
-                        { 
-                            if (spells[AIspells[i].spellid].priority >= AI_SPELL_MAX_PRIORITY || debuffee->CanBuffStack(AIspells[i].spellid, GetLevel(), true) >= 0)
-                            {
-                                if (spells[AIspells[i].spellid].targettype != ST_AECaster && !checked_los)
-                                {
-                                    if (!CheckLosFN(debuffee))
-                                        return false;
-                                    checked_los = true;
-                                }
-                                AIDoSpellCast(i, debuffee, mana_cost);
-                                return true;
-                            }
-                        }
+						if (debuffee && manaR >= 10 && (bInnates || zone->random.Roll(75)) &&
+								debuffee->CanBuffStack(AIspells[i].spellid, GetLevel(), true) >= 0) {
+							if (!checked_los) {
+								if (!CheckLosFN(debuffee))
+									return false;
+								checked_los = true;
+							}
+							AIDoSpellCast(i, debuffee, mana_cost);
+							return true;
+						}
 						break;
 					}
 					case SpellType_Nuke: {
-						if (manaR >= 10 && zone->random.Roll(75))
-                        {
-							if (spells[AIspells[i].spellid].priority >= AI_SPELL_MAX_PRIORITY || tar->CanBuffStack(AIspells[i].spellid, GetLevel(), true) >= 0)
-                            {
-                                if(spells[AIspells[i].spellid].targettype != ST_AECaster && !checked_los)
-                                {
-                                    if(!CheckLosFN(tar))
-                                        return(false);	//cannot see target... we assume that no spell is going to work since we will only be casting detrimental spells in this call
-                                    checked_los = true;
-                                }
-                                AIDoSpellCast(i, tar, mana_cost);
-                                return true;
-                            }
-                        }
+						if (
+							manaR >= 10 && (bInnates || zone->random.Roll(75))
+							&& tar->CanBuffStack(AIspells[i].spellid, GetLevel(), false) >= 0 // saying it's a nuke here, AI shouldn't care too much if overwriting
+							) {
+							if(!checked_los) {
+								if(!CheckLosFN(tar))
+									return(false);	//cannot see target... we assume that no spell is going to work since we will only be casting detrimental spells in this call
+								checked_los = true;
+							}
+							AIDoSpellCast(i, tar, mana_cost);
+							return true;
+						}
 						break;
 					}
                                          
 					case SpellType_Dispel: {
-						if(zone->random.Roll(5))
+						if(bInnates || zone->random.Roll(5))
 						{
 							if(spells[AIspells[i].spellid].targettype != ST_AECaster && !checked_los) {
 								if(!CheckLosFN(tar)) {
@@ -236,7 +237,7 @@ bool NPC::AICastSpell(Mob* tar, uint8 iChance, uint32 iSpellTypes) {
 						break;
 					}
 					case SpellType_Mez: {
-						if(zone->random.Roll(20))
+						if(bInnates || zone->random.Roll(20))
 						{
 							Mob * mezTar = nullptr;
 							mezTar = entity_list.GetTargetForMez(this);
@@ -252,7 +253,7 @@ bool NPC::AICastSpell(Mob* tar, uint8 iChance, uint32 iSpellTypes) {
 
 					case SpellType_Charm:
 					{
-						if(!IsPet() && zone->random.Roll(20))
+						if(!IsPet() && (bInnates || zone->random.Roll(20)))
 						{
 							Mob * chrmTar = GetHateRandom();
 							if(chrmTar && chrmTar->CanBuffStack(AIspells[i].spellid, GetLevel(), true) >= 0)
@@ -266,7 +267,7 @@ bool NPC::AICastSpell(Mob* tar, uint8 iChance, uint32 iSpellTypes) {
 
 					case SpellType_Pet: {
 						//keep mobs from recasting pets when they have them.
-						if (!IsPet() && !GetPetID() && zone->random.Roll(25)) {
+						if (!IsPet() && !GetPetID() && (bInnates || zone->random.Roll(25))) {
 							AIDoSpellCast(i, tar, mana_cost);
 							return true;
 						}
@@ -274,7 +275,7 @@ bool NPC::AICastSpell(Mob* tar, uint8 iChance, uint32 iSpellTypes) {
 					}
 					case SpellType_Lifetap: {
 						if (GetHPRatio() <= 95
-							&& zone->random.Roll(50)
+							&& (bInnates || zone->random.Roll(50))
 							&& tar->CanBuffStack(AIspells[i].spellid, GetLevel(), true) >= 0
 							) {
 							if(spells[AIspells[i].spellid].targettype != ST_AECaster && !checked_los) {
@@ -290,7 +291,7 @@ bool NPC::AICastSpell(Mob* tar, uint8 iChance, uint32 iSpellTypes) {
 					case SpellType_Snare: {
 						if (
 							!tar->IsRooted()
-							&& zone->random.Roll(50)
+							&& (bInnates || zone->random.Roll(50))
 							&& tar->DontSnareMeBefore() < Timer::GetCurrentTime()
 							&& tar->CanBuffStack(AIspells[i].spellid, GetLevel(), true) >= 0
 							) {
@@ -308,7 +309,7 @@ bool NPC::AICastSpell(Mob* tar, uint8 iChance, uint32 iSpellTypes) {
 					}
 					case SpellType_DOT: {
 						if (
-							zone->random.Roll(60)
+							(bInnates || zone->random.Roll(60))
 							&& tar->DontDotMeBefore() < Timer::GetCurrentTime()
 							&& tar->CanBuffStack(AIspells[i].spellid, GetLevel(), true) >= 0
 							) {
@@ -534,8 +535,8 @@ void NPC::AI_Start(uint32 iMoveDelay) {
 		AIautocastspell_timer = std::unique_ptr<Timer>(new Timer(1000));
 		AIautocastspell_timer->Disable();
 	} else {
-		AIautocastspell_timer = std::unique_ptr<Timer>(new Timer(750));
-		AIautocastspell_timer->Start(RandomTimer(0, 15000), false);
+		AIautocastspell_timer = std::unique_ptr<Timer>(new Timer(500));
+		AIautocastspell_timer->Start(RandomTimer(0, 300), false);
 	}
 
 	if (NPCTypedata) {
@@ -1880,7 +1881,7 @@ void NPC::AI_Event_SpellCastFinished(bool iCastSucceeded, uint16 slot) {
 					recovery_time += spells[AIspells[casting_spell_AIindex].spellid].recovery_time;
 					if (AIspells[casting_spell_AIindex].recast_delay >= 0)
 					{
-						if (AIspells[casting_spell_AIindex].recast_delay < 10000)
+						if (AIspells[casting_spell_AIindex].recast_delay < 1000)
 							AIspells[casting_spell_AIindex].time_cancast = Timer::GetCurrentTime() + (AIspells[casting_spell_AIindex].recast_delay*1000);
 					}
 					else
@@ -1903,14 +1904,17 @@ bool NPC::AI_EngagedCastCheck() {
 
 		Log(Logs::Detail, Logs::AI, "Engaged autocast check triggered. Trying to cast healing spells then maybe offensive spells.");
 
-		// try casting a heal or gate
-		if (!AICastSpell(this, AISpellVar.engaged_beneficial_self_chance, SpellType_Heal | SpellType_Escape | SpellType_InCombatBuff)) {
-			// try casting a heal on nearby
-			if (!entity_list.AICheckCloseBeneficialSpells(this, AISpellVar.engaged_beneficial_other_chance, MobAISpellRange, SpellType_Heal)) {
-				//nobody to heal, try some detrimental spells.
-				if(!AICastSpell(GetTarget(), AISpellVar.engaged_detrimental_chance, SpellType_Nuke | SpellType_Lifetap | SpellType_DOT | SpellType_Dispel | SpellType_Mez | SpellType_Slow | SpellType_Debuff | SpellType_Charm | SpellType_Root)) {
-					//no spell to cast, try again soon.
-					AIautocastspell_timer->Start(RandomTimer(AISpellVar.engaged_no_sp_recast_min, AISpellVar.engaged_no_sp_recast_max), false);
+		// first try innate (spam) spells
+		if(!AICastSpell(GetTarget(), 0, SpellType_Nuke | SpellType_Lifetap | SpellType_DOT | SpellType_Dispel | SpellType_Mez | SpellType_Slow | SpellType_Debuff | SpellType_Charm | SpellType_Root, true)) {
+			// try casting a heal or gate
+			if (!AICastSpell(this, AISpellVar.engaged_beneficial_self_chance, SpellType_Heal | SpellType_Escape | SpellType_InCombatBuff)) {
+				// try casting a heal on nearby
+				if (!entity_list.AICheckCloseBeneficialSpells(this, AISpellVar.engaged_beneficial_other_chance, MobAISpellRange, SpellType_Heal)) {
+					//nobody to heal, try some detrimental spells.
+					if(!AICastSpell(GetTarget(), AISpellVar.engaged_detrimental_chance, SpellType_Nuke | SpellType_Lifetap | SpellType_DOT | SpellType_Dispel | SpellType_Mez | SpellType_Slow | SpellType_Debuff | SpellType_Charm | SpellType_Root)) {
+						//no spell to cast, try again soon.
+						AIautocastspell_timer->Start(RandomTimer(AISpellVar.engaged_no_sp_recast_min, AISpellVar.engaged_no_sp_recast_max), false);
+					}
 				}
 			}
 		}
@@ -1925,10 +1929,13 @@ bool NPC::AI_PursueCastCheck() {
 		AIautocastspell_timer->Disable();	//prevent the timer from going off AGAIN while we are casting.
 
 		Log(Logs::Detail, Logs::AI, "Engaged (pursuing) autocast check triggered. Trying to cast offensive spells.");
-		if(!AICastSpell(GetTarget(), AISpellVar.pursue_detrimental_chance, SpellType_Root | SpellType_Nuke | SpellType_Lifetap | SpellType_Snare | SpellType_DOT | SpellType_Dispel | SpellType_Mez | SpellType_Slow | SpellType_Debuff)) {
-			//no spell cast, try again soon.
-			AIautocastspell_timer->Start(RandomTimer(AISpellVar.pursue_no_sp_recast_min, AISpellVar.pursue_no_sp_recast_max), false);
-		} //else, spell casting finishing will reset the timer.
+		// checking innate (spam) spells first
+		if(!AICastSpell(GetTarget(), AISpellVar.pursue_detrimental_chance, SpellType_Root | SpellType_Nuke | SpellType_Lifetap | SpellType_Snare | SpellType_DOT | SpellType_Dispel | SpellType_Mez | SpellType_Slow | SpellType_Debuff, true)) {
+			if(!AICastSpell(GetTarget(), AISpellVar.pursue_detrimental_chance, SpellType_Root | SpellType_Nuke | SpellType_Lifetap | SpellType_Snare | SpellType_DOT | SpellType_Dispel | SpellType_Mez | SpellType_Slow | SpellType_Debuff)) {
+				//no spell cast, try again soon.
+				AIautocastspell_timer->Start(RandomTimer(AISpellVar.pursue_no_sp_recast_min, AISpellVar.pursue_no_sp_recast_max), false);
+			} //else, spell casting finishing will reset the timer.
+		}
 		return(true);
 	}
 	return(false);

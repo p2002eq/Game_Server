@@ -1,5 +1,87 @@
 EQEMu Changelog (Started on Sept 24, 2003 15:50)
 -------------------------------------------------------
+== 01/28/2018 ==
+Mackal: Spell AI tweaks
+
+AI spells are treated as "innate" spells (devs use this term, and I think this is what they mean by it)
+These spells are spammed by the NPC, lots of encounters on live work like this and this will greatly reduce
+the need to do quest scripting on these types of encounters.
+
+You can safely run update npc_spells_entries set priority = priority + 1 where priority >= 0; if you want to disable this new behavior
+
+== 10/08/2017 ==
+Mackal: Rework regens
+
+Regen will now match whats reported by modern clients, besides where they lie due to known bugs
+
+HP and END regens are now based on the BaseData.txt values allowing easy customization
+Those cases:
+	- The client always applies hunger penalties, it appears they don't exist anymore on live you can turn them on with a rule
+	- The way the client gets buff mana/end regen benefits incorrectly applies the bard mod making these values lie sometimes
+
+== 9/17/2017 ==
+Akkadius: Add model/race offset to FixZ calc (KLS)
+Akkadius: Fix 95% of food/water consumption issues, if there are additional modifiers for race/class combos - those will need to be applied
+
+Stages should be put in place if not already:
+https://wiki.project1999.com/Food_and_drink#Stages_of_Hunger_and_Thirst
+
+Values stored in the database are 0-6000, previously we capped it at 6000 but previous math would have normal values in the 60k+ range in order for food to be consumed at a reasonable rate. We are now using more native logic where 1 = 1 minute, following logic:
+
+(Minutes)
+0 -  5	- This is a snack.
+6 -  20	- This is a meal.
+21 - 30	- This is a hearty meal.
+31 - 40	- This is a banquet size meal.
+41 - 50	- This meal is a feast!
+51 - 60	- This is an enduring meal!
+61 - X	- This is a miraculous meal!
+
+== 7/14/2017 ==
+Akkadius: HP Update tuning - HP Updates are now forced when a client is targeted
+Akkadius: Client position updates should be smoother (granted the client has a good connection)
+	- Clients should also no longer randomly disappear 
+
+== 7/11/2017 ==
+Akkadius: Raid/Group/XTarget HP/Mana/Endurance updates now only send when percentage changes
+Akkadius: Raid/Group Mana/Endurance updates should now update real-time once again
+Akkadius: Fixed an issue with clients looking like they are 'skipping' when they are moving in view of another client
+Akkadius: Fixed an issue with NPC's who are ghosted in plain view of a client when they are not really there
+
+== 7/9/2017 ==
+Akkadius: Fix HP update issues, rework logic for more accurate HP updates
+Akkadius: Massive reductions in unnecessary network traffic especially during high spam combat fights
+	- HP Updates now only send to others when HP percentage changes (0-100%)
+		- HP Updates were sending excessively even during idle zones when HP wasn't changing at all
+	- Attack animations now only send once per second versus up to a hundred times a second per Mob/Client
+	- 17,000 OP_ClientUpdate packets per second have been observed in combat scenarios, some of the major culprits have been
+		throttled without affecting what the client should see
+	- Before and After packet differences under similar load/tests (Packets per second)
+		- 7,000 - 8,000 	OP_Animation pps	After: 600-800 pps
+		- 13,0000 - 17,000 	OP_MobHealth pps	After: 1-10 pps
+		- 15,0000 - 20,000 	OP_ClientUpdate pps	After: 500-1,000 pps
+	- Packet reports from a 46 client test here:
+		https://gist.github.com/Akkadius/28b7ad2fdd82bdd15ea737c68f404346
+	- Servers who use Marquee HP updates will also recieve far less packet spam as they will only be sent when HP changes
+
+== 7/1/2017 ==
+Akkadius: Resolve issues with NPC's hopping to the ceiling in small corridors
+Akkadius: Improved grounding issues with NPC's during combat
+Akkadius: Improved scenarios where NPC's need to be dragged out of the ground - they should correct themselves far more consistently
+	- Scenarios where an NPC is coming up from the bottom floor, or from the top floor, they will correct much better
+	- A video of these tests can be found here: https://www.youtube.com/watch?v=HtC7bVNM7ZQ&feature=youtu.be
+
+== 6/28/2017 ==
+Akkadius: Fixed issues with Z correctness when NPCs are pathing on normal grids
+Akkadius: Fixed issues with Z correctness when NPCs are engaged with players following
+Akkadius: NPC corpses should fall into the ground far less
+
+== 6/25/2017 ==
+Akkadius: New rules made by developers are now automatically created when world boots up, this keeps 
+	from having to issue schema SQL updates every time rules are added.
+	- Whenever a rule isn't present in the database, it will be automatically created
+Akkadius: Sped up saylink retrieval x1000 helpful for dialogues, plugins with many saylinks
+
 == 4/16/2017 ==
 KLS: Merge eqstream branch
 	-UDP client stack completely rewritten should both have better throughput and recover better (peq has had far fewer reports of desyncs).
