@@ -1290,15 +1290,12 @@ void EntityList::SendZoneSpawnsBulk(Client *client)
 			delaypkt = false;
 			if (DistanceSquared(cpos, spos) > dmax || (spawn->IsClient() && (spawn->GetRace() == MINOR_ILL_OBJ || spawn->GetRace() == TREE)))
 				delaypkt = true;
-
-			if (spawn->GetBaseRace() != spawn->GetRace()) {
-				delaypkt = true;
-			}
 			
 			if (delaypkt) {
 				app = new EQApplicationPacket;
 				spawn->CreateSpawnPacket(app, client);
 				client->QueuePacket(app, true, Client::CLIENT_CONNECTED);
+				spawn->SendArmorAppearance(client);
 				safe_delete(app);
 			}
 			else {
