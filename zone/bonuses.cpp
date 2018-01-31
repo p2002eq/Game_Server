@@ -1580,16 +1580,16 @@ void Mob::ApplySpellsBonuses(uint16 spell_id, uint8 casterlevel, StatBonuses *ne
 				if (WornType){
 					if (RuleB(Spells, UseAdditiveFocusFromWornSlot))
 						new_bonus->FocusEffectsWorn[focus] += spells[spell_id].base[i];
-				}
-
-				else
+				} else {
 					new_bonus->FocusEffects[focus] = static_cast<uint8>(spells[spell_id].effectid[i]);
+				}
 
 				continue;
 			}
 
-			if (WornType && (RuleI(Spells, AdditiveBonusWornType) == WornType))
+			if (WornType && (RuleI(Spells, AdditiveBonusWornType) == WornType)) {
 				AdditiveWornBonus = true;
+			}
 
 			effectid = spells[spell_id].effectid[i];
 			effect_value = CalcSpellEffectValue(spell_id, i, casterlevel, instrument_mod, nullptr, ticsremaining, casterId);
