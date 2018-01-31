@@ -1295,7 +1295,6 @@ void EntityList::SendZoneSpawnsBulk(Client *client)
 				app = new EQApplicationPacket;
 				spawn->CreateSpawnPacket(app, client);
 				client->QueuePacket(app, true, Client::CLIENT_CONNECTED);
-				spawn->SendArmorAppearance(client);
 				safe_delete(app);
 			}
 			else {
