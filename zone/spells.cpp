@@ -3559,7 +3559,9 @@ bool Mob::SpellOnTarget(uint16 spell_id, Mob *spelltar, bool reflect, bool use_r
 
 	Log(Logs::Detail, Logs::Spells, "Casting spell %d on %s with effective caster level %d", spell_id, spelltar->GetName(), caster_level);
 	
-	if (IsClient() && (IsDiscipline(spell_id) || IsDisciplineBuff(spell_id))) {
+	Log(Logs::Detail, Logs::Spells, "Checking if this is a disc to show message globaly");
+	if (IsClient() && (IsDiscipline(spell_id) || spells[spell_id].IsDisciplineBuff) {
+		Log(Logs::Detail, Logs::Spells, "Should be Showing disc spell message");
 		std::string msg = "%s";
 		msg += spells[spell_id].cast_on_other;
 		entity_list.MessageClose(this, true, 200, 0, msg.c_str(), this->GetCleanName());
