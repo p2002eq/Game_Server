@@ -1212,14 +1212,14 @@ void Mob::FillSpawnStruct(NewSpawn_Struct* ns, Mob* ForWho)
 	strn0cpy(ns->spawn.lastName, lastname, sizeof(ns->spawn.lastName));
 
 	//for (i = 0; i < _MaterialCount; i++)
-	for (int i = EQEmu::textures::textureBegin; i <= EQEmu::textures::LastTintableTexture; i++)
+	for (i = 0; i < 9; i++)
 	{
 		// Only Player Races Wear Armor
 		if (Mob::IsPlayerRace(race) || i > 6)
 		{
 			ns->spawn.equipment.Slot[i].Material = GetEquipmentMaterial(i);
-			//ns->spawn.equipment.Slot[i].EliteModel = IsEliteMaterialItem(i);
-			//ns->spawn.equipment.Slot[i].HerosForgeModel = GetHerosForgeModel(i);
+			ns->spawn.equipment.Slot[i].EliteModel = IsEliteMaterialItem(i);
+			ns->spawn.equipment.Slot[i].HerosForgeModel = GetHerosForgeModel(i);
 			ns->spawn.equipment_tint.Slot[i].Color = GetEquipmentColor(i);
 		}
 	}
