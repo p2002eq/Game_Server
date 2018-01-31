@@ -3564,7 +3564,8 @@ bool Mob::SpellOnTarget(uint16 spell_id, Mob *spelltar, bool reflect, bool use_r
 		Log(Logs::Detail, Logs::Spells, "Should be Showing disc spell message");
 		std::string msg = "%s";
 		msg += spells[spell_id].cast_on_other;
-		entity_list.MessageClose(this, true, 200, 0, msg.c_str(), this->GetCleanName());
+		Log(Logs::Detail, Logs::Spells, msg.c_str());
+		entity_list.MessageClose(this, false, 200, 0, msg.c_str(), this->GetCleanName());
 	}
 
 	// Actual cast action - this causes the caster animation and the particles
