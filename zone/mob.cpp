@@ -2892,7 +2892,7 @@ void Mob::SendArmorAppearance(Client *one_client)
 		if (!IsClient())
 		{
 			const EQEmu::ItemData *item = nullptr;
-			for (int i = EQEmu::textures::textureBegin; i <= EQEmu::textures::LastTintableTexture; i++)
+			for (int i = 0; i < 7; ++i)
 			{
 				item = database.GetItem(GetEquipment(i));
 				if (item != 0)
