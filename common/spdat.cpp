@@ -75,6 +75,7 @@
 #include "../common/eqemu_logsys.h"
 
 #include "classes.h"
+#include "races.h"
 #include "spdat.h"
 
 #ifndef WIN32
@@ -1273,5 +1274,19 @@ bool IsSpellUsableThisZoneType(uint16 spell_id, uint8 zone_type)
 const char* GetSpellName(int16 spell_id)
 {
     return spells[spell_id].name;
+}
+
+bool IsRacialIllusion(uint16 spell_id)
+{
+	SPDat_Spell_Struct spell = spells[spell_id];
+	for (int i = 0; i < EFFECT_COUNT; i++)
+	{
+		int _base = spell.base[i];
+		if (spell.effectid[i] == SE_Illusion && (_base >= HUMAN && _base <= GNOME) || _base == IKSAR || _base == VAHSHIR) {
+			return true;
+		}
+		
+		return false;
+	}
 }
 

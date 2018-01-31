@@ -19,6 +19,7 @@
 #define SPDAT_H
 
 #include "classes.h"
+#include "races.h"
 #include "skills.h"
 
 #define SPELL_UNKNOWN 0xFFFF
@@ -986,5 +987,7 @@ int32 GetFuriousBash(uint16 spell_id);
 bool IsShortDurationBuff(uint16 spell_id);
 bool IsSpellUsableThisZoneType(uint16 spell_id, uint8 zone_type);
 const char *GetSpellName(int16 spell_id);
+
+bool IsRacialIllusion(uint16 spell_id);
 
 #endif

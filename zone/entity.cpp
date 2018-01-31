@@ -4222,7 +4222,8 @@ void EntityList::SendZoneAppearance(Client *c)
 				cur->SendAppearancePacket(AT_Anim, cur->GetAppearanceValue(cur->GetAppearance()), false, true, c);
 			}
 			if (cur->GetSize() != cur->GetBaseSize()) {
-				cur->SendAppearancePacket(AT_Size, (uint32)cur->GetSize(), false, true, c);
+				uint32 newsize = floor(cur->GetSize() + 0.5);
+				cur->SendAppearancePacket(AT_Size, newsize, false, true, c);
 			}
 		}
 		++it;

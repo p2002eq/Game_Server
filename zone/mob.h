@@ -567,6 +567,7 @@ public:
 	inline const float GetHeading() const { return m_Position.w; }
 	inline const float GetSize() const { return size; }
 	inline const float GetBaseSize() const { return base_size; }
+	inline const float GetBaseTexture() const { return base_texture; }
 	inline const float GetTarX() const { return m_TargetLocation.x; }
 	inline const float GetTarY() const { return m_TargetLocation.y; }
 	inline const float GetTarZ() const { return m_TargetLocation.z; }
@@ -1178,19 +1179,7 @@ public:
 	float FindGroundZ(float new_x, float new_y, float z_offset = 0.0);
 	float last_z;
 
-	// Bots HealRotation methods
-#ifdef BOTS
-	bool IsHealRotationTarget() { return (m_target_of_heal_rotation.use_count() && m_target_of_heal_rotation.get()); }
-	bool JoinHealRotationTargetPool(std::shared_ptr<HealRotation>* heal_rotation);
-	bool LeaveHealRotationTargetPool();
-
-	uint32 HealRotationHealCount();
-	uint32 HealRotationExtendedHealCount();
-	float HealRotationHealFrequency();
-	float HealRotationExtendedHealFrequency();
-
-	const std::shared_ptr<HealRotation>* TargetOfHealRotation() const { return &m_target_of_heal_rotation; }
-#endif
+	float GetPlayerHeight(uint16 race);
 
 protected:
 	void CommonDamage(Mob* other, int &damage, const uint16 spell_id, const EQEmu::skills::SkillType attack_skill, bool &avoidable, const int8 buffslot, const bool iBuffTic, eSpecialAttacks specal = eSpecialAttacks::None);
@@ -1297,6 +1286,7 @@ protected:
 	glm::vec4 last_major_update_position;
 	uint16 animation;
 	float base_size;
+	uint8 base_texture;
 	float size;
 	float runspeed;
 	float walkspeed;

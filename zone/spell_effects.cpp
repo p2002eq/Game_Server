@@ -1411,70 +1411,42 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial, int level_ove
 					if(spell_id == 1732 || spell_id == 1731) {
 						int specific_gender = -1;
 						// Male
-						if(spell_id == 1732)
+						if(spell_id == 1732) {
 							specific_gender = 0;
+						}
 						// Female
-						else if (spell_id == 1731)
+						else if (spell_id == 1731) {
 							specific_gender = 1;
+						}
 						if(specific_gender > -1) {
 							if(caster && caster->GetTarget()) {
 								SendIllusionPacket
-								(
-									caster->GetTarget()->GetBaseRace(),
-									specific_gender,
-									caster->GetTarget()->GetTexture()
-								);
+									(
+									 caster->GetTarget()->GetBaseRace(),
+									 specific_gender,
+									 caster->GetTarget()->GetTexture()
+									);
 							}
-						}
-					}
-					// Change Gender Illusions
-					else {
-						if(caster && caster->GetTarget()) {
-							int opposite_gender = 0;
-							if(caster->GetTarget()->GetGender() == 0)
-								opposite_gender = 1;
-
-							SendIllusionPacket
-							(
-								caster->GetTarget()->GetRace(),
-								opposite_gender,
-								caster->GetTarget()->GetTexture()
-							);
 						}
 					}
 				}
 				// Racial Illusions
 				else {
+					float realsize = GetPlayerHeight(spell.base[i]);
 					SendIllusionPacket
-					(
-						spell.base[i],
-						Mob::GetDefaultGender(spell.base[i], GetGender()),
-						spell.base2[i],
-						spell.max[i]
-					);
-					if(spell.base[i] == OGRE){
-						SendAppearancePacket(AT_Size, 9);
-					}
-					else if(spell.base[i] == TROLL){
-						SendAppearancePacket(AT_Size, 8);
-					}
-					else if(spell.base[i] == VAHSHIR || spell.base[i] == BARBARIAN){
-						SendAppearancePacket(AT_Size, 7);
-					}
-					else if(spell.base[i] == HALF_ELF || spell.base[i] == WOOD_ELF || spell.base[i] == DARK_ELF || spell.base[i] == FROGLOK){
-						SendAppearancePacket(AT_Size, 5);
-					}
-					else if(spell.base[i] == DWARF){
-						SendAppearancePacket(AT_Size, 4);
-					}
-					else if(spell.base[i] == HALFLING || spell.base[i] == GNOME){
-						SendAppearancePacket(AT_Size, 3);
-					}
-					else if(spell.base[i] == WOLF) {
-						SendAppearancePacket(AT_Size, 2);
-					}
-					else{
-						SendAppearancePacket(AT_Size, 6);
+						(
+						 spell.base[i],
+						 Mob::GetDefaultGender(spell.base[i], GetGender()),
+						 spell.base2[i],
+						 spell.max[i],
+						 0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,
+						 0xFF,0xFF,0xFF,
+						 realsize
+						);
+					if (!IsRacialIllusion(spell_id)) {
+						uint32 newsize = 6;
+						newsize = floor(realsize + 0.5);
+						SendAppearancePacket(AT_Size, newsize);
 					}
 				}
 
@@ -1710,15 +1682,21 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial, int level_ove
 #ifdef SPELL_EFFECT_SPAM
 				snprintf(effect_desc, _EDLEN, "Model Size: %d%%", effect_value);
 #endif
+
+				float basesize = GetBaseSize();
+
+				//Check for Illusion
+				if (GetRace() != GetBaseRace()) {
+					basesize = GetPlayerHeight(GetRace());
+				}
+
 				// Only allow 2 size changes from Base Size
 				float modifyAmount = (static_cast<float>(effect_value) / 100.0f);
-				float maxModAmount = GetBaseSize() * modifyAmount * modifyAmount;
-				if ((GetSize() <= GetBaseSize() && GetSize() > maxModAmount) ||
-					(GetSize() >= GetBaseSize() && GetSize() < maxModAmount) ||
-					(GetSize() <= GetBaseSize() && maxModAmount > 1.0f) ||
-					(GetSize() >= GetBaseSize() && maxModAmount < 1.0f))
+				float maxModAmount = basesize * modifyAmount;
+				if ((GetSize() <= basesize && GetSize() > maxModAmount) || 
+						(GetSize() >= basesize && GetSize() < maxModAmount))
 				{
-					ChangeSize(GetSize() * modifyAmount);
+					ChangeSize(GetSize() * modifyAmount, true);
 				}
 				break;
 			}
@@ -3874,30 +3852,28 @@ void Mob::BuffFadeBySlot(int slot, bool iRecalcBonuses)
 			case SE_IllusionCopy:
 			case SE_Illusion:
 			{
-				SendIllusionPacket(0, GetBaseGender());
-				if(GetRace() == OGRE){
-					SendAppearancePacket(AT_Size, 9);
+				uint8 texture = 0xFF;
+				if (IsNPC() && ~IsPlayerRace(GetBaseRace())) {
+					texture = CastToNPC()->GetBaseTexture();
 				}
-				else if(GetRace() == TROLL){
-					SendAppearancePacket(AT_Size, 8);
-				}
-				else if(GetRace() == VAHSHIR || GetRace() == FROGLOK || GetRace() == BARBARIAN){
-					SendAppearancePacket(AT_Size, 7);
-				}
-				else if(GetRace() == HALF_ELF || GetRace() == WOOD_ELF || GetRace() == DARK_ELF){
-					SendAppearancePacket(AT_Size, 5);
-				}
-				else if(GetRace() == DWARF){
-					SendAppearancePacket(AT_Size, 4);
-				}
-				else if(GetRace() == HALFLING || GetRace() == GNOME){
-					SendAppearancePacket(AT_Size, 3);
-				}
-				else{
-					SendAppearancePacket(AT_Size, 6);
-				}
-				for (int x = EQEmu::textures::textureBegin; x <= EQEmu::textures::LastTintableTexture; x++){
-					SendWearChange(x);
+
+				SendIllusionPacket
+				(
+				 0,
+				 GetBaseGender(),
+				 texture,
+					0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+					0xFF, 0xFF, 0xFF,
+					GetBaseSize()
+				 );
+
+				if(IsNPC() && !IsPlayerRace(GetBaseRace())) {
+					uint32 newsize = floor(GetBaseSize() + 0.5);
+					SendAppearancePacket(AT_Size, newsize);
+				} else {
+					for (int x = EQEmu::textures::textureBegin; x <= EQEmu::textures::LastTintableTexture; x++){
+						SendWearChange(x);
+					}
 				}
 				break;
 			}

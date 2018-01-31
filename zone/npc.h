@@ -215,6 +215,9 @@ public:
 	inline void	SetGold(uint32 amt)			{ gold = amt; }
 	inline void	SetPlatinum(uint32 amt)		{ platinum = amt; }
 
+	inline const float GetBaseSize() const { return base_size; }
+	inline const float GetBaseTexture() const { return base_texture; }
+
 
 	virtual int32 CalcMaxMana();
 	void SetGrid(int32 grid_){ grid=grid_; }
@@ -549,6 +552,9 @@ protected:
 	bool raid_target;
 	uint8	probability;
 	bool ignore_despawn; //NPCs with this set to 1 will ignore the despawn value in spawngroup
+	
+	float base_size;
+	uint8 base_texture;
 
 private:
 	uint32	loottable_id;
