@@ -3874,14 +3874,13 @@ void Mob::BuffFadeBySlot(int slot, bool iRecalcBonuses)
 					_size
 				 );
 
-				if(IsNPC() && !IsPlayerRace(GetBaseRace())) {
-					uint32 newsize = floor(GetBaseSize() + 0.5);
-					SendAppearancePacket(AT_Size, newsize);
-				} else {
+				if(!IsNPC() && IsPlayerRace(GetBaseRace())) {
 					for (int x = EQEmu::textures::textureBegin; x <= EQEmu::textures::LastTintableTexture; x++){
 						SendWearChange(x);
 					}
 				}
+
+				SendAppearancePacket(AT_Size, _size);
 				break;
 			}
 
