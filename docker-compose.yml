@@ -5,7 +5,7 @@ services:
     links:
       - db
     volumes:
-      - .:/eqemu
+      - .:/eqemu:cached
     hostname: 'eqemu-server-dev'
     ports:
       # Loginserver
