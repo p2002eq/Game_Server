@@ -3853,8 +3853,15 @@ void Mob::BuffFadeBySlot(int slot, bool iRecalcBonuses)
 			case SE_Illusion:
 			{
 				uint8 texture = 0xFF;
-				if (IsNPC() && ~IsPlayerRace(GetBaseRace())) {
+				float _size;
+				if (IsNPC() && !IsPlayerRace(GetBaseRace())) {
 					texture = CastToNPC()->GetBaseTexture();
+				}
+
+				if (IsClient()) {
+					_size = GetPlayerHeight(GetBaseRace());
+				} else {
+					_size = GetBaseSize();
 				}
 
 				SendIllusionPacket
@@ -3864,7 +3871,7 @@ void Mob::BuffFadeBySlot(int slot, bool iRecalcBonuses)
 				 texture,
 					0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
 					0xFF, 0xFF, 0xFF,
-					GetBaseSize()
+					_size
 				 );
 
 				if(IsNPC() && !IsPlayerRace(GetBaseRace())) {
