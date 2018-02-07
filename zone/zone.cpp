@@ -1491,9 +1491,6 @@ bool Zone::Depop(bool StartSpawnTimer) {
 		npctable.erase(itr);
 	}
 
-	// clear spell cache
-	database.ClearNPCSpells();
-
 	return true;
 }
 
