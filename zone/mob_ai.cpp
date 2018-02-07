@@ -2590,37 +2590,51 @@ DBnpcspells_Struct* ZoneDatabase::GetNPCSpells(uint32 iDBSpellsID) {
         if (!results.Success())
         {
 			return nullptr;
-		}
+        }
 
-		int entryIndex = 0;
-		for (row = results.begin(); row != results.end(); ++row, ++entryIndex) {
-			DBnpcspells_entries_Struct entry;
-			int spell_id = atoi(row[0]);
-			entry.spellid = spell_id;
-			entry.type = atoul(row[1]);
-			entry.minlevel = atoi(row[2]);
-			entry.maxlevel = atoi(row[3]);
-			entry.manacost = atoi(row[4]);
-			entry.recast_delay = atoi(row[5]);
-			entry.priority = atoi(row[6]);
-			entry.min_hp = atoi(row[7]);
-			entry.max_hp = atoi(row[8]);
+        uint32 tmpSize = sizeof(DBnpcspells_Struct) + (sizeof(DBnpcspells_entries_Struct) * results.RowCount());
+        npc_spells_cache[iDBSpellsID] = (DBnpcspells_Struct*) new uchar[tmpSize];
+        memset(npc_spells_cache[iDBSpellsID], 0, tmpSize);
+        npc_spells_cache[iDBSpellsID]->parent_list = tmpparent_list;
+        npc_spells_cache[iDBSpellsID]->attack_proc = tmpattack_proc;
+        npc_spells_cache[iDBSpellsID]->proc_chance = tmpproc_chance;
+        npc_spells_cache[iDBSpellsID]->range_proc = tmprange_proc;
+        npc_spells_cache[iDBSpellsID]->rproc_chance = tmprproc_chance;
+        npc_spells_cache[iDBSpellsID]->defensive_proc = tmpdefensive_proc;
+        npc_spells_cache[iDBSpellsID]->dproc_chance = tmpdproc_chance;
+        npc_spells_cache[iDBSpellsID]->fail_recast = tmppfail_recast;
+        npc_spells_cache[iDBSpellsID]->engaged_no_sp_recast_min = tmpengaged_no_sp_recast_min;
+        npc_spells_cache[iDBSpellsID]->engaged_no_sp_recast_max = tmpengaged_no_sp_recast_max;
+        npc_spells_cache[iDBSpellsID]->engaged_beneficial_self_chance = tmpengaged_b_self_chance;
+        npc_spells_cache[iDBSpellsID]->engaged_beneficial_other_chance = tmpengaged_b_other_chance;
+        npc_spells_cache[iDBSpellsID]->engaged_detrimental_chance = tmpengaged_d_chance;
+        npc_spells_cache[iDBSpellsID]->pursue_no_sp_recast_min = tmppursue_no_sp_recast_min;
+        npc_spells_cache[iDBSpellsID]->pursue_no_sp_recast_max = tmppursue_no_sp_recast_max;
+        npc_spells_cache[iDBSpellsID]->pursue_detrimental_chance = tmppursue_d_chance;
+        npc_spells_cache[iDBSpellsID]->idle_no_sp_recast_min = tmpidle_no_sp_recast_min;
+        npc_spells_cache[iDBSpellsID]->idle_no_sp_recast_max = tmpidle_no_sp_recast_max;
+        npc_spells_cache[iDBSpellsID]->idle_beneficial_chance = tmpidle_b_chance;
+        npc_spells_cache[iDBSpellsID]->numentries = results.RowCount();
 
-			// some spell types don't make much since to be priority 0, so fix that
-			if (!(entry.type & SpellTypes_Innate) && entry.priority == 0)
-				entry.priority = 1;
+        int entryIndex = 0;
+        for (row = results.begin(); row != results.end(); ++row, ++entryIndex)
+        {
+            int spell_id = atoi(row[0]);
+            npc_spells_cache[iDBSpellsID]->entries[entryIndex].spellid = spell_id;
+            npc_spells_cache[iDBSpellsID]->entries[entryIndex].type = atoul(row[1]);
+            npc_spells_cache[iDBSpellsID]->entries[entryIndex].minlevel = atoi(row[2]);
+            npc_spells_cache[iDBSpellsID]->entries[entryIndex].maxlevel = atoi(row[3]);
+            npc_spells_cache[iDBSpellsID]->entries[entryIndex].manacost = atoi(row[4]);
+            npc_spells_cache[iDBSpellsID]->entries[entryIndex].recast_delay = atoi(row[5]);
+            npc_spells_cache[iDBSpellsID]->entries[entryIndex].priority = atoi(row[6]);
 
-			if (row[9])
-				entry.resist_adjust = atoi(row[9]);
-			else if (IsValidSpell(spell_id))
-				entry.resist_adjust = spells[spell_id].ResistDiff;
+            if(row[7])
+                npc_spells_cache[iDBSpellsID]->entries[entryIndex].resist_adjust = atoi(row[7]);
+            else if(IsValidSpell(spell_id))
+                npc_spells_cache[iDBSpellsID]->entries[entryIndex].resist_adjust = spells[spell_id].ResistDiff;
+        }
 
-			spell_set.entries.push_back(entry);
-		}
-
-		npc_spells_cache.insert(std::make_pair(iDBSpellsID, spell_set));
-
-		return &npc_spells_cache[iDBSpellsID];
+        return npc_spells_cache[iDBSpellsID];
     }
 
 	return nullptr;
