@@ -691,8 +691,9 @@ void Client::SendDisciplineTimer(uint32 timer_id, uint32 duration)
 
 void EntityList::AETaunt(Client* taunter, float range, int32 bonus_hate)
 {
-	if (range == 0)
+	if (range == 0) {
 		range = 40;		//Live AE taunt range - Hardcoded.
+	}
 
 	range = range * range;
 
