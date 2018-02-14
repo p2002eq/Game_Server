@@ -1683,20 +1683,42 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial, int level_ove
 				snprintf(effect_desc, _EDLEN, "Model Size: %d%%", effect_value);
 #endif
 
-				float basesize = GetBaseSize();
+				float basesize;
+				if (IsClient()) {
+					basesize = GetPlayerHeight(GetBaseRace());
+				} else {
+					basesize = GetBaseSize();
+				}
+				Log(Logs::Detail, Logs::Spells, "Basesize 1: %f", basesize);
 
 				//Check for Illusion
 				if (GetRace() != GetBaseRace()) {
-					basesize = GetPlayerHeight(GetRace());
+				Log(Logs::Detail, Logs::Spells, "not base race adusting");
+					if(IsClient()) {
+						basesize = GetPlayerHeight(GetRace());
+					} else {
+						basesize = GetBaseSize();
+					
+					}
 				}
 
-				// Only allow 2 size changes from Base Size
+				Log(Logs::Detail, Logs::Spells, "Basesize 1: %f", basesize);
+
 				float modifyAmount = (static_cast<float>(effect_value) / 100.0f);
-				float maxModAmount = basesize * modifyAmount;
-				if ((GetSize() <= basesize && GetSize() > maxModAmount) || 
-						(GetSize() >= basesize && GetSize() < maxModAmount))
-				{
-					ChangeSize(GetSize() * modifyAmount, true);
+				Log(Logs::Detail, Logs::Spells, "Size Mod: %f", modifyAmount);
+				float newSize = GetSize() * modifyAmount;
+
+				if (modifyAmount < 1) {
+					if (newSize >= 1.98) {
+						Log(Logs::General, Logs::Spells, "Shrink successful from %0.2f to %0.2f.", GetSize(), newSize);
+						ChangeSize(newSize, true);
+					}	
+				} else {
+					if(newSize <= 11.98)
+					{
+						Log(Logs::General, Logs::Spells, "Growth successful from %0.2f to %0.2f.", GetSize(), newSize);
+						ChangeSize(newSize, true);
+					}	
 				}
 				break;
 			}

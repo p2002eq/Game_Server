@@ -379,7 +379,11 @@ NPC::NPC(const NPCType* d, Spawn2* in_respawn, const glm::vec4& position, int if
 	ignore_despawn = d->ignore_despawn;
 	m_targetable = !d->untargetable;
 	base_texture = d->texture;
-	base_size = d->size;
+	if (IsClient()) {
+		base_size = GetPlayerHeight(GetRace());
+	} else {
+		base_size = d->size;	
+	}
 }
 
 NPC::~NPC()

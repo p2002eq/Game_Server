@@ -7137,6 +7137,7 @@ void Client::SendStatsWindow(Client* client, bool use_window)
 	client->Message(0, " compute_tohit: %i TotalToHit: %i", compute_tohit(skill), GetTotalToHit(skill, 0));
 	client->Message(0, " compute_defense: %i TotalDefense: %i", compute_defense(), GetTotalDefense());
 	client->Message(0, " offense: %i mitigation ac: %i", offense(skill), GetMitigationAC());
+	client->Message(0, " base_size: %f base_texture: %i", GetBaseSize(), GetBaseTexture());
 	if(CalcMaxMana() > 0)
 		client->Message(0, " Mana: %i/%i  Mana Regen: %i/%i", GetMana(), GetMaxMana(), CalcManaRegen(), CalcManaRegenCap());
 	client->Message(0, " End.: %i/%i  End. Regen: %i/%i",GetEndurance(), GetMaxEndurance(), CalcEnduranceRegen(), CalcEnduranceRegenCap());

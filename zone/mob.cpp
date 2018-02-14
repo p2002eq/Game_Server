@@ -162,7 +162,7 @@ Mob::Mob(const char* in_name,
 	orig_level = in_level;
 	npctype_id	= in_npctype_id;
 	size		= in_size;
-	base_size	= size;
+	base_size	= in_size;
 	runspeed	= in_runspeed;
 	// neotokyo: sanity check
 	if (runspeed < 0 || runspeed > 20)
@@ -1178,11 +1178,16 @@ void Mob::FillSpawnStruct(NewSpawn_Struct* ns, Mob* ForWho)
 	ns->spawn.drakkin_heritage = drakkin_heritage;
 	ns->spawn.drakkin_tattoo = drakkin_tattoo;
 	ns->spawn.drakkin_details = drakkin_details;
-	ns->spawn.equip_chest2 = 0xff; // GetHerosForgeModel(1) != 0 || multitexture? 0xff : texture;
+
+	if (IsClient()) {
+		ns->spawn.equip_chest2 = 255; 
+	} else {
+		ns->spawn.equip_chest2 = texture;
+	}
 
 //	ns->spawn.invis2 = 0xff;//this used to be labeled beard.. if its not FF it will turn mob invis
 
-	if (helmtexture && helmtexture != 0xFF && GetHerosForgeModel(0) == 0)
+	if (helmtexture && helmtexture != 255)
 	{
 		ns->spawn.helm=helmtexture;
 	} else {
@@ -1737,10 +1742,11 @@ void Mob::SendIllusionPacket(uint16 in_race, uint8 in_gender, uint8 in_texture, 
 
 	if (in_texture == 0xFF)
 	{
-		if (IsPlayerRace(in_race))
+		if (IsPlayerRace(in_race)) {
 			texture = 0xFF;
-		else
+		} else {
 			texture = GetTexture();
+		}
 	}
 	else
 	{
@@ -2072,23 +2078,23 @@ float Mob::GetPlayerHeight(uint16 race) {
 	{
 		case OGRE:
 		case TROLL:
-			return 8;
+			return 8.0;
 		case VAHSHIR: case BARBARIAN:
-			return 7;
+			return 7.0;
 		case HUMAN: case HIGH_ELF: case ERUDITE: case IKSAR:
-			return 6;
+			return 6.0;
 		case HALF_ELF:
 			return 5.5;
 		case WOOD_ELF: case DARK_ELF: case WOLF: case ELEMENTAL:
-			return 5;
+			return 5.0;
 		case DWARF:
-			return 4;
+			return 4.0;
 		case HALFLING:
 			return 3.5;
 		case GNOME:
-			return 3;
+			return 3.0;
 		default:
-			return 6;
+			return 6.0;
 	}
 }
 

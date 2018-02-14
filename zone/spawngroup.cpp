@@ -51,7 +51,7 @@ SpawnGroup::SpawnGroup( uint32 in_id, char* name, int in_group_spawn_limit, floa
 
 uint32 SpawnGroup::GetNPCType() {
 #if EQDEBUG >= 10
-	Log(Logs::General, Logs::None, "SpawnGroup[%08x]::GetNPCType()", (uint32) this);
+	Log(Logs::General, Logs::None, "SpawnGroup[%08x]::GetNPCType()", id);
 #endif
 	int npcType = 0;
 	int totalchance = 0;
