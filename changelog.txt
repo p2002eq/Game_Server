@@ -1,7 +1,10 @@
 EQEMu Changelog (Started on Sept 24, 2003 15:50)
 -------------------------------------------------------
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
+=======
+>>>>>>> a32dede... Fix issue with heading being incorrectly handled
 == 02/14/2018 ==
 mackal: Fix Heading -- Quests broken
 
