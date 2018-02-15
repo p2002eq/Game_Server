@@ -4434,7 +4434,7 @@ void Client::Handle_OP_ClientUpdate(const EQApplicationPacket *app)
 				return;
 			}
 
-			auto boat_delta = glm::vec4(ppu->delta_x, ppu->delta_y, ppu->delta_z, ppu->delta_heading);
+			auto boat_delta = glm::vec4(ppu->delta_x, ppu->delta_y, ppu->delta_z, EQ10toFloat(ppu->delta_heading));
 			boat->SetDelta(boat_delta);
 
 			auto outapp = new EQApplicationPacket(OP_ClientUpdate, sizeof(PlayerPositionUpdateServer_Struct));
@@ -4443,7 +4443,7 @@ void Client::Handle_OP_ClientUpdate(const EQApplicationPacket *app)
 			entity_list.QueueCloseClients(boat, outapp, true, 300, this, false);
 			safe_delete(outapp);
 			/* Update the boat's position on the server, without sending an update */
-			boat->GMMove(ppu->x_pos, ppu->y_pos, ppu->z_pos, EQ19toFloat(ppu->heading), false);
+			boat->GMMove(ppu->x_pos, ppu->y_pos, ppu->z_pos, EQ12toFloat(ppu->heading), false);
 			return;
 		}
 		else return;
@@ -4587,7 +4587,7 @@ void Client::Handle_OP_ClientUpdate(const EQApplicationPacket *app)
 	}
 
 	/* Update internal state */
-	m_Delta = glm::vec4(ppu->delta_x, ppu->delta_y, ppu->delta_z, ppu->delta_heading);
+	m_Delta = glm::vec4(ppu->delta_x, ppu->delta_y, ppu->delta_z, EQ10toFloat(ppu->delta_heading));
 
 	if (IsTracking() && ((m_Position.x != ppu->x_pos) || (m_Position.y != ppu->y_pos))) {
 		if (zone->random.Real(0, 100) < 70)//should be good
@@ -4643,8 +4643,7 @@ void Client::Handle_OP_ClientUpdate(const EQApplicationPacket *app)
 			client_scan_npc_aggro_timer.Start(3000);
 		}
 	}
-
-	float new_heading = EQ19toFloat(ppu->heading);
+	float new_heading = EQ12toFloat(ppu->heading);
 	int32 new_animation = ppu->animation;
 
 	/* Update internal server position from what the client has sent */
@@ -4663,7 +4662,7 @@ void Client::Handle_OP_ClientUpdate(const EQApplicationPacket *app)
 	if (is_client_moving || new_heading != m_Position.w || new_animation != animation) {
 
 		animation = ppu->animation;
-		m_Position.w = EQ19toFloat(ppu->heading);
+		m_Position.w = EQ12toFloat(ppu->heading);
 
 		/* Broadcast update to other clients */
 		auto outapp = new EQApplicationPacket(OP_ClientUpdate, sizeof(PlayerPositionUpdateServer_Struct));

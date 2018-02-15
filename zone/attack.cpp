@@ -394,7 +394,7 @@ bool Mob::AvoidDamage(Mob *other, DamageHitInfo &hit)
 	Mob *attacker = other;
 	Mob *defender = this;
 
-	bool InFront = attacker->InFrontMob(this, attacker->GetX(), attacker->GetY());
+	bool InFront = !attacker->BehindMob(this, attacker->GetX(), attacker->GetY());
 
 	/*
 	This special ability adds a negative modifer to the defenders riposte/block/parry/chance
@@ -3623,13 +3623,7 @@ void Mob::CommonDamage(Mob* attacker, int &damage, const uint16 spell_id, const 
 			a->special = 2;
 		else
 			a->special = 0;
-
-		if (IsClient()) {
-			a->meleepush_xy = attacker ? attacker->GetHeading() * 360.0f / 256.0f : 0.0f;
-		} else {
-			a->meleepush_xy = attacker ? attacker->GetHeading() * 2.0f / 256.0f * 3.14159265f : 0.0f;
-		}
-
+		a->meleepush_xy = attacker ? attacker->GetHeading() : 0.0f;
 		if (RuleB(Combat, MeleePush) && damage > 0 && !IsRooted() &&
 			(IsClient() || zone->random.Roll(RuleI(Combat, MeleePushChance)))) {
 			a->force = EQEmu::skills::GetSkillMeleePushForce(skill_used);
@@ -3644,9 +3638,8 @@ void Mob::CommonDamage(Mob* attacker, int &damage, const uint16 spell_id, const 
 				a->force = 0.0f;	
 			}
 			// update NPC stuff
-			float size_mod = GetSize() / RuleR(Combat, MeleePushSizeMod);
-			auto new_pos = glm::vec3(GetX() + (a->force * std::sin(a->meleepush_xy)) + (size_mod * std::sin(a->meleepush_xy)),
-				GetY() + (a->force * std::cos(a->meleepush_xy)) + (size_mod * std::cos(a->meleepush_xy)), m_Position.z);
+			auto new_pos = glm::vec3(m_Position.x + (a->force * std::cos(a->meleepush_xy) + m_Delta.x),
+				m_Position.y + (a->force * std::sin(a->meleepush_xy) + m_Delta.y), m_Position.z);
 			if (zone->zonemap && zone->zonemap->CheckLoS(glm::vec3(m_Position), new_pos)) { // If we have LoS on the new loc it should be reachable.
 				if (IsNPC()) {
 					// Is this adequate?
@@ -4501,6 +4494,12 @@ void Mob::DoRiposte(Mob *defender)
 
 	if (!defender)
 		return;
+
+	// so ahhh the angle you can riposte is larger than the angle you can hit :P
+	if (!defender->IsFacingMob(this)) {
+		defender->Message_StringID(MT_TooFarAway, CANT_SEE_TARGET);
+		return;
+	}
 
 	defender->Attack(this, EQEmu::inventory::slotPrimary, true);
 	if (HasDied())

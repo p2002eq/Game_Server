@@ -394,7 +394,7 @@ struct Spawn_Struct_Position
 
 struct Spawn_Struct_Position
 {
-	signed	padding0000:12;
+	signed	angle:12;       // pitch of camera?
 	signed	y:19;
 	signed	padding0001:1;
 
@@ -410,7 +410,7 @@ struct Spawn_Struct_Position
 	signed	z:19;
 	signed	padding0020:3;
 
-	signed  animation:10;   // animation
+	signed  animation:10;   // SpeedRun
 	signed	deltaY:13;
 	signed	padding0023:9;
 };
