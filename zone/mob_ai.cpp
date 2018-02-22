@@ -46,6 +46,9 @@ extern Zone *zone;
 	#define MobAI_DEBUG_Spells	-1
 #endif
 
+
+#define MOB_AI_INNATE_SPELL 0
+
 //NOTE: do NOT pass in beneficial and detrimental spell types into the same call here!
 bool NPC::AICastSpell(Mob* tar, uint8 iChance, uint32 iSpellTypes, bool bInnates) {
 	if (!tar)
@@ -79,35 +82,51 @@ bool NPC::AICastSpell(Mob* tar, uint8 iChance, uint32 iSpellTypes, bool bInnates
 
 	float manaR = GetManaRatio();
 	for (int i = static_cast<int>(AIspells.size()) - 1; i >= 0; i--) {
-		if (AIspells[i].spellid <= 0 || AIspells[i].spellid >= SPDAT_RECORDS) {
+
+		AISpells_Struct tryingSpell = AIspells[i];
+
+		// manacost has special values, -1 is no mana cost, -2 is instant cast (no mana)
+		int32 mana_cost = tryingSpell.manacost;
+		if (mana_cost == -1) {
+			mana_cost = spells[tryingSpell.spellid].mana;
+		} else if (mana_cost == -2) {
+			mana_cost = 0;
+		}
+
+
+		if (tryingSpell.spellid <= 0 || tryingSpell.spellid >= SPDAT_RECORDS) {
 			// this is both to quit early to save cpu and to avoid casting bad spells
 			// Bad info from database can trigger this incorrectly, but that should be fixed in DB, not here
 			//return false;
 			continue;
 		}
 
-		if ((AIspells[i].priority == 0 && !bInnates) || (AIspells[i].priority != 0 && bInnates)) {
+		if (tryingSpell.priority == MOB_AI_INNATE_SPELL) {
 			// so "innate" spells are special and spammed a bit
 			// we define an innate spell as a spell with priority 0
-			continue;
+			Log(Logs::Detail, Logs::AI, "Mob::AICastSpell: innate spell detected %d", tryingSpell.spellid);
+			if (tryingSpell.time_cancast <= Timer::GetCurrentTime()) {
+
+				Log(Logs::Detail, Logs::AI, "Mob::AICastSpell: innate spell casting %d", tryingSpell.spellid);
+				if (!IsBeneficialSpell(tryingSpell.spellid) && !IsEngaged()) {
+					Log(Logs::Detail, Logs::AI, "Mob::AICastSpell: skipping innate spell cant cast offensive spell with no target %d", tryingSpell.spellid);
+					continue;	
+				}
+				AIDoSpellCast(i, tar, mana_cost);
+				return true;
+			}
 		}
 		if (iSpellTypes & AIspells[i].type) {
-			// manacost has special values, -1 is no mana cost, -2 is instant cast (no mana)
-			int32 mana_cost = AIspells[i].manacost;
-			if (mana_cost == -1)
-				mana_cost = spells[AIspells[i].spellid].mana;
-			else if (mana_cost == -2)
-				mana_cost = 0;
-			if (
-				((
-					(spells[AIspells[i].spellid].targettype==ST_AECaster || spells[AIspells[i].spellid].targettype==ST_AEBard)
-					&& dist2 <= spells[AIspells[i].spellid].aoerange*spells[AIspells[i].spellid].aoerange
-				) ||
-				dist2 <= spells[AIspells[i].spellid].range*spells[AIspells[i].spellid].range
-				)
-				&& (mana_cost <= GetMana() || GetMana() == GetMaxMana())
-				&& (AIspells[i].time_cancast + (zone->random.Int(0, 4) * 500)) <= Timer::GetCurrentTime() //break up the spelling casting over a period of time.
-				) {
+				if (
+						((
+							(spells[AIspells[i].spellid].targettype==ST_AECaster || spells[AIspells[i].spellid].targettype==ST_AEBard)
+							&& dist2 <= spells[AIspells[i].spellid].aoerange*spells[AIspells[i].spellid].aoerange
+						 ) ||
+						 dist2 <= spells[AIspells[i].spellid].range*spells[AIspells[i].spellid].range
+						)
+						&& (mana_cost <= GetMana() || GetMana() == GetMaxMana())
+						&& (AIspells[i].time_cancast + (zone->random.Int(0, 4) * 500)) <= Timer::GetCurrentTime() //break up the spelling casting over a period of time.
+					 ) {
 
 #if MobAI_DEBUG_Spells >= 21
 				Log(Logs::Detail, Logs::AI, "Mob::AICastSpell: Casting: spellid=%u, tar=%s, dist2[%f]<=%f, mana_cost[%i]<=%i, cancast[%u]<=%u, type=%u",
