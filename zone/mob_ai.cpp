@@ -957,11 +957,12 @@ void Client::AI_Process()
 				return;
 
 			float dist = DistanceSquared(m_Position, owner->GetPosition());
-			if (dist >= 400)
-			{
-				if(AI_movement_timer->Check())
-				{
-					int nspeed = (dist >= 5625 ? GetRunspeed() : GetWalkspeed());
+			if (dist >= 202500) { // >= 450 distance
+				Teleport(static_cast<glm::vec3>(owner->GetPosition()));
+				SendPositionUpdate(); // this shouldn't happen a lot (and hard to make it) so lets not rate limit
+			} else if (dist >= 400) { // >=20
+				if (AI_movement_timer->Check()) {
+					int nspeed = (dist >= 1225 ? GetRunspeed() : GetWalkspeed()); // >= 35
 					animation = nspeed;
 					nspeed *= 2;
 					SetCurrentSpeed(nspeed);
@@ -1481,7 +1482,7 @@ void Mob::AI_Process() {
 						if (dist >= 400)
 						{
 							int speed = GetWalkspeed();
-							if (dist >= 5625)
+							if (dist >= 1225) // 35
 								speed = GetRunspeed();
 
 							CalculateNewPosition2(owner->GetX(), owner->GetY(), owner->GetZ(), speed);
