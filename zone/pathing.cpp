@@ -681,6 +681,10 @@ glm::vec3 Mob::UpdatePath(float ToX, float ToY, float ToZ, float Speed, bool &Wa
 
 			if(Route.empty())
 			{
+				if (IsPet()) { 
+					return To;
+				}
+
 				Teleport(To);
 
 				WaypointChanged = true;
