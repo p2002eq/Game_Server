@@ -13623,6 +13623,11 @@ void Client::Handle_OP_TargetCommand(const EQApplicationPacket *app)
 						return;
 					}
 				}
+			} 
+			else if (std::abs(m_Position.z - GetTarget()->GetZ()) > RuleI(Character, MaxZTargetDistance)) {
+				Message(12, "lol nope");
+				SetTarget(nullptr);
+				return;
 			}
 			else if (DistanceSquared(m_Position, GetTarget()->GetPosition()) > (zone->newzone_data.maxclip*zone->newzone_data.maxclip))
 			{
