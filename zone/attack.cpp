@@ -3645,7 +3645,7 @@ void Mob::CommonDamage(Mob* attacker, int &damage, const uint16 spell_id, const 
 				float size_mod = GetSize() * RuleR(Combat, MeleePushSizeMod);
 				float x_move = m_Position.x + (a->force * std::cos(a->hit_heading) + m_Delta.x) * size_mod;
 				float y_move = m_Position.y + (a->force * std::sin(a->hit_heading) + m_Delta.y) * size_mod;
-				Say("x_move: %.2f y_move: %.2f", x_move, x_move);
+				Say("x_move: %.2f y_move: %.2f", x_move, y_move);
 				auto new_pos = glm::vec3(x_move, y_move, m_Position.z);
 				if (zone->zonemap && zone->zonemap->CheckLoS(glm::vec3(m_Position), new_pos)) { // If we have LoS on the new loc it should be reachable.
 						// Is this adequate?
