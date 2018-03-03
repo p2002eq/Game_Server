@@ -3634,10 +3634,10 @@ void Mob::CommonDamage(Mob* attacker, int &damage, const uint16 spell_id, const 
 			}
 
 			if (RuleR(Combat, MeleePushForceClient) && attacker->IsClient()) {
-				a->force += a->force*RuleR(Combat, MeleePushForceClient);
+				a->force = a->force*RuleR(Combat, MeleePushForceClient);
 			}
 			if (RuleR(Combat, MeleePushForcePet) && attacker->IsPet()) {
-				a->force += a->force*RuleR(Combat, MeleePushForcePet);
+				a->force = a->force*RuleR(Combat, MeleePushForcePet);
 			}
 			// update NPC stuff
 			Say("push: %.2f heading: %.2f", a->force, a->hit_heading);
