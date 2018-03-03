@@ -471,9 +471,10 @@ bool Mob::MakeNewPositionAndSendUpdate(float x, float y, float z, int speed, boo
 		m_Position.y = new_y;
 		m_Position.z = new_z;
 
-		if(checkZ && fix_z_timer.Check() && 
-			(!this->IsEngaged() || flee_mode || currently_fleeing))
+		if(fix_z_timer.Check() && 
+			(!this->IsEngaged() || flee_mode || currently_fleeing)) {
 			this->FixZ();
+		}
 
 		tar_ndx++;
 		return true;
@@ -498,11 +499,7 @@ bool Mob::MakeNewPositionAndSendUpdate(float x, float y, float z, int speed, boo
 	m_TargetV.z = z - nz;
 	SetCurrentSpeed((int8)speed);
 	pRunAnimSpeed = speed;
-#ifdef BOTS
-	if (IsClient() || IsBot())
-#else
 	if (IsClient())
-#endif
 	{
 		animation = speed / 2;
 	}
@@ -581,8 +578,9 @@ bool Mob::MakeNewPositionAndSendUpdate(float x, float y, float z, int speed, boo
 			m_Position.w = CalculateHeadingToTarget(x, y);
 	}
 
-	if (checkZ && fix_z_timer.Check() && !this->IsEngaged())
+	if (fix_z_timer.Check() && !this->IsEngaged()) {
 		this->FixZ();
+	}
 
 	SetMoving(true);
 	moved = true;
