@@ -3649,8 +3649,8 @@ void Mob::CommonDamage(Mob* attacker, int &damage, const uint16 spell_id, const 
 				auto new_pos = glm::vec3(x_move, y_move, m_Position.z);
 				if (zone->zonemap && zone->zonemap->CheckLoS(glm::vec3(m_Position), new_pos)) { // If we have LoS on the new loc it should be reachable.
 						// Is this adequate?
-						Teleport(new_pos);
 						if (position_update_melee_push_timer.Check()) {
+							Teleport(new_pos);
 							SendPositionUpdate();
 						}
 				} else {
