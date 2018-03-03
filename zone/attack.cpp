@@ -3619,33 +3619,40 @@ void Mob::CommonDamage(Mob* attacker, int &damage, const uint16 spell_id, const 
 		a->spellid = spell_id;
 		if (special == eSpecialAttacks::AERampage)
 			a->special = 1;
-		else if (special == eSpecialAttacks::Rampage)
+		else if (special == eSpecialAttacks::Rampage) {
 			a->special = 2;
-		else
+		} else {
 			a->special = 0;
+		}
 		a->hit_heading = attacker ? attacker->GetHeading() : 0.0f;
 		if (RuleB(Combat, MeleePush) && damage > 0 && !IsRooted() &&
 			(IsClient() || zone->random.Roll(RuleI(Combat, MeleePushChance)))) {
 			a->force = EQEmu::skills::GetSkillMeleePushForce(skill_used);
-			//a->force *= 100.0f;
 			// dont push if we are damaging self
 			if (GetID() == attacker->GetID() && spell_id != SPELL_UNKNOWN) {
 				a->force = 0.0f;	
 			}
-			a->force *= 5.0f; // it seems like push needs this to actually do something
+
+			if (RuleR(Combat, MeleePushForceClient) && attacker->IsClient()) {
+				a->force += a->force*RuleR(Combat, MeleePushForceClient);
+			}
+			if (RuleR(Combat, MeleePushForcePet) && attacker->IsPet()) {
+				a->force += a->force*RuleR(Combat, MeleePushForcePet);
+			}
 			// update NPC stuff
-			//Say("push: %.2f heading: %.2f", a->force, a->hit_heading);
+			Say("push: %.2f heading: %.2f", a->force, a->hit_heading);
 			if (a->force != 0.0f) {
-				auto new_pos = glm::vec3(
-				    m_Position.x + (a->force * std::cos(a->hit_heading) + m_Delta.x),
-				    m_Position.y + (a->force * std::sin(a->hit_heading) + m_Delta.y), m_Position.z);
-				if (position_update_melee_push_timer.Check() && zone->zonemap &&
-				    zone->zonemap->CheckLoS(
-					glm::vec3(m_Position),
-					new_pos)) { // If we have LoS on the new loc it should be reachable.
+				float size_mod = GetSize() * RuleR(Combat, MeleePushSizeMod);
+				float x_move = m_Position.x + (a->force * std::cos(a->hit_heading) + m_Delta.x) * size_mod;
+				float y_move = m_Position.y + (a->force * std::sin(a->hit_heading) + m_Delta.y) * size_mod;
+				Say("x_move: %.2f y_move: %.2f", x_move, x_move);
+				auto new_pos = glm::vec3(x_move, y_move, m_Position.z);
+				if (zone->zonemap && zone->zonemap->CheckLoS(glm::vec3(m_Position), new_pos)) { // If we have LoS on the new loc it should be reachable.
 						// Is this adequate?
 						Teleport(new_pos);
-						SendPositionUpdate();
+						if (position_update_melee_push_timer.Check()) {
+							SendPositionUpdate();
+						}
 				} else {
 					a->force = 0.0f; // we couldn't move there, so lets not
 				}
