@@ -3628,10 +3628,6 @@ void Mob::CommonDamage(Mob* attacker, int &damage, const uint16 spell_id, const 
 		if (RuleB(Combat, MeleePush) && damage > 0 && !IsRooted() &&
 			(IsClient() || zone->random.Roll(RuleI(Combat, MeleePushChance)))) {
 			a->force = EQEmu::skills::GetSkillMeleePushForce(skill_used);
-			// dont push if we are damaging self
-			if (GetID() == attacker->GetID() && spell_id != SPELL_UNKNOWN) {
-				a->force = 0.0f;	
-			}
 
 			if (RuleR(Combat, MeleePushForceClient) && attacker->IsClient()) {
 				a->force = a->force*RuleR(Combat, MeleePushForceClient);
@@ -3639,13 +3635,17 @@ void Mob::CommonDamage(Mob* attacker, int &damage, const uint16 spell_id, const 
 			if (RuleR(Combat, MeleePushForcePet) && attacker->IsPet()) {
 				a->force = a->force*RuleR(Combat, MeleePushForcePet);
 			}
+			// dont push if we are damaging self
+			if (GetID() == attacker->GetID() && spell_id != SPELL_UNKNOWN) {
+				a->force = 0.0f;	
+			}
 			// update NPC stuff
-			Say("push: %.2f heading: %.2f", a->force, a->hit_heading);
+			//Say("push: %.2f heading: %.2f", a->force, a->hit_heading);
 			if (a->force != 0.0f) {
 				float size_mod = GetSize() * RuleR(Combat, MeleePushSizeMod);
 				float x_move = m_Position.x + (a->force * std::cos(a->hit_heading) + m_Delta.x) * size_mod;
 				float y_move = m_Position.y + (a->force * std::sin(a->hit_heading) + m_Delta.y) * size_mod;
-				Say("x_move: %.2f y_move: %.2f", x_move, y_move);
+				//Say("x_move: %.2f y_move: %.2f", x_move, y_move);
 				auto new_pos = glm::vec3(x_move, y_move, m_Position.z);
 				if (zone->zonemap && zone->zonemap->CheckLoS(glm::vec3(m_Position), new_pos)) { // If we have LoS on the new loc it should be reachable.
 						// Is this adequate?
