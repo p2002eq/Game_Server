@@ -32,6 +32,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #include "worldserver.h"
 #include "zone.h"
 #include "lua_parser.h"
+#include "fastmath.h"
 
 #include <assert.h>
 #include <stdio.h>
@@ -43,6 +44,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 
 extern QueryServ* QServ;
 extern WorldServer worldserver;
+extern FastMath g_Math;
 
 #ifdef _WINDOWS
 #define snprintf	_snprintf
@@ -3642,13 +3644,22 @@ void Mob::CommonDamage(Mob* attacker, int &damage, const uint16 spell_id, const 
 				a->force = 0.0f;	
 			}
 			// update NPC stuff
-			//Say("push: %.2f heading: %.2f", a->force, a->hit_heading);
-			if (a->force != 0.0f && position_update_melee_push_timer.Check()) {
-				//Say("x_move: %.2f y_move: %.2f", x_move, y_move);
-				auto new_pos = glm::vec3(x_move, y_move, m_Position.z);
-				if (zone->zonemap && zone->zonemap->CheckLoS(glm::vec3(m_Position), new_pos)) { // If we have LoS on the new loc it should be reachable.
-					m_delta.x += a->force * g_math.FastSin(a->hit_heading);
-					m_delta.y += a->force * g_math.FastCos(a->hit_heading);
+			if (a->force != 0.0f) {
+				auto new_pos = glm::vec3(
+				    m_Position.x + (a->force * g_Math.FastSin(a->hit_heading) + m_Delta.x),
+				    m_Position.y + (a->force * g_Math.FastCos(a->hit_heading) + m_Delta.y), m_Position.z);
+				if ((!IsNPC() || position_update_melee_push_timer.Check()) && zone->zonemap &&
+				    zone->zonemap->CheckLoS(
+					glm::vec3(m_Position),
+					new_pos)) { // If we have LoS on the new loc it should be reachable.
+					if (IsNPC()) {
+						// Is this adequate?
+
+						Teleport(new_pos);
+						SendPositionUpdate();
+					}
+				} else {
+					a->force = 0.0f; // we couldn't move there, so lets not
 				}
 			}
 		}
