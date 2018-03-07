@@ -3630,36 +3630,14 @@ void Mob::CommonDamage(Mob* attacker, int &damage, const uint16 spell_id, const 
 		if (RuleB(Combat, MeleePush) && damage > 0 && !IsRooted() &&
 			(IsClient() || zone->random.Roll(RuleI(Combat, MeleePushChance)))) {
 			a->force = EQEmu::skills::GetSkillMeleePushForce(skill_used);
-
-			a->force *= 0.10;
-
-			//if (RuleR(Combat, MeleePushForceClient) && attacker->IsClient()) {
-				//a->force = a->force*RuleR(Combat, MeleePushForceClient);
-			//}
-			//if (RuleR(Combat, MeleePushForcePet) && attacker->IsPet()) {
-				//a->force = a->force*RuleR(Combat, MeleePushForcePet);
-			//}
-			// dont push if we are damaging self
-			if (GetID() == attacker->GetID() && spell_id != SPELL_UNKNOWN) {
-				a->force = 0.0f;	
-			}
-			// update NPC stuff
-			if (a->force != 0.0f) {
-				auto new_pos = glm::vec3(
-				    m_Position.x + (a->force * g_Math.FastSin(a->hit_heading) + m_Delta.x),
-				    m_Position.y + (a->force * g_Math.FastCos(a->hit_heading) + m_Delta.y), m_Position.z);
-				if ((!IsNPC() || position_update_melee_push_timer.Check()) && zone->zonemap &&
-				    zone->zonemap->CheckLoS(
-					glm::vec3(m_Position),
-					new_pos)) { // If we have LoS on the new loc it should be reachable.
-					if (IsNPC()) {
-						// Is this adequate?
-
-						Teleport(new_pos);
-						SendPositionUpdate();
-					}
-				} else {
-					a->force = 0.0f; // we couldn't move there, so lets not
+			if (IsNPC()) {
+				if (attacker->IsNPC() && !attacker->IsPet())
+					a->force = 0.0f; // 2013 change that disabled NPC vs NPC push
+				else
+					a->force *= 0.10f; // force against NPCs is divided by 10 I guess? ex bash is 0.3, parsed 0.03 against an NPC
+				if (ForcedMovement == 0 && a->force != 0.0f && position_update_melee_push_timer.Check()) {
+					m_Delta.x += a->force * g_Math.FastSin(a->hit_heading);
+					m_Delta.y += a->force * g_Math.FastCos(a->hit_heading);
 				}
 			}
 		}

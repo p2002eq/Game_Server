@@ -48,6 +48,8 @@ class Raid;
 struct NewSpawn_Struct;
 struct PlayerPositionUpdateServer_Struct;
 
+const int COLLISION_BOX_SIZE = 4;
+
 namespace EQEmu
 {
 	struct ItemData;
@@ -1346,6 +1348,9 @@ protected:
 	char lastname[64];
 
 	glm::vec4 m_Delta;
+	// just locs around them to double check, if we do expand collision this should be cached on movement
+	// ideally we should use real models, but this should be quick and work mostly
+	glm::vec4 m_CollisionBox[COLLISION_BOX_SIZE];
 
 	EQEmu::LightSourceProfile m_Light;
 
@@ -1459,6 +1464,7 @@ protected:
 	std::unique_ptr<Timer> AI_movement_timer;
 	std::unique_ptr<Timer> AI_target_check_timer;
 	bool movetimercompleted;
+	int8 ForcedMovement; // push
 	bool permarooted;
 	std::unique_ptr<Timer> AI_scan_area_timer;
 	std::unique_ptr<Timer> AI_walking_timer;
