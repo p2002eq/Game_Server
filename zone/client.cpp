@@ -332,13 +332,12 @@ Client::Client(EQStreamInterface* ieqs)
 
 	trapid = 0;
 
+	is_client_moving = false;
+
 	AI_Init();
 }
 
 Client::~Client() {
-#ifdef BOTS
-	Bot::ProcessBotOwnerRefDelete(this);
-#endif
 	if(IsInAGuild())
 		guild_mgr.SendGuildMemberUpdateToWorld(GetName(), GuildID(), 0, time(nullptr));
 
