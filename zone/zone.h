@@ -71,7 +71,7 @@ struct item_tick_struct {
 };
 
 class Client;
-class Map;
+//class Map; //Unused? Needed to uncomment for NATS
 class Mob;
 class PathManager;
 class WaterMap;

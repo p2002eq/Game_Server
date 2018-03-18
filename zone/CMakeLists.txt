@@ -80,6 +80,7 @@ SET(zone_sources
 	mob.cpp
 	mob_ai.cpp
 	mod_functions.cpp
+	nats_manager.cpp
 	net.cpp
 	npc.cpp
 	npc_ai.cpp
@@ -194,6 +195,7 @@ SET(zone_headers
 	message.h
 	merc.h
 	mob.h
+	nats_manager.h
 	net.h
 	npc.h
 	npc_ai.h

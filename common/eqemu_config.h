@@ -85,6 +85,10 @@ class EQEmuConfig : public XMLParser
 		std::string OpCodesFile;
 		std::string PluginPlFile;
 
+		// From <nats/>
+		std::string NATSHost;
+		uint16 NATSPort;
+
 		// From <directories/>
 		std::string MapDir;
 		std::string QuestDir;
@@ -161,6 +165,9 @@ class EQEmuConfig : public XMLParser
 			QSDatabaseUsername = "eq";
 			QSDatabasePassword = "eq";
 			QSDatabaseDB = "eq";
+			// NATS
+			NATSHost = "localhost";
+			NATSPort = 4222;
 			// Files
 			SpellsFile = "spells_us.txt";
 			OpCodesFile = "opcodes.conf";

@@ -46,6 +46,7 @@
 #include "clientlist.h"
 #include "wguild_mgr.h"
 #include "sof_char_create_data.h"
+#include "nats_manager.h"
 
 #include <iostream>
 #include <iomanip>
@@ -83,6 +84,7 @@ extern LoginServerList loginserverlist;
 extern ClientList client_list;
 extern EQEmu::Random emu_random;
 extern uint32 numclients;
+extern NatsManager nats;
 extern volatile bool RunLoops;
 
 Client::Client(EQStreamInterface* ieqs)
