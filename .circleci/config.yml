@@ -36,4 +36,3 @@ workflows:
               only:
                 - master
                 - dev
-                - nats3
