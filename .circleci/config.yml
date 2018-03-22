@@ -8,7 +8,7 @@ jobs:
     steps:
       - run:
           name: Install Deps
-          command: 'sudo  sudo add-apt-repository ppa:maarten-fonville/protobuf -y & apt-get update -qq && apt-get install -y -qq libprotobuf-dev protobuf-compiler gcc-4.8 g++-4.8 libmysqlclient-dev libperl-dev libboost-dev liblua5.1-0-dev zlib1g-dev uuid-dev libssl-dev build-essential make cmake git-core'
+          command: 'sudo add-apt-repository ppa:maarten-fonville/protobuf -y & apt-get update -qq && apt-get install -y -qq libprotobuf-dev protobuf-compiler gcc-4.8 g++-4.8 libmysqlclient-dev libperl-dev libboost-dev liblua5.1-0-dev zlib1g-dev uuid-dev libssl-dev build-essential make cmake git-core'
       - checkout
       - run:
           name: CMake Env
