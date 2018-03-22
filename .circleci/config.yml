@@ -8,7 +8,7 @@ jobs:
     steps:
       - run:
           name: Install Deps
-          command: 'apt-get update -qq && apt-get install -y -qq gcc-4.8 g++-4.8 libmysqlclient-dev libperl-dev libboost-dev liblua5.1-0-dev zlib1g-dev uuid-dev libssl-dev build-essential make cmake git-core unzip'
+          command: 'apt-get update -qq && apt-get install -y -qq gcc-4.8 g++-4.8 libmysqlclient-dev libperl-dev libboost-dev liblua5.1-0-dev zlib1g-dev uuid-dev libssl-dev build-essential make cmake git-core unzip curl'
       - run:
           name: Install Protobuf
           command: 'curl -OL https://github.com/google/protobuf/releases/download/v3.2.0/protoc-3.2.0-linux-x86_64.zip && unzip protoc-3.2.0-linux-x86_64.zip -d protoc3 && mv protoc3/bin/* /usr/local/bin/ && mv protoc3/include/* /usr/local/include/ && ln -s /protoc3/bin/protoc /usr/bin/protoc'
