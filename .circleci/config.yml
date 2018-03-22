@@ -11,7 +11,7 @@ jobs:
           command: 'apt-get update -qq && apt-get install -y -qq gcc-4.8 g++-4.8 libmysqlclient-dev libperl-dev libboost-dev liblua5.1-0-dev zlib1g-dev uuid-dev libssl-dev build-essential make cmake git-core unzip curl'
       - run:
           name: Install Protobuf
-          command: 'mkdir temp && cd temp && curl -OL https://github.com/google/protobuf/releases/download/v3.2.0/protoc-3.2.0-linux-x86_64.zip && unzip protoc-3.2.0-linux-x86_64.zip -d protoc3 && mv protoc3/bin/* /usr/local/bin/ && mv protoc3/include/* /usr/local/include/ && ln -s /protoc3/bin/protoc /usr/bin/protoc && cd .. && rm -rf temp'
+          command: 'mkdir temp && cd temp && curl -OL https://launchpad.net/~maarten-fonville/+archive/ubuntu/protobuf/+files/libprotobuf-dev_3.1.0-0ubuntu1~maarten0_amd64.deb && https://launchpad.net/~maarten-fonville/+archive/ubuntu/protobuf/+files/protobuf-compiler_3.1.0-0ubuntu1~maarten0_amd64.deb && https://launchpad.net/~maarten-fonville/+archive/ubuntu/protobuf/+files/libprotoc-dev_3.1.0-0ubuntu1~maarten0_amd64.deb && DEBIAN_FRONTEND=noninteractive dpkg -i libproto* && DEBIAN_FRONTEND=noninteractive dpkg -i proto* && cd .. && rm -rf temp'
       - run:
           name: Check Protobuf Version
           command: 'protoc --version'
