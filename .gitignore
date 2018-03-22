@@ -52,3 +52,7 @@ bin/*
 
 libs/format/FMT.cbp
 libs/libuv/libuv.cbp
+
+# protobuf generated files
+common/message.pb.cc
+common/message.pb.h
