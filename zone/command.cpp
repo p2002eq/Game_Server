@@ -67,11 +67,13 @@
 #include "titles.h"
 #include "water_map.h"
 #include "worldserver.h"
+#include "nats_manager.h"
 #include "client.h"
 
 extern QueryServ* QServ;
 extern WorldServer worldserver;
 extern TaskManager *taskmanager;
+extern NatsManager nats;
 void CatchSignal(int sig_num);
 
 
@@ -562,6 +564,8 @@ int command_realdispatch(Client *c, const char *message)
 		c->Message(13,"Your access level is not high enough to use this command.");
 		return(-1);
 	}
+
+	nats.SendAdminMessage(StringFormat("%s in %s issued command: %s", c->GetCleanName(), database.GetZoneName(zone->GetZoneID()), message));
 
 	if(cur->access >= COMMANDS_LOGGING_MIN_STATUS) {
 		const char *targetType = "notarget";

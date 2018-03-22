@@ -241,6 +241,19 @@ void EQEmuConfig::do_qsdatabase(TiXmlElement *ele)
 	}
 }
 
+void EQEmuConfig::do_nats(TiXmlElement *ele)
+{
+	const char *text;
+	text = ParseTextBlock(ele, "host", true);
+	if (text) {
+		NATSHost = text;
+	}
+	text = ParseTextBlock(ele, "port", true);
+	if (text) {
+		NATSPort = atoi(text);
+	}
+}
+
 void EQEmuConfig::do_zones(TiXmlElement *ele)
 {
 	const char *text;
