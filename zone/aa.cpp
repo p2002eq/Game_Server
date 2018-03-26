@@ -488,6 +488,8 @@ void Client::ResetAA() {
 	m_pp.raid_leadership_exp = 0;
 
 	database.DeleteCharacterLeadershipAAs(CharacterID());
+	database.DeleteCharacterAAs(CharacterID());
+	SaveAA();
 	// undefined for these clients
 	if (ClientVersionBit() & EQEmu::versions::bit_TitaniumAndEarlier)
 		Kick();
