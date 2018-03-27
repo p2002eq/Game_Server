@@ -1,0 +1,32 @@
+﻿  Building Custom Rule D:/code/go/src/github.com/nats-io/cnats/src/CMakeLists.txt
+  CMake does not need to re-run because D:\code\go\src\github.com\nats-io\cnats\src\CMakeFiles\generate.stamp is up-to-date.
+  asynccb.c
+  buf.c
+  comsock.c
+  conn.c
+  hash.c
+  msg.c
+  nats.c
+  natstime.c
+  nuid.c
+  opts.c
+  parser.c
+  pub.c
+  srvpool.c
+  stats.c
+  status.c
+  sub.c
+  timer.c
+  url.c
+  util.c
+  cond.c
+  Generating Code...
+  Compiling...
+  mutex.c
+  sock.c
+  strings.c
+  thread.c
+  Generating Code...
+     Creating library D:/code/go/src/github.com/nats-io/cnats/src/Debug/nats.lib and object D:/code/go/src/github.com/nats-io/cnats/src/Debug/nats.exp
+  nats.vcxproj -> D:\code\go\src\github.com\nats-io\cnats\src\Debug\nats.dll
+  nats.vcxproj -> D:/code/go/src/github.com/nats-io/cnats/src/Debug/nats.pdb (Full PDB)

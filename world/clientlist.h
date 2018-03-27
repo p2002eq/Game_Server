@@ -70,6 +70,7 @@ public:
 	int GetClientCount();
 	void GetClients(const char *zone_name, std::vector<ClientListEntry *> &into);
 
+	std::string GetWhoAll();
 private:
 	void OnTick(EQ::Timer *t);
 	inline uint32 GetNextCLEID() { return NextCLEID++; }

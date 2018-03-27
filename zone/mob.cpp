@@ -23,6 +23,7 @@
 #include "quest_parser_collection.h"
 #include "string_ids.h"
 #include "worldserver.h"
+#include "nats_manager.h"
 
 #include <limits.h>
 #include <math.h>
@@ -38,6 +39,7 @@ extern EntityList entity_list;
 
 extern Zone* zone;
 extern WorldServer worldserver;
+extern NatsManager nats;
 
 Mob::Mob(const char* in_name,
 		const char* in_lastname,
@@ -120,14 +122,12 @@ Mob::Mob(const char* in_name,
 		fix_z_timer(300),
 		fix_z_timer_engaged(100),
 		attack_anim_timer(1000),
-		position_update_melee_push_timer(1000)
+		position_update_melee_push_timer(500)
 {
 	targeted = 0;
 	tar_ndx=0;
 	tar_vector=0;
 	currently_fleeing = false;
-
-	last_z = 0;
 
 	last_major_update_position = m_Position;
 
@@ -162,7 +162,7 @@ Mob::Mob(const char* in_name,
 	orig_level = in_level;
 	npctype_id	= in_npctype_id;
 	size		= in_size;
-	base_size	= size;
+	base_size	= in_size;
 	runspeed	= in_runspeed;
 	// neotokyo: sanity check
 	if (runspeed < 0 || runspeed > 20)
@@ -396,6 +396,7 @@ Mob::Mob(const char* in_name,
 	permarooted = (runspeed > 0) ? false : true;
 
 	movetimercompleted = false;
+	ForcedMovement = 0;
 	roamer = false;
 	rooted = false;
 	charmed = false;
@@ -973,7 +974,7 @@ void Mob::CreateSpawnPacket(EQApplicationPacket* app, Mob* ForWho) {
 	memset(app->pBuffer, 0, app->size);
 	NewSpawn_Struct* ns = (NewSpawn_Struct*)app->pBuffer;
 	FillSpawnStruct(ns, ForWho);
-
+	nats.OnSpawnEvent(OP_NewSpawn, ns->spawn.spawnId, &ns->spawn);
 	if(RuleB(NPC, UseClassAsLastName) && strlen(ns->spawn.lastName) == 0)
 	{
 		switch(ns->spawn.class_)
@@ -1137,19 +1138,19 @@ void Mob::FillSpawnStruct(NewSpawn_Struct* ns, Mob* ForWho)
 		strn0cpy(ns->spawn.lastName, lastname, sizeof(ns->spawn.lastName));
 	}
 
-	ns->spawn.heading = FloatToEQ19(m_Position.w);
-	ns->spawn.x = FloatToEQ19(m_Position.x);//((int32)x_pos)<<3;
-	ns->spawn.y = FloatToEQ19(m_Position.y);//((int32)y_pos)<<3;
-	ns->spawn.z = FloatToEQ19(m_Position.z);//((int32)z_pos)<<3;
-	ns->spawn.spawnId = GetID();
-	ns->spawn.curHp = static_cast<uint8>(GetHPRatio());
-	ns->spawn.max_hp = 100;		//this field needs a better name
-	ns->spawn.race = race;
-	ns->spawn.runspeed = runspeed;
-	ns->spawn.walkspeed = walkspeed;
-	ns->spawn.class_ = class_;
-	ns->spawn.gender = gender;
-	ns->spawn.level = ForWho && this->IsNPC() ? Mob::GetLevelForClientCon(ForWho->CastToClient()->GetLevel(), level) : level;// ForWho->IsClient() ? Mob::GetLevelForClientCon(ForWho->CastToClient()->GetLevel(), level) : level;
+	ns->spawn.heading	= FloatToEQ12(m_Position.w);
+	ns->spawn.x			= FloatToEQ19(m_Position.x);//((int32)x_pos)<<3;
+	ns->spawn.y			= FloatToEQ19(m_Position.y);//((int32)y_pos)<<3;
+	ns->spawn.z			= FloatToEQ19(m_Position.z);//((int32)z_pos)<<3;
+	ns->spawn.spawnId	= GetID();
+	ns->spawn.curHp	= static_cast<uint8>(GetHPRatio());
+	ns->spawn.max_hp	= 100;		//this field needs a better name
+	ns->spawn.race		= race;
+	ns->spawn.runspeed	= runspeed;
+	ns->spawn.walkspeed	= walkspeed;
+	ns->spawn.class_	= class_;
+	ns->spawn.gender	= gender;
+	ns->spawn.level		= level;
 	ns->spawn.PlayerState	= m_PlayerState;
 	ns->spawn.deity		= deity;
 	ns->spawn.animation	= 0;
@@ -1178,11 +1179,16 @@ void Mob::FillSpawnStruct(NewSpawn_Struct* ns, Mob* ForWho)
 	ns->spawn.drakkin_heritage = drakkin_heritage;
 	ns->spawn.drakkin_tattoo = drakkin_tattoo;
 	ns->spawn.drakkin_details = drakkin_details;
-	ns->spawn.equip_chest2 = 0xff; // GetHerosForgeModel(1) != 0 || multitexture? 0xff : texture;
+
+	if (IsClient()) {
+		ns->spawn.equip_chest2 = 255; 
+	} else {
+		ns->spawn.equip_chest2 = texture;
+	}
 
 //	ns->spawn.invis2 = 0xff;//this used to be labeled beard.. if its not FF it will turn mob invis
 
-	if (helmtexture && helmtexture != 0xFF && GetHerosForgeModel(0) == 0)
+	if (helmtexture && helmtexture != 255)
 	{
 		ns->spawn.helm=helmtexture;
 	} else {
@@ -1289,6 +1295,7 @@ void Mob::CreateDespawnPacket(EQApplicationPacket* app, bool Decay)
 	ds->spawn_id = GetID();
 	// The next field only applies to corpses. If 0, they vanish instantly, otherwise they 'decay'
 	ds->Decay = Decay ? 1 : 0;
+	nats.OnDeleteSpawnEvent(this->GetID(), ds);
 }
 
 void Mob::CreateHPPacket(EQApplicationPacket* app)
@@ -1299,7 +1306,7 @@ void Mob::CreateHPPacket(EQApplicationPacket* app)
 	app->pBuffer = new uchar[app->size];
 	memset(app->pBuffer, 0, sizeof(SpawnHPUpdate_Struct2));
 	SpawnHPUpdate_Struct2* ds = (SpawnHPUpdate_Struct2*)app->pBuffer;
-
+	nats.OnHPEvent(OP_MobHealth, this->GetID(), cur_hp, max_hp);
 	ds->spawn_id = GetID();
 	// they don't need to know the real hp
 	ds->hp = (int)GetHPRatio();
@@ -1333,6 +1340,7 @@ void Mob::CreateHPPacket(EQApplicationPacket* app)
 // sends hp update of this mob to people who might care
 void Mob::SendHPUpdate(bool skip_self /*= false*/, bool force_update_all /*= false*/)
 {
+	nats.OnHPEvent(OP_HPUpdate, this->GetID(), cur_hp, max_hp);
 	/* If our HP is different from last HP update call - let's update ourself */
 	if (IsClient()) {
 		if (cur_hp != last_hp || force_update_all) {
@@ -1482,7 +1490,7 @@ void Mob::SendPosition() {
 	else {
 		entity_list.QueueCloseClients(this, app, true, RuleI(Range, MobPositionUpdates), nullptr, false);
 	}
-
+	nats.OnClientUpdateEvent(this->GetID(), spu);
 	safe_delete(app);
 }
 
@@ -1496,7 +1504,7 @@ void Mob::SendPositionUpdateToClient(Client *client) {
 		MakeSpawnUpdateNoDelta(spawn_update);
 
 	client->QueuePacket(app, false);
-
+	nats.OnClientUpdateEvent(this->GetID(), spawn_update);
 	safe_delete(app);
 }
 
@@ -1514,6 +1522,7 @@ void Mob::SendPositionUpdate(uint8 iSendToSelf) {
 	else {
 		entity_list.QueueCloseClients(this, app, (iSendToSelf == 0), RuleI(Range, MobPositionUpdates), nullptr, false);
 	}
+	nats.OnClientUpdateEvent(this->GetID(), spu);
 	safe_delete(app);
 }
 
@@ -1524,12 +1533,12 @@ void Mob::MakeSpawnUpdateNoDelta(PlayerPositionUpdateServer_Struct *spu) {
 	spu->x_pos = FloatToEQ19(m_Position.x);
 	spu->y_pos = FloatToEQ19(m_Position.y);
 	spu->z_pos = FloatToEQ19(m_Position.z);
-	spu->delta_x = NewFloatToEQ13(0);
-	spu->delta_y = NewFloatToEQ13(0);
-	spu->delta_z = NewFloatToEQ13(0);
-	spu->heading = FloatToEQ19(m_Position.w);
+	spu->delta_x = FloatToEQ13(0);
+	spu->delta_y = FloatToEQ13(0);
+	spu->delta_z = FloatToEQ13(0);
+	spu->heading = FloatToEQ12(m_Position.w);
 	spu->animation = 0;
-	spu->delta_heading = NewFloatToEQ13(0);
+	spu->delta_heading = FloatToEQ10(0);
 	spu->padding0002 = 0;
 	spu->padding0006 = 7;
 	spu->padding0014 = 0x7f;
@@ -1543,10 +1552,10 @@ void Mob::MakeSpawnUpdate(PlayerPositionUpdateServer_Struct* spu) {
 	spu->x_pos = FloatToEQ19(m_Position.x);
 	spu->y_pos = FloatToEQ19(m_Position.y);
 	spu->z_pos = FloatToEQ19(m_Position.z);
-	spu->delta_x = NewFloatToEQ13(m_Delta.x);
-	spu->delta_y = NewFloatToEQ13(m_Delta.y);
-	spu->delta_z = NewFloatToEQ13(m_Delta.z);
-	spu->heading = FloatToEQ19(m_Position.w);
+	spu->delta_x = FloatToEQ13(m_Delta.x);
+	spu->delta_y = FloatToEQ13(m_Delta.y);
+	spu->delta_z = FloatToEQ13(m_Delta.z);
+	spu->heading = FloatToEQ12(m_Position.w);
 	spu->padding0002 = 0;
 	spu->padding0006 = 7;
 	spu->padding0014 = 0x7f;
@@ -1559,8 +1568,8 @@ void Mob::MakeSpawnUpdate(PlayerPositionUpdateServer_Struct* spu) {
 		spu->animation = animation;
 	else
 		spu->animation = pRunAnimSpeed;//animation;
-	
-	spu->delta_heading = NewFloatToEQ13(m_Delta.w);
+
+	spu->delta_heading = FloatToEQ10(m_Delta.w);
 }
 
 void Mob::ShowStats(Client* client)
@@ -1641,7 +1650,7 @@ void Mob::DoAnim(const int animnum, int type, bool ackreq, eqFilterType filter) 
 		ackreq, /* Packet ACK */
 		filter /* eqFilterType filter */
 	);
-
+	nats.OnAnimationEvent(this->GetID(), anim);
 	safe_delete(outapp);
 }
 
@@ -1737,10 +1746,11 @@ void Mob::SendIllusionPacket(uint16 in_race, uint8 in_gender, uint8 in_texture, 
 
 	if (in_texture == 0xFF)
 	{
-		if (IsPlayerRace(in_race))
+		if (IsPlayerRace(in_race)) {
 			texture = 0xFF;
-		else
+		} else {
 			texture = GetTexture();
+		}
 	}
 	else
 	{
@@ -2072,23 +2082,23 @@ float Mob::GetPlayerHeight(uint16 race) {
 	{
 		case OGRE:
 		case TROLL:
-			return 8;
+			return 8.0;
 		case VAHSHIR: case BARBARIAN:
-			return 7;
+			return 7.0;
 		case HUMAN: case HIGH_ELF: case ERUDITE: case IKSAR:
-			return 6;
+			return 6.0;
 		case HALF_ELF:
 			return 5.5;
 		case WOOD_ELF: case DARK_ELF: case WOLF: case ELEMENTAL:
-			return 5;
+			return 5.0;
 		case DWARF:
-			return 4;
+			return 4.0;
 		case HALFLING:
 			return 3.5;
 		case GNOME:
-			return 3;
+			return 3.0;
 		default:
-			return 6;
+			return 6.0;
 	}
 }
 
@@ -2462,18 +2472,18 @@ float Mob::MobAngle(Mob *other, float ourx, float oury) const {
 	float mobx = -(other->GetX());	// mob xloc (inverse because eq)
 	float moby = other->GetY();		// mob yloc
 	float heading = other->GetHeading();	// mob heading
-	heading = (heading * 360.0f) / 256.0f;	// convert to degrees
+	heading = (heading * 360.0f) / 512.0f;	// convert to degrees
 	if (heading < 270)
 		heading += 90;
 	else
 		heading -= 270;
 
 	heading = heading * 3.1415f / 180.0f;	// convert to radians
-	vectorx = mobx + (10.0f * cosf(heading));	// create a vector based on heading
-	vectory = moby + (10.0f * sinf(heading));	// of mob length 10
+	vectorx = mobx + (10.0f * std::cos(heading));	// create a vector based on heading
+	vectory = moby + (10.0f * std::sin(heading));	// of mob length 10
 
 	// length of mob to player vector
-	lengthb = (float) sqrtf(((-ourx - mobx) * (-ourx - mobx)) + ((oury - moby) * (oury - moby)));
+	lengthb = (float) std::sqrt(((-ourx - mobx) * (-ourx - mobx)) + ((oury - moby) * (oury - moby)));
 
 	// calculate dot product to get angle
 	// Handle acos domain errors due to floating point rounding errors
@@ -2486,7 +2496,7 @@ float Mob::MobAngle(Mob *other, float ourx, float oury) const {
 	else if (dotp < -1)
 		return 180.0f;
 
-	angle = acosf(dotp);
+	angle = std::acos(dotp);
 	angle = angle * 180.0f / 3.1415f;
 
 	return angle;
@@ -2657,7 +2667,7 @@ bool Mob::PlotPositionAroundTarget(Mob* target, float &x_dest, float &y_dest, fl
 			look_heading = target->GetHeading();
 
 		// Convert to sony heading to radians
-		look_heading = (look_heading / 256.0f) * 6.283184f;
+		look_heading = (look_heading / 512.0f) * 6.283184f;
 
 		float tempX = 0;
 		float tempY = 0;
@@ -2939,7 +2949,7 @@ void Mob::SendWearChange(uint8 material_slot, Client *one_client)
 	{
 		one_client->QueuePacket(outapp, false, Client::CLIENT_CONNECTED);
 	}
-
+	nats.OnWearChangeEvent(this->GetID(), wc);
 	safe_delete(outapp);
 }
 
@@ -2963,6 +2973,7 @@ void Mob::SendTextureWC(uint8 slot, uint16 texture, uint32 hero_forge_model, uin
 
 
 	entity_list.QueueClients(this, outapp);
+	nats.OnWearChangeEvent(this->GetID(), wc);
 	safe_delete(outapp);
 }
 
@@ -2985,6 +2996,7 @@ void Mob::SetSlotTint(uint8 material_slot, uint8 red_tint, uint8 green_tint, uin
 	wc->wear_slot_id = material_slot;
 
 	entity_list.QueueClients(this, outapp);
+	nats.OnWearChangeEvent(this->GetID(), wc);
 	safe_delete(outapp);
 }
 
@@ -3002,6 +3014,7 @@ void Mob::WearChange(uint8 material_slot, uint16 texture, uint32 color, uint32 h
 	wc->wear_slot_id = material_slot;
 
 	entity_list.QueueClients(this, outapp);
+	nats.OnWearChangeEvent(this->GetID(), wc);
 	safe_delete(outapp);
 }
 
@@ -3488,6 +3501,19 @@ void Mob::SetTarget(Mob* mob) {
 
 	if (this->IsClient() && this->GetTarget() && this->CastToClient()->hp_other_update_throttle_timer.Check())
 		this->GetTarget()->SendHPUpdate(false, true);
+}
+
+// For when we want a Ground Z at a location we are not at yet
+// Like MoveTo.
+float Mob::FindDestGroundZ(glm::vec3 dest, float z_offset)
+{
+	float best_z = BEST_Z_INVALID;
+	if (zone->zonemap != nullptr)
+	{
+		dest.z += z_offset;
+		best_z = zone->zonemap->FindBestZ(dest, nullptr);
+	}
+	return best_z;
 }
 
 float Mob::FindGroundZ(float new_x, float new_y, float z_offset)
@@ -4688,19 +4714,20 @@ void Mob::DoKnockback(Mob *caster, uint32 pushback, uint32 pushup)
 		spu->x_pos		= FloatToEQ19(GetX());
 		spu->y_pos		= FloatToEQ19(GetY());
 		spu->z_pos		= FloatToEQ19(GetZ());
-		spu->delta_x	= NewFloatToEQ13(static_cast<float>(new_x));
-		spu->delta_y	= NewFloatToEQ13(static_cast<float>(new_y));
-		spu->delta_z	= NewFloatToEQ13(static_cast<float>(pushup));
-		spu->heading	= FloatToEQ19(GetHeading());
+		spu->delta_x	= FloatToEQ13(static_cast<float>(new_x));
+		spu->delta_y	= FloatToEQ13(static_cast<float>(new_y));
+		spu->delta_z	= FloatToEQ13(static_cast<float>(pushup));
+		spu->heading	= FloatToEQ12(GetHeading());
 		spu->padding0002	=0;
 		spu->padding0006	=7;
 		spu->padding0014	=0x7f;
 		spu->padding0018	=0x5df27;
 		spu->animation = 0;
-		spu->delta_heading = NewFloatToEQ13(0);
+		spu->delta_heading = FloatToEQ10(0);
 		outapp_push->priority = 6;
 		entity_list.QueueClients(this, outapp_push, true);
 		CastToClient()->FastQueuePacket(&outapp_push);
+		nats.OnClientUpdateEvent(this->GetID(), spu);
 	}
 }
 
@@ -5017,7 +5044,7 @@ void Mob::DoGravityEffect()
 		}
 
 		if(IsClient())
-			this->CastToClient()->MovePC(zone->GetZoneID(), zone->GetInstanceID(), cur_x, cur_y, new_ground, GetHeading()*2); // I know the heading thing is weird(chance of movepc to halve the heading value, too lazy to figure out why atm)
+			this->CastToClient()->MovePC(zone->GetZoneID(), zone->GetInstanceID(), cur_x, cur_y, new_ground, GetHeading());
 		else
 			this->GMMove(cur_x, cur_y, new_ground, GetHeading());
 	}
@@ -5642,8 +5669,7 @@ bool Mob::IsFacingMob(Mob *other)
 	if (!other)
 		return false;
 	float angle = HeadingAngleToMob(other);
-	// what the client uses appears to be 2x our internal heading
-	float heading = GetHeading() * 2.0f;
+	float heading = GetHeading();
 
 	if (angle > 472.0 && heading < 40.0)
 		angle = heading;
@@ -5657,15 +5683,13 @@ bool Mob::IsFacingMob(Mob *other)
 }
 
 // All numbers derived from the client
-float Mob::HeadingAngleToMob(Mob *other)
+float Mob::HeadingAngleToMob(float other_x, float other_y)
 {
-	float mob_x = other->GetX();
-	float mob_y = other->GetY();
 	float this_x = GetX();
 	float this_y = GetY();
 
-	float y_diff = std::abs(this_y - mob_y);
-	float x_diff = std::abs(this_x - mob_x);
+	float y_diff = std::abs(this_y - other_y);
+	float x_diff = std::abs(this_x - other_x);
 	if (y_diff < 0.0000009999999974752427)
 		y_diff = 0.0000009999999974752427;
 
@@ -5673,13 +5697,13 @@ float Mob::HeadingAngleToMob(Mob *other)
 
 	// return the right thing based on relative quadrant
 	// I'm sure this could be improved for readability, but whatever
-	if (this_y >= mob_y) {
-		if (mob_x >= this_x)
+	if (this_y >= other_y) {
+		if (other_x >= this_x)
 			return (90.0f - angle + 90.0f) * 511.5f * 0.0027777778f;
-		if (mob_x <= this_x)
+		if (other_x <= this_x)
 			return (angle + 180.0f) * 511.5f * 0.0027777778f;
 	}
-	if (this_y > mob_y || mob_x > this_x)
+	if (this_y > other_y || other_x > this_x)
 		return angle * 511.5f * 0.0027777778f;
 	else
 		return (90.0f - angle + 270.0f) * 511.5f * 0.0027777778f;

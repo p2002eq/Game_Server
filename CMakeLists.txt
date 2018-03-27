@@ -29,7 +29,7 @@
 
 #We set a fairly new version (as of 2013) because I found finding perl was a bit... buggy on older ones
 #Can change this if you really want but you should upgrade!
-CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
+CMAKE_MINIMUM_REQUIRED(VERSION 2.8.12)
 
 #FindMySQL is located here so lets make it so CMake can find it
 SET(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/" ${CMAKE_MODULE_PATH})
@@ -52,6 +52,45 @@ IF(MSVC OR MINGW)
 	ENDIF(CMAKE_CL_64)
 ENDIF(MSVC OR MINGW)
 
+# include dirs are universal
+SET(NATS_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/dependencies/nats")
+
+#Try to find protobuf automatically
+FIND_PACKAGE(Protobuf QUIET)
+IF(NOT PROTOBUF_FOUND)
+	SET(Protobuf_DIR "${CMAKE_CURRENT_SOURCE_DIR}/dependencies/protobuf" CACHE PATH "Root protobuf directory" FORCE)
+	SET(Protobuf_PROTOC_EXECUTABLE  "${Protobuf_DIR}/bin/protoc.exe" CACHE PATH "Executable path" FORCE)
+	SET(Protobuf_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/dependencies/protobuf/include" CACHE PATH "Include dir" FORCE)
+	SET(Protobuf_SRC_ROOT_FOLDER "${CMAKE_CURRENT_SOURCE_DIR}/dependencies/protobuf/include" CACHE PATH "Include dir" FORCE)
+	SET(PROTOBUF_FOUND TRUE CACHE BOOL "" FORCE)
+
+	IF(NOT MSVC)
+		MESSAGE(STATUS "Could not find protobuf library, setting to ${Protobuf_DIR}")
+	ENDIF()
+
+	IF(MSVC)
+		IF(CMAKE_CL_64)
+			SET(Protobuf_LIBRARY_DEBUG "${Protobuf_DIR}/lib_x64/libprotobufd.lib" CACHE PATH "Root protobuf directory" FORCE)
+			SET(Protobuf_LIBRARY_RELEASE "${Protobuf_DIR}/lib_x64/libprotobufd.lib" CACHE PATH "Root protobuf directory" FORCE)
+		ELSE(CMAKE_CL_64)
+			SET(Protobuf_LIBRARY_DEBUG "${Protobuf_DIR}/lib_x86/libprotobufd.lib" CACHE PATH "Root protobuf directory" FORCE)
+			SET(Protobuf_LIBRARY_RELEASE "${Protobuf_DIR}/lib_x86/libprotobufd.lib" CACHE PATH "Root protobuf directory" FORCE)
+		ENDIF()
+	ELSE(MSVC)
+		SET(Protobuf_LIBRARY_DEBUG "${Protobuf_DIR}/lib_x64/libprotobuf.so.15" CACHE PATH "Root protobuf directory" FORCE)
+		SET(Protobuf_LIBRARY_RELEASE "${Protobuf_DIR}/lib_x64/libprotobuf.so.15" CACHE PATH "Root protobuf directory" FORCE)
+	ENDIF()
+
+	#SET(Protobuf_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/dependencies/protobuf/include" CACHE PATH "Include dir")
+	#SET(Protobuf_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/dependencies/protobuf/include")
+	#SET(Protobuf_PROTOC_EXECUTABLE "${Protobuf_DIR}/bin/protoc.exe")
+
+ENDIF()
+
+INCLUDE_DIRECTORIES(SYSTEM "${Protobuf_INCLUDE_DIR}")
+
+SET(NATS_INCLUDE_DIR "${NATS_ROOT}/include")
+
 IF(MSVC)
 	#Set our default locations for zlib/mysql based on x86/x64
 	IF(CMAKE_CL_64)
@@ -67,12 +106,14 @@ IF(MSVC)
 		ELSE()
 			SET(SODIUM_LIBRARY_HINTS "${CMAKE_CURRENT_SOURCE_DIR}/dependencies/libsodium/x64/Release/v110/dynamic")
 		ENDIF()
+		SET(NATS_LIBRARY "${NATS_ROOT}/lib_x64/nats.lib")
 	ELSE(CMAKE_CL_64)
 		SET(ZLIB_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/dependencies/zlib_x86")
 		SET(MYSQL_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/dependencies/mysql_x86")
 		SET(LUA_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/dependencies/luaj_x86")
 		SET(SODIUM_INCLUDE_HINTS "${CMAKE_CURRENT_SOURCE_DIR}/dependencies/libsodium/include")
 		SET(OPENSSL_ROOT_DIR "${CMAKE_CURRENT_SOURCE_DIR}/dependencies/openssl_x86")
+		SET(NATS_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/dependencies/nats_x86")
 		IF(MSVC_VERSION GREATER 1800)
 			SET(SODIUM_LIBRARY_HINTS "${CMAKE_CURRENT_SOURCE_DIR}/dependencies/libsodium/Win32/Release/v140/dynamic")
 		ELSEIF(MSVC_VERSION EQUAL 1800)
@@ -80,6 +121,7 @@ IF(MSVC)
 		ELSE()
 			SET(SODIUM_LIBRARY_HINTS "${CMAKE_CURRENT_SOURCE_DIR}/dependencies/libsodium/Win32/Release/v110/dynamic")
 		ENDIF()
+		SET(NATS_LIBRARY "${NATS_ROOT}/lib_x86/nats.lib")
 	ENDIF(CMAKE_CL_64)
 
 	#disable CRT warnings on windows cause they're annoying as shit and we use C functions everywhere
@@ -131,6 +173,9 @@ IF(MSVC)
 
 	ADD_DEFINITIONS(-DNOMINMAX)
 ELSE(MSVC)
+
+	SET(NATS_LIBRARY "${NATS_ROOT}/lib_x64/libnats.so")
+
 	#Normally set by perl but we don't use the perl flags anymore so we set it.
 	ADD_DEFINITIONS(-DHAS_UNION_SEMUN)
 ENDIF(MSVC)
@@ -157,7 +202,7 @@ SET(EQEMU_DEBUG_LEVEL 5 CACHE STRING "EQEmu debug level:
 	4 - Moderate debug release errors and status
 	5 - Maximum debug release errors and status
 	10 - More errors than you ever wanted to see"
-)
+		)
 
 SET(EQEMU_LOG_LEVEL_STATUS 2 CACHE STRING "EQEmu logging level for [Status]:
 	0 - Disabled
@@ -167,7 +212,7 @@ SET(EQEMU_LOG_LEVEL_STATUS 2 CACHE STRING "EQEmu logging level for [Status]:
 	8 - Output to stderr Enabled
 	9 - Output to File and stderr Enabled
 	11 - Output to File, stdout and stderr Enabled"
-)
+		)
 
 SET(EQEMU_LOG_LEVEL_NORMAL 3 CACHE STRING "EQEmu logging level for [Normal]:
 	0 - Disabled
@@ -177,7 +222,7 @@ SET(EQEMU_LOG_LEVEL_NORMAL 3 CACHE STRING "EQEmu logging level for [Normal]:
 	8 - Output to stderr Enabled
 	9 - Output to File and stderr Enabled
 	11 - Output to File, stdout and stderr Enabled"
-)
+		)
 
 SET(EQEMU_LOG_LEVEL_ERROR 2 CACHE STRING "EQEmu logging level for [Error]:
 	0 - Disabled
@@ -187,7 +232,7 @@ SET(EQEMU_LOG_LEVEL_ERROR 2 CACHE STRING "EQEmu logging level for [Error]:
 	8 - Output to stderr Enabled
 	9 - Output to File and stderr Enabled
 	11 - Output to File, stdout and stderr Enabled"
-)
+		)
 
 SET(EQEMU_LOG_LEVEL_DEBUG 3 CACHE STRING "EQEmu logging level for [Debug]:
 	0 - Disabled
@@ -197,7 +242,7 @@ SET(EQEMU_LOG_LEVEL_DEBUG 3 CACHE STRING "EQEmu logging level for [Debug]:
 	8 - Output to stderr Enabled
 	9 - Output to File and stderr Enabled
 	11 - Output to File, stdout and stderr Enabled"
-)
+		)
 
 SET(EQEMU_LOG_LEVEL_QUEST 2 CACHE STRING "EQEmu logging level for [Quest]:
 	0 - Disabled
@@ -207,7 +252,7 @@ SET(EQEMU_LOG_LEVEL_QUEST 2 CACHE STRING "EQEmu logging level for [Quest]:
 	8 - Output to stderr Enabled
 	9 - Output to File and stderr Enabled
 	11 - Output to File, stdout and stderr Enabled"
-)
+		)
 
 SET(EQEMU_LOG_LEVEL_COMMANDS 1 CACHE STRING "EQEmu logging level for [Commands]:
 	0 - Disabled
@@ -217,7 +262,7 @@ SET(EQEMU_LOG_LEVEL_COMMANDS 1 CACHE STRING "EQEmu logging level for [Commands]:
 	8 - Output to stderr Enabled
 	9 - Output to File and stderr Enabled
 	11 - Output to File, stdout and stderr Enabled"
-)
+		)
 
 SET(EQEMU_LOG_LEVEL_CRASH 3 CACHE STRING "EQEmu logging level for [Crash]:
 	0 - Disabled
@@ -227,7 +272,7 @@ SET(EQEMU_LOG_LEVEL_CRASH 3 CACHE STRING "EQEmu logging level for [Crash]:
 	8 - Output to stderr Enabled
 	9 - Output to File and stderr Enabled
 	11 - Output to File, stdout and stderr Enabled"
-)
+		)
 
 MARK_AS_ADVANCED(EQEMU_LOG_LEVEL_STATUS EQEMU_LOG_LEVEL_NORMAL EQEMU_LOG_LEVEL_ERROR EQEMU_LOG_LEVEL_DEBUG EQEMU_LOG_LEVEL_QUEST EQEMU_LOG_LEVEL_COMMANDS EQEMU_LOG_LEVEL_CRASH)
 
@@ -257,12 +302,12 @@ ENDIF(EQEMU_ENABLE_BOTS)
 
 #What to build
 OPTION(EQEMU_BUILD_SERVER "Build the game server." ON)
-OPTION(EQEMU_BUILD_LOGIN "Build the login server." ON)
+OPTION(EQEMU_BUILD_LOGIN "Build the login server." OFF)
 OPTION(EQEMU_BUILD_HC "Build the headless client." OFF)
 OPTION(EQEMU_BUILD_TESTS "Build utility tests." OFF)
 OPTION(EQEMU_BUILD_PERL "Build Perl parser." ON)
 OPTION(EQEMU_BUILD_LUA "Build Lua parser." ON)
-OPTION(EQEMU_BUILD_CLIENT_FILES "Build Client Import/Export Data Programs." OFF)
+OPTION(EQEMU_BUILD_CLIENT_FILES "Build Client Import/Export Data Programs." ON)
 
 #C++11 stuff
 IF(NOT MSVC)
@@ -309,7 +354,7 @@ IF(EQEMU_BUILD_PERL)
 	INCLUDE_DIRECTORIES(SYSTEM "${PERL_INCLUDE_PATH}")
 ENDIF(EQEMU_BUILD_PERL)
 
-SET(SERVER_LIBS common debug ${MySQL_LIBRARY_DEBUG} optimized ${MySQL_LIBRARY_RELEASE} ${ZLIB_LIBRARY} libuv fmt)
+SET(SERVER_LIBS common debug ${MySQL_LIBRARY_DEBUG} optimized ${MySQL_LIBRARY_RELEASE} ${ZLIB_LIBRARY} libuv fmt ${NATS_LIBRARY} ${PROTOBUF_LIBRARY_DEBUG})
 
 FIND_PACKAGE(Sodium REQUIRED)
 IF(SODIUM_FOUND)
@@ -352,11 +397,14 @@ ENDIF(EQEMU_BUILD_LUA)
 
 INCLUDE_DIRECTORIES(SYSTEM "${ZLIB_INCLUDE_DIRS}")
 INCLUDE_DIRECTORIES(SYSTEM "${MySQL_INCLUDE_DIR}")
+INCLUDE_DIRECTORIES(SYSTEM "${NATS_INCLUDE_DIR}")
+
 INCLUDE_DIRECTORIES(SYSTEM "${CMAKE_CURRENT_SOURCE_DIR}/common/glm")
 INCLUDE_DIRECTORIES(SYSTEM "${CMAKE_CURRENT_SOURCE_DIR}/libs/cereal")
 INCLUDE_DIRECTORIES(SYSTEM "${CMAKE_CURRENT_SOURCE_DIR}/libs/libuv/include" )
 INCLUDE_DIRECTORIES(SYSTEM "${CMAKE_CURRENT_SOURCE_DIR}/libs/libuv/src")
 INCLUDE_DIRECTORIES(SYSTEM "${CMAKE_CURRENT_SOURCE_DIR}/libs/format")
+
 
 IF(EQEMU_BUILD_SERVER OR EQEMU_BUILD_LOGIN OR EQEMU_BUILD_TESTS OR EQEMU_BUILD_HC)
 	ADD_SUBDIRECTORY(common)

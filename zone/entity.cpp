@@ -2385,13 +2385,15 @@ bool EntityList::RemoveMob(uint16 delete_id)
 	auto it = mob_list.find(delete_id);
 	if (it != mob_list.end()) {
 		RemoveMobFromClientCloseLists(it->second);
-		if (npc_list.count(delete_id))
+		if (npc_list.count(delete_id)) {
 			entity_list.RemoveNPC(delete_id);
-		else if (client_list.count(delete_id))
+		} else if (client_list.count(delete_id)) {
 			entity_list.RemoveClient(delete_id);
+		}
 		safe_delete(it->second);
-		if (!corpse_list.count(delete_id))
+		if (!corpse_list.count(delete_id)) {
 			free_ids.push(it->first);
+		}
 		mob_list.erase(it);
 		return true;
 	}
@@ -2401,8 +2403,9 @@ bool EntityList::RemoveMob(uint16 delete_id)
 // This is for if the ID is deleted for some reason
 bool EntityList::RemoveMob(Mob *delete_mob)
 {
-	if (delete_mob == 0)
+	if (delete_mob == 0) {
 		return true;
+	}
 
 	auto it = mob_list.begin();
 	while (it != mob_list.end()) {

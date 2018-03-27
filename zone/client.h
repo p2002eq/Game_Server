@@ -638,6 +638,7 @@ public:
 
 	inline const char* AccountName()const { return account_name; }
 	inline int GetAccountCreation() const { return account_creation; }
+	const char* GetForumName(uint32 acc_id);
 	inline int16 Admin() const { return admin; }
 	inline uint32 CharacterID() const { return character_id; }
 	void UpdateAdmin(bool iFromDB = true);

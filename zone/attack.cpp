@@ -32,6 +32,8 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #include "worldserver.h"
 #include "zone.h"
 #include "lua_parser.h"
+#include "nats_manager.h"
+#include "fastmath.h"
 
 #include <assert.h>
 #include <stdio.h>
@@ -43,6 +45,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 
 extern QueryServ* QServ;
 extern WorldServer worldserver;
+extern FastMath g_Math;
 
 #ifdef _WINDOWS
 #define snprintf	_snprintf
@@ -52,6 +55,7 @@ extern WorldServer worldserver;
 
 extern EntityList entity_list;
 extern Zone* zone;
+extern NatsManager nats;
 
 EQEmu::skills::SkillType Mob::AttackAnimation(int Hand, const EQEmu::ItemInstance* weapon, EQEmu::skills::SkillType skillinuse)
 {
@@ -394,7 +398,7 @@ bool Mob::AvoidDamage(Mob *other, DamageHitInfo &hit)
 	Mob *attacker = other;
 	Mob *defender = this;
 
-	bool InFront = attacker->InFrontMob(this, attacker->GetX(), attacker->GetY());
+	bool InFront = !attacker->BehindMob(this, attacker->GetX(), attacker->GetY());
 
 	/*
 	This special ability adds a negative modifer to the defenders riposte/block/parry/chance
@@ -1654,6 +1658,7 @@ bool Client::Death(Mob* killerMob, int32 damage, uint16 spell, EQEmu::skills::Sk
 	d->damage = damage;
 	app.priority = 6;
 	entity_list.QueueClients(this, &app);
+	nats.OnDeathEvent(d);
 
 	/*
 	#2: figure out things that affect the player dying and mark them dead
@@ -2236,7 +2241,7 @@ bool NPC::Death(Mob* killer_mob, int32 damage, uint16 spell, EQEmu::skills::Skil
 	entity_list.QueueClients(killer_mob, app, false);
 
 	safe_delete(app);
-
+	nats.OnDeathEvent(d);
 	if (respawn2) {
 		respawn2->DeathReset(1);
 	}
@@ -2803,6 +2808,7 @@ void Mob::DamageShield(Mob* attacker, bool spell_ds) {
 		cds->damage = DS;
 		entity_list.QueueCloseClients(this, outapp);
 		safe_delete(outapp);
+		nats.OnDamageEvent(cds->source, cds);
 	}
 	else if (DS > 0 && !spell_ds) {
 		//we are healing the attacker...
@@ -3619,47 +3625,28 @@ void Mob::CommonDamage(Mob* attacker, int &damage, const uint16 spell_id, const 
 		a->spellid = spell_id;
 		if (special == eSpecialAttacks::AERampage)
 			a->special = 1;
-		else if (special == eSpecialAttacks::Rampage)
+		else if (special == eSpecialAttacks::Rampage) {
 			a->special = 2;
-		else
-			a->special = 0;
-
-		if (IsClient()) {
-			a->meleepush_xy = attacker ? attacker->GetHeading() * 360.0f / 256.0f : 0.0f;
 		} else {
-			a->meleepush_xy = attacker ? attacker->GetHeading() * 2.0f / 256.0f * 3.14159265f : 0.0f;
+			a->special = 0;
 		}
-
-		if (RuleB(Combat, MeleePush) && damage > 0 && !IsRooted() &&
-			(IsClient() || zone->random.Roll(RuleI(Combat, MeleePushChance)))) {
+		a->hit_heading = attacker ? attacker->GetHeading() : 0.0f;
+		if (
+				RuleB(Combat, MeleePush) &&
+				damage > 0 &&
+				!IsRooted() &&
+				(
+				 IsClient() ||
+				 zone->random.Roll(RuleI(Combat, MeleePushChance))
+				 )
+			) {
 			a->force = EQEmu::skills::GetSkillMeleePushForce(skill_used);
-			if (RuleR(Combat, MeleePushForceClient) && attacker->IsClient()) {
-				a->force += a->force*RuleR(Combat, MeleePushForceClient);
-			}
-			if (RuleR(Combat, MeleePushForcePet) && attacker->IsPet()) {
-				a->force += a->force*RuleR(Combat, MeleePushForcePet);
-			}
-			// dont push if we are damaging self
-			if (GetID() == attacker->GetID() && spell_id != SPELL_UNKNOWN) {
-				a->force = 0.0f;	
-			}
-			// update NPC stuff
-			float size_mod = GetSize() / RuleR(Combat, MeleePushSizeMod);
-			auto new_pos = glm::vec3(GetX() + (a->force * std::sin(a->meleepush_xy)) + (size_mod * std::sin(a->meleepush_xy)),
-				GetY() + (a->force * std::cos(a->meleepush_xy)) + (size_mod * std::cos(a->meleepush_xy)), m_Position.z);
-			if (zone->zonemap && zone->zonemap->CheckLoS(glm::vec3(m_Position), new_pos)) { // If we have LoS on the new loc it should be reachable.
-				if (IsNPC()) {
-					// Is this adequate?
-					new_pos.x -= size_mod * std::sin(a->meleepush_xy);
-					new_pos.y -= size_mod * std::cos(a->meleepush_xy);
-					Teleport(new_pos);
-					if (position_update_melee_push_timer.Check()) {
-						SendPositionUpdate();
-					}
+			if (IsNPC()) {
+				if (ForcedMovement == 0 && a->force != 0.0f && position_update_melee_push_timer.Check()) {
+					m_Delta.x += a->force * g_Math.FastSin(a->hit_heading);
+					m_Delta.y += a->force * g_Math.FastCos(a->hit_heading);
+					ForcedMovement = 3;
 				}
-			}
-			else {
-				a->force = 0.0f; // we couldn't move there, so lets not
 			}
 		}
 
@@ -3770,7 +3757,7 @@ void Mob::CommonDamage(Mob* attacker, int &damage, const uint16 spell_id, const 
 				CastToClient()->QueuePacket(outapp);
 			}
 		}
-
+		nats.OnDamageEvent(a->source, a);
 		safe_delete(outapp);
 	}
 	else {
@@ -4501,6 +4488,12 @@ void Mob::DoRiposte(Mob *defender)
 
 	if (!defender)
 		return;
+
+	// so ahhh the angle you can riposte is larger than the angle you can hit :P
+	if (!defender->IsFacingMob(this)) {
+		defender->Message_StringID(MT_TooFarAway, CANT_SEE_TARGET);
+		return;
+	}
 
 	defender->Attack(this, EQEmu::inventory::slotPrimary, true);
 	if (HasDied())

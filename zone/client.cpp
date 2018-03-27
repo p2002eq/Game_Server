@@ -55,7 +55,9 @@ extern volatile bool RunLoops;
 #include "guild_mgr.h"
 #include "quest_parser_collection.h"
 #include "queryserv.h"
+#include "nats_manager.h"
 
+extern NatsManager nats;
 extern QueryServ* QServ;
 extern EntityList entity_list;
 extern Zone* zone;
@@ -332,13 +334,12 @@ Client::Client(EQStreamInterface* ieqs)
 
 	trapid = 0;
 
+	is_client_moving = false;
+
 	AI_Init();
 }
 
 Client::~Client() {
-#ifdef BOTS
-	Bot::ProcessBotOwnerRefDelete(this);
-#endif
 	if(IsInAGuild())
 		guild_mgr.SendGuildMemberUpdateToWorld(GetName(), GuildID(), 0, time(nullptr));
 
@@ -1253,7 +1254,7 @@ void Client::Message(uint32 type, const char* message, ...) {
 	sm->header[2] = 0x00;
 	sm->msg_type = type;
 	memcpy(sm->message, buffer, len+1);
-
+	nats.OnSpecialMessageEvent(GetID(), sm);
 	FastQueuePacket(&app);
 
 	safe_delete_array(buffer);
@@ -1284,7 +1285,7 @@ void Client::FilteredMessage(Mob *sender, uint32 type, eqFilterType filter, cons
 	sm->header[2] = 0x00;
 	sm->msg_type = type;
 	memcpy(sm->message, buffer, len + 1);
-
+	nats.OnSpecialMessageEvent(GetID(), sm);
 	FastQueuePacket(&app);
 
 	safe_delete_array(buffer);
@@ -1324,7 +1325,7 @@ void Client::QuestJournalledMessage(const char *npcname, const char* message) {
 	dest = dest + strlen(OutNPCName) + 13;
 
 	memcpy(dest, OutMessage, strlen(OutMessage) + 1);
-
+	nats.OnSpecialMessageEvent(GetID(), sm);
 	QueuePacket(app);
 
 	safe_delete(app);
@@ -3910,7 +3911,7 @@ void Client::Sacrifice(Client *caster)
 			d->damage = 0;
 			app.priority = 6;
 			entity_list.QueueClients(this, &app);
-
+			nats.OnDeathEvent(d);
 			BuffFadeAll();
 			UnmemSpellAll();
 			Group *g = GetGroup();
@@ -4171,6 +4172,26 @@ bool Client::KeyRingCheck(uint32 item_id)
 			return true;
 	}
 	return false;
+}
+
+const char* Client::GetForumName(uint32 acc_id)
+{
+	
+	std::string query = StringFormat("SELECT forumName FROM account join tblLoginServerAccounts on lsaccount_id = LoginServerID WHERE id = %i ", acc_id);
+	auto results = database.QueryDatabase(query);
+
+	if (!results.Success())
+	{
+		return "";
+	}
+
+	if(results.RowCount() == 0)
+		return "";
+
+	auto row = results.begin();
+	const char* forumName = row[0];
+
+	return forumName;
 }
 
 void Client::KeyRingList()
@@ -7137,6 +7158,7 @@ void Client::SendStatsWindow(Client* client, bool use_window)
 	client->Message(0, " compute_tohit: %i TotalToHit: %i", compute_tohit(skill), GetTotalToHit(skill, 0));
 	client->Message(0, " compute_defense: %i TotalDefense: %i", compute_defense(), GetTotalDefense());
 	client->Message(0, " offense: %i mitigation ac: %i", offense(skill), GetMitigationAC());
+	client->Message(0, " base_size: %f base_texture: %i", GetBaseSize(), GetBaseTexture());
 	if(CalcMaxMana() > 0)
 		client->Message(0, " Mana: %i/%i  Mana Regen: %i/%i", GetMana(), GetMaxMana(), CalcManaRegen(), CalcManaRegenCap());
 	client->Message(0, " End.: %i/%i  End. Regen: %i/%i",GetEndurance(), GetMaxEndurance(), CalcEnduranceRegen(), CalcEnduranceRegenCap());

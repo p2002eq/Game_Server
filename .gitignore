@@ -1,16 +1,16 @@
 # Object files
-*.o
-*.obj
+#*.o
+#*.obj
 
 # Libraries
-*.lib
-*.a
+#*.lib
+#*.a
 
 # Shared objects (inc. Windows DLLs)
-*.dll
-*.so
-*.so.*
-*.dylib
+#*.dll
+#*.so
+#*.so.*
+#*.dylib
 
 # Executables
 *.exe
@@ -46,9 +46,14 @@ bin/*
 
 # VisualStudio files
 
-*.sln
+#*.sln
 *.vcxproj*
 .vs/
 
 libs/format/FMT.cbp
 libs/libuv/libuv.cbp
+libs/format/fmt/libfmt.a
+
+# protobuf generated files
+common/message.pb.cc
+common/message.pb.h

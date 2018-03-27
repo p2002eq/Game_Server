@@ -48,6 +48,8 @@ class Raid;
 struct NewSpawn_Struct;
 struct PlayerPositionUpdateServer_Struct;
 
+const int COLLISION_BOX_SIZE = 4;
+
 namespace EQEmu
 {
 	struct ItemData;
@@ -227,7 +229,8 @@ public:
 	inline bool InFrontMob(Mob *other = 0, float ourx = 0.0f, float oury = 0.0f) const
 		{ return (!other || other == this) ? true : MobAngle(other, ourx, oury) < 56.0f; }
 	bool IsFacingMob(Mob *other); // kind of does the same as InFrontMob, but derived from client
-	float HeadingAngleToMob(Mob *other); // to keep consistent with client generated messages
+	float HeadingAngleToMob(Mob *other) { return HeadingAngleToMob(other->GetX(), other->GetY()); }
+	float HeadingAngleToMob(float other_x, float other_y); // to keep consistent with client generated messages
 	virtual void RangedAttack(Mob* other) { }
 	virtual void ThrowingAttack(Mob* other) { }
 	// 13 = Primary (default), 14 = secondary
@@ -617,6 +620,7 @@ public:
 	void SetFlyMode(uint8 flymode);
 	inline void Teleport(glm::vec3 NewPosition) { m_Position.x = NewPosition.x; m_Position.y = NewPosition.y;
 		m_Position.z = NewPosition.z; };
+	void TryMoveAlong(float distance, float angle, bool send = true);
 
 	//AI
 	static uint8 GetLevelForClientCon(uint8 mylevel, uint8 iOtherLevel);
@@ -1008,15 +1012,16 @@ public:
 	inline bool IsBlind() { return spellbonuses.IsBlind; }
 
 	inline bool			CheckAggro(Mob* other) {return hate_list.IsEntOnHateList(other);}
-	float				CalculateHeadingToTarget(float in_x, float in_y);
-	bool				CalculateNewPosition(float x, float y, float z, int speed, bool checkZ = false, bool calcheading = true);
-	virtual bool		CalculateNewPosition2(float x, float y, float z, int speed, bool checkZ = true, bool calcheading = true);
+	float				CalculateHeadingToTarget(float in_x, float in_y) {return HeadingAngleToMob(in_x, in_y); }
+	bool				CalculateNewPosition(float x, float y, float z, int speed, bool checkZ = false, bool calcHeading = true);
+	virtual bool		CalculateNewPosition2(float x, float y, float z, int speed, bool checkZ = true, bool calcHeading = true);
 	float				CalculateDistance(float x, float y, float z);
 	float				GetGroundZ(float new_x, float new_y, float z_offset=0.0);
 	void				SendTo(float new_x, float new_y, float new_z);
 	void				SendToFixZ(float new_x, float new_y, float new_z);
 	float				GetZOffset() const;
-	void				FixZ(int32 z_find_offset = 5);
+	void 				FixZ(int32 z_find_offset = 5);
+	float 				GetFixedZ(glm::vec3 position, int32 z_find_offset = 5);
 	void				NPCSpecialAttacks(const char* parse, int permtag, bool reset = true, bool remove = false);
 	inline uint32		DontHealMeBefore() const { return pDontHealMeBefore; }
 	inline uint32		DontBuffMeBefore() const { return pDontBuffMeBefore; }
@@ -1181,6 +1186,20 @@ public:
 
 	float GetPlayerHeight(uint16 race);
 
+	// Bots HealRotation methods
+#ifdef BOTS
+	bool IsHealRotationTarget() { return (m_target_of_heal_rotation.use_count() && m_target_of_heal_rotation.get()); }
+	bool JoinHealRotationTargetPool(std::shared_ptr<HealRotation>* heal_rotation);
+	bool LeaveHealRotationTargetPool();
+
+	uint32 HealRotationHealCount();
+	uint32 HealRotationExtendedHealCount();
+	float HealRotationHealFrequency();
+	float HealRotationExtendedHealFrequency();
+
+	const std::shared_ptr<HealRotation>* TargetOfHealRotation() const { return &m_target_of_heal_rotation; }
+#endif
+
 protected:
 	void CommonDamage(Mob* other, int &damage, const uint16 spell_id, const EQEmu::skills::SkillType attack_skill, bool &avoidable, const int8 buffslot, const bool iBuffTic, eSpecialAttacks specal = eSpecialAttacks::None);
 	static uint16 GetProcID(uint16 spell_id, uint8 effect_index);
@@ -1188,7 +1207,7 @@ protected:
 	int _GetWalkSpeed() const;
 	int _GetRunSpeed() const;
 	int _GetFearSpeed() const;
-	virtual bool MakeNewPositionAndSendUpdate(float x, float y, float z, int speed, bool checkZ);
+	virtual bool MakeNewPositionAndSendUpdate(float x, float y, float z, int speed, bool checkZ = true, bool calcHeading = true);
 
 	virtual bool AI_EngagedCastCheck() { return(false); }
 	virtual bool AI_PursueCastCheck() { return(false); }
@@ -1325,6 +1344,7 @@ protected:
 	int GetBaseSkillDamage(EQEmu::skills::SkillType skill, Mob *target = nullptr);
 	virtual int16 GetFocusEffect(focusType type, uint16 spell_id) { return 0; }
 	void CalculateNewFearpoint();
+	float FindDestGroundZ(glm::vec3 dest, float z_offset=0.0);
 	glm::vec3 UpdatePath(float ToX, float ToY, float ToZ, float Speed, bool &WaypointChange, bool &NodeReached);
 	void PrintRoute();
 
@@ -1344,6 +1364,9 @@ protected:
 	char lastname[64];
 
 	glm::vec4 m_Delta;
+	// just locs around them to double check, if we do expand collision this should be cached on movement
+	// ideally we should use real models, but this should be quick and work mostly
+	glm::vec4 m_CollisionBox[COLLISION_BOX_SIZE];
 
 	EQEmu::LightSourceProfile m_Light;
 
@@ -1457,6 +1480,7 @@ protected:
 	std::unique_ptr<Timer> AI_movement_timer;
 	std::unique_ptr<Timer> AI_target_check_timer;
 	bool movetimercompleted;
+	int8 ForcedMovement; // push
 	bool permarooted;
 	std::unique_ptr<Timer> AI_scan_area_timer;
 	std::unique_ptr<Timer> AI_walking_timer;

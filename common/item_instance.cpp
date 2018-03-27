@@ -396,6 +396,7 @@ void EQEmu::ItemInstance::Clear()
 	// Destroy container contents
 	for (auto iter = m_contents.begin(); iter != m_contents.end(); ++iter) {
 		safe_delete(iter->second);
+		m_contents.erase(iter);
 	}
 	m_contents.clear();
 }

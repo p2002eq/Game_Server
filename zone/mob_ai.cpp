@@ -29,12 +29,16 @@
 #include "quest_parser_collection.h"
 #include "string_ids.h"
 #include "water_map.h"
+#include "fastmath.h"
 
+#include <glm/gtx/projection.hpp>
 #include <algorithm>
 #include <iostream>
+#include <limits>
 #include <math.h>
 
 extern EntityList entity_list;
+extern FastMath g_Math;
 
 extern Zone *zone;
 
@@ -48,7 +52,7 @@ extern Zone *zone;
 
 //NOTE: do NOT pass in beneficial and detrimental spell types into the same call here!
 bool NPC::AICastSpell(Mob* tar, uint8 iChance, uint32 iSpellTypes, bool bInnates) {
-	if (!tar)
+if (!tar)
 		return false;
 
 	if (IsNoCast())
@@ -61,8 +65,7 @@ bool NPC::AICastSpell(Mob* tar, uint8 iChance, uint32 iSpellTypes, bool bInnates
 	// Any sane mob would cast if they can.
 	bool cast_only_option = (IsRooted() && !CombatRange(tar));
 
-	// innates are always attempted
-	if (!cast_only_option && iChance < 100 && !bInnates) {
+	if (!cast_only_option && iChance < 100) {
 		if (zone->random.Int(0, 100) >= iChance)
 			return false;
 	}
@@ -85,12 +88,6 @@ bool NPC::AICastSpell(Mob* tar, uint8 iChance, uint32 iSpellTypes, bool bInnates
 			//return false;
 			continue;
 		}
-
-		if ((AIspells[i].priority == 0 && !bInnates) || (AIspells[i].priority != 0 && bInnates)) {
-			// so "innate" spells are special and spammed a bit
-			// we define an innate spell as a spell with priority 0
-			continue;
-		}
 		if (iSpellTypes & AIspells[i].type) {
 			// manacost has special values, -1 is no mana cost, -2 is instant cast (no mana)
 			int32 mana_cost = AIspells[i].manacost;
@@ -106,7 +103,7 @@ bool NPC::AICastSpell(Mob* tar, uint8 iChance, uint32 iSpellTypes, bool bInnates
 				dist2 <= spells[AIspells[i].spellid].range*spells[AIspells[i].spellid].range
 				)
 				&& (mana_cost <= GetMana() || GetMana() == GetMaxMana())
-				&& (AIspells[i].time_cancast + (zone->random.Int(0, 4) * 500)) <= Timer::GetCurrentTime() //break up the spelling casting over a period of time.
+				&& (AIspells[i].time_cancast + (zone->random.Int(0, 4) * 1000)) <= Timer::GetCurrentTime() //break up the spelling casting over a period of time.
 				) {
 
 #if MobAI_DEBUG_Spells >= 21
@@ -133,7 +130,7 @@ bool NPC::AICastSpell(Mob* tar, uint8 iChance, uint32 iSpellTypes, bool bInnates
 					}
 					case SpellType_Root: {
 						Mob *rootee = GetHateRandom();
-						if (rootee && !rootee->IsRooted() && !rootee->IsFeared() && (bInnates || zone->random.Roll(50))
+						if (rootee && !rootee->IsRooted() && zone->random.Roll(50)
 							&& rootee->DontRootMeBefore() < Timer::GetCurrentTime()
 							&& rootee->CanBuffStack(AIspells[i].spellid, GetLevel(), true) >= 0
 							) {
@@ -172,7 +169,7 @@ bool NPC::AICastSpell(Mob* tar, uint8 iChance, uint32 iSpellTypes, bool bInnates
 					}
 
 					case SpellType_InCombatBuff: {
-						if(bInnates || zone->random.Roll(50))
+						if(zone->random.Roll(50))
 						{
 							AIDoSpellCast(i, tar, mana_cost);
 							return true;
@@ -191,36 +188,42 @@ bool NPC::AICastSpell(Mob* tar, uint8 iChance, uint32 iSpellTypes, bool bInnates
 					case SpellType_Slow:
 					case SpellType_Debuff: {
 						Mob * debuffee = GetHateRandom();
-						if (debuffee && manaR >= 10 && (bInnates || zone->random.Roll(75)) &&
-								debuffee->CanBuffStack(AIspells[i].spellid, GetLevel(), true) >= 0) {
-							if (!checked_los) {
-								if (!CheckLosFN(debuffee))
-									return false;
-								checked_los = true;
-							}
-							AIDoSpellCast(i, debuffee, mana_cost);
-							return true;
-						}
+                        if (debuffee && manaR >= 10 && zone->random.Roll(75))
+                        { 
+                            if (spells[AIspells[i].spellid].priority >= AI_SPELL_MAX_PRIORITY || debuffee->CanBuffStack(AIspells[i].spellid, GetLevel(), true) >= 0)
+                            {
+                                if (spells[AIspells[i].spellid].targettype != ST_AECaster && !checked_los)
+                                {
+                                    if (!CheckLosFN(debuffee))
+                                        return false;
+                                    checked_los = true;
+                                }
+                                AIDoSpellCast(i, debuffee, mana_cost);
+                                return true;
+                            }
+                        }
 						break;
 					}
 					case SpellType_Nuke: {
-						if (
-							manaR >= 10 && (bInnates || zone->random.Roll(75))
-							&& tar->CanBuffStack(AIspells[i].spellid, GetLevel(), false) >= 0 // saying it's a nuke here, AI shouldn't care too much if overwriting
-							) {
-							if(!checked_los) {
-								if(!CheckLosFN(tar))
-									return(false);	//cannot see target... we assume that no spell is going to work since we will only be casting detrimental spells in this call
-								checked_los = true;
-							}
-							AIDoSpellCast(i, tar, mana_cost);
-							return true;
-						}
+						if (manaR >= 10 && zone->random.Roll(75))
+                        {
+							if (spells[AIspells[i].spellid].priority >= AI_SPELL_MAX_PRIORITY || tar->CanBuffStack(AIspells[i].spellid, GetLevel(), true) >= 0)
+                            {
+                                if(spells[AIspells[i].spellid].targettype != ST_AECaster && !checked_los)
+                                {
+                                    if(!CheckLosFN(tar))
+                                        return(false);	//cannot see target... we assume that no spell is going to work since we will only be casting detrimental spells in this call
+                                    checked_los = true;
+                                }
+                                AIDoSpellCast(i, tar, mana_cost);
+                                return true;
+                            }
+                        }
 						break;
 					}
                                          
 					case SpellType_Dispel: {
-						if(bInnates || zone->random.Roll(5))
+						if(zone->random.Roll(5))
 						{
 							if(spells[AIspells[i].spellid].targettype != ST_AECaster && !checked_los) {
 								if(!CheckLosFN(tar)) {
@@ -237,7 +240,7 @@ bool NPC::AICastSpell(Mob* tar, uint8 iChance, uint32 iSpellTypes, bool bInnates
 						break;
 					}
 					case SpellType_Mez: {
-						if(bInnates || zone->random.Roll(20))
+						if(zone->random.Roll(20))
 						{
 							Mob * mezTar = nullptr;
 							mezTar = entity_list.GetTargetForMez(this);
@@ -253,7 +256,7 @@ bool NPC::AICastSpell(Mob* tar, uint8 iChance, uint32 iSpellTypes, bool bInnates
 
 					case SpellType_Charm:
 					{
-						if(!IsPet() && (bInnates || zone->random.Roll(20)))
+						if(!IsPet() && zone->random.Roll(20))
 						{
 							Mob * chrmTar = GetHateRandom();
 							if(chrmTar && chrmTar->CanBuffStack(AIspells[i].spellid, GetLevel(), true) >= 0)
@@ -267,7 +270,7 @@ bool NPC::AICastSpell(Mob* tar, uint8 iChance, uint32 iSpellTypes, bool bInnates
 
 					case SpellType_Pet: {
 						//keep mobs from recasting pets when they have them.
-						if (!IsPet() && !GetPetID() && (bInnates || zone->random.Roll(25))) {
+						if (!IsPet() && !GetPetID() && zone->random.Roll(25)) {
 							AIDoSpellCast(i, tar, mana_cost);
 							return true;
 						}
@@ -275,7 +278,7 @@ bool NPC::AICastSpell(Mob* tar, uint8 iChance, uint32 iSpellTypes, bool bInnates
 					}
 					case SpellType_Lifetap: {
 						if (GetHPRatio() <= 95
-							&& (bInnates || zone->random.Roll(50))
+							&& zone->random.Roll(50)
 							&& tar->CanBuffStack(AIspells[i].spellid, GetLevel(), true) >= 0
 							) {
 							if(spells[AIspells[i].spellid].targettype != ST_AECaster && !checked_los) {
@@ -291,7 +294,7 @@ bool NPC::AICastSpell(Mob* tar, uint8 iChance, uint32 iSpellTypes, bool bInnates
 					case SpellType_Snare: {
 						if (
 							!tar->IsRooted()
-							&& (bInnates || zone->random.Roll(50))
+							&& zone->random.Roll(50)
 							&& tar->DontSnareMeBefore() < Timer::GetCurrentTime()
 							&& tar->CanBuffStack(AIspells[i].spellid, GetLevel(), true) >= 0
 							) {
@@ -309,7 +312,7 @@ bool NPC::AICastSpell(Mob* tar, uint8 iChance, uint32 iSpellTypes, bool bInnates
 					}
 					case SpellType_DOT: {
 						if (
-							(bInnates || zone->random.Roll(60))
+							zone->random.Roll(60)
 							&& tar->DontDotMeBefore() < Timer::GetCurrentTime()
 							&& tar->CanBuffStack(AIspells[i].spellid, GetLevel(), true) >= 0
 							) {
@@ -535,7 +538,7 @@ void NPC::AI_Start(uint32 iMoveDelay) {
 		AIautocastspell_timer = std::unique_ptr<Timer>(new Timer(1000));
 		AIautocastspell_timer->Disable();
 	} else {
-		AIautocastspell_timer = std::unique_ptr<Timer>(new Timer(500));
+		AIautocastspell_timer = std::unique_ptr<Timer>(new Timer(750));
 		AIautocastspell_timer->Start(RandomTimer(0, 300), false);
 	}
 
@@ -938,11 +941,12 @@ void Client::AI_Process()
 				return;
 
 			float dist = DistanceSquared(m_Position, owner->GetPosition());
-			if (dist >= 400)
-			{
-				if(AI_movement_timer->Check())
-				{
-					int nspeed = (dist >= 5625 ? GetRunspeed() : GetWalkspeed());
+			if (dist >= 202500) { // >= 450 distance
+				Teleport(static_cast<glm::vec3>(owner->GetPosition()));
+				SendPositionUpdate(); // this shouldn't happen a lot (and hard to make it) so lets not rate limit
+			} else if (dist >= 400) { // >=20
+				if (AI_movement_timer->Check()) {
+					int nspeed = (dist >= 1225 ? GetRunspeed() : GetWalkspeed()); // >= 35
 					animation = nspeed;
 					nspeed *= 2;
 					SetCurrentSpeed(nspeed);
@@ -966,8 +970,71 @@ void Mob::AI_Process() {
 	if (!IsAIControlled())
 		return;
 
-	if (!(AI_think_timer->Check() || attack_timer.Check(false)))
+	if (!(AI_think_timer->Check() || attack_timer.Check(false))) {
 		return;
+	}
+
+	// we are being pushed, we will hijack this movement timer
+	// this also needs to be done before casting to have a chance to interrupt
+	// this flag won't be set if the mob can't be pushed (rooted etc)
+	if (ForcedMovement > 0 && AI_movement_timer->Check()) {
+		bool bPassed = true;
+		auto z_off = 0; //GetZOffset();
+		glm::vec3 normal;
+		glm::vec3 new_pos = m_Position + m_Delta;
+		new_pos.z += z_off;
+
+		// no zone map = fucked
+		if (zone->HasMap()) {
+			// in front
+			m_CollisionBox[0].x = m_Position.x + 3.0f * g_Math.FastSin(0.0f);
+			m_CollisionBox[0].y = m_Position.y + 3.0f * g_Math.FastCos(0.0f);
+			m_CollisionBox[0].z = m_Position.z + z_off;
+
+			// to right
+			m_CollisionBox[1].x = m_Position.x + 3.0f * g_Math.FastSin(128.0f);
+			m_CollisionBox[1].y = m_Position.y + 3.0f * g_Math.FastCos(128.0f);
+			m_CollisionBox[1].z = m_Position.z + z_off;
+
+			// behind
+			m_CollisionBox[2].x = m_Position.x + 3.0f * g_Math.FastSin(256.0f);
+			m_CollisionBox[2].y = m_Position.y + 3.0f * g_Math.FastCos(256.0f);
+			m_CollisionBox[2].z = m_Position.z + z_off;
+
+			// to left
+			m_CollisionBox[3].x = m_Position.x + 3.0f * g_Math.FastSin(384.0f);
+			m_CollisionBox[3].y = m_Position.y + 3.0f * g_Math.FastCos(384.0f);
+			m_CollisionBox[3].z = m_Position.z + z_off;
+
+			// collision happened, need to move along the wall
+			float distance = 0.0f, shortest = std::numeric_limits<float>::infinity();
+			glm::vec3 tmp_nrm;
+			for (auto &vec : m_CollisionBox) {
+				if (zone->zonemap->DoCollisionCheck(vec, new_pos, tmp_nrm, distance)) {
+					bPassed = false; // lets try with new projection next pass
+					if (distance < shortest) {
+						normal = tmp_nrm;
+						shortest = distance;
+					}
+				}
+			}
+		}
+
+		if (bPassed) {
+			ForcedMovement = 0;
+			m_Delta = glm::vec4();
+			Teleport(new_pos);
+			SendPositionUpdate();
+			pLastChange = Timer::GetCurrentTime();
+		} else if (--ForcedMovement) {
+			auto proj = glm::proj(static_cast<glm::vec3>(m_Delta), normal);
+			m_Delta.x -= proj.x;
+			m_Delta.y -= proj.y;
+			m_Delta.z -= proj.z;
+		} else {
+			m_Delta = glm::vec4(); // well, we failed to find a spot to be forced to, lets give up
+		}
+	}
 
 	if (IsCasting())
 		return;
@@ -1462,7 +1529,7 @@ void Mob::AI_Process() {
 						if (dist >= 400)
 						{
 							int speed = GetWalkspeed();
-							if (dist >= 5625)
+							if (dist >= 1225) // 35
 								speed = GetRunspeed();
 
 							CalculateNewPosition2(owner->GetX(), owner->GetY(), owner->GetZ(), speed);
@@ -1643,19 +1710,22 @@ void NPC::AI_DoMovement() {
 					}
 
 					this->FixZ();
-
 					SendPosition();
 
 					//kick off event_waypoint arrive
 					char temp[16];
 					sprintf(temp, "%d", cur_wp);
 					parse->EventNPC(EVENT_WAYPOINT_ARRIVE, CastToNPC(), nullptr, temp, 0);
-					// start moving directly to next waypoint if we're at a 0 pause waypoint and we didn't get quest halted.
-					if (!AI_walking_timer->Enabled()) {
+					// No need to move as we are there.  Next loop will
+					// take care of normal grids, even at pause 0.
+					// We do need to call and setup a wp if we're cur_wp=-2
+					// as that is where roamer is unset and we don't want
+					// the next trip through to move again based on grid stuff.
+					doMove = false;
+					if (cur_wp == -2) {
 						AI_SetupNextWaypoint();
-					} else {
-						doMove = false;
 					}
+
 					// wipe feign memory since we reached our first waypoint
 					if (cur_wp == 1) {
 						ClearFeignMemory();
@@ -2483,7 +2553,7 @@ void NPC::AddSpellToNPCList(int16 iPriority, int16 iSpellID, uint32 iType,
 
 	// If we're going from an empty list, we need to start the timer
 	if (AIspells.size() == 1)
-		AIautocastspell_timer->Start(RandomTimer(0, 15000), false);
+		AIautocastspell_timer->Start(RandomTimer(0, 300), false);
 }
 
 void NPC::RemoveSpellFromNPCList(int16 spell_id)

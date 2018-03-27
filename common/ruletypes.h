@@ -37,6 +37,7 @@
 
 RULE_CATEGORY(Character)
 RULE_INT(Character, MaxLevel, 65)
+RULE_INT(Character, MaxZTargetDistance, 40)
 RULE_BOOL(Character, PerCharacterQglobalMaxLevel, false) // This will check for qglobal 'CharMaxLevel' character qglobal (Type 5), if player tries to level beyond that point, it will not go beyond that level
 RULE_INT(Character, MaxExpLevel, 0) //Sets the Max Level attainable via Experience
 RULE_INT(Character, DeathExpLossLevel, 10)	// Any level greater than this will lose exp on death
@@ -429,6 +430,7 @@ RULE_BOOL(Spells, AllowItemTGB, false) // TGB doesn't work with items on live, c
 RULE_BOOL(Spells, NPCInnateProcOverride, true) //  NPC innate procs override the target type to single target.
 RULE_BOOL(Spells, OldRainTargets, false) // use old incorrectly implemented max targets for rains
 RULE_REAL(Spells, CallOfTheHeroAggroClearDist, 250.0)
+RULE_BOOL(Spells, NPCSpellPush, false) // enable spell push on NPCs
 RULE_CATEGORY_END()
 
 RULE_CATEGORY(Combat)
