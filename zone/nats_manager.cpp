@@ -742,7 +742,7 @@ void NatsManager::Load()
 bool NatsManager::isEntitySubscribed(const uint16 ID) {
 	if (!connect())
 		return false;
-	return true;
+	return false;
 }
 
 void NatsManager::EncodeEntity(Entity * entity, eqproto::Entity * out)
