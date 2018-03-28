@@ -869,7 +869,7 @@ void NatsManager::OnDeathEvent(Death_Struct* d) {
 	if (d == NULL)
 		return;
 
-	if (!isEntityEventAllEnabled && !isEntitySubscribed(d->spawn_id))
+	if (!RuleB(Zone, NATSEntityEventAllEnabled) && !isEntitySubscribed(d->spawn_id))
 		return;
 
 	auto op = eqproto::OP_Death;
@@ -901,7 +901,7 @@ void NatsManager::OnChannelMessageEvent(uint32 entity_id, ChannelMessage_Struct*
 	if (entity_id == 0)
 		return;
 
-	if (!isEntityEventAllEnabled && !isEntitySubscribed(entity_id))
+	if (!RuleB(Zone, NATSEntityEventAllEnabled) && !isEntitySubscribed(entity_id))
 		return;
 	auto op = eqproto::OP_ChannelMessage;
 	eqproto::ChannelMessageEvent* event = google::protobuf::Arena::CreateMessage<eqproto::ChannelMessageEvent>(&the_arena);
@@ -929,7 +929,7 @@ void NatsManager::OnSpecialMessageEvent(uint32 entity_id, SpecialMesg_Struct* sm
 		return;
 	if (entity_id == 0)
 		return;
-	if (!isEntityEventAllEnabled && !isEntitySubscribed(entity_id))
+	if (!RuleB(Zone, NATSEntityEventAllEnabled) && !isEntitySubscribed(entity_id))
 		return;
 
 	auto op = eqproto::OP_SpecialMesg;
@@ -959,7 +959,7 @@ void NatsManager::OnEntityEvent(const EmuOpcode op, uint32 entity_id, uint32 tar
 	if (entity_id == 0)
 		return;
 
-	if (!isEntityEventAllEnabled && !isEntitySubscribed(entity_id))
+	if (!RuleB(Zone, NATSEntityEventAllEnabled) && !isEntitySubscribed(entity_id))
 		return;
 
 	eqproto::EntityEvent* event = google::protobuf::Arena::CreateMessage<eqproto::EntityEvent>(&the_arena);
@@ -997,7 +997,7 @@ void NatsManager::OnSpawnEvent(const EmuOpcode op, uint32 entity_id, Spawn_Struc
 	if (entity_id == 0)
 		return;
 
-	if (!isEntityEventAllEnabled && !isEntitySubscribed(entity_id))
+	if (!RuleB(Zone, NATSEntityEventAllEnabled) && !isEntitySubscribed(entity_id))
 		return;
 
 	eqproto::SpawnEvent* event = google::protobuf::Arena::CreateMessage<eqproto::SpawnEvent>(&the_arena);
@@ -1133,7 +1133,7 @@ void NatsManager::OnWearChangeEvent(uint32 entity_id, WearChange_Struct *wc) {
 		return;
 	if (entity_id == 0)
 		return;
-	if (!isEntityEventAllEnabled && !isEntitySubscribed(entity_id))
+	if (!RuleB(Zone, NATSEntityEventAllEnabled) && !isEntitySubscribed(entity_id))
 		return;
 
 	auto op = eqproto::OP_WearChange;
@@ -1162,7 +1162,7 @@ void NatsManager::OnDeleteSpawnEvent(uint32 entity_id, DeleteSpawn_Struct *ds) {
 		return;
 	if (entity_id == 0)
 		return;
-	if (!isEntityEventAllEnabled && !isEntitySubscribed(entity_id))
+	if (!RuleB(Zone, NATSEntityEventAllEnabled) && !isEntitySubscribed(entity_id))
 		return;
 
 
@@ -1185,7 +1185,7 @@ void NatsManager::OnHPEvent(const EmuOpcode op, uint32 entity_id, uint32 cur_hp,
 		return;
 	if (entity_id == 0)
 		return;
-	if (!isEntityEventAllEnabled && !isEntitySubscribed(entity_id))
+	if (!RuleB(Zone, NATSEntityEventAllEnabled) && !isEntitySubscribed(entity_id))
 		return;
 	if (cur_hp == max_hp)
 		return;
@@ -1220,7 +1220,7 @@ void NatsManager::OnDamageEvent(uint32 entity_id, CombatDamage_Struct *cd) {
 		return;
 	if (entity_id == 0)
 		return;
-	if (!isEntityEventAllEnabled && !isEntitySubscribed(entity_id))
+	if (!RuleB(Zone, NATSEntityEventAllEnabled) && !isEntitySubscribed(entity_id))
 		return;
 
 
@@ -1253,7 +1253,7 @@ void NatsManager::OnClientUpdateEvent(uint32 entity_id, PlayerPositionUpdateServ
 		return;
 	if (entity_id == 0)
 		return;
-	if (!isEntityEventAllEnabled && !isEntitySubscribed(entity_id))
+	if (!RuleB(Zone, NATSEntityEventAllEnabled) && !isEntitySubscribed(entity_id))
 		return;
 
 
@@ -1289,7 +1289,7 @@ void NatsManager::OnAnimationEvent(uint32 entity_id, Animation_Struct *anim) {
 		return;
 	if (entity_id == 0)
 		return;
-	if (!isEntityEventAllEnabled && !isEntitySubscribed(entity_id))
+	if (!RuleB(Zone, NATSEntityEventAllEnabled) && !isEntitySubscribed(entity_id))
 		return;
 
 
@@ -1314,7 +1314,7 @@ void NatsManager::OnAlternateAdvancementStats(uint32 entity_id, AltAdvStats_Stru
 		return;
 	if (entity_id == 0)
 		return;
-	if (!isEntityEventAllEnabled && !isEntitySubscribed(entity_id))
+	if (!RuleB(Zone, NATSEntityEventAllEnabled) && !isEntitySubscribed(entity_id))
 		return;
 
 	auto op = eqproto::OP_AAExpUpdate;
@@ -1340,7 +1340,7 @@ void NatsManager::OnZoneCompleteEvent(uint32 entity_id) {
 		return;
 	if (entity_id == 0)
 		return;
-	if (!isEntityEventAllEnabled && !isEntitySubscribed(entity_id))
+	if (!RuleB(Zone, NATSEntityEventAllEnabled) && !isEntitySubscribed(entity_id))
 		return;
 
 	auto op = eqproto::OP_ZoneCompleted;
@@ -1361,7 +1361,7 @@ void NatsManager::OnAlternateAdvancementAction(uint32 entity_id, UseAA_Struct * 
 		return;
 	if (entity_id == 0)
 		return;
-	if (!isEntityEventAllEnabled && !isEntitySubscribed(entity_id))
+	if (!RuleB(Zone, NATSEntityEventAllEnabled) && !isEntitySubscribed(entity_id))
 		return;
 
 	auto op = eqproto::OP_AAAction;
@@ -1384,7 +1384,7 @@ void NatsManager::OnAlternateAdvancementActionRequest(uint32 entity_id, AA_Actio
 		return;
 	if (entity_id == 0)
 		return;
-	if (!isEntityEventAllEnabled && !isEntitySubscribed(entity_id))
+	if (!RuleB(Zone, NATSEntityEventAllEnabled) && !isEntitySubscribed(entity_id))
 		return;
 
 	auto op = eqproto::OP_AAAction;
@@ -1408,7 +1408,7 @@ void NatsManager::OnNewZoneEvent(uint32 entity_id, NewZone_Struct * nz) {
 		return;
 	if (entity_id == 0)
 		return;
-	if (!isEntityEventAllEnabled && !isEntitySubscribed(entity_id))
+	if (!RuleB(Zone, NATSEntityEventAllEnabled) && !isEntitySubscribed(entity_id))
 		return;
 
 	auto op = eqproto::OP_NewZone;
