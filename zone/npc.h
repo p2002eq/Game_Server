@@ -161,6 +161,8 @@ public:
 	virtual void InitializeBuffSlots();
 	virtual void UninitializeBuffSlots();
 
+	inline int GetMinDamage() const { return min_dmg; }
+	inline int GetMaxDamage() const { return max_dmg; }
 	virtual void	SetAttackTimer();
 	virtual void	RangedAttack(Mob* other);
 	virtual void	ThrowingAttack(Mob* other) { }
@@ -273,7 +275,6 @@ public:
 	uint32	GetMaxDMG() const {return max_dmg;}
 	uint32	GetMinDMG() const {return min_dmg;}
 	int GetBaseDamage() const { return base_damage; }
-	int GetMinDamage() const { return min_damage; }
 	float GetSlowMitigation() const { return slow_mitigation; }
 	float	GetAttackSpeed() const {return attack_speed;}
 	int		GetAttackDelay() const {return attack_delay;}

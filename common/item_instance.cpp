@@ -1690,6 +1690,82 @@ int EQEmu::ItemInstance::GetItemHaste(bool augments) const
 	return total;
 }
 
+std::string EQEmu::ItemInstance::GetSlotName(int slotNumber) const {
+	if (slotNumber == EQEmu::legacy::SLOT_CHARM) return "Charm";
+	if (slotNumber == EQEmu::legacy::SLOT_EAR01) return "Left Ear";
+	if (slotNumber == EQEmu::legacy::SLOT_HEAD) return "Head";
+	if (slotNumber == EQEmu::legacy::SLOT_FACE) return "Face";
+	if (slotNumber == EQEmu::legacy::SLOT_EAR02) return "Right Ear";
+	if (slotNumber == EQEmu::legacy::SLOT_NECK) return "Neck";
+	if (slotNumber == EQEmu::legacy::SLOT_SHOULDER) return "Shoulder";
+	if (slotNumber == EQEmu::legacy::SLOT_ARMS) return "Arms";
+	if (slotNumber == EQEmu::legacy::SLOT_BACK) return "Back";
+	if (slotNumber == EQEmu::legacy::SLOT_BRACER01) return "Left Bracer";
+	if (slotNumber == EQEmu::legacy::SLOT_BRACER02) return "Right Bracer";
+	if (slotNumber == EQEmu::legacy::SLOT_RANGE) return "Range";
+	if (slotNumber == EQEmu::legacy::SLOT_HANDS) return "Hands";
+	if (slotNumber == EQEmu::legacy::SLOT_PRIMARY) return "Primary";
+	if (slotNumber == EQEmu::legacy::SLOT_SECONDARY) return "Secondary";
+	if (slotNumber == EQEmu::legacy::SLOT_RING01) return "Left Ring";
+	if (slotNumber == EQEmu::legacy::SLOT_RING02) return "Right Ring";
+	if (slotNumber == EQEmu::legacy::SLOT_CHEST) return "Chest";
+	if (slotNumber == EQEmu::legacy::SLOT_LEGS) return "Legs";
+	if (slotNumber == EQEmu::legacy::SLOT_FEET) return "Feet";
+	if (slotNumber == EQEmu::legacy::SLOT_WAIST) return "Waist";
+	if (slotNumber == EQEmu::legacy::SLOT_AMMO) return "Ammo";
+	return "";
+}
+
+std::string EQEmu::ItemInstance::GetSlotNames() const {
+	if (this == nullptr) return "";
+	std::string slotsString = "";
+	auto slots = GetItem()->Slots;
+
+	if (slots & EQEmu::legacy::SLOT_CHARM == EQEmu::legacy::SLOT_CHARM) slotsString.append("Charm");
+	if (slots & EQEmu::legacy::SLOT_EAR01 == EQEmu::legacy::SLOT_EAR01) slotsString.append("Left Ear");
+	if (slots & EQEmu::legacy::SLOT_HEAD == EQEmu::legacy::SLOT_HEAD) slotsString.append("Head");
+	if (slots & EQEmu::legacy::SLOT_FACE == EQEmu::legacy::SLOT_FACE) slotsString.append("Face");
+	if (slots & EQEmu::legacy::SLOT_EAR02 == EQEmu::legacy::SLOT_EAR02) slotsString.append("Right Ear");
+	if (slots & EQEmu::legacy::SLOT_NECK == EQEmu::legacy::SLOT_NECK) slotsString.append("Neck");
+	if (slots & EQEmu::legacy::SLOT_SHOULDER == EQEmu::legacy::SLOT_SHOULDER) slotsString.append("Shoulder");
+	if (slots & EQEmu::legacy::SLOT_ARMS == EQEmu::legacy::SLOT_ARMS) slotsString.append("Arms");
+	if (slots & EQEmu::legacy::SLOT_BACK == EQEmu::legacy::SLOT_BACK) slotsString.append("Back");
+	if (slots & EQEmu::legacy::SLOT_BRACER01 == EQEmu::legacy::SLOT_BRACER01) slotsString.append("Left Bracer");
+	if (slots & EQEmu::legacy::SLOT_BRACER02 == EQEmu::legacy::SLOT_BRACER02) slotsString.append("Right Bracer");
+	if (slots & EQEmu::legacy::SLOT_RANGE == EQEmu::legacy::SLOT_RANGE) slotsString.append("Range");
+	if (slots & EQEmu::legacy::SLOT_HANDS == EQEmu::legacy::SLOT_HANDS) slotsString.append("Hands");
+	if (slots & EQEmu::legacy::SLOT_PRIMARY == EQEmu::legacy::SLOT_PRIMARY) slotsString.append("Primary");
+	if (slots & EQEmu::legacy::SLOT_SECONDARY == EQEmu::legacy::SLOT_SECONDARY) slotsString.append("Secondary");
+	if (slots & EQEmu::legacy::SLOT_RING01 == EQEmu::legacy::SLOT_RING01) slotsString.append("Left Ring");
+	if (slots & EQEmu::legacy::SLOT_RING02 == EQEmu::legacy::SLOT_RING02) slotsString.append("Right Ring");
+	if (slots & EQEmu::legacy::SLOT_CHEST == EQEmu::legacy::SLOT_CHEST) slotsString.append("Chest");
+	if (slots & EQEmu::legacy::SLOT_LEGS == EQEmu::legacy::SLOT_LEGS) slotsString.append("Legs");
+	if (slots & EQEmu::legacy::SLOT_FEET == EQEmu::legacy::SLOT_FEET) slotsString.append("Feet");
+	if (slots & EQEmu::legacy::SLOT_WAIST == EQEmu::legacy::SLOT_WAIST) slotsString.append("Waist");
+	if (slots & EQEmu::legacy::SLOT_AMMO == EQEmu::legacy::SLOT_AMMO) slotsString.append("Ammo");
+	return slotsString;
+}
+
+//Obtain an item score for specified item.
+int EQEmu::ItemInstance::GetItemScore() const {
+	const auto item = this->GetItem();
+	if (!item) {
+		Log(Logs::General, Logs::Inventory, "GetItemScore processed an item with no data pointer");
+		return 0;
+	}
+	int itemScore = 0;
+	itemScore += item->GetItemScore();
+
+	EQEmu::ItemInstance * inst = nullptr;
+	for (int i = inventory::socketBegin; i < inventory::SocketCount; i++)
+	{
+		inst = GetAugment(i);
+		if (!inst) continue;
+		itemScore += inst->GetItem()->GetItemScore();
+	}
+	return itemScore;
+}
+
 //
 // class EvolveInfo
 //

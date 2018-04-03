@@ -192,6 +192,7 @@ int command_init(void)
 		command_add("disarmtrap",  "Analog for ldon disarm trap for the newer clients since we still don't have it working.", 80, command_disarmtrap) ||
 		command_add("distance", "- Reports the distance between you and your target.",  80, command_distance) ||
 		command_add("doanim", "[animnum] [type] - Send an EmoteAnim for you or your target", 50, command_doanim) ||
+		command_add("dps", "- Get a report of DPS on target", 0, command_dps) ||
 		command_add("emote", "['name'/'world'/'zone'] [type] [message] - Send an emote message", 80, command_emote) ||
 		command_add("emotesearch", "Searches NPC Emotes", 80, command_emotesearch) ||
 		command_add("emoteview", "Lists all NPC Emotes", 80, command_emoteview) ||
@@ -248,6 +249,7 @@ int command_init(void)
 		command_add("iplookup", "[charname] - Look up IP address of charname", 200, command_iplookup) ||
 		command_add("issue", "- Report an issue with the server", 0, command_issue) ||
 		command_add("iteminfo", "- Get information about the item on your cursor", 10, command_iteminfo) ||
+		command_add("itemscore", "- Get itemscore of the item on your cursor", 0, command_itemscore) ||
 		command_add("itemsearch", "[search criteria] - Search for an item", 10, command_itemsearch) ||
 		command_add("kick", "[charname] - Disconnect charname", 150, command_kick) ||
 		command_add("kill", "- Kill your target", 100, command_kill) ||
@@ -373,6 +375,7 @@ int command_init(void)
 		command_add("spellinfo", "[spellid] - Get detailed info about a spell", 10, command_spellinfo) ||
 		command_add("spoff", "- Sends OP_ManaChange", 80, command_spoff) ||
 		command_add("spon", "- Sends OP_MemorizeSpell", 80, command_spon) ||
+		command_add("stats", "- Get stats about target", 250, command_stats) ||
 		command_add("stun", "[duration] - Stuns you or your target for duration", 100, command_stun) ||
 		command_add("summon", "[charname] - Summons your player/npc/corpse target, or charname if specified", 80, command_summon) ||
 		command_add("summonburiedplayercorpse", "- Summons the target's oldest buried corpse, if any exist.",  100, command_summonburiedplayercorpse) ||
@@ -389,6 +392,7 @@ int command_init(void)
 		command_add("title", "[text] [1 = create title table row] - Set your or your player target's title", 50, command_title) ||
 		command_add("titlesuffix", "[text] [1 = create title table row] - Set your or your player target's title suffix", 50, command_titlesuffix) ||
 		command_add("traindisc", "[level] - Trains all the disciplines usable by the target, up to level specified. (may freeze client for a few seconds)", 150, command_traindisc) ||
+		command_add("toggle", " - Toggle server options", 0, command_toggle) ||
 		command_add("trapinfo", "- Gets infomation about the traps currently spawned in the zone.", 81, command_trapinfo) ||
 		command_add("tune",  "Calculate ideal statical values related to combat.",  100, command_tune) ||
 		command_add("undeletechar", "- Undelete a character that was previously deleted.", 255, command_undeletechar) ||
@@ -1479,6 +1483,33 @@ void command_npcstats(Client *c, const Seperator *sep)
 	else if (!c->GetTarget()->IsNPC())
 		c->Message(0, "ERROR: Target is not a NPC!");
 	else {
+		float dps;
+		//attack delay = 29,
+		//min 168 max 404
+
+		std::string specials = "";
+		int num_hits = 1;
+		if (c->GetTarget()->GetLevel() > 10) {
+			num_hits = 2;
+		}
+
+		if (c->GetTarget()->CastToNPC()->GetSpecialAbility(SPECATK_TRIPLE)) {
+			specials += "TRIP ";
+			num_hits = 3;
+		}
+
+		if (c->GetTarget()->CastToNPC()->GetSpecialAbility(SPECATK_QUAD)) {
+			num_hits = 4;
+			specials += "QUAD ";
+		}
+
+		if (c->GetTarget()->CastToNPC()->GetSpecialAbility(SPECATK_FLURRY)) specials += "FLUR ";
+
+		if (c->GetTarget()->CastToNPC()->GetSpecialAbility(UNSLOWABLE)) specials += "!SLOW ";
+		if (c->GetTarget()->CastToNPC()->GetSpecialAbility(FLEE_PERCENT)) specials += "FLEE ";
+
+		dps = c->GetTarget()->CastToNPC()->GetMaxDamage() * num_hits*(c->GetTarget()->CastToNPC()->GetAttackDelay() / 1000);
+
 		auto target_npc = c->GetTarget()->CastToNPC();
 		c->Message(0, "NPC Stats:");
 		c->Message(0, "Name: %s   NpcID: %u", target_npc->GetName(), target_npc->GetNPCTypeID());
@@ -1762,6 +1793,56 @@ void command_zcolor(Client *c, const Seperator *sep)
 void command_spon(Client *c, const Seperator *sep)
 {
 	c->MemorizeSpell(0, SPELLBAR_UNLOCK, memSpellSpellbar);
+}
+
+void command_stats(Client *c, const Seperator *sep)
+{
+	if (!c->GetTarget()) {
+		c->Message(0, "Need a target.");
+		return;
+	}
+	Mob *target = c->GetTarget();
+	if (target->IsCorpse()) {
+		c->Message(0, "Doesn't support dead stuff yet.");
+		return;
+	}
+
+	std::string specials = "";
+	int num_hits = 1;
+	if (c->GetTarget()->GetLevel() > 10) {
+		num_hits = 2;
+	}
+
+	if (target->GetSpecialAbility(SPECATK_TRIPLE)) {
+		specials += "TRIP ";
+		num_hits = 3;
+	}
+
+	if (target->GetSpecialAbility(SPECATK_QUAD)) {
+		num_hits = 4;
+		specials += "QUAD ";
+	}
+
+	if (target->GetSpecialAbility(SPECATK_FLURRY)) specials += "FLUR ";
+
+	if (target->GetSpecialAbility(UNSLOWABLE)) specials += "!SLOW ";
+	if (target->GetSpecialAbility(FLEE_PERCENT)) specials += "FLEE ";
+	int max_dmg = target->CastToNPC()->GetMaxDamage();
+	int delay = target->CastToNPC()->GetAttackDelay();
+	float dps = floor(max_dmg * num_hits*(delay / 1000)/40);
+
+	c->Message(0, "NPC Stats:");
+	c->Message(0, "Name: %s   NpcID: %u, Entity ID: %u", c->GetTarget()->GetName(), c->GetTarget()->GetNPCTypeID(), c->GetTarget()->GetID());
+	c->Message(0, "Race: %i  Level: %i  Class: %i  Material: %i", c->GetTarget()->GetRace(), c->GetTarget()->GetLevel(), c->GetTarget()->GetClass(), c->GetTarget()->GetTexture());
+	c->Message(0, "Faction: %i", target->GetPrimaryFaction());
+	c->Message(0, "HP: %i, AC: %i", target->GetMaxHP(), target->GetAC());
+	c->Message(0, "STR: %i, DEX: %i", target->GetSTR(), target->GetAGI());
+	c->Message(0, "Min: %i, Max: %i, Delay: %i", target->CastToNPC()->GetMinDamage(), target->CastToNPC()->GetMaxDamage(), target->CastToNPC()->GetAttackDelay());
+	c->Message(0, "DPS: %f", dps);
+	c->Message(0, "Specials: %s", specials.c_str());
+	c->Message(0, "Spawn Group: %i  Grid: %i", c->GetTarget()->CastToNPC()->GetSp2(), c->GetTarget()->CastToNPC()->GetGrid());
+	if (c->GetTarget()->IsNPC()) c->GetTarget()->CastToNPC()->QueryLoot(c);
+
 }
 
 void command_spoff(Client *c, const Seperator *sep)
@@ -4857,6 +4938,42 @@ void command_iteminfo(Client *c, const Seperator *sep)
 		c->Message(0, ">> MinStatus: %u", item->MinStatus);
 }
 
+void command_itemscore(Client *c, const Seperator *sep)
+{
+
+	int itemScore = c->CastToClient()->GetCharacterItemScore();
+	int maxItemScore = 0;
+	std::string tmp_value;
+	RuleManager::Instance()->GetRule(StringFormat("ItemScore:Class%i", c->GetClass()).c_str(), tmp_value);
+	maxItemScore = std::stoi(tmp_value);
+	if (itemScore < 1) itemScore = 1;
+	if (itemScore > maxItemScore) maxItemScore = itemScore;
+
+	const char *windowTitle = "ItemScore";
+	std::string windowText = StringFormat("Your total ItemScore is: <c \"#FFDF00\">%i</c> (%i%%)<br>", itemScore, (itemScore * 100 / maxItemScore));
+
+	auto inst = c->GetInv()[EQEmu::inventory::slotCursor];
+	if (inst) {
+		windowText.append(StringFormat("<c \"#4444DD\">Cursor</c> (%s) ItemScore: %i<br>", inst->GetItem()->Name, inst->GetItemScore()));
+	}
+
+	int x;
+	//const EQEmu::ItemInstance* inst = nullptr;
+	std::string itemBreakdown = "";
+	for (x = EQEmu::legacy::EQUIPMENT_BEGIN; x < EQEmu::legacy::EQUIPMENT_END; x++) {
+		inst = c->GetInv().GetItem(x);
+		if (!inst) continue;
+		itemBreakdown.append(StringFormat("<c \"#4444DD\">%s</c> (%s) ItemScore: %i<br>", inst->GetSlotName(x).c_str(), inst->GetItem()->Name, inst->GetItemScore()));
+	}
+	windowText.append(itemBreakdown);
+
+
+	windowText.append("<br>ItemScore is a tally of all worn items, calculated based on modifiers of each stat, includes augments, and scaled in percent based on best known geared character of your class on server.<br>The best known geared player data is updated every 24 hours, and the formula for ItemScore is subject to change.<br>");
+	c->Message(0, "Your ItemScore is %i (%i%%). Use #itemscore with an item on cursor to get it's score.", itemScore, (itemScore * 100 / maxItemScore));
+
+	c->SendPopupToClient(windowTitle, windowText.c_str());
+}
+
 void command_uptime(Client *c, const Seperator *sep)
 {
 	if (!worldserver.Connected())
@@ -5372,6 +5489,65 @@ void command_zonestatus(Client *c, const Seperator *sep)
 		worldserver.SendPacket(pack);
 		delete pack;
 	}
+}
+
+void command_dps(Client *c, const Seperator *sep)
+{
+	Mob *target = c->GetTarget();
+
+	if (!strcasecmp(sep->arg[1], "self")) {
+		target = c;
+	}
+
+	if (!target) {
+		c->Message(0, "You must target something to use this command, or type #dps self to get your received dps so far.");
+		return;
+	}
+
+	if (!target->IsCorpse() && target->GetHPRatio() > 95.0f) {
+		c->Message(0, "#dps is disabled until your target is 95 percent or less health.");
+		return;
+	}
+	/*if (!target->IsCorpse()) {
+		c->Message(0, "Invalid Target type (Not corpse), bypassing for now");
+	}*/
+
+	if (target->DPS().size() < 1) {
+		c->Message(0, "Target %s not engaged.", (target->IsCorpse() ? "was" : "is"));
+		return;
+	}
+	int my_hp_self_loss_net = 0;
+	int my_hp_target_loss_net = 0;
+	int cur_engage_duration = 0;
+
+	if (target->IsCorpse()) { //target is dead, use the corpse's engage_duration
+		cur_engage_duration = target->engage_duration;
+	}
+
+	for (auto&& d : target->DPS()) {
+		if (d.ent_id == target->GetID()) {
+			my_hp_self_loss_net = d.hp_self_loss_net;
+			my_hp_target_loss_net = d.hp_target_loss_net;
+		}
+		//we have to tally duration since fight is ongoing
+		if (!target->IsCorpse() && cur_engage_duration < time(nullptr) - d.engage_start) cur_engage_duration = time(nullptr) - d.engage_start;
+	}
+	if (cur_engage_duration < 1) cur_engage_duration = 1;
+
+	float my_dps_loss = (float)((float)my_hp_self_loss_net / cur_engage_duration);
+	float my_dps_target_loss = (float)((float)my_hp_target_loss_net / cur_engage_duration);
+	c->Message(MT_CritMelee, "------ %s DPS over %i seconds ----------", target->GetCleanName(), cur_engage_duration);
+	c->Message(MT_CritMelee, "- dealt %i damage (%.1f DPS)", my_hp_self_loss_net, my_dps_loss);
+	c->Message(MT_CritMelee, "- took %i damage (%.1f DPS)", my_hp_target_loss_net, my_dps_target_loss);
+	c->Message(MT_CritMelee, "------ Participants ----------");
+	for (auto&& d : target->DPS()) {
+
+		float cur_dps = (float)((float)d.hp_target_loss_net / cur_engage_duration);
+		//float cur_hps_taken = (float)((float)d.hp_self_gain_net / engage_duration);
+		//float cur_hps_dealt = (float)((float)d.hp_target_gain_net / engage_duration);
+		c->Message(MT_CritMelee, "- %s: %i damage (%.1f DPS)", d.character_name.c_str(), d.hp_target_loss_net, cur_dps);
+	}
+
 }
 
 void command_doanim(Client *c, const Seperator *sep)
@@ -8344,6 +8520,45 @@ void command_reloadtitles(Client *c, const Seperator *sep)
 	worldserver.SendPacket(pack);
 	safe_delete(pack);
 	c->Message(15, "Player Titles Reloaded.");
+
+}
+
+void command_toggle(Client *c, const Seperator *sep)
+{
+
+	if (sep->arg[1][0] == '\0' || !strcasecmp(sep->arg[1], "help")) {
+		c->Message(0, "Syntax: #toggle [option].");
+		c->Message(0, "-- Options --");
+		c->Message(0, "...dpsfull [%s] - When a mob dies you hurted, shows report of all DPS", ((c->GetEPP().use_full_dps) ? "ON" : "OFF"));
+		c->Message(0, "...dpsself [%s] - When a mob dies you hurted, shows your DPS in report", ((c->GetEPP().use_self_dps) ? "ON" : "OFF"));
+		return;
+	}
+
+	if (!strcasecmp(sep->arg[1], "dpsfull")) {
+		c->GetEPP().use_full_dps = 1 - c->GetEPP().use_full_dps;
+		std::string query = StringFormat("UPDATE account_custom SET use_full_dps = %i WHERE account_id = %u", c->GetEPP().use_full_dps, c->AccountID());
+		auto results = database.QueryDatabase(query);
+		if (!results.Success()) {
+			c->Message(13, "Setting option failed. The devs have been notified.");
+			Log(Logs::General, Logs::Normal, "Option failed for user %u: %s", c->AccountID(), results.ErrorMessage().c_str());
+			return;
+		}
+		c->Message(0, "Full DPS is now %s by default.", ((c->GetEPP().use_full_dps) ? "enabled" : "disabled"));
+		return;
+	}
+
+	if (!strcasecmp(sep->arg[1], "dpsself")) {
+		c->GetEPP().use_self_dps = 1 - c->GetEPP().use_self_dps;
+		std::string query = StringFormat("UPDATE account_custom SET use_self_dps = %i WHERE account_id = %u", c->GetEPP().use_self_dps, c->AccountID());
+		auto results = database.QueryDatabase(query);
+		if (!results.Success()) {
+			c->Message(13, "Setting option failed. The devs have been notified.");
+			Log(Logs::General, Logs::Normal, "Option failed for user %u: %s", c->AccountID(), results.ErrorMessage().c_str());
+			return;
+		}
+		c->Message(0, "Self DPS is now %s by default.", ((c->GetEPP().use_self_dps) ? "enabled" : "disabled"));
+		return;
+	}
 
 }
 

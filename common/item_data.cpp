@@ -225,3 +225,109 @@ bool EQEmu::ItemData::CheckLoreConflict(const ItemData* l_item, const ItemData* 
 
 	return false;
 }
+
+int EQEmu::ItemData::GetItemScore() const
+{
+	int itemScore = 0;
+	auto item = this;
+	if (item->AAgi > 0) {
+		itemScore += item->AAgi * 30;
+		//if (IsFighterClass(myClass)) classItemScore += item->AAgi * 40;
+		//else if (IsCasterClass(myClass)) classItemScore += item->AAgi * 10;
+	}
+	if (item->AC > 0) itemScore += item->AC * 50;
+	if (item->Accuracy > 0) itemScore += item->Accuracy * 80;
+	if (item->ACha > 0) itemScore += item->ACha * 10;
+	if (item->ADex > 0) itemScore += item->ACha * 20;
+	if (item->AInt > 0) itemScore += item->AInt * 30;
+	if (item->ASta > 0) itemScore += item->ASta * 30;
+	if (item->AStr > 0) itemScore += item->AStr * 10;
+	if (item->Attack > 0) itemScore += item->Attack * 30;
+	if (item->Avoidance > 0) itemScore += item->Avoidance * 40;
+	if (item->AWis > 0) itemScore += item->AWis * 30;
+	if (item->BackstabDmg > 0) itemScore += item->BackstabDmg * 10;
+	if (item->BaneDmgAmt > 0) itemScore += item->BaneDmgAmt * 90;
+	if (item->BaneDmgRaceAmt > 0) itemScore += item->BaneDmgRaceAmt * 90;
+	if (item->CombatEffects > 0) itemScore += item->CombatEffects * 10;
+	if (item->Damage > 0) itemScore += item->Damage * 80;
+	if (item->DamageShield > 0) itemScore += item->DamageShield * 20;
+	if (item->DotShielding > 0) itemScore += item->DotShielding * 20;
+	if (item->DR > 0) itemScore += item->DR * 30;
+	if (item->DSMitigation > 0) itemScore += item->DSMitigation * 40;
+	if (item->ElemDmgAmt > 0) itemScore += item->ElemDmgAmt * 90;
+	if (item->Endur > 0) itemScore += item->Endur * 20;
+	if (item->EnduranceRegen > 0) itemScore += item->EnduranceRegen * 10;
+	if (item->ExtraDmgAmt > 0) itemScore += item->ExtraDmgAmt * 70;
+	if (item->Focus.Effect > 0) itemScore += 30;
+	if (item->FR > 0)
+		itemScore += item->FR * 40;
+	if (item->Haste > 0)
+		itemScore += item->Haste * 90;
+	if (item->HealAmt > 0)
+		itemScore += item->HealAmt * 90;
+	if (item->HeroicAgi > 0)
+		itemScore += item->HeroicAgi * 50;
+	if (item->HeroicCha > 0)
+		itemScore += item->HeroicCha * 20;
+
+	if (item->HeroicCR > 0)
+		itemScore += item->HeroicCR * 20;
+
+	if (item->HeroicDex > 0)
+		itemScore += item->HeroicDex * 20;
+
+	if (item->HeroicDR > 0)
+		itemScore += item->HeroicDR * 20;
+
+	if (item->HeroicFR > 0)
+		itemScore += item->HeroicFR * 20;
+
+	if (item->HeroicInt > 0)
+		itemScore += item->HeroicInt * 20;
+	if (item->HeroicMR > 0)
+		itemScore += item->HeroicMR * 20;
+	if (item->HeroicPR > 0)
+		itemScore += item->HeroicPR * 20;
+	if (item->HeroicSta > 0)
+		itemScore += item->HeroicSta * 20;
+	if (item->HeroicStr > 0)
+		itemScore += item->HeroicStr * 20;
+	if (item->HeroicSVCorrup > 0)
+		itemScore += item->HeroicSVCorrup * 20;
+	if (item->HeroicWis > 0)
+		itemScore += item->HeroicWis * 20;
+	if (item->HP > 0)
+		itemScore += item->HP * 90;
+	if (item->Mana > 0)
+		itemScore += item->Mana * 90;
+	if (item->ManaRegen > 0)
+		itemScore += item->ManaRegen * 120;
+	if (item->MR > 0)
+		itemScore += item->MR * 40;
+	if (item->PR > 0)
+		itemScore += item->PR * 40;
+	if (item->Proc.Effect > 0)
+		itemScore += 30;
+	if (item->Purity > 0)
+		itemScore += item->Purity * 30;
+	if (item->Regen > 0)
+		itemScore += item->Regen * 30;
+	if (item->Shielding > 0)
+		itemScore += item->Shielding * 50;
+	if (item->SpellDmg > 0)
+		itemScore += item->SpellDmg * 50;
+	if (item->SpellShield > 0)
+		itemScore += item->SpellShield * 40;
+	if (item->StrikeThrough > 0)
+		itemScore += item->StrikeThrough * 80;
+	if (item->StunResist > 0) {
+		itemScore += item->StunResist * 40;
+	}
+	if (item->SVCorruption > 0) {
+		itemScore += item->SVCorruption * 40;
+	}
+	if (item->Worn.Effect > 0) {
+		itemScore += 40;
+	}
+	return itemScore;
+}

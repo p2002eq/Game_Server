@@ -1264,7 +1264,7 @@ public:
 	void FixClientXP();
 	void SendHPUpdateMarquee();
 	std::string CreateSayLink(const char* message, const char* name);
-
+	int GetCharacterItemScore();
 	uint32 trapid; //ID of trap player has triggered. This is cleared when the player leaves the trap's radius, or it despawns.
 
 	// exp.cpp
@@ -1279,6 +1279,8 @@ public:
 	void CheckRegionTypeChanges();
 
 	int32 CalcATK();
+
+
 
 protected:
 	friend class Mob;
