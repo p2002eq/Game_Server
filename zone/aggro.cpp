@@ -1318,3 +1318,55 @@ void Mob::RogueEvade(Mob *other)
 	return;
 }
 
+void EntityList::LogManaEvent(Mob *caster, Mob *target, int mana) {
+	if (target == nullptr) return;
+	if (mana == 0) return;
+	int net_mana = mana;
+
+	if (mana > 0 && target->GetMana() + mana > target->GetMaxMana()) net_mana = target->GetMaxMana() - target->GetMana();
+	if (mana < 0 && target->GetMana() + mana < 0) net_mana = -target->GetMana();
+
+	//if (net_mana == 0 || !target->IsClient()) return; //Ignore an NPC regenerating, or no events
+
+	for (auto it = npc_list.begin(); it != npc_list.end(); ++it) {
+		NPC *mob = it->second;
+		if (!mob) continue;
+		if (!mob->IsOnHatelist(caster) &&
+			!mob->IsOnHatelist(target) &&
+			mob->GetID() != caster->GetID() &&
+			mob->GetID() != target->GetID()) continue;
+
+		mob->AddManaEvent(caster, mana, net_mana, 1);
+		mob->AddManaEvent(target, mana, net_mana, 0);
+
+	}
+}
+//caster: me, target: enemy.
+void EntityList::LogHPEvent(Mob *caster, Mob *target, int hp) {
+	int net_hp = hp;
+	if (target == nullptr) return;
+	if (caster == nullptr) {
+		caster = target; //This may bite me in the ass, but seems logical.
+	}
+
+
+
+	if (target->GetHP() + hp > target->GetMaxHP()) net_hp = target->GetMaxHP() - target->GetHP(); //overheal, get difference of max - cur
+	if (target->GetHP() - hp < 0) net_hp = target->GetHP(); //reduce below zero, store mana left
+
+	//if (net_hp == 0 || !target->IsClient()) return; //Ignore an NPC regenerating, or no events
+
+	//now find anyone else who may be tracking this event (on aggro list)
+	for (auto it = npc_list.begin(); it != npc_list.end(); ++it) {
+		NPC *mob = it->second;
+		if (!mob) continue;
+		if (mob->IsOnHatelist(caster) ||
+			mob->IsOnHatelist(target) ||
+			((caster != nullptr) && mob->GetID() == caster->GetID()) ||
+			mob->GetID() == target->GetID()) {
+
+			mob->AddHPEvent(caster, hp, net_hp, 1);
+			mob->AddHPEvent(target, hp, net_hp, 0);
+		}
+	}
+}

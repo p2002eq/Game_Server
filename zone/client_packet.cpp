@@ -9586,6 +9586,7 @@ void Client::Handle_OP_Mend(const EQApplicationPacket *app)
 			mendhp *= 2;
 			Message_StringID(4, MEND_CRITICAL);
 		}
+		entity_list.LogHPEvent(this, this, mendhp);
 		SetHP(GetHP() + mendhp);
 		SendHPUpdate();
 		Message_StringID(4, MEND_SUCCESS);

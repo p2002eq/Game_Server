@@ -404,6 +404,7 @@ bool Mob::DoCastSpell(uint16 spell_id, uint16 target_id, CastingSlot slot,
 		Log(Logs::Detail, Logs::Spells, "Spell casting canceled: fizzled. %d mana has been consumed", use_mana);
 
 		// fizzle 1/4 the mana away
+		entity_list.LogManaEvent(this, this, -use_mana);
 		Mob::SetMana(GetMana() - use_mana); // We send StopCasting which will update mana
 		StopCasting();
 
@@ -2448,6 +2449,7 @@ bool Mob::SpellFinished(uint16 spell_id, Mob *spell_target, CastingSlot slot, ui
 			mana_used = GetMana();
 		Log(Logs::Detail, Logs::Spells, "Spell %d: consuming %d mana", spell_id, mana_used);
 		if (!DoHPToManaCovert(mana_used)) {
+			entity_list.LogManaEvent(this, this, -mana_used);
 			SetMana(GetMana() - mana_used);
 			TryTriggerOnValueAmount(false, true);
 		}
@@ -2564,6 +2566,7 @@ bool Mob::ApplyNextBardPulse(uint16 spell_id, Mob *spell_target, CastingSlot slo
 		}
 
 		Log(Logs::Detail, Logs::Spells, "Bard Song Pulse %d: consuming %d mana (have %d)", spell_id, mana_used, GetMana());
+		entity_list.LogManaEvent(this, this, -mana_used);
 		SetMana(GetMana() - mana_used);
 	}
 

@@ -589,6 +589,7 @@ void Raid::HealGroup(uint32 heal_amt, Mob* caster, uint32 gid, float range)
 			{
 				distance = DistanceSquared(caster->GetPosition(), members[gi].member->GetPosition());
 				if(distance <= range2){
+					entity_list.LogHPEvent(caster, members[gi].member, heal_amt);
 					members[gi].member->SetHP(members[gi].member->GetHP() + heal_amt);
 					members[gi].member->SendHPUpdate();
 				}
@@ -698,6 +699,7 @@ void Raid::BalanceMana(int32 penalty, uint32 gid, float range, Mob* caster, int3
 			{
 				distance = DistanceSquared(caster->GetPosition(), members[gi].member->GetPosition());
 				if(distance <= range2){
+					entity_list.LogManaEvent(caster, members[gi].member, -manataken);
 					if((members[gi].member->GetMaxMana() - manataken) < 1){
 						members[gi].member->SetMana(1);
 						if (members[gi].member->IsClient())
