@@ -569,7 +569,9 @@ int command_realdispatch(Client *c, const char *message)
 		return(-1);
 	}
 
-	nats.SendAdminMessage(StringFormat("%s in %s issued command: %s", c->GetCleanName(), database.GetZoneName(zone->GetZoneID()), message));
+	//nats.SendAdminMessage(StringFormat("%s in %s issued command: %s", c->GetCleanName(), database.GetZoneName(zone->GetZoneID()), message));
+
+	if (cur->access > 10) nats.SendAdminMessage(StringFormat("%s in %s issued command: %s", c->GetCleanName(), database.GetZoneName(zone->GetZoneID()), message));
 
 	if(cur->access >= COMMANDS_LOGGING_MIN_STATUS) {
 		const char *targetType = "notarget";
@@ -4952,7 +4954,7 @@ void command_itemscore(Client *c, const Seperator *sep)
 	const char *windowTitle = "ItemScore";
 	std::string windowText = StringFormat("Your total ItemScore is: <c \"#FFDF00\">%i</c> (%i%%)<br>", itemScore, (itemScore * 100 / maxItemScore));
 
-	auto inst = c->GetInv()[EQEmu::inventory::slotCursor];
+	auto inst = c->GetInv()[EQEmu::legacy::InventorySlot::SLOT_CURSOR];
 	if (inst) {
 		windowText.append(StringFormat("<c \"#4444DD\">Cursor</c> (%s) ItemScore: %i<br>", inst->GetItem()->Name, inst->GetItemScore()));
 	}
@@ -8523,25 +8525,27 @@ void command_reloadtitles(Client *c, const Seperator *sep)
 
 }
 
-//TODO: Implement a custom account table for features.
-/* void command_toggle(Client *c, const Seperator *sep)
-{
+void command_toggle(Client *c, const Seperator *sep) {
 
 	if (sep->arg[1][0] == '\0' || !strcasecmp(sep->arg[1], "help")) {
 		c->Message(0, "Syntax: #toggle [option].");
 		c->Message(0, "-- Options --");
-		c->Message(0, "...dpsfull [%s] - When a mob dies you hurted, shows report of all DPS", ((c->GetEPP().use_full_dps) ? "ON" : "OFF"));
-		c->Message(0, "...dpsself [%s] - When a mob dies you hurted, shows your DPS in report", ((c->GetEPP().use_self_dps) ? "ON" : "OFF"));
+		c->Message(0, "...dpsfull [%s] - When a mob dies you hurted, shows report of all DPS",
+				   ((c->GetEPP().use_full_dps) ? "ON" : "OFF"));
+		c->Message(0, "...dpsself [%s] - When a mob dies you hurted, shows your DPS in report",
+				   ((c->GetEPP().use_self_dps) ? "ON" : "OFF"));
 		return;
 	}
 
 	if (!strcasecmp(sep->arg[1], "dpsfull")) {
 		c->GetEPP().use_full_dps = 1 - c->GetEPP().use_full_dps;
-		std::string query = StringFormat("UPDATE account_custom SET use_full_dps = %i WHERE account_id = %u", c->GetEPP().use_full_dps, c->AccountID());
+		std::string query = StringFormat("UPDATE account_custom SET use_full_dps = %i WHERE account_id = %u",
+										 c->GetEPP().use_full_dps, c->AccountID());
 		auto results = database.QueryDatabase(query);
 		if (!results.Success()) {
 			c->Message(13, "Setting option failed. The devs have been notified.");
-			Log(Logs::General, Logs::Normal, "Option failed for user %u: %s", c->AccountID(), results.ErrorMessage().c_str());
+			Log(Logs::General, Logs::Normal, "Option failed for user %u: %s", c->AccountID(),
+				results.ErrorMessage().c_str());
 			return;
 		}
 		c->Message(0, "Full DPS is now %s by default.", ((c->GetEPP().use_full_dps) ? "enabled" : "disabled"));
@@ -8550,18 +8554,19 @@ void command_reloadtitles(Client *c, const Seperator *sep)
 
 	if (!strcasecmp(sep->arg[1], "dpsself")) {
 		c->GetEPP().use_self_dps = 1 - c->GetEPP().use_self_dps;
-		std::string query = StringFormat("UPDATE account_custom SET use_self_dps = %i WHERE account_id = %u", c->GetEPP().use_self_dps, c->AccountID());
+		std::string query = StringFormat("UPDATE account_custom SET use_self_dps = %i WHERE account_id = %u",
+										 c->GetEPP().use_self_dps, c->AccountID());
 		auto results = database.QueryDatabase(query);
 		if (!results.Success()) {
 			c->Message(13, "Setting option failed. The devs have been notified.");
-			Log(Logs::General, Logs::Normal, "Option failed for user %u: %s", c->AccountID(), results.ErrorMessage().c_str());
+			Log(Logs::General, Logs::Normal, "Option failed for user %u: %s", c->AccountID(),
+				results.ErrorMessage().c_str());
 			return;
 		}
 		c->Message(0, "Self DPS is now %s by default.", ((c->GetEPP().use_self_dps) ? "enabled" : "disabled"));
 		return;
 	}
-
-} */
+}
 
 void command_traindisc(Client *c, const Seperator *sep)
 {
