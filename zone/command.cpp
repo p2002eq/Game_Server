@@ -4968,7 +4968,7 @@ void command_itemscore(Client *c, const Seperator *sep)
 	windowText.append(itemBreakdown);
 
 
-	windowText.append("<br>ItemScore is a tally of all worn items, calculated based on modifiers of each stat, includes augments, and scaled in percent based on best known geared character of your class on server.<br>The best known geared player data is updated every 24 hours, and the formula for ItemScore is subject to change.<br>");
+	windowText.append("<br>ItemScore is a tally of all worn items, calculated based on modifiers of each stat and scaled in percent based on best known geared character of your class on server.<br>The best known geared player data is updated every 24 hours, and the formula for ItemScore is subject to change.<br>");
 	c->Message(0, "Your ItemScore is %i (%i%%). Use #itemscore with an item on cursor to get it's score.", itemScore, (itemScore * 100 / maxItemScore));
 
 	c->SendPopupToClient(windowTitle, windowText.c_str());
