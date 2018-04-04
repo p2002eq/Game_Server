@@ -2565,7 +2565,7 @@ bool Mob::CanThisClassTripleAttack() const
 		return false; // When they added the real triple attack skill, mobs lost the ability to triple
 	else
 	// Innate Triple Attack only for Level 60 Monks and Warriors in our era	
-	return (GetLevel() == 60 && (GetClass() == WARRIOR || GetClass() == MONK));
+	return (GetLevel() >= 60 && (GetClass() == WARRIOR || GetClass() == MONK));
 		//return CastToClient()->HasSkill(EQEmu::skills::SkillTripleAttack);
 }
 
