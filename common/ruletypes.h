@@ -182,6 +182,23 @@ RULE_INT(Guild, PlayerCreationRequiredLevel, 0)	// Required Level of the player 
 RULE_INT(Guild, PlayerCreationRequiredTime, 0)	// Required Time Entitled On Account (in Minutes) to create the guild.
 RULE_CATEGORY_END()
 
+RULE_CATEGORY(ItemScore)
+RULE_INT(ItemScore, Class1, 0)
+RULE_INT(ItemScore, Class2, 0)
+RULE_INT(ItemScore, Class3, 0)
+RULE_INT(ItemScore, Class4, 0)
+RULE_INT(ItemScore, Class5, 0)
+RULE_INT(ItemScore, Class6, 0)
+RULE_INT(ItemScore, Class7, 0)
+RULE_INT(ItemScore, Class8, 0)
+RULE_INT(ItemScore, Class9, 0)
+RULE_INT(ItemScore, Class10, 0)
+RULE_INT(ItemScore, Class11, 0)
+RULE_INT(ItemScore, Class12, 0)
+RULE_INT(ItemScore, Class13, 0)
+RULE_INT(ItemScore, Class14, 0)
+RULE_CATEGORY_END()
+
 RULE_CATEGORY(Skills)
 RULE_INT(Skills, MaxTrainTradeskills, 21)
 RULE_BOOL(Skills, UseLimitTradeskillSearchSkillDiff, true)
