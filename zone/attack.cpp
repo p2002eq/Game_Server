@@ -2345,7 +2345,7 @@ bool NPC::Death(Mob* killer_mob, int32 damage, uint16 spell, EQEmu::skills::Skil
 		float my_dps_loss = (float) ((float) my_hp_self_loss_net / cur_engage_duration);
 		float my_dps_target_loss = (float) ((float) my_hp_target_loss_net / cur_engage_duration);
 
-		adminMessage.append(StringFormat("%s [T%i] DPS Report %d seconds, killed in %s\n", GetCleanName(),
+		adminMessage.append(StringFormat("%s DPS Report %d seconds, killed in %s\n", GetCleanName(),
 										 cur_engage_duration, database.GetZoneName(zone->GetZoneID())));
 		adminMessage.append(StringFormat("- dealt %i damage (%.1f DPS)\n", my_hp_self_loss_net, my_dps_loss));
 		adminMessage.append(StringFormat("- took %i damage (%.1f DPS)\n", my_hp_target_loss_net, my_dps_target_loss));
