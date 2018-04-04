@@ -392,7 +392,7 @@ int command_init(void)
 			command_add("title", "[text] [1 = create title table row] - Set your or your player target's title", 50, command_title) ||
 			command_add("titlesuffix", "[text] [1 = create title table row] - Set your or your player target's title suffix", 50, command_titlesuffix) ||
 			command_add("traindisc", "[level] - Trains all the disciplines usable by the target, up to level specified. (may freeze client for a few seconds)", 150, command_traindisc) ||
-			//command_add("toggle", " - Toggle server options", 0, command_toggle) ||
+			command_add("toggle", " - Toggle server options", 0, command_toggle) ||
 			command_add("trapinfo", "- Gets infomation about the traps currently spawned in the zone.", 81, command_trapinfo) ||
 			command_add("tune",  "Calculate ideal statical values related to combat.",  100, command_tune) ||
 			command_add("undeletechar", "- Undelete a character that was previously deleted.", 255, command_undeletechar) ||
