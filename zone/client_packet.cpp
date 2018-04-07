@@ -4195,7 +4195,7 @@ void Client::Handle_OP_CastSpell(const EQApplicationPacket *app)
 				return;
 			}
 			spell_to_cast = SPELL_LAY_ON_HANDS;
-			p_timers.Start(pTimerLayHands, LayOnHandsReuseTime);
+			p_timers.Start(pTimerLayHands, (LayOnHandsReuseTime - (GetAA(aaFervrentBlessing) * 720)));
 		}
 		else if ((castspell->spell_id == SPELL_HARM_TOUCH
 			|| castspell->spell_id == SPELL_HARM_TOUCH2) && GetClass() == SHADOWKNIGHT) {

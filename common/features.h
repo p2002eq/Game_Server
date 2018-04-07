@@ -144,8 +144,8 @@ enum {	//reuse times
 	FlyingKickReuseTime = 7,
 	SenseTrapsReuseTime = 9,
 	DisarmTrapsReuseTime = 9,
-	HarmTouchReuseTime = 4300,
-	LayOnHandsReuseTime = 4300,
+	HarmTouchReuseTime = 4320,
+	LayOnHandsReuseTime = 4320,
 	FrenzyReuseTime = 10
 };
 

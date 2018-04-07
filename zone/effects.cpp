@@ -172,7 +172,7 @@ int32 Mob::GetActSpellDamage(uint16 spell_id, int32 value, Mob* target) {
 	if (spell_id == SPELL_IMP_HARM_TOUCH && IsClient()) {//Improved Harm Touch
 		value -= GetAA(aaUnholyTouch) * 450; //Unholy Touch
 	}
-	
+
 	return value;
 }
 
