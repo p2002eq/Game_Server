@@ -431,7 +431,7 @@ void Mob::WakeTheDead(uint16 spell_id, Mob *target, uint32 duration)
 
 	//give the pet somebody to "love"
 	if(target != nullptr){
-		npca->AddToHateList(target, 100000);
+		npca->AddToHateList(target, 1000, 1000);
 		npca->GetSwarmInfo()->target = target->GetID();
 	}
 
