@@ -4190,12 +4190,12 @@ void Client::Handle_OP_CastSpell(const EQApplicationPacket *app)
 
 		if (castspell->spell_id == SPELL_LAY_ON_HANDS && GetClass() == PALADIN) {
 			// P2002 we use the AA Version
-			Message(13, "Ability requires an AA Hotkey - AA Window Default Hotkey 'V', located under the 'Class' Tab");
+			Message(13, "Ability requires an AA Hotkey - AA Window Default Hotkey 'V', located under the 'General' Tab");
 			InterruptSpell(castspell->spell_id);
 			return;
 		} else if ((castspell->spell_id == SPELL_HARM_TOUCH || castspell->spell_id == SPELL_HARM_TOUCH2) && GetClass() == SHADOWKNIGHT) {
 			// P2002 we use the AA Version
-			Message(13, "Ability requires an AA Hotkey - AA Window Default Hotkey 'V', located under the 'Class' Tab");
+			Message(13, "Ability requires an AA Hotkey - AA Window Default Hotkey 'V', located under the 'General' Tab");
 			InterruptSpell(castspell->spell_id);
 			return;
 		}
