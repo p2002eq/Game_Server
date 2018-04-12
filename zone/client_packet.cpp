@@ -4189,45 +4189,17 @@ void Client::Handle_OP_CastSpell(const EQApplicationPacket *app)
 		uint16 spell_to_cast = 0;
 
 		if (castspell->spell_id == SPELL_LAY_ON_HANDS && GetClass() == PALADIN) {
-			if (!p_timers.Expired(&database, pTimerLayHands)) {
-				Message(13, "Ability recovery time not yet met.");
-				InterruptSpell(castspell->spell_id);
-				return;
-			}
-			spell_to_cast = SPELL_LAY_ON_HANDS;
-			p_timers.Start(pTimerLayHands, (LayOnHandsReuseTime - (GetAA(aaFervrentBlessing) * 720)));
+			// P2002 we use the AA Version
+			Message(13, "Ability requires an AA Hotkey - AA Window Default Hotkey 'V', located under the 'Class' Tab");
+			InterruptSpell(castspell->spell_id);
+			return;
+		} else if ((castspell->spell_id == SPELL_HARM_TOUCH || castspell->spell_id == SPELL_HARM_TOUCH2) && GetClass() == SHADOWKNIGHT) {
+			// P2002 we use the AA Version
+			Message(13, "Ability requires an AA Hotkey - AA Window Default Hotkey 'V', located under the 'Class' Tab");
+			InterruptSpell(castspell->spell_id);
+			return;
 		}
-		else if ((castspell->spell_id == SPELL_HARM_TOUCH
-			|| castspell->spell_id == SPELL_HARM_TOUCH2) && GetClass() == SHADOWKNIGHT) {
-			if (!p_timers.Expired(&database, pTimerHarmTouch)) {
-				Message(13, "Ability recovery time not yet met.");
-				InterruptSpell(castspell->spell_id);
-				return;
-			}
-
-			// determine which version of HT we are casting based on level
-			if (GetLevel() < 40)
-				spell_to_cast = SPELL_HARM_TOUCH;
-			else
-				spell_to_cast = SPELL_HARM_TOUCH2;
-
-			// The Harm Touch reuse time depends on the rank of Touch of the Wicked.
-			// It is 12 minutes per rank.
-			int reduced_cooldown = HarmTouchReuseTime - GetAA(aaTouchoftheWicked) * 720;
-
-			p_timers.Start(pTimerHarmTouch, reduced_cooldown);
-
-			// We need also to synchronize the Improved Harm Touch and Leech Touch timers.
-			if (GetAA(aaImprovedHarmTouch) > 0 || GetAA(aaLeechTouch) > 0) {
-				AA::Rank *rank = zone->GetAlternateAdvancementRank(aaImprovedHarmTouch);
-
-				CastToClient()->GetPTimers().Start(rank->spell_type + pTimerAAStart, reduced_cooldown);
-				SendAlternateAdvancementTimer(rank->spell_type, 0, 0);
-			}
-		}
-
-		if (spell_to_cast > 0)	// if we've matched LoH or HT, cast now
-			CastSpell(spell_to_cast, castspell->target_id, slot);
+		return;
 	}
 	return;
 }
