@@ -10622,8 +10622,7 @@ void Client::Handle_OP_PetCommands(const EQApplicationPacket *app)
 
 			uint8 feignchance = 0;
 
-			switch (GetAA(aaFeignedMinion))
-			{
+			switch (GetAA(aaFeignedMinion)) {
 				case 1:
 					feignchance = 25;
 					break;
@@ -10640,21 +10639,29 @@ void Client::Handle_OP_PetCommands(const EQApplicationPacket *app)
 			}
 
 			if (zone->random.Roll(feignchance)) {
-				Log(Logs::General, Logs::Combat, "[DEBUG] - Pet succeeded at Feigning Death! feignchance = %i", feignchance);
+				Log(Logs::General, Logs::Combat, "[DEBUG] - Pet succeeded at Feigning Death! feignchance = %i",
+					feignchance);
 				mypet->SetPetFeigned(true);
 				mypet->WipeHateList();
 				entity_list.RemoveFromTargets(mypet);
 				mypet->SetPetOrder(SPO_Sit);
 				mypet->SetHeld(true);
 				mypet->SetRunAnimSpeed(0);
-				mypet->SendAppearancePacket(AT_Anim, ANIM_DEATH);
-				Message(0, "%s says 'Areeeeewwwww'", GetPet()->GetCleanName());
+				Message_StringID(MT_PetResponse, PET_CALMING);
 				mypet->SendAppearancePacket(AT_Anim, ANIM_DEATH);
 				p_timers.Start(pTimerPetFeignDeath, 15);
-				break;
+				mypet->SendAppearancePacket(AT_Anim, ANIM_DEATH);
+				return;
+			} else {
+				Log(Logs::General, Logs::Combat, "[DEBUG] - Pet failed at Feigning Death! feignchance = %i", feignchance);
+				mypet->SetPetOrder(SPO_Sit);
+				mypet->SetHeld(true);
+				mypet->SetRunAnimSpeed(0);
+				mypet->SendAppearancePacket(AT_Anim, ANIM_DEATH);
+				p_timers.Start(pTimerPetFeignDeath, 15);
+				Message_StringID(MT_PetResponse, STRING_FEIGNFAILED);
+				return;
 			}
-			p_timers.Start(pTimerPetFeignDeath, 15);
-			Log(Logs::General, Logs::Combat, "[DEBUG] - Pet failed at Feigning Death! feignchance = %i", feignchance);
 		}
 		break;
 	}
