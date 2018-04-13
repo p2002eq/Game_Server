@@ -10647,7 +10647,7 @@ void Client::Handle_OP_PetCommands(const EQApplicationPacket *app)
 				mypet->SetPetOrder(SPO_Sit);
 				mypet->SetHeld(true);
 				mypet->SetRunAnimSpeed(0);
-				Message_StringID(MT_PetResponse, PET_CALMING);
+				mypet->SayTo_StringID(this, MT_PetResponse, PET_CALMING);
 				mypet->SendAppearancePacket(AT_Anim, ANIM_DEATH);
 				p_timers.Start(pTimerPetFeignDeath, 15);
 				mypet->SendAppearancePacket(AT_Anim, ANIM_DEATH);
@@ -10659,7 +10659,7 @@ void Client::Handle_OP_PetCommands(const EQApplicationPacket *app)
 				mypet->SetRunAnimSpeed(0);
 				mypet->SendAppearancePacket(AT_Anim, ANIM_DEATH);
 				p_timers.Start(pTimerPetFeignDeath, 15);
-				Message_StringID(MT_PetResponse, STRING_FEIGNFAILED);
+				entity_list.MessageClose_StringID(this, false, 200, 10, STRING_FEIGNFAILED, GetPet()->GetCleanName());
 				return;
 			}
 		}
