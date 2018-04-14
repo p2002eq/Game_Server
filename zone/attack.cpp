@@ -3301,6 +3301,8 @@ bool Client::CheckDoubleAttack()
 	if (per_inc)
 		chance += chance * per_inc / 100;
 
+	Log(Logs::General, Logs::Combat, "Double Attack Chance = %i out of 500", chance);
+
 	return zone->random.Int(1, 500) <= chance;
 }
 
@@ -3327,12 +3329,16 @@ bool Client::CheckTripleAttack()
 	int inc = aabonuses.TripleAttackChance + spellbonuses.TripleAttackChance + itembonuses.TripleAttackChance;
 	chance = static_cast<int>(chance * (1 + inc / 100.0f));
 	//chance = (chance * 100) / (chance + 800);
-	
+
+	Log(Logs::General, Logs::Combat, "Triple Attack Chance = %i out of 1000", chance);
+
 	return zone->random.Int(1, 1000) <= chance;
 }
 
 bool Client::CheckDoubleRangedAttack() {
 	int32 chance = spellbonuses.DoubleRangedAttack + itembonuses.DoubleRangedAttack + aabonuses.DoubleRangedAttack;
+
+	Log(Logs::General, Logs::Combat, "Double Ranged Attack Chance = %i out of 100", chance);
 
 	if (chance && zone->random.Roll(chance))
 		return true;
@@ -4253,15 +4259,14 @@ bool Mob::RollMeleeCritCheck(Mob *defender, EQEmu::skills::SkillType skill)
 		if (!innate_crit) {
 			dex_bonus = dex_bonus * 3 / 5;
 		}
-
+		Log(Logs::General, Logs::Combat, "dex_bonus (%i) * crit_chance (%i) / 100", dex_bonus, crit_chance);
 		if (crit_chance) {
 			dex_bonus += dex_bonus * crit_chance / 100;
 		}
-	
-		Log(Logs::Detail, Logs::Combat,
-			"Crit  roll dex chance %d", dex_bonus);
+
 
 		// check if we crited
+		Log(Logs::General, Logs::Combat, "Final Roll! Difficulty = %i -- Dex_Bonus = %i ", difficulty, dex_bonus);
 		return (roll < dex_bonus);
 	}
 
@@ -4341,6 +4346,7 @@ void Mob::TryCriticalHit(Mob *defender, DamageHitInfo &hit, ExtraAttackOptions *
 
 	// are we criting?
 	if (!RollMeleeCritCheck(defender, hit.skill)) { return; };
+	Log(Logs::General, Logs::Combat, "Crit Passed");
 
 	int crit_mod = 170 + GetCritDmgMod(hit.skill);
 	if (crit_mod < 100) {
@@ -5617,15 +5623,19 @@ void Client::DoAttackRounds(Mob *target, int hand, bool IsFromSpell)
 	if (candouble) {
 		CheckIncreaseSkill(EQEmu::skills::SkillDoubleAttack, target, -10);
 		if (CheckDoubleAttack()) {
+			Log(Logs::General, Logs::Combat, "Double Attack Passed");
 			Attack(target, hand, false, false, IsFromSpell);
 			// you can only triple from the main hand
 			if (hand == EQEmu::inventory::slotPrimary && CanThisClassTripleAttack()) {
 				//CheckIncreaseSkill(EQEmu::skills::SkillTripleAttack, target, -10);
 				if (CheckTripleAttack()) {
+					Log(Logs::General, Logs::Combat, "Triple Attack Passed");
 					Attack(target, hand, false, false, IsFromSpell);
 					auto flurrychance = aabonuses.FlurryChance + spellbonuses.FlurryChance +
 						itembonuses.FlurryChance;
+					Log(Logs::General, Logs::Combat, "Flurry Chance = %i", flurrychance);
 					if (flurrychance && zone->random.Roll(flurrychance)) {
+						Log(Logs::General, Logs::Combat, "Flurry Attack Passed");
 						Attack(target, hand, false, false, IsFromSpell);
 						if (zone->random.Roll(flurrychance))
 							Attack(target, hand, false, false, IsFromSpell);
