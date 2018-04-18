@@ -3301,6 +3301,8 @@ bool Client::CheckDoubleAttack()
 	if (per_inc)
 		chance += chance * per_inc / 100;
 
+	Log(Logs::General, Logs::Combat, "Double Attack Chance = %i out of 500", chance);
+
 	return zone->random.Int(1, 500) <= chance;
 }
 
@@ -3315,10 +3317,10 @@ bool Client::CheckTripleAttack()
 	// Only Level 60 Warriors and Monks get it, and making their percentage (fixed) separate as a tuning variable.
 	int chance = 0;
 	
-	if (IsClient() && (GetLevel() == 60) && (GetClass() == WARRIOR))
+	if (IsClient() && (GetLevel() >= 60) && (GetClass() == WARRIOR))
 		chance = RuleI(Combat, TripleAttackChanceWarrior);
 	
-	if (IsClient() && (GetLevel() == 60) && (GetClass() == MONK))
+	if (IsClient() && (GetLevel() >= 60) && (GetClass() == MONK))
 		chance = RuleI(Combat, TripleAttackChanceMonk);
 	
 	if (chance < 1)
@@ -3327,12 +3329,16 @@ bool Client::CheckTripleAttack()
 	int inc = aabonuses.TripleAttackChance + spellbonuses.TripleAttackChance + itembonuses.TripleAttackChance;
 	chance = static_cast<int>(chance * (1 + inc / 100.0f));
 	//chance = (chance * 100) / (chance + 800);
-	
+
+	Log(Logs::General, Logs::Combat, "Triple Attack Chance = %i out of 1000", chance);
+
 	return zone->random.Int(1, 1000) <= chance;
 }
 
 bool Client::CheckDoubleRangedAttack() {
 	int32 chance = spellbonuses.DoubleRangedAttack + itembonuses.DoubleRangedAttack + aabonuses.DoubleRangedAttack;
+
+	Log(Logs::General, Logs::Combat, "Double Ranged Attack Chance = %i out of 100", chance);
 
 	if (chance && zone->random.Roll(chance))
 		return true;
@@ -4253,15 +4259,14 @@ bool Mob::RollMeleeCritCheck(Mob *defender, EQEmu::skills::SkillType skill)
 		if (!innate_crit) {
 			dex_bonus = dex_bonus * 3 / 5;
 		}
-
+		Log(Logs::General, Logs::Combat, "dex_bonus (%i) * crit_chance (%i) / 100", dex_bonus, crit_chance);
 		if (crit_chance) {
 			dex_bonus += dex_bonus * crit_chance / 100;
 		}
-	
-		Log(Logs::Detail, Logs::Combat,
-			"Crit  roll dex chance %d", dex_bonus);
+
 
 		// check if we crited
+		Log(Logs::General, Logs::Combat, "Final Roll! Difficulty = %i -- Dex_Bonus = %i ", difficulty, dex_bonus);
 		return (roll < dex_bonus);
 	}
 
@@ -4341,6 +4346,7 @@ void Mob::TryCriticalHit(Mob *defender, DamageHitInfo &hit, ExtraAttackOptions *
 
 	// are we criting?
 	if (!RollMeleeCritCheck(defender, hit.skill)) { return; };
+	Log(Logs::General, Logs::Combat, "Crit Passed");
 
 	int crit_mod = 170 + GetCritDmgMod(hit.skill);
 	if (crit_mod < 100) {
@@ -5192,8 +5198,9 @@ bool Mob::TryRootFadeByDamage(int buffslot, Mob* attacker) {
 	- Root break chance values obtained from live parses.
 	*/
 
-	if (!attacker || !spellbonuses.Root[0] || spellbonuses.Root[1] < 0)
+	if (!attacker || !spellbonuses.Root[0] || spellbonuses.Root[1] < 0) {
 		return false;
+	}
 
 	if (IsDetrimentalSpell(spellbonuses.Root[1]) && spellbonuses.Root[1] != buffslot) {
 		int BreakChance = RuleI(Spells, RootBreakFromSpells);
@@ -5203,29 +5210,28 @@ bool Mob::TryRootFadeByDamage(int buffslot, Mob* attacker) {
 
 		//Use baseline if level difference <= 1 (ie. If target is (1) level less than you, or equal or greater level)
 
-		if (level_diff == 2)
+		if (level_diff == 2) {
 			BreakChance = (BreakChance * 80) / 100; //Decrease by 20%;
-
-		else if (level_diff >= 3 && level_diff <= 20)
+		} else if (level_diff >= 3 && level_diff <= 20) {
 			BreakChance = (BreakChance * 60) / 100; //Decrease by 40%;
-
-		else if (level_diff > 21)
+		} else if (level_diff > 21) {
 			BreakChance = (BreakChance * 20) / 100; //Decrease by 80%;
+		}
 
-		if (BreakChance < 1)
+		if (BreakChance < 1) {
 			BreakChance = 1;
+		}
 
 		if (zone->random.Roll(BreakChance)) {
 
 			if (!TryFadeEffect(spellbonuses.Root[1])) {
 				BuffFadeBySlot(spellbonuses.Root[1]);
-				Log(Logs::Detail, Logs::Combat, "Spell broke root! BreakChance percent chance");
+				Log(Logs::Detail, Logs::Combat, "Spell broke root! BreakChance = %i", BreakChance);
 				return true;
 			}
 		}
+		Log(Logs::Detail, Logs::Combat, "Spell did not break root. BreakChance = %i", BreakChance);
 	}
-
-	Log(Logs::Detail, Logs::Combat, "Spell did not break root. BreakChance percent chance");
 	return false;
 }
 
@@ -5617,15 +5623,19 @@ void Client::DoAttackRounds(Mob *target, int hand, bool IsFromSpell)
 	if (candouble) {
 		CheckIncreaseSkill(EQEmu::skills::SkillDoubleAttack, target, -10);
 		if (CheckDoubleAttack()) {
+			Log(Logs::General, Logs::Combat, "Double Attack Passed");
 			Attack(target, hand, false, false, IsFromSpell);
 			// you can only triple from the main hand
 			if (hand == EQEmu::inventory::slotPrimary && CanThisClassTripleAttack()) {
 				//CheckIncreaseSkill(EQEmu::skills::SkillTripleAttack, target, -10);
 				if (CheckTripleAttack()) {
+					Log(Logs::General, Logs::Combat, "Triple Attack Passed");
 					Attack(target, hand, false, false, IsFromSpell);
 					auto flurrychance = aabonuses.FlurryChance + spellbonuses.FlurryChance +
 						itembonuses.FlurryChance;
+					Log(Logs::General, Logs::Combat, "Flurry Chance = %i", flurrychance);
 					if (flurrychance && zone->random.Roll(flurrychance)) {
+						Log(Logs::General, Logs::Combat, "Flurry Attack Passed");
 						Attack(target, hand, false, false, IsFromSpell);
 						if (zone->random.Roll(flurrychance))
 							Attack(target, hand, false, false, IsFromSpell);

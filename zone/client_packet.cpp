@@ -4189,45 +4189,17 @@ void Client::Handle_OP_CastSpell(const EQApplicationPacket *app)
 		uint16 spell_to_cast = 0;
 
 		if (castspell->spell_id == SPELL_LAY_ON_HANDS && GetClass() == PALADIN) {
-			if (!p_timers.Expired(&database, pTimerLayHands)) {
-				Message(13, "Ability recovery time not yet met.");
-				InterruptSpell(castspell->spell_id);
-				return;
-			}
-			spell_to_cast = SPELL_LAY_ON_HANDS;
-			p_timers.Start(pTimerLayHands, LayOnHandsReuseTime);
+			// P2002 we use the AA Version
+			Message(13, "Ability requires an AA Hotkey - AA Window Default Hotkey 'V', located under the 'General' Tab");
+			InterruptSpell(castspell->spell_id);
+			return;
+		} else if ((castspell->spell_id == SPELL_HARM_TOUCH || castspell->spell_id == SPELL_HARM_TOUCH2) && GetClass() == SHADOWKNIGHT) {
+			// P2002 we use the AA Version
+			Message(13, "Ability requires an AA Hotkey - AA Window Default Hotkey 'V', located under the 'General' Tab");
+			InterruptSpell(castspell->spell_id);
+			return;
 		}
-		else if ((castspell->spell_id == SPELL_HARM_TOUCH
-			|| castspell->spell_id == SPELL_HARM_TOUCH2) && GetClass() == SHADOWKNIGHT) {
-			if (!p_timers.Expired(&database, pTimerHarmTouch)) {
-				Message(13, "Ability recovery time not yet met.");
-				InterruptSpell(castspell->spell_id);
-				return;
-			}
-
-			// determine which version of HT we are casting based on level
-			if (GetLevel() < 40)
-				spell_to_cast = SPELL_HARM_TOUCH;
-			else
-				spell_to_cast = SPELL_HARM_TOUCH2;
-
-			// The Harm Touch reuse time depends on the rank of Touch of the Wicked.
-			// It is 12 minutes per rank.
-			int reduced_cooldown = HarmTouchReuseTime - GetAA(aaTouchoftheWicked) * 720;
-
-			p_timers.Start(pTimerHarmTouch, reduced_cooldown);
-
-			// We need also to synchronize the Improved Harm Touch and Leech Touch timers.
-			if (GetAA(aaImprovedHarmTouch) > 0 || GetAA(aaLeechTouch) > 0) {
-				AA::Rank *rank = zone->GetAlternateAdvancementRank(aaImprovedHarmTouch);
-
-				CastToClient()->GetPTimers().Start(rank->spell_type + pTimerAAStart, reduced_cooldown);
-				SendAlternateAdvancementTimer(rank->spell_type, 0, 0);
-			}
-		}
-
-		if (spell_to_cast > 0)	// if we've matched LoH or HT, cast now
-			CastSpell(spell_to_cast, castspell->target_id, slot);
+		return;
 	}
 	return;
 }
@@ -10221,6 +10193,9 @@ void Client::Handle_OP_PetCommands(const EQApplicationPacket *app)
 					mypet->SetPetRegroup(false);
 					SetPetCommandState(PET_BUTTON_REGROUP, 0);
 				}
+
+				mypet->SetPetFeigned(false);
+
 				zone->AddAggroMob();
 				// classic acts like qattack
 				int hate = 1;
@@ -10263,6 +10238,9 @@ void Client::Handle_OP_PetCommands(const EQApplicationPacket *app)
 					mypet->SetPetRegroup(false);
 					SetPetCommandState(PET_BUTTON_REGROUP, 0);
 				}
+
+				mypet->SetPetFeigned(false);
+
 				zone->AddAggroMob();
 				mypet->AddToHateList(GetTarget(), 1, 0, true, false, false, SPELL_UNKNOWN, true);
 				Message_StringID(MT_PetResponse, PET_ATTACKING, mypet->GetCleanName(), GetTarget()->GetCleanName());
@@ -10325,6 +10303,7 @@ void Client::Handle_OP_PetCommands(const EQApplicationPacket *app)
 		if ((mypet->GetPetType() == petAnimation && aabonuses.PetCommands[PetCommand]) || mypet->GetPetType() != petAnimation) {
 			if (mypet->IsNPC()) {
 				mypet->SayTo_StringID(this, MT_PetResponse, PET_GUARDINGLIFE);
+				mypet->SetPetFeigned(false);
 				mypet->SetPetOrder(SPO_Guard);
 				mypet->CastToNPC()->SaveGuardSpot();
 				if (!mypet->GetTarget()) // want them to not twitch if they're chasing something down
@@ -10342,6 +10321,7 @@ void Client::Handle_OP_PetCommands(const EQApplicationPacket *app)
 
 		if ((mypet->GetPetType() == petAnimation && aabonuses.PetCommands[PetCommand]) || mypet->GetPetType() != petAnimation) {
 			mypet->SayTo_StringID(this, MT_PetResponse, PET_FOLLOWING);
+			mypet->SetPetFeigned(false);
 			mypet->SetPetOrder(SPO_Follow);
 			mypet->SendAppearancePacket(AT_Anim, ANIM_STAND);
 			if (mypet->IsPetStop()) {
@@ -10385,6 +10365,7 @@ void Client::Handle_OP_PetCommands(const EQApplicationPacket *app)
 
 		if ((mypet->GetPetType() == petAnimation && aabonuses.PetCommands[PetCommand]) || mypet->GetPetType() != petAnimation) {
 			mypet->SayTo_StringID(this, MT_PetResponse, PET_GUARDME_STRING);
+			mypet->SetPetFeigned(false);
 			mypet->SetPetOrder(SPO_Follow);
 			mypet->SendAppearancePacket(AT_Anim, ANIM_STAND);
 			if (mypet->IsPetStop()) {
@@ -10401,12 +10382,14 @@ void Client::Handle_OP_PetCommands(const EQApplicationPacket *app)
 			if (mypet->GetPetOrder() == SPO_Sit)
 			{
 				mypet->SayTo_StringID(this, MT_PetResponse, PET_SIT_STRING);
+				mypet->SetPetFeigned(false);
 				mypet->SetPetOrder(SPO_Follow);
 				mypet->SendAppearancePacket(AT_Anim, ANIM_STAND);
 			}
 			else
 			{
 				mypet->SayTo_StringID(this, MT_PetResponse, PET_SIT_STRING);
+				mypet->SetPetFeigned(false);
 				mypet->SetPetOrder(SPO_Sit);
 				mypet->SetRunAnimSpeed(0);
 				if (!mypet->UseBardSpellLogic())	//maybe we can have a bard pet
@@ -10421,6 +10404,7 @@ void Client::Handle_OP_PetCommands(const EQApplicationPacket *app)
 
 		if ((mypet->GetPetType() == petAnimation && aabonuses.PetCommands[PetCommand]) || mypet->GetPetType() != petAnimation) {
 			mypet->SayTo_StringID(this, MT_PetResponse, PET_SIT_STRING);
+			mypet->SetPetFeigned(false);
 			mypet->SetPetOrder(SPO_Follow);
 			mypet->SendAppearancePacket(AT_Anim, ANIM_STAND);
 		}
@@ -10431,6 +10415,7 @@ void Client::Handle_OP_PetCommands(const EQApplicationPacket *app)
 
 		if ((mypet->GetPetType() == petAnimation && aabonuses.PetCommands[PetCommand]) || mypet->GetPetType() != petAnimation) {
 			mypet->SayTo_StringID(this, MT_PetResponse, PET_SIT_STRING);
+			mypet->SetPetFeigned(false);
 			mypet->SetPetOrder(SPO_Sit);
 			mypet->SetRunAnimSpeed(0);
 			if (!mypet->UseBardSpellLogic())	//maybe we can have a bard pet
@@ -10622,6 +10607,64 @@ void Client::Handle_OP_PetCommands(const EQApplicationPacket *app)
 		}
 		break;
 	}
+	case PET_FEIGN: {
+		if (!p_timers.Expired(&database, pTimerPetFeignDeath, false)) {
+			Message(13, "Ability recovery time not yet met.");
+			return;
+		}
+
+		if (aabonuses.PetCommands[PetCommand] && mypet->IsNPC()) {
+			mypet->SetPetFeigned(false);
+
+			if (mypet->IsFeared()) {
+				break;
+			}
+
+			uint8 feignchance = 0;
+
+			switch (GetAA(aaFeignedMinion)) {
+				case 1:
+					feignchance = 25;
+					break;
+				case 2:
+					feignchance = 50;
+					break;
+				case 3:
+					feignchance = 75;
+					break;
+			}
+
+			if (feignchance < 25) {
+				break;
+			}
+
+			if (zone->random.Roll(feignchance)) {
+				Log(Logs::General, Logs::Combat, "[DEBUG] - Pet succeeded at Feigning Death! feignchance = %i",
+					feignchance);
+				mypet->SetPetFeigned(true);
+				mypet->WipeHateList();
+				entity_list.RemoveFromTargets(mypet);
+				mypet->SetPetOrder(SPO_Sit);
+				mypet->SetHeld(true);
+				mypet->SetRunAnimSpeed(0);
+				mypet->SayTo_StringID(this, MT_PetResponse, PET_CALMING);
+				mypet->SendAppearancePacket(AT_Anim, ANIM_DEATH);
+				p_timers.Start(pTimerPetFeignDeath, 15);
+				mypet->SendAppearancePacket(AT_Anim, ANIM_DEATH);
+				return;
+			} else {
+				Log(Logs::General, Logs::Combat, "[DEBUG] - Pet failed at Feigning Death! feignchance = %i", feignchance);
+				mypet->SetPetOrder(SPO_Sit);
+				mypet->SetHeld(true);
+				mypet->SetRunAnimSpeed(0);
+				mypet->SendAppearancePacket(AT_Anim, ANIM_DEATH);
+				p_timers.Start(pTimerPetFeignDeath, 15);
+				entity_list.MessageClose_StringID(this, false, 200, 10, STRING_FEIGNFAILED, GetPet()->GetCleanName());
+				return;
+			}
+		}
+		break;
+	}
 	case PET_STOP: {
 		if (mypet->IsFeared()) break; //could be exploited like PET_BACKOFF
 
@@ -10708,6 +10751,8 @@ void Client::Handle_OP_PetCommands(const EQApplicationPacket *app)
 		break;
 	}
 	default:
+
+		Log(Logs::General, Logs::Combat, "[DEBUG] - PetCommand = %s", PetCommand);
 		printf("Client attempted to use a unknown pet command:\n");
 		break;
 	}

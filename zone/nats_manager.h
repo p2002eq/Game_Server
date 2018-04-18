@@ -51,7 +51,6 @@ protected:
 	bool connect();
 	Timer nats_timer;
 	bool isEntitySubscribed(const uint16 ID);
-	bool isEntityEventAllEnabled = true;
 	natsConnection *conn = NULL;
 	natsStatus      s;
 	natsOptions *opts = NULL;

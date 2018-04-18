@@ -1518,7 +1518,6 @@ luabind::scope lua_register_client() {
 		.def("AccountName", (const char *(Lua_Client::*)(void))&Lua_Client::AccountName)
 		.def("GetAccountAge", (int(Lua_Client::*)(void))&Lua_Client::GetAccountAge)
 		.def("GetForumName", (const char *(Lua_Client::*)(uint32 acc_id))&Lua_Client::GetForumName)
-		.def("KeyRingCheck", (bool(Lua_Client::*)(uint32))&Lua_Client::KeyRingCheck)
 		.def("Admin", (int(Lua_Client::*)(void))&Lua_Client::Admin)
 		.def("CharacterID", (uint32(Lua_Client::*)(void))&Lua_Client::CharacterID)
 		.def("GuildRank", (int(Lua_Client::*)(void))&Lua_Client::GuildRank)

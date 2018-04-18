@@ -2485,11 +2485,11 @@ bool Mob::SpellFinished(uint16 spell_id, Mob *spell_target, CastingSlot slot, ui
 			int recast = spells[spell_id].recast_time/1000;
 			if (spell_id == SPELL_LAY_ON_HANDS)	//lay on hands
 			{
-				recast -= GetAA(aaFervrentBlessing) * 420;
+				recast -= GetAA(aaFervrentBlessing) * 720;
 			}
 			else if (spell_id == SPELL_HARM_TOUCH || spell_id == SPELL_HARM_TOUCH2)	//harm touch
 			{
-				recast -= GetAA(aaTouchoftheWicked) * 420;
+				recast -= GetAA(aaTouchoftheWicked) * 720;
 			}
 			int reduction = CastToClient()->GetFocusEffect(focusReduceRecastTime, spell_id);//Client only
 			if(reduction)
