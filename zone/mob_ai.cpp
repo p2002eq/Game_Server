@@ -43,16 +43,16 @@ extern FastMath g_Math;
 extern Zone *zone;
 
 #if EQDEBUG >= 12
-	#define MobAI_DEBUG_Spells	25
+#define MobAI_DEBUG_Spells	25
 #elif EQDEBUG >= 9
-	#define MobAI_DEBUG_Spells	10
+#define MobAI_DEBUG_Spells	10
 #else
-	#define MobAI_DEBUG_Spells	-1
+#define MobAI_DEBUG_Spells	-1
 #endif
 
 //NOTE: do NOT pass in beneficial and detrimental spell types into the same call here!
 bool NPC::AICastSpell(Mob* tar, uint8 iChance, uint32 iSpellTypes, bool bInnates) {
-if (!tar)
+	if (!tar)
 		return false;
 
 	if (IsNoCast())
@@ -65,6 +65,7 @@ if (!tar)
 	// Any sane mob would cast if they can.
 	bool cast_only_option = (IsRooted() && !CombatRange(tar));
 
+	// innates are always attempted
 	if (!cast_only_option && iChance < 100) {
 		if (zone->random.Int(0, 100) >= iChance)
 			return false;
@@ -95,16 +96,20 @@ if (!tar)
 				mana_cost = spells[AIspells[i].spellid].mana;
 			else if (mana_cost == -2)
 				mana_cost = 0;
+			// this is ugly -- ignore distance for hatelist spells, looks like the client is only checking distance for some targettypes in CastSpell,
+			// should probably match that eventually. This should be good enough for now I guess ....
 			if (
-				((
-					(spells[AIspells[i].spellid].targettype==ST_AECaster || spells[AIspells[i].spellid].targettype==ST_AEBard)
-					&& dist2 <= spells[AIspells[i].spellid].aoerange*spells[AIspells[i].spellid].aoerange
-				) ||
-				dist2 <= spells[AIspells[i].spellid].range*spells[AIspells[i].spellid].range
-				)
-				&& (mana_cost <= GetMana() || GetMana() == GetMaxMana())
-				&& (AIspells[i].time_cancast + (zone->random.Int(0, 4) * 1000)) <= Timer::GetCurrentTime() //break up the spelling casting over a period of time.
-				) {
+					(
+							(spells[AIspells[i].spellid].targettype == ST_HateList || spells[AIspells[i].spellid].targettype == ST_AETargetHateList) ||
+							(
+									(spells[AIspells[i].spellid].targettype==ST_AECaster || spells[AIspells[i].spellid].targettype==ST_AEBard)
+									&& dist2 <= spells[AIspells[i].spellid].aoerange*spells[AIspells[i].spellid].aoerange
+							) ||
+							dist2 <= spells[AIspells[i].spellid].range*spells[AIspells[i].spellid].range
+					)
+					&& (mana_cost <= GetMana() || GetMana() == GetMaxMana())
+					&& (AIspells[i].time_cancast + (zone->random.Int(0, 4) * 500)) <= Timer::GetCurrentTime() //break up the spelling casting over a period of time.
+					) {
 
 #if MobAI_DEBUG_Spells >= 21
 				Log(Logs::Detail, Logs::AI, "Mob::AICastSpell: Casting: spellid=%u, tar=%s, dist2[%f]<=%f, mana_cost[%i]<=%i, cancast[%u]<=%u, type=%u",
@@ -113,10 +118,10 @@ if (!tar)
 				switch (AIspells[i].type) {
 					case SpellType_Heal: {
 						if (
-							(spells[AIspells[i].spellid].targettype == ST_Target || tar == this)
-							&& tar->DontHealMeBefore() < Timer::GetCurrentTime()
-							&& !(tar->IsPet() && tar->GetOwner()->IsClient())	//no buffing PC's pets
-							) {
+								(spells[AIspells[i].spellid].targettype == ST_Target || tar == this)
+								&& tar->DontHealMeBefore() < Timer::GetCurrentTime()
+								&& !(tar->IsPet() && tar->GetOwner()->IsClient())	//no buffing PC's pets
+								) {
 							uint8 hpr = (uint8)tar->GetHPRatio();
 
 							if(hpr <= 35 || (!IsEngaged() && hpr <= 50) || (tar->IsClient() && hpr <= 99)) {
@@ -130,11 +135,11 @@ if (!tar)
 					}
 					case SpellType_Root: {
 						Mob *rootee = GetHateRandom();
-						if (rootee && !rootee->IsRooted() && zone->random.Roll(50)
+						if (rootee && !rootee->IsRooted() && !rootee->IsFeared() && (bInnates || zone->random.Roll(50))
 							&& rootee->DontRootMeBefore() < Timer::GetCurrentTime()
 							&& rootee->CanBuffStack(AIspells[i].spellid, GetLevel(), true) >= 0
-							) {
-							if(spells[AIspells[i].spellid].targettype != ST_AECaster && !checked_los) {
+								) {
+							if(!checked_los) {
 								if(!CheckLosFN(rootee))
 									return(false);	//cannot see target... we assume that no spell is going to work since we will only be casting detrimental spells in this call
 								checked_los = true;
@@ -146,16 +151,23 @@ if (!tar)
 						}
 						break;
 					}
+					case SpellType_InCombatBuff: {
+						if (bInnates || zone->random.Roll(50)) {
+							AIDoSpellCast(i, tar, mana_cost);
+							return true;
+						}
+						break;
+					}
 					case SpellType_Buff: {
 						if (
-							(spells[AIspells[i].spellid].targettype == ST_Target || tar == this)
-							&& tar->DontBuffMeBefore() < Timer::GetCurrentTime()
-							&& !tar->IsImmuneToSpell(AIspells[i].spellid, this)
-							&& tar->CanBuffStack(AIspells[i].spellid, GetLevel(), true) >= 0
-							&& !(tar->IsPet() && tar->GetOwner()->IsClient() && this != tar)	//no buffing PC's pets, but they can buff themself
-							)
+								(spells[AIspells[i].spellid].targettype == ST_Target || tar == this)
+								&& tar->DontBuffMeBefore() < Timer::GetCurrentTime()
+								&& !tar->IsImmuneToSpell(AIspells[i].spellid, this)
+								&& tar->CanBuffStack(AIspells[i].spellid, GetLevel(), true) >= 0
+								&& !(tar->IsPet() && tar->GetOwner()->IsClient() && this != tar)	//no buffing PC's pets, but they can buff themself
+								)
 						{
-							if(spells[AIspells[i].spellid].targettype != ST_AECaster && !checked_los) {
+							if(!checked_los) {
 								if(!CheckLosFN(tar))
 									return(false);
 								checked_los = true;
@@ -167,16 +179,6 @@ if (!tar)
 						}
 						break;
 					}
-
-					case SpellType_InCombatBuff: {
-						if(zone->random.Roll(50))
-						{
-							AIDoSpellCast(i, tar, mana_cost);
-							return true;
-						}
-						break;
-					}
-
 					case SpellType_Escape: {
 						if (GetHPRatio() <= 5 )
 						{
@@ -187,41 +189,32 @@ if (!tar)
 					}
 					case SpellType_Slow:
 					case SpellType_Debuff: {
-						Mob * debuffee = GetHateRandom();
-                        if (debuffee && manaR >= 10 && zone->random.Roll(75))
-                        { 
-                            if (spells[AIspells[i].spellid].priority >= AI_SPELL_MAX_PRIORITY || debuffee->CanBuffStack(AIspells[i].spellid, GetLevel(), true) >= 0)
-                            {
-                                if (spells[AIspells[i].spellid].targettype != ST_AECaster && !checked_los)
-                                {
-                                    if (!CheckLosFN(debuffee))
-                                        return false;
-                                    checked_los = true;
-                                }
-                                AIDoSpellCast(i, debuffee, mana_cost);
-                                return true;
-                            }
-                        }
+						Mob *debuffee = GetHateRandom();
+						if (debuffee && manaR >= 10 && (bInnates || zone->random.Roll(70)) &&
+							debuffee->CanBuffStack(AIspells[i].spellid, GetLevel(), true) >= 0) {
+							if (!checked_los) {
+								if (!CheckLosFN(debuffee))
+									return false;
+								checked_los = true;
+							}
+							AIDoSpellCast(i, debuffee, mana_cost);
+							return true;
+						}
 						break;
 					}
 					case SpellType_Nuke: {
-						if (manaR >= 10 && zone->random.Roll(75))
-                        {
-							if (spells[AIspells[i].spellid].priority >= AI_SPELL_MAX_PRIORITY || tar->CanBuffStack(AIspells[i].spellid, GetLevel(), true) >= 0)
-                            {
-                                if(spells[AIspells[i].spellid].targettype != ST_AECaster && !checked_los)
-                                {
-                                    if(!CheckLosFN(tar))
-                                        return(false);	//cannot see target... we assume that no spell is going to work since we will only be casting detrimental spells in this call
-                                    checked_los = true;
-                                }
-                                AIDoSpellCast(i, tar, mana_cost);
-                                return true;
-                            }
-                        }
+						if (manaR >= 10 && (bInnates || (zone->random.Roll(70) && tar->CanBuffStack(AIspells[i].spellid, GetLevel(), false) >= 0)) // saying it's a nuke here, AI shouldn't care too much if overwriting
+								) {
+							if (!checked_los) {
+								if (!CheckLosFN(tar))
+									return (false);    //cannot see target... we assume that no spell is going to work since we will only be casting detrimental spells in this call
+								checked_los = true;
+							}
+							AIDoSpellCast(i, tar, mana_cost);
+							return true;
+						}
 						break;
 					}
-                                         
 					case SpellType_Dispel: {
 						if(zone->random.Roll(5))
 						{
@@ -280,7 +273,7 @@ if (!tar)
 						if (GetHPRatio() <= 95
 							&& zone->random.Roll(50)
 							&& tar->CanBuffStack(AIspells[i].spellid, GetLevel(), true) >= 0
-							) {
+								) {
 							if(spells[AIspells[i].spellid].targettype != ST_AECaster && !checked_los) {
 								if(!CheckLosFN(tar))
 									return(false);	//cannot see target... we assume that no spell is going to work since we will only be casting detrimental spells in this call
@@ -293,11 +286,11 @@ if (!tar)
 					}
 					case SpellType_Snare: {
 						if (
-							!tar->IsRooted()
-							&& zone->random.Roll(50)
-							&& tar->DontSnareMeBefore() < Timer::GetCurrentTime()
-							&& tar->CanBuffStack(AIspells[i].spellid, GetLevel(), true) >= 0
-							) {
+								!tar->IsRooted()
+								&& zone->random.Roll(50)
+								&& tar->DontSnareMeBefore() < Timer::GetCurrentTime()
+								&& tar->CanBuffStack(AIspells[i].spellid, GetLevel(), true) >= 0
+								) {
 							if(spells[AIspells[i].spellid].targettype != ST_AECaster && !checked_los) {
 								if(!CheckLosFN(tar))
 									return(false);	//cannot see target... we assume that no spell is going to work since we will only be casting detrimental spells in this call
@@ -312,10 +305,10 @@ if (!tar)
 					}
 					case SpellType_DOT: {
 						if (
-							zone->random.Roll(60)
-							&& tar->DontDotMeBefore() < Timer::GetCurrentTime()
-							&& tar->CanBuffStack(AIspells[i].spellid, GetLevel(), true) >= 0
-							) {
+								zone->random.Roll(60)
+								&& tar->DontDotMeBefore() < Timer::GetCurrentTime()
+								&& tar->CanBuffStack(AIspells[i].spellid, GetLevel(), true) >= 0
+								) {
 							if(spells[AIspells[i].spellid].targettype != ST_AECaster && !checked_los) {
 								if(!CheckLosFN(tar))
 									return(false);	//cannot see target... we assume that no spell is going to work since we will only be casting detrimental spells in this call
@@ -417,7 +410,7 @@ bool EntityList::AICheckCloseBeneficialSpells(NPC* caster, uint8 iChance, float 
 	//Only iterate through NPCs
 	for (auto it = npc_list.begin(); it != npc_list.end(); ++it) {
 		NPC* mob = it->second;
-	
+
 		if (mob->GetReverseFactionCon(caster) >= FACTION_KINDLY) {
 			continue;
 		}
@@ -500,7 +493,7 @@ void Mob::AI_Start(uint32 iMoveDelay) {
 
 	if(CastToNPC()->WillAggroNPCs())
 		AI_scan_area_timer = std::unique_ptr<Timer>(new Timer(RandomTimer(RuleI(NPC, NPCToNPCAggroTimerMin), RuleI(NPC, NPCToNPCAggroTimerMax))));
-	
+
 	AI_check_signal_timer = std::unique_ptr<Timer>(new Timer(AI_check_signal_timer_delay));
 
 
@@ -538,7 +531,7 @@ void NPC::AI_Start(uint32 iMoveDelay) {
 		AIautocastspell_timer = std::unique_ptr<Timer>(new Timer(1000));
 		AIautocastspell_timer->Disable();
 	} else {
-		AIautocastspell_timer = std::unique_ptr<Timer>(new Timer(750));
+		AIautocastspell_timer = std::unique_ptr<Timer>(new Timer(500));
 		AIautocastspell_timer->Start(RandomTimer(0, 300), false);
 	}
 
@@ -804,7 +797,7 @@ void Client::AI_Process()
 					SetCurrentSpeed(speed);
 					// Check if we have reached the last fear point
 					if ((std::abs(GetX() - m_FearWalkTarget.x) < 0.1) &&
-					    (std::abs(GetY() - m_FearWalkTarget.y) < 0.1)) {
+						(std::abs(GetY() - m_FearWalkTarget.y) < 0.1)) {
 						// Calculate a new point to run to
 						CalculateNewFearpoint();
 					}
@@ -815,7 +808,7 @@ void Client::AI_Process()
 						bool WaypointChanged, NodeReached;
 
 						glm::vec3 Goal = UpdatePath(m_FearWalkTarget.x, m_FearWalkTarget.y, m_FearWalkTarget.z,
-									speed, WaypointChanged, NodeReached);
+													speed, WaypointChanged, NodeReached);
 
 						if(WaypointChanged)
 							tar_ndx = 20;
@@ -860,7 +853,7 @@ void Client::AI_Process()
 
 			if (AI_movement_timer->Check()) {
 				if (CalculateHeadingToTarget(GetTarget()->GetX(), GetTarget()->GetY()) !=
-				    m_Position.w) {
+					m_Position.w) {
 					SetHeading(CalculateHeadingToTarget(GetTarget()->GetX(), GetTarget()->GetY()));
 					SendPosition();
 				}
@@ -896,7 +889,7 @@ void Client::AI_Process()
 					{
 						bool WaypointChanged, NodeReached;
 						glm::vec3 Goal = UpdatePath(GetTarget()->GetX(), GetTarget()->GetY(), GetTarget()->GetZ(),
-							GetRunspeed(), WaypointChanged, NodeReached);
+													GetRunspeed(), WaypointChanged, NodeReached);
 
 						if(WaypointChanged)
 							tar_ndx = 20;
@@ -1065,7 +1058,7 @@ void Mob::AI_Process() {
 				if(AI_movement_timer->Check()) {
 					// Check if we have reached the last fear point
 					if ((std::abs(GetX() - m_FearWalkTarget.x) < 0.1) &&
-					    (std::abs(GetY() - m_FearWalkTarget.y) < 0.1)) {
+						(std::abs(GetY() - m_FearWalkTarget.y) < 0.1)) {
 						// Calculate a new point to run to
 						CalculateNewFearpoint();
 					}
@@ -1078,7 +1071,7 @@ void Mob::AI_Process() {
 						bool WaypointChanged, NodeReached;
 
 						glm::vec3 Goal = UpdatePath(m_FearWalkTarget.x, m_FearWalkTarget.y, m_FearWalkTarget.z,
-									GetFearSpeed(), WaypointChanged, NodeReached);
+													GetFearSpeed(), WaypointChanged, NodeReached);
 
 						if(WaypointChanged)
 							tar_ndx = 20;
@@ -1298,7 +1291,7 @@ void Mob::AI_Process() {
 
 						if (owner) {
 							int16 flurry_chance = owner->aabonuses.PetFlurry +
-								owner->spellbonuses.PetFlurry + owner->itembonuses.PetFlurry;
+												  owner->spellbonuses.PetFlurry + owner->itembonuses.PetFlurry;
 
 							if (flurry_chance && zone->random.Roll(flurry_chance))
 								Flurry(nullptr);
@@ -1443,7 +1436,7 @@ void Mob::AI_Process() {
 							bool WaypointChanged, NodeReached;
 
 							glm::vec3 Goal = UpdatePath(target->GetX(), target->GetY(), target->GetZ(),
-								GetRunspeed(), WaypointChanged, NodeReached);
+														GetRunspeed(), WaypointChanged, NodeReached);
 
 							if (WaypointChanged)
 								tar_ndx = 20;
@@ -1576,7 +1569,7 @@ void Mob::AI_Process() {
 				if (IsPetRegroup())
 					return;
 			}
-			/* Entity has been assigned another entity to follow */
+				/* Entity has been assigned another entity to follow */
 			else if (GetFollowID())
 			{
 				Mob* follow = entity_list.GetMob(GetFollowID());
@@ -1932,11 +1925,11 @@ void Mob::AI_Event_NoLongerEngaged() {
 		{
 			if(entity_list.GetNPCByID(this->GetID()))
 			{
-			uint16 emoteid = CastToNPC()->GetEmoteID();
-			parse->EventNPC(EVENT_COMBAT, CastToNPC(), nullptr, "0", 0);
-			if(emoteid != 0)
-				CastToNPC()->DoNPCEmote(LEAVECOMBAT,emoteid);
-			CastToNPC()->SetCombatEvent(false);
+				uint16 emoteid = CastToNPC()->GetEmoteID();
+				parse->EventNPC(EVENT_COMBAT, CastToNPC(), nullptr, "0", 0);
+				if(emoteid != 0)
+					CastToNPC()->DoNPCEmote(LEAVECOMBAT,emoteid);
+				CastToNPC()->SetCombatEvent(false);
 			}
 		}
 	}
@@ -1948,14 +1941,14 @@ void NPC::AI_Event_SpellCastFinished(bool iCastSucceeded, uint16 slot) {
 		uint32 recovery_time = 0;
 		if (iCastSucceeded) {
 			if (casting_spell_AIindex < AIspells.size()) {
-					recovery_time += spells[AIspells[casting_spell_AIindex].spellid].recovery_time;
-					if (AIspells[casting_spell_AIindex].recast_delay >= 0)
-					{
-						if (AIspells[casting_spell_AIindex].recast_delay < 1000)
-							AIspells[casting_spell_AIindex].time_cancast = Timer::GetCurrentTime() + (AIspells[casting_spell_AIindex].recast_delay*1000);
-					}
-					else
-						AIspells[casting_spell_AIindex].time_cancast = Timer::GetCurrentTime() + spells[AIspells[casting_spell_AIindex].spellid].recast_time;
+				recovery_time += spells[AIspells[casting_spell_AIindex].spellid].recovery_time;
+				if (AIspells[casting_spell_AIindex].recast_delay >= 0)
+				{
+					if (AIspells[casting_spell_AIindex].recast_delay < 1000)
+						AIspells[casting_spell_AIindex].time_cancast = Timer::GetCurrentTime() + (AIspells[casting_spell_AIindex].recast_delay*1000);
+				}
+				else
+					AIspells[casting_spell_AIindex].time_cancast = Timer::GetCurrentTime() + spells[AIspells[casting_spell_AIindex].spellid].recast_time;
 			}
 			if (recovery_time < AIautocastspell_timer->GetSetAtTrigger())
 				recovery_time = AIautocastspell_timer->GetSetAtTrigger();
@@ -1996,19 +1989,24 @@ bool NPC::AI_EngagedCastCheck() {
 
 bool NPC::AI_PursueCastCheck() {
 	if (AIautocastspell_timer->Check(false)) {
-		AIautocastspell_timer->Disable();	//prevent the timer from going off AGAIN while we are casting.
+		AIautocastspell_timer->Disable();    //prevent the timer from going off AGAIN while we are casting.
 
 		Log(Logs::Detail, Logs::AI, "Engaged (pursuing) autocast check triggered. Trying to cast offensive spells.");
 		// checking innate (spam) spells first
-		if(!AICastSpell(GetTarget(), AISpellVar.pursue_detrimental_chance, SpellType_Root | SpellType_Nuke | SpellType_Lifetap | SpellType_Snare | SpellType_DOT | SpellType_Dispel | SpellType_Mez | SpellType_Slow | SpellType_Debuff, true)) {
-			if(!AICastSpell(GetTarget(), AISpellVar.pursue_detrimental_chance, SpellType_Root | SpellType_Nuke | SpellType_Lifetap | SpellType_Snare | SpellType_DOT | SpellType_Dispel | SpellType_Mez | SpellType_Slow | SpellType_Debuff)) {
+		if (!AICastSpell(GetTarget(), AISpellVar.pursue_detrimental_chance,
+						 SpellType_Root | SpellType_Nuke | SpellType_Lifetap | SpellType_Snare | SpellType_DOT |
+						 SpellType_Dispel | SpellType_Mez | SpellType_Slow | SpellType_Debuff, true)) {
+			if (!AICastSpell(GetTarget(), AISpellVar.pursue_detrimental_chance,
+							 SpellType_Root | SpellType_Nuke | SpellType_Lifetap | SpellType_Snare | SpellType_DOT |
+							 SpellType_Dispel | SpellType_Mez | SpellType_Slow | SpellType_Debuff)) {
 				//no spell cast, try again soon.
-				AIautocastspell_timer->Start(RandomTimer(AISpellVar.pursue_no_sp_recast_min, AISpellVar.pursue_no_sp_recast_max), false);
+				AIautocastspell_timer->Start(
+						RandomTimer(AISpellVar.pursue_no_sp_recast_min, AISpellVar.pursue_no_sp_recast_max), false);
 			} //else, spell casting finishing will reset the timer.
 		}
-		return(true);
+		return (true);
 	}
-	return(false);
+	return (false);
 }
 
 bool NPC::AI_IdleCastCheck() {
@@ -2045,7 +2043,7 @@ void Mob::StartEnrage()
 	}
 
 	if(RuleB(NPC, LiveLikeEnrage) && !((IsPet() && !IsCharmed() && GetOwner() && GetOwner()->IsClient()) ||
-		(CastToNPC()->GetSwarmOwner() && entity_list.GetMob(CastToNPC()->GetSwarmOwner())->IsClient()))) {
+									   (CastToNPC()->GetSwarmOwner() && entity_list.GetMob(CastToNPC()->GetSwarmOwner())->IsClient()))) {
 		return;
 	}
 
@@ -2275,14 +2273,13 @@ bool NPC::AI_AddNPCSpells(uint32 iDBSpellsID) {
 		return false;
 	}
 	DBnpcspells_Struct* parentlist = database.GetNPCSpells(spell_list->parent_list);
-	uint32 i;
 #if MobAI_DEBUG_Spells >= 10
 	std::string debug_msg = StringFormat("Loading NPCSpells onto %s: dbspellsid=%u", this->GetName(), iDBSpellsID);
 	if (spell_list) {
-		debug_msg.append(StringFormat(" (found, %u), parentlist=%u", spell_list->numentries, spell_list->parent_list));
+		debug_msg.append(StringFormat(" (found, %u), parentlist=%u", spell_list->entries.size(), spell_list->parent_list));
 		if (spell_list->parent_list) {
 			if (parentlist)
-				debug_msg.append(StringFormat(" (found, %u)", parentlist->numentries));
+				debug_msg.append(StringFormat(" (found, %u)", parentlist->entries.size()));
 			else
 				debug_msg.append(" (not found)");
 		}
@@ -2330,15 +2327,11 @@ bool NPC::AI_AddNPCSpells(uint32 iDBSpellsID) {
 		_idle_no_sp_recast_min = parentlist->idle_no_sp_recast_min;
 		_idle_no_sp_recast_max = parentlist->idle_no_sp_recast_max;
 		_idle_beneficial_chance = parentlist->idle_beneficial_chance;
-		for (i=0; i<parentlist->numentries; i++) {
-			if (GetLevel() >= parentlist->entries[i].minlevel && GetLevel() <= parentlist->entries[i].maxlevel && parentlist->entries[i].spellid > 0) {
-				if(GetLevel() > 60 && parentlist->entries[i].minlevel > 60 && !RuleB(NPC, CastOutOfEraSpells)) { continue; } // This was added to stop luclin 60+ npcs from casting POP spells until we release pop
-				if (!IsSpellInList(spell_list, parentlist->entries[i].spellid))
+		for (auto &e : parentlist->entries) {
+			if (GetLevel() >= e.minlevel && GetLevel() <= e.maxlevel && e.spellid > 0) {
+				if (!IsSpellInList(spell_list, e.spellid))
 				{
-					AddSpellToNPCList(parentlist->entries[i].priority,
-						parentlist->entries[i].spellid, parentlist->entries[i].type,
-						parentlist->entries[i].manacost, parentlist->entries[i].recast_delay,
-						parentlist->entries[i].resist_adjust);
+					AddSpellToNPCList(e.priority, e.spellid, e.type, e.manacost, e.recast_delay, e.resist_adjust);
 				}
 			}
 		}
@@ -2377,15 +2370,12 @@ bool NPC::AI_AddNPCSpells(uint32 iDBSpellsID) {
 		_idle_beneficial_chance = spell_list->idle_beneficial_chance;
 	}
 
-	for (i=0; i<spell_list->numentries; i++) {
-		if (GetLevel() >= spell_list->entries[i].minlevel && GetLevel() <= spell_list->entries[i].maxlevel && spell_list->entries[i].spellid > 0) {
-			if(GetLevel() > 60 && spell_list->entries[i].minlevel > 60 && !RuleB(NPC, CastOutOfEraSpells)) { continue; } // This was added to stop luclin 60+ npcs from casting POP spells until we release pop
-			AddSpellToNPCList(spell_list->entries[i].priority,
-				spell_list->entries[i].spellid, spell_list->entries[i].type,
-				spell_list->entries[i].manacost, spell_list->entries[i].recast_delay,
-				spell_list->entries[i].resist_adjust);
+	for (auto &e : spell_list->entries) {
+		if (GetLevel() >= e.minlevel && GetLevel() <= e.maxlevel && e.spellid > 0) {
+			AddSpellToNPCList(e.priority, e.spellid, e.type, e.manacost, e.recast_delay, e.resist_adjust);
 		}
 	}
+
 	std::sort(AIspells.begin(), AIspells.end(), [](const AISpells_Struct& a, const AISpells_Struct& b) {
 		return a.priority > b.priority;
 	});
@@ -2463,11 +2453,11 @@ bool NPC::AI_AddNPCSpellsEffects(uint32 iDBSpellsEffectsID) {
 		for (i=0; i<parentlist->numentries; i++) {
 			if (GetLevel() >= parentlist->entries[i].minlevel && GetLevel() <= parentlist->entries[i].maxlevel && parentlist->entries[i].spelleffectid > 0) {
 				if (!IsSpellEffectInList(spell_effects_list, parentlist->entries[i].spelleffectid, parentlist->entries[i].base,
-					parentlist->entries[i].limit, parentlist->entries[i].max))
+										 parentlist->entries[i].limit, parentlist->entries[i].max))
 				{
-				AddSpellEffectToNPCList(parentlist->entries[i].spelleffectid,
-						parentlist->entries[i].base, parentlist->entries[i].limit,
-						parentlist->entries[i].max);
+					AddSpellEffectToNPCList(parentlist->entries[i].spelleffectid,
+											parentlist->entries[i].base, parentlist->entries[i].limit,
+											parentlist->entries[i].max);
 				}
 			}
 		}
@@ -2476,8 +2466,8 @@ bool NPC::AI_AddNPCSpellsEffects(uint32 iDBSpellsEffectsID) {
 	for (i=0; i<spell_effects_list->numentries; i++) {
 		if (GetLevel() >= spell_effects_list->entries[i].minlevel && GetLevel() <= spell_effects_list->entries[i].maxlevel && spell_effects_list->entries[i].spelleffectid > 0) {
 			AddSpellEffectToNPCList(spell_effects_list->entries[i].spelleffectid,
-				spell_effects_list->entries[i].base, spell_effects_list->entries[i].limit,
-				spell_effects_list->entries[i].max);
+									spell_effects_list->entries[i].base, spell_effects_list->entries[i].limit,
+									spell_effects_list->entries[i].max);
 		}
 	}
 
@@ -2491,7 +2481,7 @@ void NPC::ApplyAISpellEffects(StatBonuses* newbon)
 
 	for (int i = 0; i < AIspellsEffects.size(); i++)
 		ApplySpellsBonuses(0, 0, newbon, 0, 0, 0, -1, 10, true, AIspellsEffects[i].spelleffectid,
-				   AIspellsEffects[i].base, AIspellsEffects[i].limit, AIspellsEffects[i].max);
+						   AIspellsEffects[i].base, AIspellsEffects[i].limit, AIspellsEffects[i].max);
 
 	return;
 }
@@ -2523,11 +2513,9 @@ bool IsSpellEffectInList(DBnpcspellseffects_Struct* spelleffect_list, uint16 iSp
 }
 
 bool IsSpellInList(DBnpcspells_Struct* spell_list, int16 iSpellID) {
-	for (uint32 i=0; i < spell_list->numentries; i++) {
-		if (spell_list->entries[i].spellid == iSpellID)
-			return true;
-	}
-	return false;
+	auto it = std::find_if(spell_list->entries.begin(), spell_list->entries.end(),
+						   [iSpellID](const DBnpcspells_entries_Struct &a) { return a.spellid == iSpellID; });
+	return it != spell_list->entries.end();
 }
 
 // adds a spell to the list, taking into account priority and resorting list as needed.
@@ -2577,7 +2565,7 @@ void NPC::AISpellsList(Client *c)
 
 	for (auto it = AIspells.begin(); it != AIspells.end(); ++it)
 		c->Message(0, "%s (%d): Type %d, Priority %d",
-				spells[it->spellid].name, it->spellid, it->type, it->priority);
+				   spells[it->spellid].name, it->spellid, it->type, it->priority);
 
 	return;
 }
@@ -2586,122 +2574,99 @@ DBnpcspells_Struct* ZoneDatabase::GetNPCSpells(uint32 iDBSpellsID) {
 	if (iDBSpellsID == 0)
 		return nullptr;
 
-	if (!npc_spells_cache) {
-		npc_spells_maxid = GetMaxNPCSpellsID();
-		npc_spells_cache = new DBnpcspells_Struct*[npc_spells_maxid+1];
-		npc_spells_loadtried = new bool[npc_spells_maxid+1];
-		for (uint32 i=0; i<=npc_spells_maxid; i++) {
-			npc_spells_cache[i] = nullptr;
-			npc_spells_loadtried[i] = false;
-		}
+	auto it = npc_spells_cache.find(iDBSpellsID);
+
+	if (it != npc_spells_cache.end()) { // it's in the cache, easy =)
+		return &it->second;
 	}
 
-	if (iDBSpellsID > npc_spells_maxid)
-		return nullptr;
-	if (npc_spells_cache[iDBSpellsID]) { // it's in the cache, easy =)
-		return npc_spells_cache[iDBSpellsID];
-	}
-
-	else if (!npc_spells_loadtried[iDBSpellsID]) { // no reason to ask the DB again if we have failed once already
-		npc_spells_loadtried[iDBSpellsID] = true;
+	if (!npc_spells_loadtried.count(iDBSpellsID)) { // no reason to ask the DB again if we have failed once already
+		npc_spells_loadtried.insert(iDBSpellsID);
 
 		std::string query = StringFormat("SELECT id, parent_list, attack_proc, proc_chance, "
-                                        "range_proc, rproc_chance, defensive_proc, dproc_chance, "
-                                        "fail_recast, engaged_no_sp_recast_min, engaged_no_sp_recast_max, "
-                                        "engaged_b_self_chance, engaged_b_other_chance, engaged_d_chance, "
-                                        "pursue_no_sp_recast_min, pursue_no_sp_recast_max, "
-                                        "pursue_d_chance, idle_no_sp_recast_min, idle_no_sp_recast_max, "
-                                        "idle_b_chance FROM npc_spells WHERE id=%d", iDBSpellsID);
-        auto results = QueryDatabase(query);
-        if (!results.Success()) {
+												 "range_proc, rproc_chance, defensive_proc, dproc_chance, "
+												 "fail_recast, engaged_no_sp_recast_min, engaged_no_sp_recast_max, "
+												 "engaged_b_self_chance, engaged_b_other_chance, engaged_d_chance, "
+												 "pursue_no_sp_recast_min, pursue_no_sp_recast_max, "
+												 "pursue_d_chance, idle_no_sp_recast_min, idle_no_sp_recast_max, "
+												 "idle_b_chance FROM npc_spells WHERE id=%d",
+										 iDBSpellsID);
+		auto results = QueryDatabase(query);
+		if (!results.Success()) {
 			return nullptr;
-        }
+		}
 
-        if (results.RowCount() != 1)
-            return nullptr;
+		if (results.RowCount() != 1)
+			return nullptr;
 
-        auto row = results.begin();
-        uint32 tmpparent_list = atoi(row[1]);
-        uint16 tmpattack_proc = atoi(row[2]);
-        uint8 tmpproc_chance = atoi(row[3]);
-        uint16 tmprange_proc = atoi(row[4]);
-        int16 tmprproc_chance = atoi(row[5]);
-        uint16 tmpdefensive_proc = atoi(row[6]);
-        int16 tmpdproc_chance = atoi(row[7]);
-        uint32 tmppfail_recast = atoi(row[8]);
-        uint32 tmpengaged_no_sp_recast_min = atoi(row[9]);
-        uint32 tmpengaged_no_sp_recast_max = atoi(row[10]);
-        uint8 tmpengaged_b_self_chance = atoi(row[11]);
-        uint8 tmpengaged_b_other_chance = atoi(row[12]);
-        uint8 tmpengaged_d_chance = atoi(row[13]);
-        uint32 tmppursue_no_sp_recast_min = atoi(row[14]);
-        uint32 tmppursue_no_sp_recast_max = atoi(row[15]);
-        uint8 tmppursue_d_chance = atoi(row[16]);
-        uint32 tmpidle_no_sp_recast_min = atoi(row[17]);
-        uint32 tmpidle_no_sp_recast_max = atoi(row[18]);
-        uint8 tmpidle_b_chance = atoi(row[19]);
+		auto row = results.begin();
+		DBnpcspells_Struct spell_set;
+
+		spell_set.parent_list = atoi(row[1]);
+		spell_set.attack_proc = atoi(row[2]);
+		spell_set.proc_chance = atoi(row[3]);
+		spell_set.range_proc = atoi(row[4]);
+		spell_set.rproc_chance = atoi(row[5]);
+		spell_set.defensive_proc = atoi(row[6]);
+		spell_set.dproc_chance = atoi(row[7]);
+		spell_set.fail_recast = atoi(row[8]);
+		spell_set.engaged_no_sp_recast_min = atoi(row[9]);
+		spell_set.engaged_no_sp_recast_max = atoi(row[10]);
+		spell_set.engaged_beneficial_self_chance = atoi(row[11]);
+		spell_set.engaged_beneficial_other_chance = atoi(row[12]);
+		spell_set.engaged_detrimental_chance = atoi(row[13]);
+		spell_set.pursue_no_sp_recast_min = atoi(row[14]);
+		spell_set.pursue_no_sp_recast_max = atoi(row[15]);
+		spell_set.pursue_detrimental_chance = atoi(row[16]);
+		spell_set.idle_no_sp_recast_min = atoi(row[17]);
+		spell_set.idle_no_sp_recast_max = atoi(row[18]);
+		spell_set.idle_beneficial_chance = atoi(row[19]);
 
 		// pulling fixed values from an auto-increment field is dangerous...
-        query = StringFormat("SELECT spellid, type, minlevel, maxlevel, "
-                            "manacost, recast_delay, priority, resist_adjust "
+		query = StringFormat(
+				"SELECT spellid, type, minlevel, maxlevel, "
+						"manacost, recast_delay, priority, resist_adjust "
 #ifdef BOTS
-							"FROM %s "
-							"WHERE npc_spells_id=%d ORDER BY minlevel", (iDBSpellsID >= 3001 && iDBSpellsID <= 3016 ? "bot_spells_entries" : "npc_spells_entries"), iDBSpellsID);
+				"FROM %s "
+		    "WHERE npc_spells_id=%d ORDER BY minlevel",
+		    (iDBSpellsID >= 3001 && iDBSpellsID <= 3016 ? "bot_spells_entries" : "npc_spells_entries"),
+		    iDBSpellsID);
 #else
-                            "FROM npc_spells_entries "
-							"WHERE npc_spells_id=%d ORDER BY minlevel", iDBSpellsID);
+						"FROM npc_spells_entries "
+						"WHERE npc_spells_id=%d ORDER BY minlevel",
+				iDBSpellsID);
 #endif
-        results = QueryDatabase(query);
+		results = QueryDatabase(query);
 
-        if (!results.Success())
-        {
+		if (!results.Success())
+		{
 			return nullptr;
-        }
+		}
 
-        uint32 tmpSize = sizeof(DBnpcspells_Struct) + (sizeof(DBnpcspells_entries_Struct) * results.RowCount());
-        npc_spells_cache[iDBSpellsID] = (DBnpcspells_Struct*) new uchar[tmpSize];
-        memset(npc_spells_cache[iDBSpellsID], 0, tmpSize);
-        npc_spells_cache[iDBSpellsID]->parent_list = tmpparent_list;
-        npc_spells_cache[iDBSpellsID]->attack_proc = tmpattack_proc;
-        npc_spells_cache[iDBSpellsID]->proc_chance = tmpproc_chance;
-        npc_spells_cache[iDBSpellsID]->range_proc = tmprange_proc;
-        npc_spells_cache[iDBSpellsID]->rproc_chance = tmprproc_chance;
-        npc_spells_cache[iDBSpellsID]->defensive_proc = tmpdefensive_proc;
-        npc_spells_cache[iDBSpellsID]->dproc_chance = tmpdproc_chance;
-        npc_spells_cache[iDBSpellsID]->fail_recast = tmppfail_recast;
-        npc_spells_cache[iDBSpellsID]->engaged_no_sp_recast_min = tmpengaged_no_sp_recast_min;
-        npc_spells_cache[iDBSpellsID]->engaged_no_sp_recast_max = tmpengaged_no_sp_recast_max;
-        npc_spells_cache[iDBSpellsID]->engaged_beneficial_self_chance = tmpengaged_b_self_chance;
-        npc_spells_cache[iDBSpellsID]->engaged_beneficial_other_chance = tmpengaged_b_other_chance;
-        npc_spells_cache[iDBSpellsID]->engaged_detrimental_chance = tmpengaged_d_chance;
-        npc_spells_cache[iDBSpellsID]->pursue_no_sp_recast_min = tmppursue_no_sp_recast_min;
-        npc_spells_cache[iDBSpellsID]->pursue_no_sp_recast_max = tmppursue_no_sp_recast_max;
-        npc_spells_cache[iDBSpellsID]->pursue_detrimental_chance = tmppursue_d_chance;
-        npc_spells_cache[iDBSpellsID]->idle_no_sp_recast_min = tmpidle_no_sp_recast_min;
-        npc_spells_cache[iDBSpellsID]->idle_no_sp_recast_max = tmpidle_no_sp_recast_max;
-        npc_spells_cache[iDBSpellsID]->idle_beneficial_chance = tmpidle_b_chance;
-        npc_spells_cache[iDBSpellsID]->numentries = results.RowCount();
+		int entryIndex = 0;
+		for (row = results.begin(); row != results.end(); ++row, ++entryIndex) {
+			DBnpcspells_entries_Struct entry;
+			int spell_id = atoi(row[0]);
+			entry.spellid = spell_id;
+			entry.type = atoul(row[1]);
+			entry.minlevel = atoi(row[2]);
+			entry.maxlevel = atoi(row[3]);
+			entry.manacost = atoi(row[4]);
+			entry.recast_delay = atoi(row[5]);
+			entry.priority = atoi(row[6]);
 
-        int entryIndex = 0;
-        for (row = results.begin(); row != results.end(); ++row, ++entryIndex)
-        {
-            int spell_id = atoi(row[0]);
-            npc_spells_cache[iDBSpellsID]->entries[entryIndex].spellid = spell_id;
-            npc_spells_cache[iDBSpellsID]->entries[entryIndex].type = atoul(row[1]);
-            npc_spells_cache[iDBSpellsID]->entries[entryIndex].minlevel = atoi(row[2]);
-            npc_spells_cache[iDBSpellsID]->entries[entryIndex].maxlevel = atoi(row[3]);
-            npc_spells_cache[iDBSpellsID]->entries[entryIndex].manacost = atoi(row[4]);
-            npc_spells_cache[iDBSpellsID]->entries[entryIndex].recast_delay = atoi(row[5]);
-            npc_spells_cache[iDBSpellsID]->entries[entryIndex].priority = atoi(row[6]);
+			if (row[7])
+				entry.resist_adjust = atoi(row[7]);
+			else if (IsValidSpell(spell_id))
+				entry.resist_adjust = spells[spell_id].ResistDiff;
 
-            if(row[7])
-                npc_spells_cache[iDBSpellsID]->entries[entryIndex].resist_adjust = atoi(row[7]);
-            else if(IsValidSpell(spell_id))
-                npc_spells_cache[iDBSpellsID]->entries[entryIndex].resist_adjust = spells[spell_id].ResistDiff;
-        }
+			spell_set.entries.push_back(entry);
+		}
 
-        return npc_spells_cache[iDBSpellsID];
-    }
+		npc_spells_cache.insert(std::make_pair(iDBSpellsID, spell_set));
+
+		return &npc_spells_cache[iDBSpellsID];
+	}
 
 	return nullptr;
 }
@@ -2714,15 +2679,15 @@ uint32 ZoneDatabase::GetMaxNPCSpellsID() {
 		return 0;
 	}
 
-    if (results.RowCount() != 1)
-        return 0;
+	if (results.RowCount() != 1)
+		return 0;
 
-    auto row = results.begin();
+	auto row = results.begin();
 
-    if (!row[0])
-        return 0;
+	if (!row[0])
+		return 0;
 
-    return atoi(row[0]);
+	return atoi(row[0]);
 }
 
 DBnpcspellseffects_Struct *ZoneDatabase::GetNPCSpellsEffects(uint32 iDBSpellsEffectsID)
@@ -2752,7 +2717,7 @@ DBnpcspellseffects_Struct *ZoneDatabase::GetNPCSpellsEffects(uint32 iDBSpellsEff
 	npc_spellseffects_loadtried[iDBSpellsEffectsID] = true;
 
 	std::string query =
-	    StringFormat("SELECT id, parent_list FROM npc_spells_effects WHERE id=%d", iDBSpellsEffectsID);
+			StringFormat("SELECT id, parent_list FROM npc_spells_effects WHERE id=%d", iDBSpellsEffectsID);
 	auto results = QueryDatabase(query);
 	if (!results.Success()) {
 		return nullptr;
@@ -2765,16 +2730,16 @@ DBnpcspellseffects_Struct *ZoneDatabase::GetNPCSpellsEffects(uint32 iDBSpellsEff
 	uint32 tmpparent_list = atoi(row[1]);
 
 	query = StringFormat("SELECT spell_effect_id, minlevel, "
-			     "maxlevel,se_base, se_limit, se_max "
-			     "FROM npc_spells_effects_entries "
-			     "WHERE npc_spells_effects_id = %d ORDER BY minlevel",
-			     iDBSpellsEffectsID);
+								 "maxlevel,se_base, se_limit, se_max "
+								 "FROM npc_spells_effects_entries "
+								 "WHERE npc_spells_effects_id = %d ORDER BY minlevel",
+						 iDBSpellsEffectsID);
 	results = QueryDatabase(query);
 	if (!results.Success())
 		return nullptr;
 
 	uint32 tmpSize =
-	    sizeof(DBnpcspellseffects_Struct) + (sizeof(DBnpcspellseffects_entries_Struct) * results.RowCount());
+			sizeof(DBnpcspellseffects_Struct) + (sizeof(DBnpcspellseffects_entries_Struct) * results.RowCount());
 	npc_spellseffects_cache[iDBSpellsEffectsID] = (DBnpcspellseffects_Struct *)new uchar[tmpSize];
 	memset(npc_spellseffects_cache[iDBSpellsEffectsID], 0, tmpSize);
 	npc_spellseffects_cache[iDBSpellsEffectsID]->parent_list = tmpparent_list;
@@ -2802,13 +2767,12 @@ uint32 ZoneDatabase::GetMaxNPCSpellsEffectsID() {
 		return 0;
 	}
 
-    if (results.RowCount() != 1)
-        return 0;
+	if (results.RowCount() != 1)
+		return 0;
 
-    auto row = results.begin();
-    if (!row[0])
-        return 0;
+	auto row = results.begin();
+	if (!row[0])
+		return 0;
 
-    return atoi(row[0]);
+	return atoi(row[0]);
 }
-
