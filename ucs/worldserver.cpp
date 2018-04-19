@@ -104,14 +104,13 @@ void WorldServer::ProcessMessage(uint16 opcode, EQ::Net::Packet &p)
 		break;
 	}
 
-	case ServerOP_UCSMailMessage:
-	{
-		ServerMailMessageHeader_Struct *mail = (ServerMailMessageHeader_Struct*)pack->pBuffer;
+	case ServerOP_UCSMailMessage: {
+		ServerMailMessageHeader_Struct *mail = (ServerMailMessageHeader_Struct *) pack->pBuffer;
 		database.SendMail(std::string("SOE.EQ.") + Config->ShortName + std::string(".") + std::string(mail->to),
-			std::string(mail->from),
-			mail->subject,
-			mail->message,
-			std::string());
+						  std::string(mail->from),
+						  mail->subject,
+						  mail->message,
+						  std::string());
 		break;
 	}
 	}

@@ -225,7 +225,7 @@ public:
 	void	SetDate(uint16 year, uint8 month, uint8 day, uint8 hour, uint8 minute);
 	void SetTime(uint8 hour, uint8 minute, bool update_world = true);
 
-	void	weatherSend();
+	void	weatherSend(Client* client = nullptr);
 	bool	CanBind() const { return(can_bind); }
 	bool	IsCity() const { return(is_city); }
 	bool	CanDoCombat() const { return(can_combat); }
@@ -270,6 +270,10 @@ public:
 	uint32  GetSpawnKillCount(uint32 in_spawnid);
 	void    UpdateHotzone();
 	std::unordered_map<int, item_tick_struct> tick_items;
+
+	void RequestUCSServerStatus();
+	void SetUCSServerAvailable(bool ucss_available, uint32 update_timestamp);
+	bool IsUCSServerAvailable() { return m_ucss_available; }
 
 	// random object that provides random values for the zone
 	EQEmu::Random random;
@@ -349,6 +353,10 @@ private:
 	QGlobalCache *qGlobals;
 
 	Timer	hotzone_timer;
+
+	bool m_ucss_available;
+	uint32 m_last_ucss_update;
+
 };
 
 #endif
