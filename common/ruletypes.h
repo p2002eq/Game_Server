@@ -57,6 +57,21 @@ RULE_REAL(Character, GroupExpMultiplier, 1.0)
 RULE_REAL(Character, RaidExpMultiplier, 0.2)
 RULE_BOOL ( Character, SmoothEXPLoss, true)
 RULE_REAL ( Character, EXPLossMultiplier, 1.0)
+
+RULE_BOOL(Character, ExpConBasedBonus, true)
+RULE_REAL(Character, ExpMultiplierLightBlue, 1.0)
+RULE_REAL(Character, ExpMultiplierDarkBlue, 1.0)
+RULE_REAL(Character, ExpMultiplierWhite, 1.0)
+RULE_REAL(Character, ExpMultiplierYellow, 1.0)
+RULE_REAL(Character, ExpMultiplierRed, 1.0)
+
+RULE_REAL(Character, AAExpMultiplierLightBlue, 1.0)
+RULE_REAL(Character, AAExpMultiplierDarkBlue, 1.0)
+RULE_REAL(Character, AAExpMultiplierWhite, 1.0)
+RULE_REAL(Character, AAExpMultiplierYellow, 1.0)
+RULE_REAL(Character, AAExpMultiplierRed, 1.0)
+RULE_INT(Character, MaxAAExpPerKill, 3596474)
+
 RULE_BOOL(Character, UseXPConScaling, true)
 RULE_INT(Character, ShowExpValues, 0) //0 - normal, 1 - Show raw experience values, 2 - Show raw experience values AND percent.
 RULE_INT(Character, GreenModifier, 20)

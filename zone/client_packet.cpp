@@ -4776,7 +4776,7 @@ void Client::Handle_OP_Consider(const EQApplicationPacket *app)
 	else
 		con->faction = 1;
 	con->level = GetLevelCon(tmob->GetLevel());
-	
+
 	if (zone->IsPVPZone()) {
 		if (!tmob->IsNPC())
 			con->pvpcon = tmob->CastToClient()->GetPVP();
@@ -4798,119 +4798,124 @@ void Client::Handle_OP_Consider(const EQApplicationPacket *app)
 		}
 	}
 
-	// Titan Client appears to have different con levels/colors than what was correct in era for P2002.  Additionally, client seems to ignore the con->level you send it.
-	// To get con levels/colors to match the table in mob_ai.cpp, the below code (P2002ConSystem = True) is used.  This code ignores the client and instead has the server
-	// send the client a messsage.  If (P2002ConSystem = False), the code will revert to relying on the client to display the message, which won't likely match mob_ai.cpp.
-	if (RuleB(World, P2002ConSystem) && tmob->IsClient()) {
-			
-		// Get Target Name
-		std::string tar_name = tmob->GetName();
-		std::replace(tar_name.begin(), tar_name.end(), '_', ' ');
-		if(!tmob->IsClient())
-			tar_name.resize(tar_name.size() - 3);
-		else
-			con->faction = 5;
-		std::string gender;
-		
-		// Get Gender Message
-		switch (tmob->GetGender()) {
-			case 0:
-				gender = "he"; break;
-			case 1:
-				gender = "she"; break;
-			default:
-				gender = "it";
-		}
-		
-		// Get Faction Message
-		std::string faction_msg;
-		if(con->faction == FACTION_SCOWLS)
-			faction_msg = " scowls at you, ready to attack -- ";
-		else if(con->faction == FACTION_THREATENLY)
-			faction_msg = " glares at you threateningly -- ";
-		else if(con->faction == FACTION_DUBIOUS)
-			faction_msg = " glowers at you dubiously -- ";
-		else if(con->faction == FACTION_APPREHENSIVE)
-			faction_msg = " looks your way apprehensively -- ";
-		else if(con->faction == FACTION_INDIFFERENT)
-			faction_msg = " regards you indifferently -- ";
-		else if(con->faction == FACTION_AMIABLE)
-			faction_msg = " judges you amiably -- ";
-		else if(con->faction == FACTION_KINDLY)
-			faction_msg = " kindly considers you -- ";
-		else if(con->faction == FACTION_WARMLY)
-			faction_msg = " looks upon you warmly -- ";
-		else if(con->faction == FACTION_ALLY)
-			faction_msg = " regards you as an ally -- ";
-		
-		// Get Level Message
-		std::string level_msg;
-		if(con->level == CON_GREEN)
-			level_msg = "You could probably win this fight.";
-		else if(con->level == CON_LIGHTBLUE)
-			level_msg = "You would probably win this fight... it's not certain though.";
-		else if(con->level == CON_BLUE) {
-			gender[0] = toupper(gender[0]);
-			level_msg = gender + " appears to be quite formidable.";
-		}
-		else if(con->level == CON_WHITE)
-			level_msg = "Looks like quite a gamble.";
-		else if(con->level == CON_YELLOW)
-			level_msg = "Looks like " + gender + " would wipe the floor with you!";
-		else if(con->level == CON_RED)
-			level_msg = "What would you like your tombstone to say?";
-		
-		// Combine
-		std::string con_msg = tar_name + faction_msg + level_msg;
-		
-		// Send Con
-		SendColoredText(con->level, con_msg);
+	if (con->faction == FACTION_APPREHENSIVE) {
+		con->faction = FACTION_SCOWLS;
+	}
+	else if (con->faction == FACTION_DUBIOUS) {
+		con->faction = FACTION_THREATENLY;
+	}
+	else if (con->faction == FACTION_SCOWLS) {
+		con->faction = FACTION_APPREHENSIVE;
+	}
+	else if (con->faction == FACTION_THREATENLY) {
+		con->faction = FACTION_DUBIOUS;
+	}
+
+	uint32 color = 0;
+	mod_consider(tmob, con);
+	if (RuleB(World, P2002ConSystem) == false) {
+		QueuePacket(outapp);
 	}
 	else {
-			
-		if (con->faction == FACTION_APPREHENSIVE) {
-			con->faction = FACTION_SCOWLS;
+		std::string con_text;
+
+		int factionlvl = GetFactionLevel(CharacterID(), tmob->CastToNPC()->GetNPCTypeID(), GetRace(), GetClass(), GetDeity(), tmob->CastToNPC()->GetPrimaryFaction(), tmob);
+
+		switch (factionlvl) {
+			case FACTION_ALLY:
+				con_text = "regards you an ally";
+				break;
+			case FACTION_WARMLY:
+				con_text = "regards you warmly";
+				break;
+			case FACTION_KINDLY:
+				con_text = "regards you kindly";
+				break;
+			case FACTION_AMIABLE:
+				con_text = "regards you amiably";
+				break;
+			case FACTION_INDIFFERENT:
+				con_text = "regards you indifferently";
+				break;
+			case FACTION_APPREHENSIVE:
+				con_text = "regards you apprehensively";
+				break;
+			case FACTION_DUBIOUS:
+				con_text = "glowers at you dubiously";
+				break;
+			case FACTION_THREATENLY:
+				con_text = "glares at you threateningly";
+				break;
+			case FACTION_SCOWLS:
+				con_text = "scowls at you, ready to attack";
+				break;
 		}
-		else if (con->faction == FACTION_DUBIOUS) {
-			con->faction = FACTION_THREATENLY;
+
+		con->level = GetLevelCon(GetLevel(), tmob->GetLevel());
+		std::string level_text;
+		//if (tmob->GetLevel() >= GetLevel() + 4) {
+		if (con->level == CON_RED) {
+			level_text = "what would you like your tombstone to say?";
+			color = 13;
 		}
-		else if (con->faction == FACTION_SCOWLS) {
-			con->faction = FACTION_APPREHENSIVE;
+			//else if (tmob->GetLevel() > GetLevel()) {
+		else if (con->level == CON_YELLOW) {
+			level_text = "looks like he would wipe the floor with you!";
+			color = 15;
 		}
-		else if (con->faction == FACTION_THREATENLY) {
-			con->faction = FACTION_DUBIOUS;
+		else if ((con->level == CON_WHITE || con->level == CON_WHITE_TITANIUM)|| tmob->GetLevel() == GetLevel()) { //CON_WHITE doesn't work always for some reason
+			level_text = "looks like quite a gamble.";
+			color = 10;
 		}
-		
-		mod_consider(tmob, con);
-		QueuePacket(outapp);
-		safe_delete(outapp);
+			//else if (tmob->GetLevel() > GetLevel() - 6) {
+		else if (con->level == CON_BLUE) {
+			level_text = "he appears to be quite formiddable.";
+			color = 4;
+		}
+			//else if (tmob->GetLevel() > GetLevel() - 11) {
+		else if (con->level == CON_LIGHTBLUE){// && (tmob->GetLevel() > GetLevel() - 11)) { //for some reason green was coming up early.
+			level_text = "looks kind of dangerous.";
+			color = 18;
+		}
+			//else if (tmob->GetLevel() > GetLevel() - 20) {
+		else if (con->level == CON_GREEN) {
+			level_text = "You would probably win this fight... it's not certain though.";
+			color = 2;
+		}
+		std::string race_name;
+
+		std::string level_value = StringFormat("%u", tmob->GetLevel());
+
+		if (tmob->IsClient()) {
+			SendColoredText(color, StringFormat("%s %s -- %s", tmob->GetCleanName(), con_text.c_str(), level_text.c_str()));
+		}
+		else {
+			SendColoredText(color, StringFormat("%s %s -- %s", tmob->GetCleanName(), con_text.c_str(), level_text.c_str()));
+		}
 	}
-		
 	// only wanted to check raid target once
 	// and need con to still be around so, do it here!
-	/*
 	if (tmob->IsRaidTarget()) {
-		uint32 color = 0;
 		switch (con->level) {
-		case CON_GREEN:
-			color = 2;
-			break;
-		case CON_LIGHTBLUE:
-			color = 10;
-			break;
-		case CON_BLUE:
-			color = 4;
-			break;
-		case CON_WHITE_TITANIUM:
-		case CON_WHITE:
-			color = 10;
-			break;
-		case CON_YELLOW:
-			color = 15;
-			break;
-		case CON_RED:
-			color = 13;
-			break;
+			case CON_RED:
+				color = 13;
+				break;
+			case CON_YELLOW:
+				color = 15;
+				break;
+			case CON_WHITE_TITANIUM:
+			case CON_WHITE:
+				color = 10;
+				break;
+			case CON_BLUE:
+				color = 4;
+				break;
+			case CON_LIGHTBLUE:
+				color = 18;
+				break;
+			case CON_GREEN:
+				color = 2;
+				break;
 		}
 
 		if (ClientVersion() <= EQEmu::versions::ClientVersion::Titanium) {
@@ -4921,15 +4926,16 @@ void Client::Handle_OP_Consider(const EQApplicationPacket *app)
 
 		SendColoredText(color, std::string("This creature would take an army to defeat!"));
 	}
-	*/
+
 	// this could be done better, but this is only called when you con so w/e
 	// Shroud of Stealth has a special message
 	if (improved_hidden && (!tmob->see_improved_hide && (tmob->see_invis || tmob->see_hide)))
 		Message_StringID(10, SOS_KEEPS_HIDDEN);
-	// we are trying to hide but they can see us
+		// we are trying to hide but they can see us
 	else if ((invisible || invisible_undead || hidden || invisible_animals) && !IsInvisible(tmob))
 		Message_StringID(10, SUSPECT_SEES_YOU);
 
+	safe_delete(outapp);
 	return;
 }
 
