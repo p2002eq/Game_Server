@@ -66,7 +66,7 @@ bool NPC::AICastSpell(Mob* tar, uint8 iChance, uint32 iSpellTypes, bool bInnates
 	bool cast_only_option = (IsRooted() && !CombatRange(tar));
 
 	// innates are always attempted
-	if (!cast_only_option && iChance < 100) {
+	if (!cast_only_option && iChance < 100 && !bInnates) {
 		if (zone->random.Int(0, 100) >= iChance)
 			return false;
 	}
@@ -89,6 +89,15 @@ bool NPC::AICastSpell(Mob* tar, uint8 iChance, uint32 iSpellTypes, bool bInnates
 			//return false;
 			continue;
 		}
+		if ((AIspells[i].priority == 0 && !bInnates) || (AIspells[i].priority != 0 && bInnates)) {
+			// so "innate" spells are special and spammed a bit
+			// we define an innate spell as a spell with priority 0
+			continue;
+		}
+		if (AIspells[i].min_hp != 0 && GetIntHPRatio() < AIspells[i].min_hp)
+			continue;
+		if (AIspells[i].max_hp != 0 && GetIntHPRatio() > AIspells[i].max_hp)
+			continue;
 		if (iSpellTypes & AIspells[i].type) {
 			// manacost has special values, -1 is no mana cost, -2 is instant cast (no mana)
 			int32 mana_cost = AIspells[i].manacost;
@@ -151,13 +160,6 @@ bool NPC::AICastSpell(Mob* tar, uint8 iChance, uint32 iSpellTypes, bool bInnates
 						}
 						break;
 					}
-					case SpellType_InCombatBuff: {
-						if (bInnates || zone->random.Roll(50)) {
-							AIDoSpellCast(i, tar, mana_cost);
-							return true;
-						}
-						break;
-					}
 					case SpellType_Buff: {
 						if (
 								(spells[AIspells[i].spellid].targettype == ST_Target || tar == this)
@@ -175,6 +177,15 @@ bool NPC::AICastSpell(Mob* tar, uint8 iChance, uint32 iSpellTypes, bool bInnates
 							uint32 tempTime = 0;
 							AIDoSpellCast(i, tar, mana_cost, &tempTime);
 							tar->SetDontBuffMeBefore(tempTime);
+							return true;
+						}
+						break;
+					}
+
+					case SpellType_InCombatBuff: {
+						if(bInnates || zone->random.Roll(50))
+						{
+							AIDoSpellCast(i, tar, mana_cost);
 							return true;
 						}
 						break;
@@ -203,7 +214,9 @@ bool NPC::AICastSpell(Mob* tar, uint8 iChance, uint32 iSpellTypes, bool bInnates
 						break;
 					}
 					case SpellType_Nuke: {
-						if (manaR >= 10 && (bInnates || (zone->random.Roll(70) && tar->CanBuffStack(AIspells[i].spellid, GetLevel(), false) >= 0)) // saying it's a nuke here, AI shouldn't care too much if overwriting
+						if (
+								manaR >= 10 && (bInnates || (zone->random.Roll(70)
+															 && tar->CanBuffStack(AIspells[i].spellid, GetLevel(), false) >= 0)) // saying it's a nuke here, AI shouldn't care too much if overwriting
 								) {
 							if (!checked_los) {
 								if (!CheckLosFN(tar))
@@ -216,12 +229,11 @@ bool NPC::AICastSpell(Mob* tar, uint8 iChance, uint32 iSpellTypes, bool bInnates
 						break;
 					}
 					case SpellType_Dispel: {
-						if(zone->random.Roll(5))
+						if(bInnates || zone->random.Roll(15))
 						{
-							if(spells[AIspells[i].spellid].targettype != ST_AECaster && !checked_los) {
-								if(!CheckLosFN(tar)) {
+							if(!checked_los) {
+								if(!CheckLosFN(tar))
 									return(false);	//cannot see target... we assume that no spell is going to work since we will only be casting detrimental spells in this call
-								}
 								checked_los = true;
 							}
 							if(tar->CountDispellableBuffs() > 0)
@@ -233,7 +245,7 @@ bool NPC::AICastSpell(Mob* tar, uint8 iChance, uint32 iSpellTypes, bool bInnates
 						break;
 					}
 					case SpellType_Mez: {
-						if(zone->random.Roll(20))
+						if(bInnates || zone->random.Roll(20))
 						{
 							Mob * mezTar = nullptr;
 							mezTar = entity_list.GetTargetForMez(this);
@@ -249,7 +261,7 @@ bool NPC::AICastSpell(Mob* tar, uint8 iChance, uint32 iSpellTypes, bool bInnates
 
 					case SpellType_Charm:
 					{
-						if(!IsPet() && zone->random.Roll(20))
+						if(!IsPet() && (bInnates || zone->random.Roll(20)))
 						{
 							Mob * chrmTar = GetHateRandom();
 							if(chrmTar && chrmTar->CanBuffStack(AIspells[i].spellid, GetLevel(), true) >= 0)
@@ -263,7 +275,7 @@ bool NPC::AICastSpell(Mob* tar, uint8 iChance, uint32 iSpellTypes, bool bInnates
 
 					case SpellType_Pet: {
 						//keep mobs from recasting pets when they have them.
-						if (!IsPet() && !GetPetID() && zone->random.Roll(25)) {
+						if (!IsPet() && !GetPetID() && (bInnates || zone->random.Roll(25))) {
 							AIDoSpellCast(i, tar, mana_cost);
 							return true;
 						}
@@ -271,10 +283,10 @@ bool NPC::AICastSpell(Mob* tar, uint8 iChance, uint32 iSpellTypes, bool bInnates
 					}
 					case SpellType_Lifetap: {
 						if (GetHPRatio() <= 95
-							&& zone->random.Roll(50)
+							&& (bInnates || zone->random.Roll(50))
 							&& tar->CanBuffStack(AIspells[i].spellid, GetLevel(), true) >= 0
 								) {
-							if(spells[AIspells[i].spellid].targettype != ST_AECaster && !checked_los) {
+							if(!checked_los) {
 								if(!CheckLosFN(tar))
 									return(false);	//cannot see target... we assume that no spell is going to work since we will only be casting detrimental spells in this call
 								checked_los = true;
@@ -287,11 +299,11 @@ bool NPC::AICastSpell(Mob* tar, uint8 iChance, uint32 iSpellTypes, bool bInnates
 					case SpellType_Snare: {
 						if (
 								!tar->IsRooted()
-								&& zone->random.Roll(50)
+								&& (bInnates || zone->random.Roll(50))
 								&& tar->DontSnareMeBefore() < Timer::GetCurrentTime()
 								&& tar->CanBuffStack(AIspells[i].spellid, GetLevel(), true) >= 0
 								) {
-							if(spells[AIspells[i].spellid].targettype != ST_AECaster && !checked_los) {
+							if(!checked_los) {
 								if(!CheckLosFN(tar))
 									return(false);	//cannot see target... we assume that no spell is going to work since we will only be casting detrimental spells in this call
 								checked_los = true;
@@ -305,11 +317,11 @@ bool NPC::AICastSpell(Mob* tar, uint8 iChance, uint32 iSpellTypes, bool bInnates
 					}
 					case SpellType_DOT: {
 						if (
-								zone->random.Roll(60)
+								(bInnates || zone->random.Roll(60))
 								&& tar->DontDotMeBefore() < Timer::GetCurrentTime()
 								&& tar->CanBuffStack(AIspells[i].spellid, GetLevel(), true) >= 0
 								) {
-							if(spells[AIspells[i].spellid].targettype != ST_AECaster && !checked_los) {
+							if(!checked_los) {
 								if(!CheckLosFN(tar))
 									return(false);	//cannot see target... we assume that no spell is going to work since we will only be casting detrimental spells in this call
 								checked_los = true;
@@ -927,8 +939,7 @@ void Client::AI_Process()
 			}
 		}
 
-		if(IsPet())
-		{
+		if (IsPet()) {
 			Mob* owner = GetOwner();
 			if(owner == nullptr)
 				return;
@@ -946,11 +957,8 @@ void Client::AI_Process()
 
 					CalculateNewPosition2(owner->GetX(), owner->GetY(), owner->GetZ(), nspeed);
 				}
-			}
-			else
-			{
-				if(moved)
-				{
+			} else {
+				if (moved) {
 					SetCurrentSpeed(0);
 					moved = false;
 				}
@@ -1861,6 +1869,11 @@ void Mob::AI_Event_Engaged(Mob* attacker, bool iYellForHelp) {
 		return;
 
 	SetAppearance(eaStanding);
+	/*
+		Kick off auto cast timer
+	*/
+	if (this->IsNPC())
+		this->CastToNPC()->AIautocastspell_timer->Start(300, false);
 
 	if (iYellForHelp) {
 		if(IsPet()) {
@@ -1944,7 +1957,7 @@ void NPC::AI_Event_SpellCastFinished(bool iCastSucceeded, uint16 slot) {
 				recovery_time += spells[AIspells[casting_spell_AIindex].spellid].recovery_time;
 				if (AIspells[casting_spell_AIindex].recast_delay >= 0)
 				{
-					if (AIspells[casting_spell_AIindex].recast_delay < 1000)
+					if (AIspells[casting_spell_AIindex].recast_delay < 10000)
 						AIspells[casting_spell_AIindex].time_cancast = Timer::GetCurrentTime() + (AIspells[casting_spell_AIindex].recast_delay*1000);
 				}
 				else
@@ -1993,15 +2006,10 @@ bool NPC::AI_PursueCastCheck() {
 
 		Log(Logs::Detail, Logs::AI, "Engaged (pursuing) autocast check triggered. Trying to cast offensive spells.");
 		// checking innate (spam) spells first
-		if (!AICastSpell(GetTarget(), AISpellVar.pursue_detrimental_chance,
-						 SpellType_Root | SpellType_Nuke | SpellType_Lifetap | SpellType_Snare | SpellType_DOT |
-						 SpellType_Dispel | SpellType_Mez | SpellType_Slow | SpellType_Debuff, true)) {
-			if (!AICastSpell(GetTarget(), AISpellVar.pursue_detrimental_chance,
-							 SpellType_Root | SpellType_Nuke | SpellType_Lifetap | SpellType_Snare | SpellType_DOT |
-							 SpellType_Dispel | SpellType_Mez | SpellType_Slow | SpellType_Debuff)) {
+		if(!AICastSpell(GetTarget(), AISpellVar.pursue_detrimental_chance, SpellType_Root | SpellType_Nuke | SpellType_Lifetap | SpellType_Snare | SpellType_DOT | SpellType_Dispel | SpellType_Mez | SpellType_Slow | SpellType_Debuff, true)) {
+			if(!AICastSpell(GetTarget(), AISpellVar.pursue_detrimental_chance, SpellType_Root | SpellType_Nuke | SpellType_Lifetap | SpellType_Snare | SpellType_DOT | SpellType_Dispel | SpellType_Mez | SpellType_Slow | SpellType_Debuff)) {
 				//no spell cast, try again soon.
-				AIautocastspell_timer->Start(
-						RandomTimer(AISpellVar.pursue_no_sp_recast_min, AISpellVar.pursue_no_sp_recast_max), false);
+				AIautocastspell_timer->Start(RandomTimer(AISpellVar.pursue_no_sp_recast_min, AISpellVar.pursue_no_sp_recast_max), false);
 			} //else, spell casting finishing will reset the timer.
 		}
 		return (true);
@@ -2331,7 +2339,7 @@ bool NPC::AI_AddNPCSpells(uint32 iDBSpellsID) {
 			if (GetLevel() >= e.minlevel && GetLevel() <= e.maxlevel && e.spellid > 0) {
 				if (!IsSpellInList(spell_list, e.spellid))
 				{
-					AddSpellToNPCList(e.priority, e.spellid, e.type, e.manacost, e.recast_delay, e.resist_adjust);
+					AddSpellToNPCList(e.priority, e.spellid, e.type, e.manacost, e.recast_delay, e.resist_adjust, e.min_hp, e.max_hp);
 				}
 			}
 		}
@@ -2372,7 +2380,7 @@ bool NPC::AI_AddNPCSpells(uint32 iDBSpellsID) {
 
 	for (auto &e : spell_list->entries) {
 		if (GetLevel() >= e.minlevel && GetLevel() <= e.maxlevel && e.spellid > 0) {
-			AddSpellToNPCList(e.priority, e.spellid, e.type, e.manacost, e.recast_delay, e.resist_adjust);
+			AddSpellToNPCList(e.priority, e.spellid, e.type, e.manacost, e.recast_delay, e.resist_adjust, e.min_hp, e.max_hp);
 		}
 	}
 
@@ -2520,7 +2528,7 @@ bool IsSpellInList(DBnpcspells_Struct* spell_list, int16 iSpellID) {
 
 // adds a spell to the list, taking into account priority and resorting list as needed.
 void NPC::AddSpellToNPCList(int16 iPriority, int16 iSpellID, uint32 iType,
-							int16 iManaCost, int32 iRecastDelay, int16 iResistAdjust)
+							int16 iManaCost, int32 iRecastDelay, int16 iResistAdjust, int8 min_hp, int8 max_hp)
 {
 
 	if(!IsValidSpell(iSpellID))
@@ -2536,6 +2544,8 @@ void NPC::AddSpellToNPCList(int16 iPriority, int16 iSpellID, uint32 iType,
 	t.recast_delay = iRecastDelay;
 	t.time_cancast = 0;
 	t.resist_adjust = iResistAdjust;
+	t.min_hp = min_hp;
+	t.max_hp = max_hp;
 
 	AIspells.push_back(t);
 
@@ -2564,8 +2574,8 @@ void NPC::AISpellsList(Client *c)
 		return;
 
 	for (auto it = AIspells.begin(); it != AIspells.end(); ++it)
-		c->Message(0, "%s (%d): Type %d, Priority %d",
-				   spells[it->spellid].name, it->spellid, it->type, it->priority);
+		c->Message(0, "%s (%d): Type %d, Priority %d, Recast Delay %d, Resist Adjust %d, Min HP %d, Max HP %d",
+				   spells[it->spellid].name, it->spellid, it->type, it->priority, it->recast_delay, it->resist_adjust, it->min_hp, it->max_hp);
 
 	return;
 }
@@ -2625,7 +2635,7 @@ DBnpcspells_Struct* ZoneDatabase::GetNPCSpells(uint32 iDBSpellsID) {
 		// pulling fixed values from an auto-increment field is dangerous...
 		query = StringFormat(
 				"SELECT spellid, type, minlevel, maxlevel, "
-						"manacost, recast_delay, priority, resist_adjust "
+						"manacost, recast_delay, priority, min_hp, max_hp, resist_adjust "
 #ifdef BOTS
 				"FROM %s "
 		    "WHERE npc_spells_id=%d ORDER BY minlevel",
@@ -2654,9 +2664,15 @@ DBnpcspells_Struct* ZoneDatabase::GetNPCSpells(uint32 iDBSpellsID) {
 			entry.manacost = atoi(row[4]);
 			entry.recast_delay = atoi(row[5]);
 			entry.priority = atoi(row[6]);
+			entry.min_hp = atoi(row[7]);
+			entry.max_hp = atoi(row[8]);
 
-			if (row[7])
-				entry.resist_adjust = atoi(row[7]);
+			// some spell types don't make much since to be priority 0, so fix that
+			if (!(entry.type & SpellTypes_Innate) && entry.priority == 0)
+				entry.priority = 1;
+
+			if (row[9])
+				entry.resist_adjust = atoi(row[9]);
 			else if (IsValidSpell(spell_id))
 				entry.resist_adjust = spells[spell_id].ResistDiff;
 

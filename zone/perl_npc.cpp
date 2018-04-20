@@ -1992,8 +1992,8 @@ XS(XS_NPC_AddSpellToNPCList)
 			Perl_croak(aTHX_ "THIS is not of type NPC");
 		if(THIS == nullptr)
 			Perl_croak(aTHX_ "THIS is nullptr, avoiding crash.");
-
-		THIS->AddSpellToNPCList(priority, spell_id, type, mana_cost, recast_delay, resist_adjust);
+		
+		THIS->AddSpellToNPCList(priority, spell_id, type, mana_cost, recast_delay, resist_adjust, 0, 0);
 	}
 	XSRETURN_EMPTY;
 }

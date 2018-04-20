@@ -56,6 +56,8 @@ struct DBnpcspells_entries_Struct {
 	int32	recast_delay;
 	int16	priority;
 	int16	resist_adjust;
+	int8	min_hp;
+	int8	max_hp;
 };
 #pragma pack()
 
@@ -420,6 +422,7 @@ public:
 
 	DBnpcspells_Struct*				GetNPCSpells(uint32 iDBSpellsID);
 	DBnpcspellseffects_Struct*		GetNPCSpellsEffects(uint32 iDBSpellsEffectsID);
+	void ClearNPCSpells() { npc_spells_cache.clear(); npc_spells_loadtried.clear(); }
 	const NPCType* LoadNPCTypesData(uint32 id, bool bulk_load = false);
 
 	/* Mercs   */
