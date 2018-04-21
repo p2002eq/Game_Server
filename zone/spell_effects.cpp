@@ -1314,7 +1314,7 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial, int level_ove
 				// this should catch the cures
 				if (BeneficialSpell(spell_id) && spells[spell_id].buffduration == 0)
 					BuffFadeByEffect(SE_Blind);
-				else if (!IsClient())
+				else if (!IsClient() && !IsRaidTarget())
 					CalculateNewFearpoint();
 				break;
 			}
@@ -3998,12 +3998,20 @@ void Mob::BuffFadeBySlot(int slot, bool iRecalcBonuses)
 			}
 
 			case SE_Blind:
+				if (IsRaidTarget()) {
+					break;
+				}
+
 				if (currently_fleeing && !FindType(SE_Fear))
 					currently_fleeing = false;
 				break;
 
 			case SE_Fear:
 			{
+				if (IsRaidTarget()) {
+					break;
+				}
+				
 				if(RuleB(Combat, EnableFearPathing)){
 					if(IsClient())
 					{
