@@ -2159,6 +2159,12 @@ bool Mob::SpellFinished(uint16 spell_id, Mob *spell_target, CastingSlot slot, ui
 
 	// check to see if target is a caster mob before performing a mana tap
 	if(spell_target && IsManaTapSpell(spell_id)) {
+
+		if (target->GetMana() == 0) {
+			Message_StringID(13, TARGET_NO_MANA);
+			return false;
+		}
+
 		if(spell_target->GetCasterClass() == 'N') {
 			Message_StringID(13, TARGET_NO_MANA);
 			return false;
