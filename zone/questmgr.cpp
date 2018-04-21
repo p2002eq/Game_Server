@@ -303,21 +303,21 @@ Mob* QuestManager::spawn_from_spawn2(uint32 spawn2_id)
 		database.UpdateRespawnTime(spawn2_id, zone->GetInstanceID(), 0);
 		found_spawn->SetCurrentNPCID(npcid);
 
-        auto position = glm::vec4(found_spawn->GetX(), found_spawn->GetY(), found_spawn->GetZ(), found_spawn->GetHeading());
-	auto npc = new NPC(tmp, found_spawn, position, FlyMode3);
+		auto position = glm::vec4(found_spawn->GetX(), found_spawn->GetY(), found_spawn->GetZ(), found_spawn->GetHeading());
+		auto npc = new NPC(tmp, found_spawn, position, FlyMode3);
 
-	found_spawn->SetNPCPointer(npc);
-	npc->AddLootTable();
-	npc->SetSp2(found_spawn->SpawnGroupID());
-	entity_list.AddNPC(npc);
-	entity_list.LimitAddNPC(npc);
+		found_spawn->SetNPCPointer(npc);
+		npc->AddLootTable();
+		npc->SetSp2(found_spawn->SpawnGroupID());
+		entity_list.AddNPC(npc);
+		entity_list.LimitAddNPC(npc);
 
-	if (sg->roamdist && sg->roambox[0] && sg->roambox[1] && sg->roambox[2] && sg->roambox[3] && sg->delay &&
-	    sg->min_delay)
-		npc->AI_SetRoambox(sg->roamdist, sg->roambox[0], sg->roambox[1], sg->roambox[2], sg->roambox[3],
-				   sg->delay, sg->min_delay);
-	if (zone->InstantGrids()) {
-		found_spawn->LoadGrid();
+		if (sg->roamdist && sg->roambox[0] && sg->roambox[1] && sg->roambox[2] && sg->roambox[3] && sg->delay &&
+			sg->min_delay)
+			npc->AI_SetRoambox(sg->roamdist, sg->roambox[0], sg->roambox[1], sg->roambox[2], sg->roambox[3],
+							   sg->delay, sg->min_delay);
+		if (zone->InstantGrids()) {
+			found_spawn->LoadGrid();
 		}
 
 		return npc;
@@ -677,79 +677,6 @@ void QuestManager::repopzone() {
 	}
 }
 
-void QuestManager::ConnectNodeToNode(int node1, int node2, int teleport, int doorid) {
-	if (!node1 || !node2)
-	{
-		Log(Logs::General, Logs::Quests, "QuestManager::ConnectNodeToNode called without node1 or node2. Probably syntax error in quest file.");
-	}
-	else
-	{
-		if (!teleport)
-		{
-			teleport = 0;
-		}
-		else if (teleport == 1 || teleport == -1)
-		{
-			teleport = -1;
-		}
-
-		if (!doorid)
-		{
-			doorid = 0;
-		}
-
-		if (!zone->pathing)
-		{
-			// if no pathing bits available, make them available.
-			zone->pathing = new PathManager();
-		}
-
-		if (zone->pathing)
-		{
-			zone->pathing->ConnectNodeToNode(node1, node2, teleport, doorid);
-			Log(Logs::Moderate, Logs::Quests, "QuestManager::ConnectNodeToNode connecting node %i to node %i.", node1, node2);
-		}
-	}
-}
-
-void QuestManager::AddNode(float x, float y, float z, float best_z, int32 requested_id)
-{
-	if (!x || !y || !z)
-	{
-		Log(Logs::General, Logs::Quests, "QuestManager::AddNode called without x, y, z. Probably syntax error in quest file.");
-	}
-
-	if (!best_z || best_z == 0)
-	{
-		if (zone->zonemap)
-		{
-			glm::vec3 loc(x, y, z);
-			best_z = zone->zonemap->FindBestZ(loc, nullptr);
-		}
-		else
-		{
-			best_z = z;
-		}
-	}
-
-	if (!requested_id)
-	{
-		requested_id = 0;
-	}
-
-	if (!zone->pathing)
-	{
-		// if no pathing bits available, make them available.
-		zone->pathing = new PathManager();
-	}
-
-	if (zone->pathing)
-	{
-		zone->pathing->AddNode(x, y, z, best_z, requested_id);
-		Log(Logs::Moderate, Logs::Quests, "QuestManager::AddNode adding node at (%i, %i, %i).", x, y, z);
-	}
-}
-
 void QuestManager::settarget(const char *type, int target_id) {
 	QuestManagerCurrentQuestVars();
 	if (!owner || !owner->IsNPC())
@@ -832,20 +759,20 @@ bool QuestManager::isdisctome(int item_id) {
 	//so they cant turn in a spell and get it as a discipline
 	//this is kinda a hack:
 	if(!(
-		item->Name[0] == 'T' &&
-		item->Name[1] == 'o' &&
-		item->Name[2] == 'm' &&
-		item->Name[3] == 'e' &&
-		item->Name[4] == ' '
-		) && !(
-		item->Name[0] == 'S' &&
-		item->Name[1] == 'k' &&
-		item->Name[2] == 'i' &&
-		item->Name[3] == 'l' &&
-		item->Name[4] == 'l' &&
-		item->Name[5] == ':' &&
-		item->Name[6] == ' '
-		)) {
+			item->Name[0] == 'T' &&
+			item->Name[1] == 'o' &&
+			item->Name[2] == 'm' &&
+			item->Name[3] == 'e' &&
+			item->Name[4] == ' '
+	) && !(
+			item->Name[0] == 'S' &&
+			item->Name[1] == 'k' &&
+			item->Name[2] == 'i' &&
+			item->Name[3] == 'l' &&
+			item->Name[4] == 'l' &&
+			item->Name[5] == ':' &&
+			item->Name[6] == ' '
+	)) {
 		return(false);
 	}
 
@@ -867,11 +794,11 @@ bool QuestManager::isdisctome(int item_id) {
 	//we know for sure none of the int casters get disciplines
 	const SPDat_Spell_Struct &spell = spells[spell_id];
 	if(
-		spell.classes[WIZARD - 1] != 255 &&
-		spell.classes[ENCHANTER - 1] != 255 &&
-		spell.classes[MAGICIAN - 1] != 255 &&
-		spell.classes[NECROMANCER - 1] != 255
-	) {
+			spell.classes[WIZARD - 1] != 255 &&
+			spell.classes[ENCHANTER - 1] != 255 &&
+			spell.classes[MAGICIAN - 1] != 255 &&
+			spell.classes[NECROMANCER - 1] != 255
+			) {
 		return(false);
 	}
 
@@ -957,13 +884,13 @@ uint16 QuestManager::scribespells(uint8 max_level, uint8 min_level) {
 	for(curspell = 0, book_slot = initiator->GetNextAvailableSpellBookSlot(), count = 0; curspell < SPDAT_RECORDS && book_slot < MAX_PP_SPELLBOOK; curspell++, book_slot = initiator->GetNextAvailableSpellBookSlot(book_slot))
 	{
 		if
-		(
-			spells[curspell].classes[WARRIOR] != 0 &&       //check if spell exists
-			spells[curspell].classes[initiator->GetPP().class_-1] <= max_level &&   //maximum level
-			spells[curspell].classes[initiator->GetPP().class_-1] >= min_level &&   //minimum level
-			spells[curspell].skill != 52 &&
-			spells[curspell].effectid[EFFECT_COUNT - 1] != 10
-		)
+				(
+				spells[curspell].classes[WARRIOR] != 0 &&       //check if spell exists
+				spells[curspell].classes[initiator->GetPP().class_-1] <= max_level &&   //maximum level
+				spells[curspell].classes[initiator->GetPP().class_-1] >= min_level &&   //minimum level
+				spells[curspell].skill != 52 &&
+				spells[curspell].effectid[EFFECT_COUNT - 1] != 10
+				)
 		{
 			if (book_slot == -1) //no more book slots
 				break;
@@ -998,13 +925,13 @@ uint16 QuestManager::traindiscs(uint8 max_level, uint8 min_level) {
 	for(curspell = 0, count = 0; curspell < SPDAT_RECORDS; curspell++)
 	{
 		if
-		(
-			spells[curspell].classes[WARRIOR] != 0 &&	//check if spell exists
-			spells[curspell].classes[initiator->GetPP().class_-1] <= max_level &&	//maximum level
-			spells[curspell].classes[initiator->GetPP().class_-1] >= min_level &&	//minimum level
-			spells[curspell].skill != 52 &&
-			( !RuleB(Spells, UseCHAScribeHack) || spells[curspell].effectid[EFFECT_COUNT - 1] != 10 )
-		)
+				(
+				spells[curspell].classes[WARRIOR] != 0 &&	//check if spell exists
+				spells[curspell].classes[initiator->GetPP().class_-1] <= max_level &&	//maximum level
+				spells[curspell].classes[initiator->GetPP().class_-1] >= min_level &&	//minimum level
+				spells[curspell].skill != 52 &&
+				( !RuleB(Spells, UseCHAScribeHack) || spells[curspell].effectid[EFFECT_COUNT - 1] != 10 )
+				)
 		{
 			if(IsDiscipline(curspell)){
 				//we may want to come up with a function like Client::GetNextAvailableSpellBookSlot() to help speed this up a little
@@ -1045,7 +972,7 @@ uint16 QuestManager::traindiscs(uint8 max_level, uint8 min_level) {
 void QuestManager::unscribespells() {
 	QuestManagerCurrentQuestVars();
 	initiator->UnscribeSpellAll();
-	}
+}
 
 void QuestManager::untraindiscs() {
 	QuestManagerCurrentQuestVars();
@@ -1109,8 +1036,8 @@ void QuestManager::pvp(const char *mode) {
 			initiator->SetPVP(true);
 	}
 	else
-		if (initiator)
-			initiator->SetPVP(false);
+	if (initiator)
+		initiator->SetPVP(false);
 }
 
 void QuestManager::movepc(int zone_id, float x, float y, float z, float heading) {
@@ -1245,13 +1172,13 @@ void QuestManager::faction(int faction_id, int faction_value, int temp) {
 	if (initiator && initiator->IsClient()) {
 		if(faction_id != 0 && faction_value != 0) {
 			initiator->SetFactionLevel2(
-				initiator->CharacterID(),
-				faction_id,
-				initiator->GetBaseClass(),
-				initiator->GetBaseRace(),
-				initiator->GetDeity(),
-				faction_value,
-				temp);
+					initiator->CharacterID(),
+					faction_id,
+					initiator->GetBaseClass(),
+					initiator->GetBaseRace(),
+					initiator->GetDeity(),
+					faction_value,
+					temp);
 		}
 	}
 }
@@ -1277,28 +1204,28 @@ void QuestManager::CreateGuild(const char *guild_name, const char *leader) {
 	QuestManagerCurrentQuestVars();
 	uint32 cid = database.GetCharacterID(leader);
 	char hString[250];
-			if (cid == 0) {
-				worldserver.SendEmoteMessage(0, 0, 80, 15, "%s", "Guild Creation: Guild leader not found.");
-				return;
-			}
+	if (cid == 0) {
+		worldserver.SendEmoteMessage(0, 0, 80, 15, "%s", "Guild Creation: Guild leader not found.");
+		return;
+	}
 
-			uint32 tmp = guild_mgr.FindGuildByLeader(cid);
-			if (tmp != GUILD_NONE) {
-				sprintf(hString, "Guild Creation: Error: %s already is the leader of DB# %u '%s'.", leader, tmp, guild_mgr.GetGuildName(tmp));
-				worldserver.SendEmoteMessage(0, 0, 80, 15, "%s", hString);
-			}
-			else {
-				uint32 gid = guild_mgr.CreateGuild(guild_name, cid);
-				if (gid == GUILD_NONE)
-					worldserver.SendEmoteMessage(0, 0, 80, 15, "%s", "Guild Creation: Guild creation failed");
-				else {
-					sprintf(hString, "Guild Creation: Guild created: Leader: %u, number %u: %s", cid, gid, leader);
-					worldserver.SendEmoteMessage(0, 0, 80, 15, "%s", hString);
-					if(!guild_mgr.SetGuild(cid, gid, GUILD_LEADER))
-						worldserver.SendEmoteMessage(0, 0, 80, 15, "%s", "Unable to set guild leader's guild in the database. Your going to have to run #guild set");
-				}
+	uint32 tmp = guild_mgr.FindGuildByLeader(cid);
+	if (tmp != GUILD_NONE) {
+		sprintf(hString, "Guild Creation: Error: %s already is the leader of DB# %u '%s'.", leader, tmp, guild_mgr.GetGuildName(tmp));
+		worldserver.SendEmoteMessage(0, 0, 80, 15, "%s", hString);
+	}
+	else {
+		uint32 gid = guild_mgr.CreateGuild(guild_name, cid);
+		if (gid == GUILD_NONE)
+			worldserver.SendEmoteMessage(0, 0, 80, 15, "%s", "Guild Creation: Guild creation failed");
+		else {
+			sprintf(hString, "Guild Creation: Guild created: Leader: %u, number %u: %s", cid, gid, leader);
+			worldserver.SendEmoteMessage(0, 0, 80, 15, "%s", hString);
+			if(!guild_mgr.SetGuild(cid, gid, GUILD_LEADER))
+				worldserver.SendEmoteMessage(0, 0, 80, 15, "%s", "Unable to set guild leader's guild in the database. Your going to have to run #guild set");
+		}
 
-			}
+	}
 }
 
 void QuestManager::settime(uint8 new_hour, uint8 new_min, bool update_world /*= true*/)
@@ -1397,17 +1324,17 @@ int QuestManager::InsertQuestGlobal(int charid, int npcid, int zoneid, const cha
 	*/
 
 	std::string query = StringFormat("REPLACE INTO quest_globals "
-                                    "(charid, npcid, zoneid, name, value, expdate)"
-                                    "VALUES (%i, %i, %i, '%s', '%s', %s)",
-                                    charid, npcid, zoneid, varname, varvalue, durationText.c_str());
-    auto results = database.QueryDatabase(query);
+											 "(charid, npcid, zoneid, name, value, expdate)"
+											 "VALUES (%i, %i, %i, '%s', '%s', %s)",
+									 charid, npcid, zoneid, varname, varvalue, durationText.c_str());
+	auto results = database.QueryDatabase(query);
 	if (!results.Success())
 		std::cerr << "setglobal error inserting " << varname << " : " << results.ErrorMessage() << std::endl;
 
 	if(!zone)
-        return 0;
+		return 0;
 
-    /* Delete existing qglobal data and update zone processes */
+	/* Delete existing qglobal data and update zone processes */
 	auto pack = new ServerPacket(ServerOP_QGlobalDelete, sizeof(ServerQGlobalDelete_Struct));
 	ServerQGlobalDelete_Struct *qgd = (ServerQGlobalDelete_Struct *)pack->pBuffer;
 	qgd->npc_id = npcid;
@@ -1432,8 +1359,8 @@ int QuestManager::InsertQuestGlobal(int charid, int npcid, int zoneid, const cha
 
 	qgu->expdate = (duration == INT_MAX)? 0xFFFFFFFF: Timer::GetTimeSeconds() + duration;
 
-    strcpy((char*)qgu->name, varname);
-    strn0cpy((char*)qgu->value, varvalue, 128);
+	strcpy((char*)qgu->name, varname);
+	strn0cpy((char*)qgu->value, varvalue, 128);
 	qgu->id = results.LastInsertedID();
 	qgu->from_zone_id = zone->GetZoneID();
 	qgu->from_instance_id = zone->GetInstanceID();
@@ -1475,18 +1402,18 @@ void QuestManager::delglobal(const char *varname) {
 		QServ->PlayerLogEvent(Player_Log_QGlobal_Update, qgCharid, event_desc);
 	}
 
-    std::string query = StringFormat("DELETE FROM quest_globals "
-                                    "WHERE name = '%s' "
-                                    "&& (npcid=0 || npcid=%i) "
-                                    "&& (charid=0 || charid=%i) "
-                                    "&& (zoneid=%i || zoneid=0)",
-                                    varname, qgNpcid, qgCharid, qgZoneid);
-    auto results = database.QueryDatabase(query);
+	std::string query = StringFormat("DELETE FROM quest_globals "
+											 "WHERE name = '%s' "
+											 "&& (npcid=0 || npcid=%i) "
+											 "&& (charid=0 || charid=%i) "
+											 "&& (zoneid=%i || zoneid=0)",
+									 varname, qgNpcid, qgCharid, qgZoneid);
+	auto results = database.QueryDatabase(query);
 	if (!results.Success())
 		std::cerr << "delglobal error deleting " << varname << " : " << results.ErrorMessage() << std::endl;
 
 	if(!zone)
-        return;
+		return;
 
 	auto pack = new ServerPacket(ServerOP_QGlobalDelete, sizeof(ServerQGlobalDelete_Struct));
 	ServerQGlobalDelete_Struct *qgu = (ServerQGlobalDelete_Struct *)pack->pBuffer;
@@ -1528,7 +1455,7 @@ int QuestManager::QGVarDuration(const char *fmt)
 		case 'f':
 			duration = INT_MAX;
 			break;
-		// Years
+			// Years
 		case 'Y':
 		case 'y':
 			duration = val * 31556926;
@@ -1537,22 +1464,22 @@ int QuestManager::QGVarDuration(const char *fmt)
 		case 'd':
 			duration = val * 86400;
 			break;
-		// Hours
+			// Hours
 		case 'H':
 		case 'h':
 			duration = val * 3600;
 			break;
-		// Minutes
+			// Minutes
 		case 'M':
 		case 'm':
 			duration = val * 60;
 			break;
-		// Seconds
+			// Seconds
 		case 'S':
 		case 's':
 			duration = val;
 			break;
-		// Invalid
+			// Invalid
 		default:
 			duration = 0;
 			break;
@@ -1725,23 +1652,23 @@ void QuestManager::showgrid(int grid) {
 
 	// Retrieve all waypoints for this grid
 	std::string query = StringFormat("SELECT `x`,`y`,`z` FROM grid_entries "
-                                    "WHERE `gridid` = %i AND `zoneid` = %i "
-                                    "ORDER BY `number`", grid, zone->GetZoneID());
-    auto results = database.QueryDatabase(query);
-    if (!results.Success()) {
-        Log(Logs::General, Logs::Quests, "Error loading grid %d for showgrid(): %s", grid, results.ErrorMessage().c_str());
+											 "WHERE `gridid` = %i AND `zoneid` = %i "
+											 "ORDER BY `number`", grid, zone->GetZoneID());
+	auto results = database.QueryDatabase(query);
+	if (!results.Success()) {
+		Log(Logs::General, Logs::Quests, "Error loading grid %d for showgrid(): %s", grid, results.ErrorMessage().c_str());
 		return;
-    }
+	}
 
-    for(auto row = results.begin(); row != results.end(); ++row) {
-        pt.x = atof(row[0]);
-        pt.y = atof(row[1]);
-        pt.z = atof(row[2]);
+	for(auto row = results.begin(); row != results.end(); ++row) {
+		pt.x = atof(row[0]);
+		pt.y = atof(row[1]);
+		pt.z = atof(row[2]);
 
-        pts.push_back(pt);
-    }
+		pts.push_back(pt);
+	}
 
-    initiator->SendPathPacket(pts);
+	initiator->SendPathPacket(pts);
 
 }
 
@@ -1785,7 +1712,7 @@ bool QuestManager::summonburiedplayercorpse(uint32 char_id, const glm::vec4& pos
 	bool Result = false;
 
 	if(char_id <= 0)
-        return false;
+		return false;
 
 	Corpse* PlayerCorpse = database.SummonBuriedCharacterCorpses(char_id, zone->GetZoneID(), zone->GetInstanceID(), position);
 	if(!PlayerCorpse)
@@ -1797,7 +1724,7 @@ bool QuestManager::summonburiedplayercorpse(uint32 char_id, const glm::vec4& pos
 bool QuestManager::summonallplayercorpses(uint32 char_id, const glm::vec4& position) {
 
 	if(char_id <= 0)
-        return false;
+		return false;
 
 	Client* c = entity_list.GetClientByCharID(char_id);
 	c->SummonAllCorpses(position);
@@ -1977,8 +1904,8 @@ void QuestManager::playerfeature(char *feature, int setting)
 		return;
 
 	initiator->SendIllusionPacket(Race, Gender, Texture, HelmTexture, HairColor, BeardColor,
-										EyeColor1, EyeColor2, HairStyle, LuclinFace, Beard, 0xFF,
-										DrakkinHeritage, DrakkinTattoo, DrakkinDetails, Size);
+								  EyeColor1, EyeColor2, HairStyle, LuclinFace, Beard, 0xFF,
+								  DrakkinHeritage, DrakkinTattoo, DrakkinDetails, Size);
 }
 
 void QuestManager::npcfeature(char *feature, int setting)
@@ -2034,8 +1961,8 @@ void QuestManager::npcfeature(char *feature, int setting)
 		return;
 
 	owner->SendIllusionPacket(Race, Gender, Texture, HelmTexture, HairColor, BeardColor,
-										EyeColor1, EyeColor2, HairStyle, LuclinFace, Beard, 0xFF,
-										DrakkinHeritage, DrakkinTattoo, DrakkinDetails, Size);
+							  EyeColor1, EyeColor2, HairStyle, LuclinFace, Beard, 0xFF,
+							  DrakkinHeritage, DrakkinTattoo, DrakkinDetails, Size);
 }
 
 void QuestManager::popup(const char *title, const char *text, uint32 popupid, uint32 buttons, uint32 Duration)
@@ -2315,17 +2242,17 @@ bool QuestManager::istaskappropriate(int task) {
 
 void QuestManager::clearspawntimers() {
 	if(!zone)
-        return;
+		return;
 
 	//TODO: Dec 19, 2008, replace with code updated for current spawn timers.
-    LinkedListIterator<Spawn2*> iterator(zone->spawn2_list);
+	LinkedListIterator<Spawn2*> iterator(zone->spawn2_list);
 	iterator.Reset();
 	while (iterator.MoreElements()) {
 		std::string query = StringFormat("DELETE FROM respawn_times "
-                                        "WHERE id = %lu AND instance_id = %lu",
-                                        (unsigned long)iterator.GetData()->GetID(),
-                                        (unsigned long)zone->GetInstanceID());
-        auto results = database.QueryDatabase(query);
+												 "WHERE id = %lu AND instance_id = %lu",
+										 (unsigned long)iterator.GetData()->GetID(),
+										 (unsigned long)zone->GetInstanceID());
+		auto results = database.QueryDatabase(query);
 		iterator.Advance();
 	}
 }
@@ -2410,7 +2337,7 @@ void QuestManager::ModifyNPCStat(const char *identifier, const char *newValue)
 }
 
 int QuestManager::collectitems_processSlot(int16 slot_id, uint32 item_id,
-	bool remove)
+										   bool remove)
 {
 	QuestManagerCurrentQuestVars();
 	EQEmu::ItemInstance *item = nullptr;
@@ -2548,7 +2475,7 @@ const char* QuestManager::varlink(char* perltext, int item_id) {
 
 	auto item_link = linker.GenerateLink();
 	strcpy(perltext, item_link.c_str()); // link length is currently ranged from 1 to 250 in TextLink::GenerateLink()
-	
+
 	return perltext;
 }
 
@@ -2586,7 +2513,7 @@ void QuestManager::DestroyInstance(uint16 instance_id)
 void QuestManager::UpdateInstanceTimer(uint16 instance_id, uint32 new_duration)
 {
 	std::string query = StringFormat("UPDATE instance_list SET duration = %lu, start_time = UNIX_TIMESTAMP() WHERE id = %lu",
-		(unsigned long)new_duration, (unsigned long)instance_id);
+									 (unsigned long)new_duration, (unsigned long)instance_id);
 	auto results = database.QueryDatabase(query);
 
 	if (results.Success()) {
@@ -2610,10 +2537,10 @@ uint32 QuestManager::GetInstanceTimer() {
 uint32 QuestManager::GetInstanceTimerByID(uint16 instance_id) {
 	if (instance_id == 0)
 		return 0;
-	
+
 	std::string query = StringFormat("SELECT ((start_time + duration) - UNIX_TIMESTAMP()) AS `remaining` FROM `instance_list` WHERE `id` = %lu", (unsigned long)instance_id);
 	auto results = database.QueryDatabase(query);
-	
+
 	if (results.Success()) {
 		auto row = results.begin();
 		uint32 timer = atoi(row[0]);
@@ -2993,7 +2920,7 @@ void QuestManager::CrossZoneMessagePlayerByName(uint32 Type, const char *CharNam
 	uint32 message_len = strlen(CharName) + 1;
 	uint32 message_len2 = strlen(Message) + 1;
 	auto pack =
-	    new ServerPacket(ServerOP_CZMessagePlayer, sizeof(CZMessagePlayer_Struct) + message_len + message_len2);
+			new ServerPacket(ServerOP_CZMessagePlayer, sizeof(CZMessagePlayer_Struct) + message_len + message_len2);
 	CZMessagePlayer_Struct* CZSC = (CZMessagePlayer_Struct*) pack->pBuffer;
 	CZSC->Type = Type;
 	strn0cpy(CZSC->CharName, CharName, 64);
@@ -3020,7 +2947,7 @@ void QuestManager::CrossZoneSetEntityVariableByNPCTypeID(uint32 npctype_id, cons
 	uint32 message_len = strlen(id) + 1;
 	uint32 message_len2 = strlen(m_var) + 1;
 	auto pack = new ServerPacket(ServerOP_CZSetEntityVariableByNPCTypeID,
-				     sizeof(CZSetEntVarByNPCTypeID_Struct) + message_len + message_len2);
+								 sizeof(CZSetEntVarByNPCTypeID_Struct) + message_len + message_len2);
 	CZSetEntVarByNPCTypeID_Struct* CZSNBYNID = (CZSetEntVarByNPCTypeID_Struct*)pack->pBuffer;
 	CZSNBYNID->npctype_id = npctype_id;
 	strn0cpy(CZSNBYNID->id, id, 256);

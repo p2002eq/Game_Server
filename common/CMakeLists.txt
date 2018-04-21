@@ -6,6 +6,7 @@ PROTOBUF_GENERATE_CPP(PROTO_SRCS PROTO_HEADERS message.proto)
 SET(common_sources
 	base_packet.cpp
 	classes.cpp
+	compression.cpp
 	condition.cpp
 	crash.cpp
 	crc16.cpp
@@ -118,6 +119,7 @@ SET(common_headers
 	base_data.h
 	bodytypes.h
 	classes.h
+	compression.h
 	condition.h
 	crash.h
 	crc16.h
