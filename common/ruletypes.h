@@ -446,7 +446,7 @@ RULE_BOOL(Spells, AllowItemTGB, false) // TGB doesn't work with items on live, c
 RULE_BOOL(Spells, NPCInnateProcOverride, true) //  NPC innate procs override the target type to single target.
 RULE_BOOL(Spells, OldRainTargets, false) // use old incorrectly implemented max targets for rains
 RULE_REAL(Spells, CallOfTheHeroAggroClearDist, 250.0)
-RULE_BOOL(Spells, NPCSpellPush, false) // enable spell push on NPCs
+RULE_BOOL(Spells, NPCSpellPush, true) // enable spell push on NPCs
 RULE_CATEGORY_END()
 
 RULE_CATEGORY(Combat)
