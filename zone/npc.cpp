@@ -201,7 +201,7 @@ NPC::NPC(const NPCType* d, Spawn2* in_respawn, const glm::vec4& position, int if
 		CalcNPCDamage();
 	}
 
-	base_damage = round((max_dmg - min_dmg) / 1.9);
+	base_damage = round((max_dmg + min_dmg) / 3.1);
 	min_damage = min_dmg - round(base_damage / 10.0);
 
 	accuracy_rating = d->accuracy_rating;
