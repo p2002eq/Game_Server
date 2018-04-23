@@ -3286,6 +3286,7 @@ bool Mob::HasRangedProcs() const
 
 bool Client::CheckDoubleAttack()
 {
+
 	int chance = 0;
 	int skill = GetSkill(EQEmu::skills::SkillDoubleAttack);
 	//Check for bonuses that give you a double attack chance regardless of skill (ie Bestial Frenzy/Harmonious Attack AA)
@@ -3297,9 +3298,16 @@ bool Client::CheckDoubleAttack()
 
 	if (bonusGiveDA)
 		chance += bonusGiveDA / 100.0f * 500; // convert to skill value
-	int per_inc = aabonuses.DoubleAttackChance + spellbonuses.DoubleAttackChance + itembonuses.DoubleAttackChance;
-	if (per_inc)
+	int per_inc = 0;
+	if (GetClass() == PALADIN || GetClass() == SHADOWKNIGHT && !HasTwoHanderEquipped() ) {
+		per_inc = 0;
+		Log(Logs::General, Logs::Combat, "Knight class without a 2 hand weapon equiped = No DA Bonus!");
+	} else {
+		per_inc = aabonuses.DoubleAttackChance + spellbonuses.DoubleAttackChance + itembonuses.DoubleAttackChance;
+	}
+	if (per_inc > 0) {
 		chance += chance * per_inc / 100;
+	}
 
 	Log(Logs::General, Logs::Combat, "Double Attack Chance = %i out of 500", chance);
 
@@ -5643,8 +5651,11 @@ void Client::DoAttackRounds(Mob *target, int hand, bool IsFromSpell)
 
 	if (hand == EQEmu::inventory::slotPrimary) {
 		auto extraattackchance = aabonuses.ExtraAttackChance + spellbonuses.ExtraAttackChance + itembonuses.ExtraAttackChance;
-		if (extraattackchance && HasTwoHanderEquipped() && zone->random.Roll(extraattackchance))
+		Log(Logs::General, Logs::Combat, "Extra Attack Roll - Extra Attack Chance = %i of 100", extraattackchance);
+		if (extraattackchance && HasTwoHanderEquipped() && zone->random.Roll(extraattackchance)) {
+			Log(Logs::General, Logs::Combat, "Extra Attack Passed ");
 			Attack(target, hand, false, false, IsFromSpell);
+		}
 	}
 }
 
