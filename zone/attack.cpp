@@ -5655,6 +5655,8 @@ void Client::DoAttackRounds(Mob *target, int hand, bool IsFromSpell)
 		if (extraattackchance && HasTwoHanderEquipped() && zone->random.Roll(extraattackchance)) {
 			Log(Logs::General, Logs::Combat, "Extra Attack Passed ");
 			Attack(target, hand, false, false, IsFromSpell);
+		} else if (extraattackchance && !HasTwoHanderEquipped()){
+			Log(Logs::General, Logs::Combat, "Extra Attack not attempted - Missing 2 Hand Weapon! ");
 		}
 	}
 }
