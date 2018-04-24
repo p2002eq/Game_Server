@@ -57,6 +57,21 @@ RULE_REAL(Character, GroupExpMultiplier, 1.0)
 RULE_REAL(Character, RaidExpMultiplier, 0.2)
 RULE_BOOL ( Character, SmoothEXPLoss, true)
 RULE_REAL ( Character, EXPLossMultiplier, 1.0)
+
+RULE_BOOL(Character, ExpConBasedBonus, true)
+RULE_REAL(Character, ExpMultiplierLightBlue, 1.0)
+RULE_REAL(Character, ExpMultiplierDarkBlue, 1.0)
+RULE_REAL(Character, ExpMultiplierWhite, 1.0)
+RULE_REAL(Character, ExpMultiplierYellow, 1.0)
+RULE_REAL(Character, ExpMultiplierRed, 1.0)
+
+RULE_REAL(Character, AAExpMultiplierLightBlue, 1.0)
+RULE_REAL(Character, AAExpMultiplierDarkBlue, 1.0)
+RULE_REAL(Character, AAExpMultiplierWhite, 1.0)
+RULE_REAL(Character, AAExpMultiplierYellow, 1.0)
+RULE_REAL(Character, AAExpMultiplierRed, 1.0)
+RULE_INT(Character, MaxAAExpPerKill, 3596474)
+
 RULE_BOOL(Character, UseXPConScaling, true)
 RULE_INT(Character, ShowExpValues, 0) //0 - normal, 1 - Show raw experience values, 2 - Show raw experience values AND percent.
 RULE_INT(Character, GreenModifier, 20)
@@ -431,7 +446,7 @@ RULE_BOOL(Spells, AllowItemTGB, false) // TGB doesn't work with items on live, c
 RULE_BOOL(Spells, NPCInnateProcOverride, true) //  NPC innate procs override the target type to single target.
 RULE_BOOL(Spells, OldRainTargets, false) // use old incorrectly implemented max targets for rains
 RULE_REAL(Spells, CallOfTheHeroAggroClearDist, 250.0)
-RULE_BOOL(Spells, NPCSpellPush, false) // enable spell push on NPCs
+RULE_BOOL(Spells, NPCSpellPush, true) // enable spell push on NPCs
 RULE_CATEGORY_END()
 
 RULE_CATEGORY(Combat)
@@ -577,6 +592,7 @@ RULE_BOOL(NPC, IgnoreQuestLoot, false)
 RULE_BOOL(NPC, UseClassAsLastName, true) // Uses class archetype as LastName for npcs with none
 RULE_BOOL(NPC, NewLevelScaling, true) // Better level scaling, use old if new formulas would break your server
 RULE_BOOL(NPC, CastOutOfEraSpells, false)
+RULE_REAL(NPC,NPCBackstabMod, 3.1) // Multiplier for NPC Backstab, Higher = Lower backstab amount
 RULE_CATEGORY_END()
 
 RULE_CATEGORY(Aggro)

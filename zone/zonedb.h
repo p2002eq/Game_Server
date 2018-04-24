@@ -1,6 +1,8 @@
 #ifndef ZONEDB_H_
 #define ZONEDB_H_
 
+#include <unordered_set>
+
 #include "../common/shareddb.h"
 #include "../common/eq_packet_structs.h"
 #include "position.h"
@@ -54,6 +56,8 @@ struct DBnpcspells_entries_Struct {
 	int32	recast_delay;
 	int16	priority;
 	int16	resist_adjust;
+	int8	min_hp;
+	int8	max_hp;
 };
 #pragma pack()
 
@@ -76,7 +80,6 @@ struct DBnpcspells_Struct {
 	int16	rproc_chance;
 	uint16	defensive_proc;
 	int16	dproc_chance;
-	uint32	numentries;
 	uint32	fail_recast;
 	uint32	engaged_no_sp_recast_min;
 	uint32	engaged_no_sp_recast_max;
@@ -89,7 +92,7 @@ struct DBnpcspells_Struct {
 	uint32  idle_no_sp_recast_min;
 	uint32  idle_no_sp_recast_max;
 	uint8	idle_beneficial_chance;
-	DBnpcspells_entries_Struct entries[0];
+	std::vector<DBnpcspells_entries_Struct> entries;
 };
 
 struct DBnpcspellseffects_Struct {
@@ -419,6 +422,7 @@ public:
 
 	DBnpcspells_Struct*				GetNPCSpells(uint32 iDBSpellsID);
 	DBnpcspellseffects_Struct*		GetNPCSpellsEffects(uint32 iDBSpellsEffectsID);
+	void ClearNPCSpells() { npc_spells_cache.clear(); npc_spells_loadtried.clear(); }
 	const NPCType* LoadNPCTypesData(uint32 id, bool bulk_load = false);
 
 	/* Mercs   */
@@ -519,10 +523,9 @@ protected:
 
 	uint32				max_faction;
 	Faction**			faction_array;
-	uint32 npc_spells_maxid;
 	uint32 npc_spellseffects_maxid;
-	DBnpcspells_Struct** npc_spells_cache;
-	bool*				npc_spells_loadtried;
+	std::unordered_map<uint32, DBnpcspells_Struct> npc_spells_cache;
+	std::unordered_set<uint32> npc_spells_loadtried;
 	DBnpcspellseffects_Struct** npc_spellseffects_cache;
 	bool*				npc_spellseffects_loadtried;
 	uint8 door_isopen_array[255];

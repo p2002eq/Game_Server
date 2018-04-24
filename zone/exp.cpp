@@ -92,24 +92,58 @@ void Client::AddEXP(uint32 in_add_exp, uint8 conlevel, bool resexp) {
 	if (m_epp.perAA < 0 || m_epp.perAA > 100)
 		m_epp.perAA = 0;    // stop exploit with sanity check
 
-	uint32 add_aaxp;
-	if (resexp) {
-		add_aaxp = 0;
-	} else {
 
-		//figure out how much of this goes to AAs
-		add_aaxp = add_exp * m_epp.perAA / 100;
-		//take that amount away from regular exp
-		add_exp -= add_aaxp;
+	float totalexpmod = 1.0;
+	float totalaamod = 1.0;
+	uint32 add_aaxp = 0;
 
-		float totalmod = 1.0;
-		if (RuleR(Character, ExpMultiplier) >= 0) {
-			totalmod  = totalmod * RuleR(Character, ExpMultiplier);
+	// Figure out Con Based Bonus
+	if (RuleB(Character, ExpConBasedBonus)) {
+		switch (conlevel) {
+			case CON_RED:
+				totalexpmod  = totalexpmod * RuleR(Character, ExpMultiplierRed);
+				totalaamod  = totalaamod * RuleR(Character, AAExpMultiplierRed);
+				break;
+			case CON_YELLOW:
+				totalexpmod  = totalexpmod * RuleR(Character, ExpMultiplierYellow);
+				totalaamod  = totalaamod * RuleR(Character, AAExpMultiplierYellow);
+				break;
+			case CON_WHITE_TITANIUM:
+			case CON_WHITE:
+				totalexpmod  = totalexpmod * RuleR(Character, ExpMultiplierWhite);
+				totalaamod  = totalaamod * RuleR(Character, AAExpMultiplierWhite);
+				break;
+			case CON_BLUE:
+				totalexpmod  = totalexpmod * RuleR(Character, ExpMultiplierDarkBlue);
+				totalaamod  = totalaamod * RuleR(Character, AAExpMultiplierDarkBlue);
+				break;
+			case CON_LIGHTBLUE:
+				totalexpmod  = totalexpmod * RuleR(Character, ExpMultiplierLightBlue);
+				totalaamod  = totalaamod * RuleR(Character, AAExpMultiplierLightBlue);
+				break;
 		}
-
-		add_exp = uint32(float(add_exp) * totalmod);
 	}
 
+	//figure out how much of this goes to AAs
+	add_aaxp = add_exp * m_epp.perAA / 100;
+
+	//take that amount away from regular exp
+	add_exp -= add_aaxp;
+
+	// General EXP Modifier
+	if (RuleR(Character, ExpMultiplier) >= 0) {
+		totalexpmod  = totalexpmod * RuleR(Character, ExpMultiplier);
+	}
+
+	// General AA Exp Modifier
+	if (RuleR(Character, AAExpMultiplier) >= 0) {
+		totalaamod  = totalaamod * RuleR(Character, AAExpMultiplier);
+	}
+
+	add_exp = uint32(float(add_exp) * totalexpmod);
+	add_aaxp = uint32(float(add_aaxp) * totalaamod);
+
+	// ZEMS
 	if (RuleB(Zone, LevelBasedEXPMods)) {
 		if (zone->level_exp_mod[GetLevel()].ExpMod) {
 			add_exp *= zone->level_exp_mod[GetLevel()].ExpMod;
@@ -117,19 +151,23 @@ void Client::AddEXP(uint32 in_add_exp, uint8 conlevel, bool resexp) {
 		}
 	}
 
+	// Calculate Caps
 	uint32 requiredxp = GetEXPForLevel(GetLevel() + 1) - GetEXPForLevel(GetLevel());
 	float xp_cap = (float) requiredxp * 0.13f; //13% of total XP is our cap
+	int aaxp_cap = RuleI(Character, MaxAAExpPerKill);
 
+	// Enforce Reg XP Cap
 	if (add_exp > xp_cap) {
 		add_exp = xp_cap;
 	}
 
-	if (add_aaxp > xp_cap) {
-		add_aaxp = xp_cap;
+	// Enforce AA XP Cap
+	if (add_aaxp > aaxp_cap) {
+		add_aaxp = aaxp_cap;
 	}
 
 	uint32 exp = GetEXP() + add_exp;
-	uint32 aaexp = (uint32) (RuleR(Character, AAExpMultiplier) * add_aaxp);
+	uint32 aaexp = add_aaxp;
 	uint32 had_aaexp = GetAAXP();
 	aaexp += had_aaexp;
 	if (aaexp < had_aaexp) {
@@ -142,8 +180,9 @@ void Client::AddEXP(uint32 in_add_exp, uint8 conlevel, bool resexp) {
 				add_aaxp, GetAAXP() + add_aaxp, add_exp, GetEXP() + add_exp, neededxp, GetLevel() + 1);
 	}
 
-	//Message(CC_Yellow, "AddExp: XP awarded: %i (%i) Required XP is: %i Cap: %0.2f Race: %i Class: %i Zoneid: %i", add_exp, GetEXP() + add_exp, requiredxp, xp_cap, GetBaseRace(), GetClass(), zone->GetZoneID());
-	
+	//Message(CC_Yellow, "[DEBUG] XP awarded: %i (%i) Required XP is: %i Cap: %0.2f ", add_exp, GetEXP() + add_exp, requiredxp, xp_cap);
+	//Message(CC_Yellow, "[DEBUG] AA XP awarded: %i (%i) Required AA XP is: %i Cap: %i ", add_aaxp, had_aaexp + add_exp, RuleI(AA, ExpPerPoint), aaxp_cap);
+
 	// Check for Unused AA Cap.  If at or above cap, set AAs to cap, set aaexp to 0 and set aa percentage to 0.
 	// Doing this here means potentially one kill wasted worth of experience, but easiest to put it here than to rewrite this function.
 	if (m_pp.aapoints >= RuleI(Character, UnusedAAPointCap)) {
@@ -156,8 +195,14 @@ void Client::AddEXP(uint32 in_add_exp, uint8 conlevel, bool resexp) {
 			Message(15, "You have exceeded the Unused AA Point Cap (%d).  Unused AA Points reduced to %d.", RuleI(Character, UnusedAAPointCap), RuleI(Character, UnusedAAPointCap));
 			m_pp.aapoints = RuleI(Character, UnusedAAPointCap);
 		}
-	}	
-	
+	}
+
+	if (GetLevel() <= 51 and m_epp.perAA > 0) {
+		Message(15, "You are below the level allowed to gain AA Experience. AA Experience set to 0%");
+		aaexp = 0;
+		m_epp.perAA = 0;
+	}
+
 	SetEXP(exp, aaexp, resexp);
 }
 

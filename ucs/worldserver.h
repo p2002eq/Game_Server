@@ -30,7 +30,6 @@ public:
 	void ProcessMessage(uint16 opcode, EQ::Net::Packet &);
 
 private:
-
 	std::unique_ptr<EQ::Net::ServertalkClient> m_connection;
 };
 #endif

@@ -67,6 +67,7 @@
 #include "titles.h"
 #include "water_map.h"
 #include "worldserver.h"
+#include "fastmath.h"
 #include "nats_manager.h"
 #include "client.h"
 
@@ -74,6 +75,7 @@ extern QueryServ* QServ;
 extern WorldServer worldserver;
 extern TaskManager *taskmanager;
 extern NatsManager nats;
+extern FastMath g_Math;
 void CatchSignal(int sig_num);
 
 
@@ -311,6 +313,7 @@ int command_init(void)
 		command_add("profilereset", "- Reset profiling info", 250, command_profilereset) ||
 #endif
 
+		command_add("push", "Lets you do spell push", 150, command_push) ||
 		command_add("pvp", "[on/off] - Set your or your player target's PVP status", 100, command_pvp) ||
 		command_add("qglobal", "[on/off/view] - Toggles qglobal functionality on an NPC", 100, command_qglobal) ||
 		command_add("questerrors", "Shows quest errors.", 100, command_questerrors) ||
@@ -322,6 +325,7 @@ int command_init(void)
 		command_add("reloadallrules", "Executes a reload of all rules.", 80, command_reloadallrules) ||
 		command_add("reloademote", "Reloads NPC Emotes", 80, command_reloademote) ||
 		command_add("reloadlevelmods", nullptr, 255, command_reloadlevelmods) ||
+		command_add("reloadmerchants", nullptr, 255, command_reloadmerchants) ||
 		command_add("reloadperlexportsettings", nullptr, 255, command_reloadperlexportsettings) ||
 		command_add("reloadqst", " - Clear quest cache (any argument causes it to also stop all timers)", 150, command_reloadqst) ||
 		command_add("reloadrulesworld", "Executes a reload of all rules in world specifically.", 80, command_reloadworldrules) ||
@@ -391,6 +395,7 @@ int command_init(void)
 		command_add("traindisc", "[level] - Trains all the disciplines usable by the target, up to level specified. (may freeze client for a few seconds)", 150, command_traindisc) ||
 		command_add("trapinfo", "- Gets infomation about the traps currently spawned in the zone.", 81, command_trapinfo) ||
 		command_add("tune",  "Calculate ideal statical values related to combat.",  100, command_tune) ||
+		command_add("ucs", "- Attempts to reconnect to the UCS server", 0, command_ucs) ||
 		command_add("undeletechar", "- Undelete a character that was previously deleted.", 255, command_undeletechar) ||
 		command_add("undyeme", "- Remove dye from all of your armor slots", 0, command_undyeme) ||
 		command_add("unfreeze", "- Unfreeze your target", 80, command_unfreeze) ||
@@ -3139,6 +3144,11 @@ void command_reloadworld(Client *c, const Seperator *sep)
 	safe_delete(pack);
 }
 
+void command_reloadmerchants(Client *c, const Seperator *sep) {
+	zone->ReloadMerchants();
+	c->Message(15, "Reloading merchants.");
+}
+
 void command_reloadlevelmods(Client *c, const Seperator *sep)
 {
 	if (sep->arg[1][0] == 0)
@@ -4519,6 +4529,33 @@ void command_unfreeze(Client *c, const Seperator *sep)
 		c->GetTarget()->SendAppearancePacket(AT_Anim, ANIM_STAND);
 	else
 		c->Message(0, "ERROR: Unfreeze requires a target.");
+}
+
+void command_push(Client *c, const Seperator *sep)
+{
+	Mob *t = c;
+	if (c->GetTarget() != nullptr)
+		t = c->GetTarget();
+
+	if (!sep->arg[1] || !sep->IsNumber(1)) {
+		c->Message(0, "ERROR: Must provide at least a push back.");
+		return;
+	}
+
+	float back = atof(sep->arg[1]);
+	float up = 0.0f;
+
+	if (sep->arg[2] && sep->IsNumber(2))
+		up = atof(sep->arg[2]);
+
+	if (t->IsNPC()) {
+		t->IncDeltaX(back * g_Math.FastSin(c->GetHeading()));
+		t->IncDeltaY(back * g_Math.FastCos(c->GetHeading()));
+		t->IncDeltaZ(up);
+		t->SetForcedMovement(6);
+	} else if (t->IsClient()) {
+		// TODO: send packet to push
+	}
 }
 
 void command_pvp(Client *c, const Seperator *sep)
@@ -11282,6 +11319,90 @@ void command_mysqltest(Client *c, const Seperator *sep)
 		}
 	}
 	Log(Logs::General, Logs::Debug, "MySQL Test... Took %f seconds", ((float)(std::clock() - t)) / CLOCKS_PER_SEC);
+}
+
+void command_ucs(Client *c, const Seperator *sep)
+{
+	if (!c)
+		return;
+
+	Log(Logs::Detail, Logs::UCS_Server, "Character %s attempting ucs reconnect while ucs server is %savailable",
+		c->GetName(), (zone->IsUCSServerAvailable() ? "" : "un"));
+
+	if (zone->IsUCSServerAvailable()) {
+		EQApplicationPacket* outapp = nullptr;
+		std::string buffer;
+
+		std::string MailKey = database.GetMailKey(c->CharacterID(), true);
+		EQEmu::versions::UCSVersion ConnectionType = EQEmu::versions::ucsUnknown;
+
+		// chat server packet
+		switch (c->ClientVersion()) {
+			case EQEmu::versions::ClientVersion::Titanium:
+				ConnectionType = EQEmu::versions::ucsTitaniumChat;
+				break;
+			case EQEmu::versions::ClientVersion::SoF:
+				ConnectionType = EQEmu::versions::ucsSoFCombined;
+				break;
+			case EQEmu::versions::ClientVersion::SoD:
+				ConnectionType = EQEmu::versions::ucsSoDCombined;
+				break;
+			case EQEmu::versions::ClientVersion::UF:
+				ConnectionType = EQEmu::versions::ucsUFCombined;
+				break;
+			case EQEmu::versions::ClientVersion::RoF:
+				ConnectionType = EQEmu::versions::ucsRoFCombined;
+				break;
+			case EQEmu::versions::ClientVersion::RoF2:
+				ConnectionType = EQEmu::versions::ucsRoF2Combined;
+				break;
+			default:
+				ConnectionType = EQEmu::versions::ucsUnknown;
+				break;
+		}
+
+		buffer = StringFormat("%s,%i,%s.%s,%c%s",
+							  Config->ChatHost.c_str(),
+							  Config->ChatPort,
+							  Config->ShortName.c_str(),
+							  c->GetName(),
+							  ConnectionType,
+							  MailKey.c_str()
+		);
+
+		outapp = new EQApplicationPacket(OP_SetChatServer, (buffer.length() + 1));
+		memcpy(outapp->pBuffer, buffer.c_str(), buffer.length());
+		outapp->pBuffer[buffer.length()] = '\0';
+
+		c->QueuePacket(outapp);
+		safe_delete(outapp);
+
+		// mail server packet
+		switch (c->ClientVersion()) {
+			case EQEmu::versions::ClientVersion::Titanium:
+				ConnectionType = EQEmu::versions::ucsTitaniumMail;
+				break;
+			default:
+				// retain value from previous switch
+				break;
+		}
+
+		buffer = StringFormat("%s,%i,%s.%s,%c%s",
+							  Config->MailHost.c_str(),
+							  Config->MailPort,
+							  Config->ShortName.c_str(),
+							  c->GetName(),
+							  ConnectionType,
+							  MailKey.c_str()
+		);
+
+		outapp = new EQApplicationPacket(OP_SetChatServer2, (buffer.length() + 1));
+		memcpy(outapp->pBuffer, buffer.c_str(), buffer.length());
+		outapp->pBuffer[buffer.length()] = '\0';
+
+		c->QueuePacket(outapp);
+		safe_delete(outapp);
+	}
 }
 
 void command_undeletechar(Client *c, const Seperator *sep) {

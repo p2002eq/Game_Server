@@ -2159,6 +2159,12 @@ bool Mob::SpellFinished(uint16 spell_id, Mob *spell_target, CastingSlot slot, ui
 
 	// check to see if target is a caster mob before performing a mana tap
 	if(spell_target && IsManaTapSpell(spell_id)) {
+
+		if (target->GetMana() == 0) {
+			Message_StringID(13, TARGET_NO_MANA);
+			return false;
+		}
+
 		if(spell_target->GetCasterClass() == 'N') {
 			Message_StringID(13, TARGET_NO_MANA);
 			return false;
@@ -2358,6 +2364,9 @@ bool Mob::SpellFinished(uint16 spell_id, Mob *spell_target, CastingSlot slot, ui
 					if(target_group)
 					{
 						target_group->CastGroupSpell(this, spell_id);
+						if (!GetClass() == BARD) {
+							SpellOnTarget(spell_id, this);
+						}
 					}
 				}
 				else if(spell_target->IsRaidGrouped() && spell_target->IsClient())
@@ -2726,7 +2735,7 @@ void Mob::BardPulse(uint16 spell_id, Mob *caster) {
 
 			action->effect_flag = 4;
 
-			if(spells[spell_id].pushback > 0 || spells[spell_id].pushup > 0)
+			if(spells[spell_id].pushback != 0.0f || spells[spell_id].pushup != 0.0f)
 			{
 				if(IsClient())
 				{
@@ -4104,7 +4113,7 @@ bool Mob::SpellOnTarget(uint16 spell_id, Mob *spelltar, bool reflect, bool use_r
 	// the complete sequence is 2 actions and 1 damage message
 	action->effect_flag = 0x04;	// this is a success flag
 
-	if(spells[spell_id].pushback > 0 || spells[spell_id].pushup > 0)
+	if(spells[spell_id].pushback != 0.0f || spells[spell_id].pushup != 0.0f)
 	{
 		if(spelltar->IsClient())
 		{

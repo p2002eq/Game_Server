@@ -33,28 +33,16 @@ ZoneDatabase::ZoneDatabase(const char* host, const char* user, const char* passw
 
 void ZoneDatabase::ZDBInitVars() {
 	memset(door_isopen_array, 0, sizeof(door_isopen_array));
-	npc_spells_maxid = 0;
-	npc_spellseffects_maxid = 0;
-	npc_spells_cache = 0;
 	npc_spellseffects_cache = 0;
-	npc_spells_loadtried = 0;
 	npc_spellseffects_loadtried = 0;
 	max_faction = 0;
 	faction_array = nullptr;
 }
 
 ZoneDatabase::~ZoneDatabase() {
-	unsigned int x;
-	if (npc_spells_cache) {
-		for (x = 0; x <= npc_spells_maxid; x++) {
-			safe_delete_array(npc_spells_cache[x]);
-		}
-		safe_delete_array(npc_spells_cache);
-	}
-	safe_delete_array(npc_spells_loadtried);
 
 	if (npc_spellseffects_cache) {
-		for (x = 0; x <= npc_spellseffects_maxid; x++) {
+		for (int x = 0; x <= npc_spellseffects_maxid; x++) {
 			safe_delete_array(npc_spellseffects_cache[x]);
 		}
 		safe_delete_array(npc_spellseffects_cache);
@@ -62,7 +50,7 @@ ZoneDatabase::~ZoneDatabase() {
 	safe_delete_array(npc_spellseffects_loadtried);
 
 	if (faction_array != nullptr) {
-		for (x = 0; x <= max_faction; x++) {
+		for (int x = 0; x <= max_faction; x++) {
 			if (faction_array[x] != 0)
 				safe_delete(faction_array[x]);
 		}
@@ -1414,6 +1402,13 @@ bool ZoneDatabase::SaveCharacterInventorySnapshot(uint32 character_id){
 }
 
 bool ZoneDatabase::SaveCharacterData(uint32 character_id, uint32 account_id, PlayerProfile_Struct* pp, ExtendedProfile_Struct* m_epp){
+
+	/* If this is ever zero - the client hasn't fully loaded and potentially crashed during zone */
+	if (account_id <= 0)
+		return false;
+
+	std::string mail_key = database.GetMailKey(character_id);
+
 	clock_t t = std::clock(); /* Function timer start */
 	std::string query = StringFormat(
 		"REPLACE INTO `character_data` ("
@@ -1510,7 +1505,8 @@ bool ZoneDatabase::SaveCharacterData(uint32 character_id, uint32 account_id, Pla
 		" e_aa_effects,				 "
 		" e_percent_to_aa,			 "
 		" e_expended_aa_spent,		 "
-		" e_last_invsnapshot		 "
+		" e_last_invsnapshot,		 "
+		" mailkey					 "
 		")							 "
 		"VALUES ("
 		"%u,"  // id																" id,                        "
@@ -1606,7 +1602,8 @@ bool ZoneDatabase::SaveCharacterData(uint32 character_id, uint32 account_id, Pla
 		"%u,"  // e_aa_effects
 		"%u,"  // e_percent_to_aa
 		"%u,"  // e_expended_aa_spent
-		"%u"   // e_last_invsnapshot
+		"%u,"  // e_last_invsnapshot
+		"'%s'" // mailkey					  mail_key
 		")",
 		character_id,					  // " id,                        "
 		account_id,						  // " account_id,                "
@@ -1701,7 +1698,8 @@ bool ZoneDatabase::SaveCharacterData(uint32 character_id, uint32 account_id, Pla
 		m_epp->aa_effects,
 		m_epp->perAA,
 		m_epp->expended_aa,
-		m_epp->last_invsnapshot_time
+		m_epp->last_invsnapshot_time,
+		mail_key.c_str()
 	);
 	auto results = database.QueryDatabase(query);
 	Log(Logs::General, Logs::None, "ZoneDatabase::SaveCharacterData %i, done... Took %f seconds", character_id, ((float)(std::clock() - t)) / CLOCKS_PER_SEC);

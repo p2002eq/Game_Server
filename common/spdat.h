@@ -77,6 +77,7 @@ enum SpellTypes : uint32
 
 	SpellTypes_Detrimental = (SpellType_Nuke | SpellType_Root | SpellType_Lifetap | SpellType_Snare | SpellType_DOT | SpellType_Dispel | SpellType_Mez | SpellType_Charm | SpellType_Debuff | SpellType_Slow),
 	SpellTypes_Beneficial = (SpellType_Heal | SpellType_Buff | SpellType_Escape | SpellType_Pet | SpellType_InCombatBuff | SpellType_Cure | SpellType_HateRedux | SpellType_InCombatBuffSong | SpellType_OutOfCombatBuffSong | SpellType_PreCombatBuff | SpellType_PreCombatBuffSong),
+	SpellTypes_Innate = (SpellType_Nuke | SpellType_Lifetap | SpellType_DOT | SpellType_Dispel | SpellType_Mez | SpellType_Slow | SpellType_Debuff | SpellType_Charm | SpellType_Root),
 
 	SpellType_Any = 0xFFFFFFFF
 };
@@ -676,18 +677,18 @@ typedef enum {
 #define SE_ResourceTap					457 // implemented  Coverts a percent of dmg from dmg spells(DD/DoT) to hp/mana/end.
 #define SE_FactionModPct				458 // implemented  Modifies faction gains and losses by percent.
 #define SE_DamageModifier2				459 // implemented - Modifies melee damage by skill type
-//#define SE_Ff_Override_NotFocusable	460 // 
+//#define SE_Ff_Override_NotFocusable	460 //
 #define SE_ImprovedDamage2				461 // implemented - Increase spell damage by percent (SE_Fc_Damage_%2)
-#define SE_FcDamageAmt2					462 // implemented - Increase spell damage by flat amount (SE_Fc_Damage_Amt2)	
-//#define SE_Shield_Target				463 // 
+#define SE_FcDamageAmt2					462 // implemented - Increase spell damage by flat amount (SE_Fc_Damage_Amt2)
+//#define SE_Shield_Target				463 //
 #define SE_PC_Pet_Rampage				464 // implemented - Base1 % chance to do rampage for base2 % of damage each melee round
 //#define SE_PC_Pet_AE_Rampage			465 // Would assume as above but need to confirm.
 #define SE_PC_Pet_Flurry_Chance			466 // implemented - Base1 % chance to do flurry from double attack hit.
-//#define SE_DS_Mitigation_Amount		467 // 
-//#define SE_DS_Mitigation_Percentage	468 // 
-//#define SE_Chance_Best_in_Spell_Grp   469 //  
-//#define SE_Trigger_Best_in_Spell Grp  470 // 
-//#define SE_Double_Melee_Round			471 // 
+//#define SE_DS_Mitigation_Amount		467 //
+//#define SE_DS_Mitigation_Percentage	468 //
+//#define SE_Chance_Best_in_Spell_Grp   469 //
+//#define SE_Trigger_Best_in_Spell Grp  470 //
+//#define SE_Double_Melee_Round			471 //
 
 
 // LAST
@@ -738,9 +739,9 @@ struct SPDat_Spell_Struct
 /* 058 */	int32 components[4]; // reagents -- EXPENDREAGENT1 ... EXPENDREAGENT4
 /* 062 */	int component_counts[4]; // amount of regents used -- EXPENDQTY1 ... EXPENDQTY4
 /* 066 */	int NoexpendReagent[4];	// focus items (Need but not used; Flame Lick has a Fire Beetle Eye focus.)
-											// If it is a number between 1-4 it means components[number] is a focus and not to expend it
-											// If it is a valid itemid it means this item is a focus as well
-											// -- NOEXPENDREAGENT1 ... NOEXPENDREAGENT4
+	// If it is a number between 1-4 it means components[number] is a focus and not to expend it
+	// If it is a valid itemid it means this item is a focus as well
+	// -- NOEXPENDREAGENT1 ... NOEXPENDREAGENT4
 /* 070 */	uint16 formula[EFFECT_COUNT]; // Spell's value formula -- LEVELAFFECT1MOD ... LEVELAFFECT12MOD
 /* 082 */	//int LightType; // probaly another effecttype flag -- LIGHTTYPE
 /* 083 */	int8 goodEffect; //0=detrimental, 1=Beneficial, 2=Beneficial, Group Only -- BENEFICIAL
@@ -761,9 +762,9 @@ struct SPDat_Spell_Struct
 /* 124 */	int8 disallow_sit; // 124: high-end Yaulp spells (V, VI, VII, VIII [Rk 1, 2, & 3], & Gallenite's Bark of Fury -- CANCELONSIT
 /* 125 */	int8 diety_agnostic;// 125: Words of the Skeptic -- DIETY_AGNOSTIC
 /* 126 */	int8 deities[16];	// Deity check. 201 - 216 per http://www.eqemulator.net/wiki/wikka.php?wakka=DeityList
-										// -1: Restrict to Deity; 1: Restrict to Deity, but only used on non-Live (Test Server "Blessing of ...") spells; 0: Don't restrict
-										// the client actually stores deities in a single int32_t
-										// -- DIETY_BERTOXXULOUS ... DIETY_VEESHAN
+	// -1: Restrict to Deity; 1: Restrict to Deity, but only used on non-Live (Test Server "Blessing of ...") spells; 0: Don't restrict
+	// the client actually stores deities in a single int32_t
+	// -- DIETY_BERTOXXULOUS ... DIETY_VEESHAN
 /* 142 */	//int8 npc_no_cast;			// 142: between 0 & 100 -- NPC_NO_CAST
 /* 143 */	//int ai_pt_bonus;			// 143: always set to 0, client doesn't save this -- AI_PT_BONUS
 /* 144 */	//int16 new_icon	// Spell icon used by the client in uifiles/default/spells??.tga, both for spell gems & buff window. Looks to depreciate icon & memicon -- NEW_ICON
@@ -864,7 +865,7 @@ struct SPDat_Spell_Struct
 /* 235 */	//bool is_beta_only; // -- IS_BETA_ONLY
 /* 235 */   int priority;
 /* 236 */	//int spell_subgroup; // -- SPELL_SUBGROUP
-			uint8 DamageShieldType; // This field does not exist in spells_us.txt
+	uint8 DamageShieldType; // This field does not exist in spells_us.txt
 
 };
 

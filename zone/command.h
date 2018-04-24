@@ -216,6 +216,7 @@ void command_profiledump(Client *c, const Seperator *sep);
 void command_profilereset(Client *c, const Seperator *sep);
 #endif
 
+void command_push(Client *c, const Seperator *sep);
 void command_pvp(Client *c, const Seperator *sep);
 void command_qglobal(Client *c, const Seperator *sep);
 void command_qtest(Client *c, const Seperator *sep);
@@ -229,6 +230,7 @@ void command_reloadaa(Client *c, const Seperator *sep);
 void command_reloadallrules(Client *c, const Seperator *sep);
 void command_reloademote(Client* c, const Seperator *sep);
 void command_reloadlevelmods(Client *c, const Seperator *sep);
+void command_reloadmerchants(Client *c, const Seperator *sep);
 void command_reloadperlexportsettings(Client *c, const Seperator *sep);
 void command_reloadqst(Client *c, const Seperator *sep);
 void command_reloadstatic(Client *c, const Seperator *sep);
@@ -302,6 +304,7 @@ void command_title(Client *c, const Seperator *sep);
 void command_titlesuffix(Client *c, const Seperator *sep);
 void command_traindisc(Client *c, const Seperator *sep);
 void command_tune(Client *c, const Seperator *sep);
+void command_ucs(Client *c, const Seperator *sep);
 void command_undye(Client *c, const Seperator *sep);
 void command_undyeme(Client *c, const Seperator *sep);
 void command_unfreeze(Client *c, const Seperator *sep);

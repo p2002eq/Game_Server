@@ -1314,7 +1314,7 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial, int level_ove
 				// this should catch the cures
 				if (BeneficialSpell(spell_id) && spells[spell_id].buffduration == 0)
 					BuffFadeByEffect(SE_Blind);
-				else if (!IsClient())
+				else if (!IsClient() && !IsRaidTarget())
 					CalculateNewFearpoint();
 				break;
 			}
@@ -3998,12 +3998,20 @@ void Mob::BuffFadeBySlot(int slot, bool iRecalcBonuses)
 			}
 
 			case SE_Blind:
+				if (IsRaidTarget()) {
+					break;
+				}
+
 				if (currently_fleeing && !FindType(SE_Fear))
 					currently_fleeing = false;
 				break;
 
 			case SE_Fear:
 			{
+				if (IsRaidTarget()) {
+					break;
+				}
+				
 				if(RuleB(Combat, EnableFearPathing)){
 					if(IsClient())
 					{
@@ -6224,33 +6232,51 @@ bool Mob::TryDispel(uint8 caster_level, uint8 buff_level, int level_modifier){
 
 	/*This should provide a somewhat accurate conversion between pre 5/14 base values and post.
 	until more information is avialble - Kayen*/
-	if (level_modifier >= 100)
-		level_modifier = level_modifier/100;
+
+	//Log(Logs::General, Logs::Spells, "[Dispel] Start Routine");
+	//Log(Logs::General, Logs::Spells, "[Dispel] Caster Level = %i -- Buff Level = %i -- Level Modifier = %i", caster_level, buff_level, level_modifier);
+
+	if (level_modifier >= 100) {
+		level_modifier = level_modifier / 100;
+		//Log(Logs::General, Logs::Spells, "[Dispel] Level modifier is Greater than or equal to 100. Adjusting it to be in line with code. New Value = %i", level_modifier);
+	}
 
 	//Dispels - Check level of caster agianst buffs level (level of the caster who cast the buff)
 	//Effect value of dispels are treated as a level modifier.
 	//Values for scaling were obtain from live parses, best estimates.
 
 	caster_level += level_modifier - 1;
+	//Log(Logs::General, Logs::Spells, "[Dispel] Caster Level (%i) = Caster Level + Level Modifier (%i) - 1", caster_level, level_modifier);
 	int dispel_chance = 32; //Baseline chance if no level difference and no modifier
+	//Log(Logs::General, Logs::Spells, "[Dispel] Dispel Chance (Baseline = 32) = %i", dispel_chance);
 	int level_diff = caster_level - buff_level;
+	//Log(Logs::General, Logs::Spells, "[Dispel] Level Difference (%i) = caster_level (%i) - buff_level (%i) ", level_diff, caster_level, buff_level);
 
-	if (level_diff > 0)
+	if (level_diff > 0) {
 		dispel_chance += level_diff * 7;
-
-	else if (level_diff < 0)
+		//Log(Logs::General, Logs::Spells, "[Dispel] Level Diff = Greater than 0 -- dispel_chance (%i) += level diff (%i) * 7", dispel_chance, level_diff);
+	} else if (level_diff < 0) {
 		dispel_chance += level_diff * 2;
+		//Log(Logs::General, Logs::Spells, "[Dispel] Level Diff = less than 0 -- dispel_chance (%i) += level diff (%i) * 2", dispel_chance, level_diff);
+	}
 
-	if (dispel_chance >= 100)
+	if (dispel_chance >= 100) {
+		//Log(Logs::General, Logs::Spells, "[Dispel] Dispel Chance >= 100 - Automatic Pass -- Return True");
 		return true;
-
-	else if (dispel_chance < 10)
+	} else if (dispel_chance < 10) {
 		dispel_chance = 10;
+		//Log(Logs::General, Logs::Spells, "[Dispel] Dispel Chance < 10 - Set dispel chance to 10 as minimum");
+	}
 
-	if (zone->random.Roll(dispel_chance))
+	Log(Logs::General, Logs::Spells, "[Dispel] Total Dispel Chance = %i out of 100", dispel_chance);
+
+	if (zone->random.Roll(dispel_chance)) {
+		Log(Logs::General, Logs::Spells, "[Dispel] Passed Dispel Roll");
 		return true;
-	else
+	} else {
+		Log(Logs::General, Logs::Spells, "[Dispel] Failed Dispel Roll");
 		return false;
+	}
 }
 
 

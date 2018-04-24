@@ -30,7 +30,7 @@
 
 
 #ifdef _WINDOWS
-	#define M_PI	3.141592
+#define M_PI	3.141592
 #endif
 
 #define LEAVECOMBAT 0
@@ -61,6 +61,8 @@ struct AISpells_Struct {
 	int32	recast_delay;
 	int16	priority;
 	int16	resist_adjust;
+	int8	min_hp; // >0 won't cast if HP is below
+	int8	max_hp; // >0 won't cast if HP is above
 };
 
 struct AISpellsEffects_Struct {
@@ -111,7 +113,7 @@ public:
 	virtual bool Death(Mob* killerMob, int32 damage, uint16 spell_id, EQEmu::skills::SkillType attack_skill);
 	virtual void Damage(Mob* from, int32 damage, uint16 spell_id, EQEmu::skills::SkillType attack_skill, bool avoidable = true, int8 buffslot = -1, bool iBuffTic = false, eSpecialAttacks special = eSpecialAttacks::None);
 	virtual bool Attack(Mob* other, int Hand = EQEmu::inventory::slotPrimary, bool FromRiposte = false, bool IsStrikethrough = false,
-		bool IsFromSpell = false, ExtraAttackOptions *opts = nullptr);
+						bool IsFromSpell = false, ExtraAttackOptions *opts = nullptr);
 	virtual bool HasRaid() { return false; }
 	virtual bool HasGroup() { return false; }
 	virtual Raid* GetRaid() { return 0; }
@@ -268,7 +270,7 @@ public:
 
 	void	SetNPCFactionID(int32 in) { npc_faction_id = in; database.GetFactionIdsForNPC(npc_faction_id, &faction_list, &primary_faction); }
 
-    glm::vec4 m_SpawnPoint;
+	glm::vec4 m_SpawnPoint;
 
 	uint32	GetMaxDMG() const {return max_dmg;}
 	uint32	GetMinDMG() const {return min_dmg;}
@@ -392,7 +394,7 @@ public:
 	void NPCSlotTexture(uint8 slot, uint16 texture);	// Sets new material values for slots
 
 	uint32 GetAdventureTemplate() const { return adventure_template_id; }
-	void AddSpellToNPCList(int16 iPriority, int16 iSpellID, uint32 iType, int16 iManaCost, int32 iRecastDelay, int16 iResistAdjust);
+	void AddSpellToNPCList(int16 iPriority, int16 iSpellID, uint32 iType, int16 iManaCost, int32 iRecastDelay, int16 iResistAdjust, int8 min_hp, int8 max_hp);
 	void AddSpellEffectToNPCList(uint16 iSpellEffectID, int32 base, int32 limit, int32 max);
 	void RemoveSpellFromNPCList(int16 spell_id);
 	Timer *GetRefaceTimer() const { return reface_timer; }
@@ -436,6 +438,7 @@ public:
 
 	bool IgnoreDespawn() { return ignore_despawn; }
 
+	std::unique_ptr<Timer> AIautocastspell_timer;
 protected:
 
 	const NPCType*	NPCTypedata;
@@ -468,7 +471,7 @@ protected:
 
 	uint32	npc_spells_id;
 	uint8	casting_spell_AIindex;
-	std::unique_ptr<Timer> AIautocastspell_timer;
+
 	uint32*	pDontCastBefore_casting_spell;
 	std::vector<AISpells_Struct> AIspells;
 	bool HasAISpell;
@@ -552,7 +555,7 @@ protected:
 	bool raid_target;
 	uint8	probability;
 	bool ignore_despawn; //NPCs with this set to 1 will ignore the despawn value in spawngroup
-	
+
 	float base_size;
 	uint8 base_texture;
 

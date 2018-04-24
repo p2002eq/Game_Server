@@ -722,6 +722,9 @@ void Client::GoToSafeCoords(uint16 zone_id, uint16 instance_id) {
 
 void Mob::Gate() {
 	GoToBind();
+	if (this->GetHPRatio() <= 20) {
+		SetHP(int(this->GetMaxHP() * 0.25));
+	}
 }
 
 void Client::Gate() {

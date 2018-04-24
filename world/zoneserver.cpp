@@ -42,6 +42,7 @@ extern GroupLFPList LFPGroupList;
 extern ZSList zoneserver_list;
 extern LoginServerList loginserverlist;
 extern volatile bool RunLoops;
+extern volatile bool UCSServerAvailable_;
 extern AdventureManager adventure_manager;
 extern UCSConnection UCSLink;
 extern QueryServConnection QSLink;
@@ -1273,10 +1274,25 @@ void ZoneServer::HandleMessage(uint16 opcode, const EQ::Net::Packet &p) {
 		loginserverlist.SendAccountUpdate(pack);
 		break;
 	}
-
 	case ServerOP_UCSMailMessage:
 	{
 		UCSLink.SendPacket(pack);
+		break;
+	}
+	case ServerOP_UCSServerStatusRequest:
+	{
+		auto ucsss = (UCSServerStatus_Struct*)pack->pBuffer;
+		auto zs = zoneserver_list.FindByPort(ucsss->port);
+		if (!zs)
+			break;
+
+		auto outapp = new ServerPacket(ServerOP_UCSServerStatusReply, sizeof(UCSServerStatus_Struct));
+		ucsss = (UCSServerStatus_Struct*)outapp->pBuffer;
+		ucsss->available = (UCSServerAvailable_ ? 1 : 0);
+		ucsss->timestamp = Timer::GetCurrentTime();
+		zs->SendPacket(outapp);
+		safe_delete(outapp);
+
 		break;
 	}
 	case ServerOP_QSSendQuery:
