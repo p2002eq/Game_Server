@@ -3299,7 +3299,7 @@ bool Client::CheckDoubleAttack()
 	if (bonusGiveDA)
 		chance += bonusGiveDA / 100.0f * 500; // convert to skill value
 	int per_inc = 0;
-	if (GetClass() == PALADIN || GetClass() == SHADOWKNIGHT && !HasTwoHanderEquipped() ) {
+	if ((GetClass() == PALADIN || GetClass() == SHADOWKNIGHT) && (!HasTwoHanderEquipped())) {
 		per_inc = 0;
 		Log(Logs::General, Logs::Combat, "Knight class without a 2 hand weapon equiped = No DA Bonus!");
 	} else {
