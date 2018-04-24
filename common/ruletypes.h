@@ -616,6 +616,7 @@ RULE_INT(Aggro, InitialAggroBonus, 100) // Initial Aggro Bonus, Default 100
 RULE_BOOL(Aggro, PetsTriggerAggro, false)
 RULE_REAL(Aggro, CharmedPetAggroRadiusMod, 5.0) // 5x combat distance check for charmed pets
 RULE_REAL(Aggro, YellForHelpZIndex, 10.0)
+RULE_INT(Aggro, InitialPetAggroBonus, 135)
 RULE_CATEGORY_END()
 
 RULE_CATEGORY(TaskSystem)
