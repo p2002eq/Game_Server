@@ -1,2 +1,2 @@
 #! /bin/bash
-docker-compose run eqemu bash -l #-c "source /root/.bashrc; /bin/bash"
+docker-compose run eqemu fish -l #-c "source /root/.bashrc; /bin/fish"
