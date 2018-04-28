@@ -29,6 +29,7 @@
 #include "queryserv.h"
 #include "quest_parser_collection.h"
 #include "string_ids.h"
+#include "../world/client.h"
 
 #ifdef BOTS
 #include "bot.h"
@@ -122,6 +123,10 @@ void Client::AddEXP(uint32 in_add_exp, uint8 conlevel, bool resexp) {
 				totalaamod  = totalaamod * RuleR(Character, AAExpMultiplierLightBlue);
 				break;
 		}
+	}
+
+	if (GetInstanceID() != 0) {
+		add_exp = add_exp * RuleR(Character, ExpInstanceMultiplier);
 	}
 
 	//figure out how much of this goes to AAs

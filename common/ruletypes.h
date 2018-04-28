@@ -72,6 +72,8 @@ RULE_REAL(Character, AAExpMultiplierYellow, 1.0)
 RULE_REAL(Character, AAExpMultiplierRed, 1.0)
 RULE_INT(Character, MaxAAExpPerKill, 3596474)
 
+RULE_REAL(Character, ExpInstanceMultiplier, 0.20)
+
 RULE_BOOL(Character, UseXPConScaling, true)
 RULE_INT(Character, ShowExpValues, 0) //0 - normal, 1 - Show raw experience values, 2 - Show raw experience values AND percent.
 RULE_INT(Character, GreenModifier, 20)
