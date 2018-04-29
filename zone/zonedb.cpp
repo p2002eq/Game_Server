@@ -4328,7 +4328,7 @@ bool ZoneDatabase::CopyCorpseToBackup(uint32 corpse_id) {
 		return false;
 	}
 
-	query = StringFormat("UPDATE `character_corpses_backup` SELECT * from `character_corpses` WHERE `id` = %d", corpse_id);
+	query = StringFormat("REPLACE `character_corpses_backup` SELECT * from `character_corpses` WHERE `id` = %d", corpse_id);
 	results = QueryDatabase(query);
 	if (!results.Success()) {
 		return false;
@@ -4343,13 +4343,10 @@ bool ZoneDatabase::CopyCorpseToBackup(uint32 corpse_id) {
 	query = StringFormat("INSERT INTO `character_corpse_items_backup` SELECT * from `character_corpse_items` WHERE `corpse_id` = %d", corpse_id);
 	results = QueryDatabase(query);
 	if (!results.Success()) {
-		Log(Logs::Detail, Logs::Error, "CopyBackupCorpse() Error replacing items.");
 		return false;
 	}
-
 	return true;
 }
-
 
 bool ZoneDatabase::RestoreCorpseFromBackup(uint32 corpse_id) {
 	std::string query;
