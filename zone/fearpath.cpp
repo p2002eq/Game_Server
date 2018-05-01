@@ -32,25 +32,34 @@ extern Zone* zone;
 
 //this is called whenever we are damaged to process possible fleeing
 void Mob::CheckFlee() {
-	//if were allready fleeing, dont need to check more...
-	if(flee_mode && currently_fleeing)
+	//Log(Logs::General, Logs::Combat, "[Debug] Check Flee - Started Check");
+	//if were already fleeing, don't need to check more...
+	if(flee_mode && currently_fleeing) {
+		//Log(Logs::General, Logs::Combat, "[Debug] Already Fleeing");
 		return;
+	}
 
 	//dont bother if we are immune to fleeing
-	if(GetSpecialAbility(IMMUNE_FLEEING) || spellbonuses.ImmuneToFlee)
+	if(GetSpecialAbility(IMMUNE_FLEEING) || spellbonuses.ImmuneToFlee) {
+		//Log(Logs::General, Logs::Combat, "[Debug] Immune to Fleeing");
 		return;
+	}
 
-	if(!flee_timer.Check())
-		return;	//only do all this stuff every little while, since
-				//its not essential that we start running RIGHT away
+	if(!flee_timer.Check()) {
+		//Log(Logs::General, Logs::Combat, "[Debug] Flee Timer hasn't tripped");
+		return;    //only do all this stuff every little while, since
+		//its not essential that we start running RIGHT away
+	}
 
 	//see if were possibly hurt enough
 	float ratio = GetHPRatio();
 	float fleeratio = GetSpecialAbility(FLEE_PERCENT);
 	fleeratio = fleeratio > 0 ? fleeratio : RuleI(Combat, FleeHPRatio);
 
-	if(ratio >= fleeratio)
+	if(ratio >= fleeratio) {
+		//Log(Logs::General, Logs::Combat, "[Debug] Ratio (%i) >= Flee Ratio (%i)", ratio, fleeratio);
 		return;
+	}
 
 	//we might be hurt enough, check con now..
 	Mob *hate_top = GetHateTop();
@@ -74,23 +83,31 @@ void Mob::CheckFlee() {
 		//these values are not 100% researched
 		case CON_GREEN:
 			run_ratio = fleeratio * 9 / 10;
+			//Log(Logs::General, Logs::Combat, "[Debug] Green Con - Run Ratio (%i) = Fleeratio (%i) * 9 / 10", run_ratio, fleeratio);
 			break;
 		case CON_LIGHTBLUE:
 			run_ratio = fleeratio * 9 / 10;
+			//Log(Logs::General, Logs::Combat, "[Debug] LB Con - Run Ratio (%i) = Fleeratio (%i) * 9 / 10", run_ratio, fleeratio);
 			break;
 		case CON_BLUE:
 			run_ratio = fleeratio * 8 / 10;
+			//Log(Logs::General, Logs::Combat, "[Debug] Blue Con - Run Ratio (%i) = Fleeratio (%i) * 8 / 10", run_ratio, fleeratio);
 			break;
 		default:
 			run_ratio = fleeratio * 7 / 10;
+			//Log(Logs::General, Logs::Combat, "[Debug] White/Yellow/Red Con - Run Ratio (%i) = Fleeratio (%i) * 7 / 10", run_ratio, fleeratio);
 			break;
 	}
+
+	//Log(Logs::General, Logs::Combat, "[Debug] Ratio (%i) < run_ratio (%i)", ratio, run_ratio);
 	if(ratio < run_ratio)
 	{
-		if (RuleB(Combat, FleeIfNotAlone) ||
-			GetSpecialAbility(ALWAYS_FLEE) ||
-			(!RuleB(Combat, FleeIfNotAlone) && (entity_list.GetHatedCount(hate_top, this) == 0)))
+		//Log(Logs::General, Logs::Combat, "[Debug] Ratio Passed");
+		Log(Logs::General, Logs::Combat, "[Debug] Entity List. GetHatedCount (%i)", entity_list.GetHatedCount(hate_top, this));
+		if (entity_list.GetHatedCount(hate_top, this) == 0) {
+			Log(Logs::General, Logs::Combat, "[Debug] Start Fleeing!");
 			StartFleeing();
+		}
 	}
 }
 

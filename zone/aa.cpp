@@ -286,6 +286,7 @@ void Mob::WakeTheDead(uint16 spell_id, Mob *target, uint32 duration)
 	make_npc->ATK = GetLevel();
 	make_npc->max_dmg = (GetLevel() * 4) + 2;
 	make_npc->min_dmg = 1;
+	make_npc->npc_aggro = true;
 
 	//base stats
 	make_npc->cur_hp = (GetLevel() * 55);

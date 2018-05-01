@@ -72,6 +72,8 @@ RULE_REAL(Character, AAExpMultiplierYellow, 1.0)
 RULE_REAL(Character, AAExpMultiplierRed, 1.0)
 RULE_INT(Character, MaxAAExpPerKill, 3596474)
 
+RULE_REAL(Character, ExpInstanceMultiplier, 0.20)
+
 RULE_BOOL(Character, UseXPConScaling, true)
 RULE_INT(Character, ShowExpValues, 0) //0 - normal, 1 - Show raw experience values, 2 - Show raw experience values AND percent.
 RULE_INT(Character, GreenModifier, 20)
@@ -616,6 +618,7 @@ RULE_INT(Aggro, InitialAggroBonus, 100) // Initial Aggro Bonus, Default 100
 RULE_BOOL(Aggro, PetsTriggerAggro, false)
 RULE_REAL(Aggro, CharmedPetAggroRadiusMod, 5.0) // 5x combat distance check for charmed pets
 RULE_REAL(Aggro, YellForHelpZIndex, 10.0)
+RULE_INT(Aggro, InitialPetAggroBonus, 135)
 RULE_CATEGORY_END()
 
 RULE_CATEGORY(TaskSystem)
