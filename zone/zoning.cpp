@@ -732,8 +732,13 @@ void Client::Gate() {
 }
 
 void NPC::Gate() {
+	if (IsNPC()) {
+		auto npcSpawnPoint = CastToNPC()->GetSpawnPoint();
+		if (DistanceSquaredNoZ(m_Position, npcSpawnPoint) < RuleI(NPC, NPCGateDistanceFromBind)) {
+			return;
+		}
+	}
 	entity_list.MessageClose_StringID(this, true, RuleI(Range, SpellMessages), MT_Spells, GATES, GetCleanName());
-
 	Mob::Gate();
 }
 

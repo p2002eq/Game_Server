@@ -595,6 +595,7 @@ RULE_BOOL(NPC, UseClassAsLastName, true) // Uses class archetype as LastName for
 RULE_BOOL(NPC, NewLevelScaling, true) // Better level scaling, use old if new formulas would break your server
 RULE_BOOL(NPC, CastOutOfEraSpells, false)
 RULE_REAL(NPC,NPCBackstabMod, 3.1) // Multiplier for NPC Backstab, Higher = Lower backstab amount
+RULE_INT(NPC, NPCGateDistanceFromBind, 25) // Distance from bind before gate will function
 RULE_CATEGORY_END()
 
 RULE_CATEGORY(Aggro)
