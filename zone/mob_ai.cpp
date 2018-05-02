@@ -1042,9 +1042,7 @@ void Mob::ProcessForcedMovement() {
 			m_Delta = glm::vec4();
 			SendPositionUpdate();
 			pLastChange = Timer::GetCurrentTime();
-			if(this->GetRace() != 72 && this->GetRace() != 73 && this->GetRace() != 141 && zone->GetZoneID() != 216) {
-				this->FixZ();
-			} // so we teleport to the ground locally, we want the client to interpolate falling etc
+			FixZ(); // so we teleport to the ground locally, we want the client to interpolate falling etc
 		} else if (--ForcedMovement) {
 			auto proj = glm::proj(static_cast<glm::vec3>(m_Delta), normal);
 			m_Delta.x -= proj.x;
