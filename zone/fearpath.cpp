@@ -102,9 +102,8 @@ void Mob::CheckFlee() {
 	//Log(Logs::General, Logs::Combat, "[Debug] Ratio (%i) < run_ratio (%i)", ratio, run_ratio);
 	if(ratio < run_ratio)
 	{
-		//Log(Logs::General, Logs::Combat, "[Debug] Ratio Passed");
-		Log(Logs::General, Logs::Combat, "[Debug] Entity List. GetHatedCount (%i)", entity_list.GetHatedCount(hate_top, this));
-		if (entity_list.GetHatedCount(hate_top, this) == 0) {
+		Log(Logs::General, Logs::Combat, "[Debug] Entity List. GetHatedCount (%i)", entity_list.GetHatedCount(hate_top, this, true));
+		if (entity_list.GetHatedCount(hate_top, this, true) == 0) {
 			Log(Logs::General, Logs::Combat, "[Debug] Start Fleeing!");
 			StartFleeing();
 		}
