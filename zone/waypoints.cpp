@@ -480,9 +480,10 @@ bool Mob::MakeNewPositionAndSendUpdate(float x, float y, float z, int speed, boo
 		m_Position.y = new_y;
 		m_Position.z = new_z;
 
-		if(fix_z_timer.Check() && 
-			(!this->IsEngaged() || flee_mode || currently_fleeing)) {
-			this->FixZ();
+		if(fix_z_timer.Check() && (!this->IsEngaged() || flee_mode || currently_fleeing)) {
+			if(this->GetRace() != 72 && this->GetRace() != 73 && this->GetRace() != 141 && zone->GetZoneID() != 216) {
+				this->FixZ(1);
+			}
 		}
 
 		tar_ndx++;
@@ -588,7 +589,9 @@ bool Mob::MakeNewPositionAndSendUpdate(float x, float y, float z, int speed, boo
 	}
 
 	if (fix_z_timer.Check() && !this->IsEngaged()) {
-		this->FixZ();
+		if(this->GetRace() != 72 && this->GetRace() != 73 && this->GetRace() != 141 && zone->GetZoneID() != 216) {
+			this->FixZ(1);
+		}
 	}
 
 	SetMoving(true);
@@ -677,8 +680,11 @@ bool Mob::CalculateNewPosition(float x, float y, float z, int speed, bool checkZ
 		Log(Logs::Detail, Logs::AI, "Next position (%.3f, %.3f, %.3f)", m_Position.x, m_Position.y, m_Position.z);
 	}
 
-	if (fix_z_timer.Check())
-		this->FixZ();
+	if (fix_z_timer.Check()) {
+		if(this->GetRace() != 72 && this->GetRace() != 73 && this->GetRace() != 141 && zone->GetZoneID() != 216) {
+			this->FixZ(1);
+		}
+	}
 
 	//OP_MobUpdate
 	if ((old_test_vector != test_vector) || tar_ndx>20) { //send update

@@ -4334,7 +4334,7 @@ bool ZoneDatabase::CopyCorpseToBackup(uint32 corpse_id) {
 		return false;
 	}
 
-	query = StringFormat("UPDATE `character_corpses_backup` SET is_locked = %d WHERE `id` = %d", atoi(rows[0]), corpse_id);
+	query = StringFormat("UPDATE `character_corpses_backup` SET is_locked = '1' WHERE `id` = %d", corpse_id);
 	results = QueryDatabase(query);
 	if (!results.Success()) {
 		return false;

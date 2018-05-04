@@ -648,7 +648,7 @@ void EntityList::AddNPC(NPC *npc, bool SendSpawnPacket, bool dontqueue)
 
 	parse->EventNPC(EVENT_SPAWN, npc, nullptr, "", 0);
 
-	if(npc->GetRace() != 72 && npc->GetRace() != 73 && npc->GetRace() != 141 ) {
+	if(npc->GetRace() != 72 && npc->GetRace() != 73 && npc->GetRace() != 141 && zone->GetZoneID() != 216) {
 		npc->FixZ(1);
 	}
 
