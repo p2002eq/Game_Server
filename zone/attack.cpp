@@ -2596,11 +2596,13 @@ void Mob::AddToHateList(Mob* other, uint32 hate /*= 0*/, int32 damage /*= 0*/, b
 			hate = ((hate * (hatemod)) / 100);
 		}
 		else {
-			hate += RuleI(Aggro, InitialAggroBonus); // Bonus Initial Aggro
-			//if (other->IsCharmed()) { // charmed mobs get double initial aggro
-			//	hate += RuleI(Aggro, InitialAggroBonus);
-			//}
-			Log(Logs::Detail, Logs::Combat, "InitialAggroBonus: %d", RuleI(Aggro, InitialAggroBonus));
+			if (this->IsCharmed()){
+				hate += RuleI(Aggro, InitialPetAggroBonus);
+				Log(Logs::General, Logs::Combat, "InitialPetAggroBonus: %d", RuleI(Aggro, InitialPetAggroBonus));
+			} else {
+				hate += RuleI(Aggro, InitialAggroBonus);
+				Log(Logs::General, Logs::Combat, "InitialAggroBonus: %d", RuleI(Aggro, InitialAggroBonus));
+			}
 		}
 	}
 
@@ -3286,6 +3288,7 @@ bool Mob::HasRangedProcs() const
 
 bool Client::CheckDoubleAttack()
 {
+
 	int chance = 0;
 	int skill = GetSkill(EQEmu::skills::SkillDoubleAttack);
 	//Check for bonuses that give you a double attack chance regardless of skill (ie Bestial Frenzy/Harmonious Attack AA)
@@ -3297,9 +3300,16 @@ bool Client::CheckDoubleAttack()
 
 	if (bonusGiveDA)
 		chance += bonusGiveDA / 100.0f * 500; // convert to skill value
-	int per_inc = aabonuses.DoubleAttackChance + spellbonuses.DoubleAttackChance + itembonuses.DoubleAttackChance;
-	if (per_inc)
+	int per_inc = 0;
+	if ((GetClass() == PALADIN || GetClass() == SHADOWKNIGHT) && (!HasTwoHanderEquipped())) {
+		per_inc = 0;
+		Log(Logs::General, Logs::Combat, "Knight class without a 2 hand weapon equiped = No DA Bonus!");
+	} else {
+		per_inc = aabonuses.DoubleAttackChance + spellbonuses.DoubleAttackChance + itembonuses.DoubleAttackChance;
+	}
+	if (per_inc > 0) {
 		chance += chance * per_inc / 100;
+	}
 
 	Log(Logs::General, Logs::Combat, "Double Attack Chance = %i out of 500", chance);
 
@@ -3637,17 +3647,12 @@ void Mob::CommonDamage(Mob* attacker, int &damage, const uint16 spell_id, const 
 			a->special = 0;
 		}
 		a->hit_heading = attacker ? attacker->GetHeading() : 0.0f;
-		if (
-				RuleB(Combat, MeleePush) &&
-				damage > 0 &&
-				!IsRooted() &&
-				(
-				 IsClient() ||
-				 zone->random.Roll(RuleI(Combat, MeleePushChance))
-				 )
-			) {
+
+		if (RuleB(Combat, MeleePush) && damage > 0 && !IsRooted() &&
+			(IsClient() || zone->random.Roll(RuleI(Combat, MeleePushChance)))) {
 			a->force = EQEmu::skills::GetSkillMeleePushForce(skill_used);
 			if (IsNPC()) {
+				a->force *= 0.10f; // force against NPCs is divided by 10 I guess? ex bash is 0.3, parsed 0.03 against an NPC
 				if (ForcedMovement == 0 && a->force != 0.0f && position_update_melee_push_timer.Check()) {
 					m_Delta.x += a->force * g_Math.FastSin(a->hit_heading);
 					m_Delta.y += a->force * g_Math.FastCos(a->hit_heading);
@@ -5648,8 +5653,13 @@ void Client::DoAttackRounds(Mob *target, int hand, bool IsFromSpell)
 
 	if (hand == EQEmu::inventory::slotPrimary) {
 		auto extraattackchance = aabonuses.ExtraAttackChance + spellbonuses.ExtraAttackChance + itembonuses.ExtraAttackChance;
-		if (extraattackchance && HasTwoHanderEquipped() && zone->random.Roll(extraattackchance))
+		Log(Logs::General, Logs::Combat, "Extra Attack Roll - Extra Attack Chance = %i of 100", extraattackchance);
+		if (extraattackchance && HasTwoHanderEquipped() && zone->random.Roll(extraattackchance)) {
+			Log(Logs::General, Logs::Combat, "Extra Attack Passed ");
 			Attack(target, hand, false, false, IsFromSpell);
+		} else if (extraattackchance && !HasTwoHanderEquipped()){
+			Log(Logs::General, Logs::Combat, "Extra Attack not attempted - Missing 2 Hand Weapon! ");
+		}
 	}
 }
 

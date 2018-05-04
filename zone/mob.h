@@ -48,7 +48,7 @@ class Raid;
 struct NewSpawn_Struct;
 struct PlayerPositionUpdateServer_Struct;
 
-const int COLLISION_BOX_SIZE = 4;
+const int COLLISION_BOX_SIZE = 8;
 
 namespace EQEmu
 {
@@ -621,6 +621,11 @@ public:
 	inline void Teleport(glm::vec3 NewPosition) { m_Position.x = NewPosition.x; m_Position.y = NewPosition.y;
 		m_Position.z = NewPosition.z; };
 	void TryMoveAlong(float distance, float angle, bool send = true);
+	void ProcessForcedMovement();
+	inline void IncDeltaX(float in) { m_Delta.x += in; }
+	inline void IncDeltaY(float in) { m_Delta.y += in; }
+	inline void IncDeltaZ(float in) { m_Delta.z += in; }
+	inline void SetForcedMovement(int in) { ForcedMovement = in; }
 
 	//AI
 	static uint8 GetLevelForClientCon(uint8 mylevel, uint8 iOtherLevel);

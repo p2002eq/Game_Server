@@ -421,7 +421,7 @@ public:
 
 	void	CheckClientAggro(Client *around);
 	Mob*	AICheckNPCtoNPCAggro(Mob* sender, float iAggroRange, float iAssistRange);
-	int		GetHatedCount(Mob *attacker, Mob *exclude);
+	int		GetHatedCount(Mob *attacker, Mob *exclude, bool incgreencon);
 	void	AIYellForHelp(Mob* sender, Mob* attacker);
 	bool	AICheckCloseBeneficialSpells(NPC* caster, uint8 iChance, float iRange, uint32 iSpellTypes);
 	bool	Merc_AICheckCloseBeneficialSpells(Merc* caster, uint8 iChance, float iRange, uint32 iSpellTypes);

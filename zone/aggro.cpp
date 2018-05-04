@@ -382,7 +382,7 @@ Mob* EntityList::AICheckNPCtoNPCAggro(Mob* sender, float iAggroRange, float iAss
 	return nullptr;
 }
 
-int EntityList::GetHatedCount(Mob *attacker, Mob *exclude)
+int EntityList::GetHatedCount(Mob *attacker, Mob *exclude, bool incgreencon)
 {
 	// Return a list of how many non-feared, non-mezzed, non-green mobs, within aggro range, hate *attacker
 	if (!attacker)
@@ -401,7 +401,7 @@ int EntityList::GetHatedCount(Mob *attacker, Mob *exclude)
 		if (mob->IsFeared() || mob->IsMezzed())
 			continue;
 
-		if (attacker->GetLevelCon(mob->GetLevel()) == CON_GREEN)
+		if (!incgreencon && attacker->GetLevelCon(mob->GetLevel()) == CON_GREEN)
 			continue;
 
 		if (!mob->CheckAggro(attacker))

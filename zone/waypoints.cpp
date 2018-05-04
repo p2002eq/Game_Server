@@ -480,9 +480,10 @@ bool Mob::MakeNewPositionAndSendUpdate(float x, float y, float z, int speed, boo
 		m_Position.y = new_y;
 		m_Position.z = new_z;
 
-		if(fix_z_timer.Check() && 
-			(!this->IsEngaged() || flee_mode || currently_fleeing)) {
-			this->FixZ();
+		if(fix_z_timer.Check() && (!this->IsEngaged() || flee_mode || currently_fleeing)) {
+			if(this->GetRace() != 72 && this->GetRace() != 73 && this->GetRace() != 141 && zone->GetZoneID() != 216) {
+				this->FixZ(1);
+			}
 		}
 
 		tar_ndx++;
@@ -588,7 +589,9 @@ bool Mob::MakeNewPositionAndSendUpdate(float x, float y, float z, int speed, boo
 	}
 
 	if (fix_z_timer.Check() && !this->IsEngaged()) {
-		this->FixZ();
+		if(this->GetRace() != 72 && this->GetRace() != 73 && this->GetRace() != 141 && zone->GetZoneID() != 216) {
+			this->FixZ(1);
+		}
 	}
 
 	SetMoving(true);
@@ -617,8 +620,9 @@ bool Mob::CalculateNewPosition(float x, float y, float z, int speed, bool checkZ
 
 void NPC::AssignWaypoints(int32 grid)
 {
-	if (grid == 0)
+	if (grid == 0) {
 		return; // grid ID 0 not supported
+	}
 
 	if (grid < 0) {
 		// Allow setting negative grid values for pausing pathing
@@ -637,8 +641,9 @@ void NPC::AssignWaypoints(int32 grid)
 		return;
 	}
 
-	if (results.RowCount() == 0)
+	if (results.RowCount() == 0) {
 		return;
+	}
 
 	auto row = results.begin();
 
@@ -929,7 +934,7 @@ void Mob::TryMoveAlong(float distance, float angle, bool send)
 		if (new_z != BEST_Z_INVALID)
 			new_pos.z = new_z;
 
-		if (zone->zonemap->FindClosestLoS(GetPosition(), new_pos, tmp_pos))
+		if (zone->zonemap->LineIntersectsZone(GetPosition(), new_pos, 0.0f, &tmp_pos))
 			new_pos = tmp_pos;
 	}
 

@@ -29,6 +29,7 @@
 #include "queryserv.h"
 #include "quest_parser_collection.h"
 #include "string_ids.h"
+#include "../world/client.h"
 
 #ifdef BOTS
 #include "bot.h"
@@ -124,6 +125,10 @@ void Client::AddEXP(uint32 in_add_exp, uint8 conlevel, bool resexp) {
 		}
 	}
 
+	if (GetInstanceID() != 0) {
+		add_exp = add_exp * RuleR(Character, ExpInstanceMultiplier);
+	}
+
 	//figure out how much of this goes to AAs
 	add_aaxp = add_exp * m_epp.perAA / 100;
 
@@ -180,8 +185,8 @@ void Client::AddEXP(uint32 in_add_exp, uint8 conlevel, bool resexp) {
 				add_aaxp, GetAAXP() + add_aaxp, add_exp, GetEXP() + add_exp, neededxp, GetLevel() + 1);
 	}
 
-	Message(CC_Yellow, "[DEBUG] XP awarded: %i (%i) Required XP is: %i Cap: %0.2f ", add_exp, GetEXP() + add_exp, requiredxp, xp_cap);
-	Message(CC_Yellow, "[DEBUG] AA XP awarded: %i (%i) Required AA XP is: %i Cap: %i ", add_aaxp, had_aaexp + add_exp, RuleI(AA, ExpPerPoint), aaxp_cap);
+	//Message(CC_Yellow, "[DEBUG] XP awarded: %i (%i) Required XP is: %i Cap: %0.2f ", add_exp, GetEXP() + add_exp, requiredxp, xp_cap);
+	//Message(CC_Yellow, "[DEBUG] AA XP awarded: %i (%i) Required AA XP is: %i Cap: %i ", add_aaxp, had_aaexp + add_exp, RuleI(AA, ExpPerPoint), aaxp_cap);
 
 	// Check for Unused AA Cap.  If at or above cap, set AAs to cap, set aaexp to 0 and set aa percentage to 0.
 	// Doing this here means potentially one kill wasted worth of experience, but easiest to put it here than to rewrite this function.
@@ -197,7 +202,7 @@ void Client::AddEXP(uint32 in_add_exp, uint8 conlevel, bool resexp) {
 		}
 	}
 
-	if (GetLevel() <= 51 and m_epp.perAA > 0) {
+	if (GetLevel() <= 50 and m_epp.perAA > 0) {
 		Message(15, "You are below the level allowed to gain AA Experience. AA Experience set to 0%");
 		aaexp = 0;
 		m_epp.perAA = 0;
