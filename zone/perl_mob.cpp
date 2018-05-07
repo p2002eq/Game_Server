@@ -5891,7 +5891,7 @@ XS(XS_Mob_CalculateNewPosition2)
 {
 	dXSARGS;
 	if (items < 5 || items > 6)
-		Perl_croak(aTHX_ "Usage: Mob::CalculateNewPosition2(THIS, x, y, z, speed, checkZ= false)");
+		Perl_croak(aTHX_ "Usage: Mob::CalculateNewPosition(THIS, x, y, z, speed, checkZ= false)");
 	{
 		Mob *		THIS;
 		bool		RETVAL;
@@ -5916,7 +5916,7 @@ XS(XS_Mob_CalculateNewPosition2)
 			checkZ = (bool)SvTRUE(ST(5));
 		}
 
-		RETVAL = THIS->CalculateNewPosition2(x, y, z, speed, checkZ);
+		RETVAL = THIS->CalculateNewPosition(x, y, z, speed, checkZ);
 		ST(0) = boolSV(RETVAL);
 		sv_2mortal(ST(0));
 	}
@@ -9262,7 +9262,6 @@ XS(boot_Mob)
 		newXSproto(strcpy(buf, "CheckAggro"), XS_Mob_CheckAggro, file, "$$");
 		newXSproto(strcpy(buf, "CalculateHeadingToTarget"), XS_Mob_CalculateHeadingToTarget, file, "$$$");
 		newXSproto(strcpy(buf, "CalculateNewPosition"), XS_Mob_CalculateNewPosition, file, "$$$$$;$");
-		newXSproto(strcpy(buf, "CalculateNewPosition2"), XS_Mob_CalculateNewPosition2, file, "$$$$$;$");
 		newXSproto(strcpy(buf, "CalculateDistance"), XS_Mob_CalculateDistance, file, "$$$$");
 		newXSproto(strcpy(buf, "SendTo"), XS_Mob_SendTo, file, "$$$$");
 		newXSproto(strcpy(buf, "SendToFixZ"), XS_Mob_SendToFixZ, file, "$$$$");
