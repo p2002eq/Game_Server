@@ -21,15 +21,15 @@
 extern volatile bool is_zone_loaded;
 
 #if EQDEBUG >= 12
-	#define MercAI_DEBUG_Spells	25
+#define MercAI_DEBUG_Spells	25
 #elif EQDEBUG >= 9
-	#define MercAI_DEBUG_Spells	10
+#define MercAI_DEBUG_Spells	10
 #else
-	#define MercAI_DEBUG_Spells	-1
+#define MercAI_DEBUG_Spells	-1
 #endif
 
 Merc::Merc(const NPCType* d, float x, float y, float z, float heading)
-: NPC(d, nullptr, glm::vec4(x, y, z, heading), 0, false), endupkeep_timer(1000), rest_timer(1), confidence_timer(6000), check_target_timer(2000)
+		: NPC(d, nullptr, glm::vec4(x, y, z, heading), 0, false), endupkeep_timer(1000), rest_timer(1), confidence_timer(6000), check_target_timer(2000)
 {
 	base_hp = d->max_hp;
 	base_mana = d->Mana;
@@ -469,7 +469,7 @@ void Merc::AddItemBonuses(const EQEmu::ItemData *item, StatBonuses* newbon) {
 
 	switch(item->BardType)
 	{
-	case 51: /* All (e.g. Singing Short Sword) */
+		case 51: /* All (e.g. Singing Short Sword) */
 		{
 			if(item->BardValue > newbon->singingMod)
 				newbon->singingMod = item->BardValue;
@@ -483,31 +483,31 @@ void Merc::AddItemBonuses(const EQEmu::ItemData *item, StatBonuses* newbon) {
 				newbon->windMod = item->BardValue;
 			break;
 		}
-	case 50: /* Singing */
+		case 50: /* Singing */
 		{
 			if(item->BardValue > newbon->singingMod)
 				newbon->singingMod = item->BardValue;
 			break;
 		}
-	case 23: /* Wind */
+		case 23: /* Wind */
 		{
 			if(item->BardValue > newbon->windMod)
 				newbon->windMod = item->BardValue;
 			break;
 		}
-	case 24: /* stringed */
+		case 24: /* stringed */
 		{
 			if(item->BardValue > newbon->stringedMod)
 				newbon->stringedMod = item->BardValue;
 			break;
 		}
-	case 25: /* brass */
+		case 25: /* brass */
 		{
 			if(item->BardValue > newbon->brassMod)
 				newbon->brassMod = item->BardValue;
 			break;
 		}
-	case 26: /* Percussion */
+		case 26: /* Percussion */
 		{
 			if(item->BardValue > newbon->percussionMod)
 				newbon->percussionMod = item->BardValue;
@@ -586,14 +586,14 @@ int Merc::GroupLeadershipAAHealthEnhancement()
 
 	switch(g->GetLeadershipAA(groupAAHealthEnhancement))
 	{
-	case 0:
-		return 0;
-	case 1:
-		return 30;
-	case 2:
-		return 60;
-	case 3:
-		return 100;
+		case 0:
+			return 0;
+		case 1:
+			return 30;
+		case 2:
+			return 60;
+		case 3:
+			return 100;
 	}
 
 	return 0;
@@ -608,14 +608,14 @@ int Merc::GroupLeadershipAAManaEnhancement()
 
 	switch(g->GetLeadershipAA(groupAAManaEnhancement))
 	{
-	case 0:
-		return 0;
-	case 1:
-		return 30;
-	case 2:
-		return 60;
-	case 3:
-		return 100;
+		case 0:
+			return 0;
+		case 1:
+			return 30;
+		case 2:
+			return 60;
+		case 3:
+			return 100;
 	}
 
 	return 0;
@@ -630,14 +630,14 @@ int Merc::GroupLeadershipAAHealthRegeneration()
 
 	switch(g->GetLeadershipAA(groupAAHealthRegeneration))
 	{
-	case 0:
-		return 0;
-	case 1:
-		return 4;
-	case 2:
-		return 6;
-	case 3:
-		return 8;
+		case 0:
+			return 0;
+		case 1:
+			return 4;
+		case 2:
+			return 6;
+		case 3:
+			return 8;
 	}
 
 	return 0;
@@ -652,18 +652,18 @@ int Merc::GroupLeadershipAAOffenseEnhancement()
 
 	switch(g->GetLeadershipAA(groupAAOffenseEnhancement))
 	{
-	case 0:
-		return 0;
-	case 1:
-		return 10;
-	case 2:
-		return 19;
-	case 3:
-		return 28;
-	case 4:
-		return 34;
-	case 5:
-		return 40;
+		case 0:
+			return 0;
+		case 1:
+			return 10;
+		case 2:
+			return 19;
+		case 3:
+			return 28;
+		case 4:
+			return 34;
+		case 5:
+			return 40;
 	}
 	return 0;
 }
@@ -887,20 +887,20 @@ int32 Merc::CalcMaxMana()
 {
 	switch(GetCasterClass())
 	{
-	case 'I':
-	case 'W': {
-		max_mana = (CalcBaseMana() + itembonuses.Mana + spellbonuses.Mana + GroupLeadershipAAManaEnhancement());
-		break;
-			  }
-	case 'N': {
-		max_mana = 0;
-		break;
-			  }
-	default: {
-		Log(Logs::General, Logs::None, "Invalid Class '%c' in CalcMaxMana", GetCasterClass());
-		max_mana = 0;
-		break;
-			 }
+		case 'I':
+		case 'W': {
+			max_mana = (CalcBaseMana() + itembonuses.Mana + spellbonuses.Mana + GroupLeadershipAAManaEnhancement());
+			break;
+		}
+		case 'N': {
+			max_mana = 0;
+			break;
+		}
+		default: {
+			Log(Logs::General, Logs::None, "Invalid Class '%c' in CalcMaxMana", GetCasterClass());
+			max_mana = 0;
+			break;
+		}
 	}
 	if (max_mana < 0) {
 		max_mana = 0;
@@ -982,12 +982,12 @@ int32 Merc::CalcManaRegenCap()
 	int32 cap = RuleI(Character, ItemManaRegenCap) + aabonuses.ItemManaRegenCap;
 	switch(GetCasterClass())
 	{
-	case 'I':
-		cap += (itembonuses.HeroicINT / 25);
-		break;
-	case 'W':
-		cap += (itembonuses.HeroicWIS / 25);
-		break;
+		case 'I':
+			cap += (itembonuses.HeroicINT / 25);
+			break;
+		case 'W':
+			cap += (itembonuses.HeroicWIS / 25);
+			break;
 	}
 
 	return (cap * RuleI(Character, ManaRegenMultiplier) / 100);
@@ -1482,17 +1482,17 @@ void Merc::AI_Process() {
 				bool WaypointChanged, NodeReached;
 
 				glm::vec3 Goal = UpdatePath(GetTarget()->GetX(), GetTarget()->GetY(), GetTarget()->GetZ(),
-					GetRunspeed(), WaypointChanged, NodeReached);
+											GetRunspeed(), WaypointChanged, NodeReached);
 
 				if (WaypointChanged)
 					tar_ndx = 20;
 
-				CalculateNewPosition2(Goal.x, Goal.y, Goal.z, GetRunspeed());
+				CalculateNewPosition(Goal.x, Goal.y, Goal.z, GetRunspeed());
 			}
 			else {
 				Mob* follow = entity_list.GetMob(GetFollowID());
 				if (follow)
-					CalculateNewPosition2(follow->GetX(), follow->GetY(), follow->GetZ(), GetRunspeed());
+					CalculateNewPosition(follow->GetX(), follow->GetY(), follow->GetZ(), GetRunspeed());
 			}
 
 			return;
@@ -1559,7 +1559,7 @@ void Merc::AI_Process() {
 									float newZ = 0;
 									FaceTarget(GetTarget());
 									if (PlotPositionAroundTarget(this, newX, newY, newZ)) {
-										CalculateNewPosition2(newX, newY, newZ, GetRunspeed());
+										CalculateNewPosition(newX, newY, newZ, GetRunspeed());
 										return;
 									}
 								}
@@ -1571,7 +1571,7 @@ void Merc::AI_Process() {
 							float newY = 0;
 							float newZ = 0;
 							if (PlotPositionAroundTarget(GetTarget(), newX, newY, newZ)) {
-								CalculateNewPosition2(newX, newY, newZ, GetRunspeed());
+								CalculateNewPosition(newX, newY, newZ, GetRunspeed());
 								return;
 							}
 						}
@@ -1582,7 +1582,7 @@ void Merc::AI_Process() {
 						float newY = 0;
 						float newZ = 0;
 						if (PlotPositionAroundTarget(GetTarget(), newX, newY, newZ, false) && GetArchetype() != ARCHETYPE_CASTER) {
-							CalculateNewPosition2(newX, newY, newZ, GetRunspeed());
+							CalculateNewPosition(newX, newY, newZ, GetRunspeed());
 							return;
 						}
 					}
@@ -1709,7 +1709,7 @@ void Merc::AI_Process() {
 			{
 				if(!IsRooted()) {
 					Log(Logs::Detail, Logs::AI, "Pursuing %s while engaged.", GetTarget()->GetCleanName());
-					CalculateNewPosition2(GetTarget()->GetX(), GetTarget()->GetY(), GetTarget()->GetZ(), GetRunspeed());
+					CalculateNewPosition(GetTarget()->GetX(), GetTarget()->GetY(), GetTarget()->GetZ(), GetRunspeed());
 					return;
 				}
 
@@ -1776,15 +1776,15 @@ void Merc::AI_Process() {
 							bool WaypointChanged, NodeReached;
 
 							glm::vec3 Goal = UpdatePath(follow->GetX(), follow->GetY(), follow->GetZ(),
-								speed, WaypointChanged, NodeReached);
+														speed, WaypointChanged, NodeReached);
 
 							if (WaypointChanged)
 								tar_ndx = 20;
 
-							CalculateNewPosition2(Goal.x, Goal.y, Goal.z, speed);
+							CalculateNewPosition(Goal.x, Goal.y, Goal.z, speed);
 						}
 						else {
-							CalculateNewPosition2(follow->GetX(), follow->GetY(), follow->GetZ(), speed);
+							CalculateNewPosition(follow->GetX(), follow->GetY(), follow->GetZ(), speed);
 						}
 
 						if (rest_timer.Enabled())
@@ -1842,36 +1842,36 @@ bool Merc::AI_EngagedCastCheck() {
 
 		switch(mercClass)
 		{
-		case TANK:
-			if (!AICastSpell(GetChanceToCastBySpellType(SpellType_Nuke), SpellType_Nuke)) {
-				if (!AICastSpell(GetChanceToCastBySpellType(SpellType_InCombatBuff), SpellType_InCombatBuff)) {
-					failedToCast = true;
-				}
-			}
-			break;
-		case HEALER:
-			if(!entity_list.Merc_AICheckCloseBeneficialSpells(this, GetChanceToCastBySpellType(SpellType_Heal), MercAISpellRange, SpellType_Heal)) {
-				if(!entity_list.Merc_AICheckCloseBeneficialSpells(this, GetChanceToCastBySpellType(SpellType_Buff), MercAISpellRange, SpellType_Buff)) {
-					failedToCast = true;
-				}
-			}
-			break;
-		case MELEEDPS:
-			if (!AICastSpell(GetChanceToCastBySpellType(SpellType_Escape), SpellType_Escape)) {
+			case TANK:
 				if (!AICastSpell(GetChanceToCastBySpellType(SpellType_Nuke), SpellType_Nuke)) {
 					if (!AICastSpell(GetChanceToCastBySpellType(SpellType_InCombatBuff), SpellType_InCombatBuff)) {
 						failedToCast = true;
 					}
 				}
-			}
-			break;
-		case CASTERDPS:
-			if (!AICastSpell(GetChanceToCastBySpellType(SpellType_Escape), SpellType_Escape)) {
-				if (!AICastSpell(GetChanceToCastBySpellType(SpellType_Nuke), SpellType_Nuke)) {
-					failedToCast = true;
+				break;
+			case HEALER:
+				if(!entity_list.Merc_AICheckCloseBeneficialSpells(this, GetChanceToCastBySpellType(SpellType_Heal), MercAISpellRange, SpellType_Heal)) {
+					if(!entity_list.Merc_AICheckCloseBeneficialSpells(this, GetChanceToCastBySpellType(SpellType_Buff), MercAISpellRange, SpellType_Buff)) {
+						failedToCast = true;
+					}
 				}
-			}
-			break;
+				break;
+			case MELEEDPS:
+				if (!AICastSpell(GetChanceToCastBySpellType(SpellType_Escape), SpellType_Escape)) {
+					if (!AICastSpell(GetChanceToCastBySpellType(SpellType_Nuke), SpellType_Nuke)) {
+						if (!AICastSpell(GetChanceToCastBySpellType(SpellType_InCombatBuff), SpellType_InCombatBuff)) {
+							failedToCast = true;
+						}
+					}
+				}
+				break;
+			case CASTERDPS:
+				if (!AICastSpell(GetChanceToCastBySpellType(SpellType_Escape), SpellType_Escape)) {
+					if (!AICastSpell(GetChanceToCastBySpellType(SpellType_Nuke), SpellType_Nuke)) {
+						failedToCast = true;
+					}
+				}
+				break;
 		}
 
 		if(!AIautocastspell_timer->Enabled()) {
@@ -1900,29 +1900,29 @@ bool Merc::AI_IdleCastCheck() {
 
 		switch(mercClass)
 		{
-		case TANK:
-			failedToCast = true;
-			break;
-		case HEALER:
-			if(!entity_list.Merc_AICheckCloseBeneficialSpells(this, 100, MercAISpellRange, SpellType_Cure)) {
-				if(!entity_list.Merc_AICheckCloseBeneficialSpells(this, 100, MercAISpellRange, SpellType_Heal)) {
-					if(!entity_list.Merc_AICheckCloseBeneficialSpells(this, 100, MercAISpellRange, SpellType_Resurrect)) {
-						if(!entity_list.Merc_AICheckCloseBeneficialSpells(this, 100, MercAISpellRange, SpellType_Buff)) {
-							failedToCast = true;
+			case TANK:
+				failedToCast = true;
+				break;
+			case HEALER:
+				if(!entity_list.Merc_AICheckCloseBeneficialSpells(this, 100, MercAISpellRange, SpellType_Cure)) {
+					if(!entity_list.Merc_AICheckCloseBeneficialSpells(this, 100, MercAISpellRange, SpellType_Heal)) {
+						if(!entity_list.Merc_AICheckCloseBeneficialSpells(this, 100, MercAISpellRange, SpellType_Resurrect)) {
+							if(!entity_list.Merc_AICheckCloseBeneficialSpells(this, 100, MercAISpellRange, SpellType_Buff)) {
+								failedToCast = true;
+							}
 						}
 					}
 				}
-			}
-			result = true;
-			break;
-		case MELEEDPS:
-			if(!entity_list.Merc_AICheckCloseBeneficialSpells(this, 100, MercAISpellRange, SpellType_Buff)) {
+				result = true;
+				break;
+			case MELEEDPS:
+				if(!entity_list.Merc_AICheckCloseBeneficialSpells(this, 100, MercAISpellRange, SpellType_Buff)) {
+					failedToCast = true;
+				}
+				break;
+			case CASTERDPS:
 				failedToCast = true;
-			}
-			break;
-		case CASTERDPS:
-			failedToCast = true;
-			break;
+				break;
 		}
 
 		if(!AIautocastspell_timer->Enabled())
@@ -2012,11 +2012,11 @@ bool Merc::AIDoSpellCast(uint16 spellid, Mob* tar, int32 mana_cost, uint32* oDon
 		dist2 = DistanceSquared(m_Position, tar->GetPosition());
 
 	if (((((spells[spellid].targettype==ST_GroupTeleport && mercSpell.type==SpellType_Heal)
-		|| spells[spellid].targettype==ST_AECaster
-		|| spells[spellid].targettype==ST_Group
-		|| spells[spellid].targettype==ST_AEBard)
-		&& dist2 <= spells[spellid].aoerange*spells[spellid].aoerange)
-		|| dist2 <= GetActSpellRange(spellid, spells[spellid].range)*GetActSpellRange(spellid, spells[spellid].range)) && (mana_cost <= GetMana() || GetMana() == GetMaxMana()))
+		   || spells[spellid].targettype==ST_AECaster
+		   || spells[spellid].targettype==ST_Group
+		   || spells[spellid].targettype==ST_AEBard)
+		  && dist2 <= spells[spellid].aoerange*spells[spellid].aoerange)
+		 || dist2 <= GetActSpellRange(spellid, spells[spellid].range)*GetActSpellRange(spellid, spells[spellid].range)) && (mana_cost <= GetMana() || GetMana() == GetMaxMana()))
 	{
 		SetRunAnimSpeed(0);
 		SendPosition();
@@ -2076,418 +2076,418 @@ bool Merc::AICastSpell(int8 iChance, uint32 iSpellTypes) {
 
 			switch(mercClass)
 			{
-			case TANK:
-			case MELEEDPS:
-				isDiscipline = true;
-				break;
-			default:
-				isDiscipline = false;
-				break;
+				case TANK:
+				case MELEEDPS:
+					isDiscipline = true;
+					break;
+				default:
+					isDiscipline = false;
+					break;
 			}
 
 			switch (iSpellTypes) {
-							case SpellType_Heal: {
-								Mob* tar = nullptr;
-								int8 numToHeal = g->GetNumberNeedingHealedInGroup(IsEngaged() ? 75 : 95, true);
-								int8 checkHPR = IsEngaged() ? 95 : 99;
-								int8 checkPetHPR = IsEngaged() ? 95 : 99;
+				case SpellType_Heal: {
+					Mob* tar = nullptr;
+					int8 numToHeal = g->GetNumberNeedingHealedInGroup(IsEngaged() ? 75 : 95, true);
+					int8 checkHPR = IsEngaged() ? 95 : 99;
+					int8 checkPetHPR = IsEngaged() ? 95 : 99;
 
-								//todo: check stance to determine healing spell selection
+					//todo: check stance to determine healing spell selection
 
-								for(int i = 0; i < MAX_GROUP_MEMBERS; i++) {
-									if(g->members[i] && !g->members[i]->qglobal) {
-										int8 hpr = (int8)g->members[i]->GetHPRatio();
+					for(int i = 0; i < MAX_GROUP_MEMBERS; i++) {
+						if(g->members[i] && !g->members[i]->qglobal) {
+							int8 hpr = (int8)g->members[i]->GetHPRatio();
 
-										if(g->members[i]->HasPet() && g->members[i]->GetPet()->GetHPRatio() < checkHPR) {
-											if(!tar || ((g->members[i]->GetPet()->GetHPRatio() + 25) < tar->GetHPRatio())) {
-												tar = g->members[i]->GetPet();
-												checkPetHPR = g->members[i]->GetPet()->GetHPRatio() + 25;
-											}
-										}
+							if(g->members[i]->HasPet() && g->members[i]->GetPet()->GetHPRatio() < checkHPR) {
+								if(!tar || ((g->members[i]->GetPet()->GetHPRatio() + 25) < tar->GetHPRatio())) {
+									tar = g->members[i]->GetPet();
+									checkPetHPR = g->members[i]->GetPet()->GetHPRatio() + 25;
+								}
+							}
 
-										if(hpr > checkHPR) {
-											continue;
-										}
+							if(hpr > checkHPR) {
+								continue;
+							}
 
-										if(IsEngaged() && (g->members[i]->GetClass() == NECROMANCER && hpr >= 50)
-											|| (g->members[i]->GetClass() == SHAMAN && hpr >= 80)) {
-												//allow necros to lifetap & shaman to canni without wasting mana
-												continue;
-										}
+							if(IsEngaged() && (g->members[i]->GetClass() == NECROMANCER && hpr >= 50)
+							   || (g->members[i]->GetClass() == SHAMAN && hpr >= 80)) {
+								//allow necros to lifetap & shaman to canni without wasting mana
+								continue;
+							}
 
-										if(hpr < checkHPR && g->members[i] == GetMercOwner()) {
-											if(!tar || (hpr < tar->GetHPRatio() || (tar->IsPet() && hpr < checkPetHPR)))
-												tar = g->members[i];            //check owner first
-										}
-										else if(hpr < checkHPR && g->HasRole(g->members[i], RoleTank)){
-											if(!tar || (hpr < tar->GetHPRatio() || (tar->IsPet() && hpr < checkPetHPR)))
-												tar = g->members[i];
-										}
-										else if( hpr < checkHPR && (!tar || (hpr < tar->GetHPRatio() || (tar->IsPet() && hpr < checkPetHPR)))) {
-											tar = g->members[i];
-										}
-									}
+							if(hpr < checkHPR && g->members[i] == GetMercOwner()) {
+								if(!tar || (hpr < tar->GetHPRatio() || (tar->IsPet() && hpr < checkPetHPR)))
+									tar = g->members[i];            //check owner first
+							}
+							else if(hpr < checkHPR && g->HasRole(g->members[i], RoleTank)){
+								if(!tar || (hpr < tar->GetHPRatio() || (tar->IsPet() && hpr < checkPetHPR)))
+									tar = g->members[i];
+							}
+							else if( hpr < checkHPR && (!tar || (hpr < tar->GetHPRatio() || (tar->IsPet() && hpr < checkPetHPR)))) {
+								tar = g->members[i];
+							}
+						}
+					}
+
+					if(numToHeal > 2) {
+						selectedMercSpell = GetBestMercSpellForGroupHeal(this);
+					}
+
+					if(tar && selectedMercSpell.spellid == 0) {
+						if(tar->GetHPRatio() < 15) {
+							//check for very fast heals first (casting time < 1 s)
+							selectedMercSpell = GetBestMercSpellForVeryFastHeal(this);
+
+							//check for fast heals next (casting time < 2 s)
+							if(selectedMercSpell.spellid == 0) {
+								selectedMercSpell = GetBestMercSpellForFastHeal(this);
+							}
+
+							//get regular heal
+							if(selectedMercSpell.spellid == 0) {
+								selectedMercSpell = GetBestMercSpellForRegularSingleTargetHeal(this);
+							}
+						}
+						else if (tar->GetHPRatio() < 35) {
+							//check for fast heals next (casting time < 2 s)
+							selectedMercSpell = GetBestMercSpellForFastHeal(this);
+
+							//get regular heal
+							if(selectedMercSpell.spellid == 0) {
+								selectedMercSpell = GetBestMercSpellForRegularSingleTargetHeal(this);
+							}
+						}
+						else if (tar->GetHPRatio() < 80) {
+							selectedMercSpell = GetBestMercSpellForPercentageHeal(this);
+
+							//get regular heal
+							if(selectedMercSpell.spellid == 0) {
+								selectedMercSpell = GetBestMercSpellForRegularSingleTargetHeal(this);
+							}
+						}
+						else {
+							//check for heal over time. if not present, try it first
+							if(!tar->FindType(SE_HealOverTime)) {
+								selectedMercSpell = GetBestMercSpellForHealOverTime(this);
+
+								//get regular heal
+								if(selectedMercSpell.spellid == 0) {
+									selectedMercSpell = GetBestMercSpellForRegularSingleTargetHeal(this);
+								}
+							}
+						}
+					}
+
+					if(selectedMercSpell.spellid > 0) {
+						castedSpell = AIDoSpellCast(selectedMercSpell.spellid, tar, -1);
+					}
+
+					if(castedSpell) {
+						char* gmsg = nullptr;
+
+						if(tar != this) {
+							//we don't need spam of bots healing themselves
+							MakeAnyLenString(&gmsg, "Casting %s on %s.", spells[selectedMercSpell.spellid].name, tar->GetCleanName());
+							if(gmsg)
+							{
+								MercGroupSay(this, gmsg);
+								safe_delete_array(gmsg);
+							}
+						}
+					}
+
+					break;
+				}
+				case SpellType_Root: {
+					break;
+				}
+				case SpellType_Buff: {
+
+					if(GetClass() == HEALER && GetManaRatio() < 50) {
+						return false;                   //mercs buff when Mana > 50%
+					}
+
+					std::list<MercSpell> buffSpellList = GetMercSpellsBySpellType(this, SpellType_Buff);
+
+					for (auto itr = buffSpellList.begin();
+						 itr != buffSpellList.end(); ++itr) {
+						MercSpell selectedMercSpell = *itr;
+
+						if(!((spells[selectedMercSpell.spellid].targettype == ST_Target || spells[selectedMercSpell.spellid].targettype == ST_Pet ||
+							  spells[selectedMercSpell.spellid].targettype == ST_Group || spells[selectedMercSpell.spellid].targettype == ST_GroupTeleport ||
+							  spells[selectedMercSpell.spellid].targettype == ST_Self))) {
+							continue;
+						}
+
+						if(spells[selectedMercSpell.spellid].targettype == ST_Self) {
+							if( !this->IsImmuneToSpell(selectedMercSpell.spellid, this)
+								&& (this->CanBuffStack(selectedMercSpell.spellid, mercLevel, true) >= 0)) {
+
+								if( this->GetArchetype() == ARCHETYPE_MELEE && IsEffectInSpell(selectedMercSpell.spellid, SE_IncreaseSpellHaste)) {
+									continue;
 								}
 
-								if(numToHeal > 2) {
-									selectedMercSpell = GetBestMercSpellForGroupHeal(this);
-								}
-
-								if(tar && selectedMercSpell.spellid == 0) {
-									if(tar->GetHPRatio() < 15) {
-										//check for very fast heals first (casting time < 1 s)
-										selectedMercSpell = GetBestMercSpellForVeryFastHeal(this);
-
-										//check for fast heals next (casting time < 2 s)
-										if(selectedMercSpell.spellid == 0) {
-											selectedMercSpell = GetBestMercSpellForFastHeal(this);
-										}
-
-										//get regular heal
-										if(selectedMercSpell.spellid == 0) {
-											selectedMercSpell = GetBestMercSpellForRegularSingleTargetHeal(this);
-										}
-									}
-									else if (tar->GetHPRatio() < 35) {
-										//check for fast heals next (casting time < 2 s)
-										selectedMercSpell = GetBestMercSpellForFastHeal(this);
-
-										//get regular heal
-										if(selectedMercSpell.spellid == 0) {
-											selectedMercSpell = GetBestMercSpellForRegularSingleTargetHeal(this);
-										}
-									}
-									else if (tar->GetHPRatio() < 80) {
-										selectedMercSpell = GetBestMercSpellForPercentageHeal(this);
-
-										//get regular heal
-										if(selectedMercSpell.spellid == 0) {
-											selectedMercSpell = GetBestMercSpellForRegularSingleTargetHeal(this);
-										}
-									}
-									else {
-										//check for heal over time. if not present, try it first
-										if(!tar->FindType(SE_HealOverTime)) {
-											selectedMercSpell = GetBestMercSpellForHealOverTime(this);
-
-											//get regular heal
-											if(selectedMercSpell.spellid == 0) {
-												selectedMercSpell = GetBestMercSpellForRegularSingleTargetHeal(this);
-											}
-										}
-									}
-								}
-
-								if(selectedMercSpell.spellid > 0) {
-									castedSpell = AIDoSpellCast(selectedMercSpell.spellid, tar, -1);
-								}
-
-								if(castedSpell) {
-									char* gmsg = nullptr;
-
-									if(tar != this) {
-										//we don't need spam of bots healing themselves
-										MakeAnyLenString(&gmsg, "Casting %s on %s.", spells[selectedMercSpell.spellid].name, tar->GetCleanName());
-										if(gmsg)
-										{
-											MercGroupSay(this, gmsg);
-											safe_delete_array(gmsg);
-										}
-									}
-								}
-
-								break;
-												 }
-							case SpellType_Root: {
-								break;
-												 }
-							case SpellType_Buff: {
-
-								if(GetClass() == HEALER && GetManaRatio() < 50) {
-									return false;                   //mercs buff when Mana > 50%
-								}
-
-								std::list<MercSpell> buffSpellList = GetMercSpellsBySpellType(this, SpellType_Buff);
-
-								for (auto itr = buffSpellList.begin();
-								     itr != buffSpellList.end(); ++itr) {
-									MercSpell selectedMercSpell = *itr;
-
-									if(!((spells[selectedMercSpell.spellid].targettype == ST_Target || spells[selectedMercSpell.spellid].targettype == ST_Pet ||
-										spells[selectedMercSpell.spellid].targettype == ST_Group || spells[selectedMercSpell.spellid].targettype == ST_GroupTeleport ||
-										spells[selectedMercSpell.spellid].targettype == ST_Self))) {
-											continue;
-									}
-
-									if(spells[selectedMercSpell.spellid].targettype == ST_Self) {
-										if( !this->IsImmuneToSpell(selectedMercSpell.spellid, this)
-											&& (this->CanBuffStack(selectedMercSpell.spellid, mercLevel, true) >= 0)) {
-
-												if( this->GetArchetype() == ARCHETYPE_MELEE && IsEffectInSpell(selectedMercSpell.spellid, SE_IncreaseSpellHaste)) {
-													continue;
-												}
-
-												uint32 TempDontBuffMeBeforeTime = this->DontBuffMeBefore();
-
-												if(selectedMercSpell.spellid > 0) {
-													if(isDiscipline) {
-														castedSpell = UseDiscipline(selectedMercSpell.spellid, GetID());
-													}
-													else {
-														castedSpell = AIDoSpellCast(selectedMercSpell.spellid, this, -1, &TempDontBuffMeBeforeTime);
-
-														if(TempDontBuffMeBeforeTime != this->DontBuffMeBefore())
-															this->SetDontBuffMeBefore(TempDontBuffMeBeforeTime);
-													}
-												}
-										}
-									}
-									else {
-										for( int i = 0; i < MAX_GROUP_MEMBERS; i++) {
-											if(g->members[i]) {
-												Mob* tar = g->members[i];
-
-												if( !tar->IsImmuneToSpell(selectedMercSpell.spellid, this)
-													&& (tar->CanBuffStack(selectedMercSpell.spellid, mercLevel, true) >= 0)) {
-
-														if( tar->GetArchetype() == ARCHETYPE_MELEE && IsEffectInSpell(selectedMercSpell.spellid, SE_IncreaseSpellHaste)) {
-															continue;
-														}
-
-														uint32 TempDontBuffMeBeforeTime = tar->DontBuffMeBefore();
-
-														if(selectedMercSpell.spellid > 0) {
-															if(isDiscipline) {
-																castedSpell = UseDiscipline(selectedMercSpell.spellid, tar->GetID());
-															}
-															else {
-																castedSpell = AIDoSpellCast(selectedMercSpell.spellid, tar, -1, &TempDontBuffMeBeforeTime);
-
-																if(TempDontBuffMeBeforeTime != tar->DontBuffMeBefore())
-																	tar->SetDontBuffMeBefore(TempDontBuffMeBeforeTime);
-															}
-														}
-												}
-
-												if(!castedSpell && tar->GetPet()) {
-
-													//don't cast group spells on pets
-													if(IsGroupSpell(selectedMercSpell.spellid)
-														|| spells[selectedMercSpell.spellid].targettype == ST_Group
-														|| spells[selectedMercSpell.spellid].targettype == ST_GroupTeleport ) {
-															continue;
-													}
-
-													if(!tar->GetPet()->IsImmuneToSpell(selectedMercSpell.spellid, this)
-														&& (tar->GetPet()->CanBuffStack(selectedMercSpell.spellid, mercLevel, true) >= 0)) {
-
-															uint32 TempDontBuffMeBeforeTime = tar->DontBuffMeBefore();
-
-															if(selectedMercSpell.spellid > 0) {
-																if(isDiscipline) {
-																	castedSpell = UseDiscipline(selectedMercSpell.spellid, tar->GetPet()->GetID());
-																}
-																else {
-																	castedSpell = AIDoSpellCast(selectedMercSpell.spellid, tar->GetPet(), -1, &TempDontBuffMeBeforeTime);
-
-																	if(TempDontBuffMeBeforeTime != tar->GetPet()->DontBuffMeBefore())
-																		tar->GetPet()->SetDontBuffMeBefore(TempDontBuffMeBeforeTime);
-																}
-															}
-													}
-												}
-											}
-										}
-									}
-								}
-								break;
-												 }
-							case SpellType_Nuke: {
-								switch(mercClass)
-								{
-								case TANK:
-									//check for taunt
-									if(CheckAETaunt()) {
-										//get AE taunt
-										selectedMercSpell = GetBestMercSpellForAETaunt(this);
-										Log(Logs::General, Logs::Mercenaries, "%s AE Taunting.", GetName());
-									}
-
-									if(selectedMercSpell.spellid == 0 && CheckTaunt()) {
-										//get taunt
-										selectedMercSpell = GetBestMercSpellForTaunt(this);
-									}
-
-									//get hate disc
-									if(selectedMercSpell.spellid == 0) {
-										selectedMercSpell = GetBestMercSpellForHate(this);
-									}
-
-									break;
-								case HEALER:
-									break;
-								case MELEEDPS:
-									break;
-								case CASTERDPS:
-									Mob* tar = GetTarget();
-
-									selectedMercSpell = GetBestMercSpellForAENuke(this, tar);
-
-									if(selectedMercSpell.spellid == 0 && !tar->GetSpecialAbility(UNSTUNABLE) && !tar->IsStunned()) {
-										uint8 stunChance = 15;
-										if(zone->random.Roll(stunChance)) {
-											selectedMercSpell = GetBestMercSpellForStun(this);
-										}
-									}
-
-									if(selectedMercSpell.spellid == 0) {
-										uint8 lureChance = 25;
-										if(zone->random.Roll(lureChance)) {
-											selectedMercSpell = GetBestMercSpellForNukeByTargetResists(this, tar);
-										}
-									}
-
-									if(selectedMercSpell.spellid == 0) {
-										selectedMercSpell = GetBestMercSpellForNuke(this);
-									}
-
-									break;
-								}
+								uint32 TempDontBuffMeBeforeTime = this->DontBuffMeBefore();
 
 								if(selectedMercSpell.spellid > 0) {
 									if(isDiscipline) {
-										castedSpell = UseDiscipline(selectedMercSpell.spellid, GetTarget()->GetID());
+										castedSpell = UseDiscipline(selectedMercSpell.spellid, GetID());
 									}
 									else {
-										castedSpell = AIDoSpellCast(selectedMercSpell.spellid, GetTarget(), -1);
+										castedSpell = AIDoSpellCast(selectedMercSpell.spellid, this, -1, &TempDontBuffMeBeforeTime);
+
+										if(TempDontBuffMeBeforeTime != this->DontBuffMeBefore())
+											this->SetDontBuffMeBefore(TempDontBuffMeBeforeTime);
 									}
 								}
-
-								break;
-												 }
-							case SpellType_InCombatBuff: {
-								std::list<MercSpell> buffSpellList = GetMercSpellsBySpellType(this, SpellType_InCombatBuff);
-								Mob* tar = this;
-
-								for (auto itr = buffSpellList.begin();
-								     itr != buffSpellList.end(); ++itr) {
-									MercSpell selectedMercSpell = *itr;
-
-									if(!(spells[selectedMercSpell.spellid].targettype == ST_Self)) {
-										continue;
-									}
-
-									if (spells[selectedMercSpell.spellid].skill == EQEmu::skills::SkillBackstab && spells[selectedMercSpell.spellid].targettype == ST_Self) {
-										if(!hidden) {
-											continue;
-										}
-									}
+							}
+						}
+						else {
+							for( int i = 0; i < MAX_GROUP_MEMBERS; i++) {
+								if(g->members[i]) {
+									Mob* tar = g->members[i];
 
 									if( !tar->IsImmuneToSpell(selectedMercSpell.spellid, this)
 										&& (tar->CanBuffStack(selectedMercSpell.spellid, mercLevel, true) >= 0)) {
+
+										if( tar->GetArchetype() == ARCHETYPE_MELEE && IsEffectInSpell(selectedMercSpell.spellid, SE_IncreaseSpellHaste)) {
+											continue;
+										}
+
+										uint32 TempDontBuffMeBeforeTime = tar->DontBuffMeBefore();
+
+										if(selectedMercSpell.spellid > 0) {
+											if(isDiscipline) {
+												castedSpell = UseDiscipline(selectedMercSpell.spellid, tar->GetID());
+											}
+											else {
+												castedSpell = AIDoSpellCast(selectedMercSpell.spellid, tar, -1, &TempDontBuffMeBeforeTime);
+
+												if(TempDontBuffMeBeforeTime != tar->DontBuffMeBefore())
+													tar->SetDontBuffMeBefore(TempDontBuffMeBeforeTime);
+											}
+										}
+									}
+
+									if(!castedSpell && tar->GetPet()) {
+
+										//don't cast group spells on pets
+										if(IsGroupSpell(selectedMercSpell.spellid)
+										   || spells[selectedMercSpell.spellid].targettype == ST_Group
+										   || spells[selectedMercSpell.spellid].targettype == ST_GroupTeleport ) {
+											continue;
+										}
+
+										if(!tar->GetPet()->IsImmuneToSpell(selectedMercSpell.spellid, this)
+										   && (tar->GetPet()->CanBuffStack(selectedMercSpell.spellid, mercLevel, true) >= 0)) {
 
 											uint32 TempDontBuffMeBeforeTime = tar->DontBuffMeBefore();
 
 											if(selectedMercSpell.spellid > 0) {
 												if(isDiscipline) {
-													castedSpell = UseDiscipline(selectedMercSpell.spellid, GetID());
+													castedSpell = UseDiscipline(selectedMercSpell.spellid, tar->GetPet()->GetID());
 												}
 												else {
-													castedSpell = AIDoSpellCast(selectedMercSpell.spellid, this, -1);
-												}
-											}
-									}
-								}
-								break;
-														 }
-							case SpellType_Cure: {
-								Mob* tar = nullptr;
-								for(int i = 0; i < MAX_GROUP_MEMBERS; i++) {
-									if(g->members[i] && !g->members[i]->qglobal) {
-										if(GetNeedsCured(g->members[i]) && (g->members[i]->DontCureMeBefore() < Timer::GetCurrentTime())) {
-											tar = g->members[i];
-										}
-									}
-								}
+													castedSpell = AIDoSpellCast(selectedMercSpell.spellid, tar->GetPet(), -1, &TempDontBuffMeBeforeTime);
 
-								if(tar && !(g->GetNumberNeedingHealedInGroup(IsEngaged() ? 25 : 40, false) > 0) && !(g->GetNumberNeedingHealedInGroup(IsEngaged() ? 40 : 60, false) > 2))
-								{
-									selectedMercSpell = GetBestMercSpellForCure(this, tar);
-
-									if(selectedMercSpell.spellid == 0)
-										break;
-
-									uint32 TempDontCureMeBeforeTime = tar->DontCureMeBefore();
-
-									castedSpell = AIDoSpellCast(selectedMercSpell.spellid, tar, spells[selectedMercSpell.spellid].mana, &TempDontCureMeBeforeTime);
-
-									if(castedSpell) {
-										if(IsGroupSpell(selectedMercSpell.spellid)){
-
-											if(this->HasGroup()) {
-												Group *g = this->GetGroup();
-
-												if(g) {
-													for( int i = 0; i<MAX_GROUP_MEMBERS; i++) {
-														if(g->members[i] && !g->members[i]->qglobal) {
-															if(TempDontCureMeBeforeTime != tar->DontCureMeBefore())
-																g->members[i]->SetDontCureMeBefore(Timer::GetCurrentTime() + 4000);
-														}
-													}
+													if(TempDontBuffMeBeforeTime != tar->GetPet()->DontBuffMeBefore())
+														tar->GetPet()->SetDontBuffMeBefore(TempDontBuffMeBeforeTime);
 												}
 											}
 										}
-										else {
-											if(TempDontCureMeBeforeTime != tar->DontCureMeBefore())
-												tar->SetDontCureMeBefore(Timer::GetCurrentTime() + 4000);
+									}
+								}
+							}
+						}
+					}
+					break;
+				}
+				case SpellType_Nuke: {
+					switch(mercClass)
+					{
+						case TANK:
+							//check for taunt
+							if(CheckAETaunt()) {
+								//get AE taunt
+								selectedMercSpell = GetBestMercSpellForAETaunt(this);
+								Log(Logs::General, Logs::Mercenaries, "%s AE Taunting.", GetName());
+							}
+
+							if(selectedMercSpell.spellid == 0 && CheckTaunt()) {
+								//get taunt
+								selectedMercSpell = GetBestMercSpellForTaunt(this);
+							}
+
+							//get hate disc
+							if(selectedMercSpell.spellid == 0) {
+								selectedMercSpell = GetBestMercSpellForHate(this);
+							}
+
+							break;
+						case HEALER:
+							break;
+						case MELEEDPS:
+							break;
+						case CASTERDPS:
+							Mob* tar = GetTarget();
+
+							selectedMercSpell = GetBestMercSpellForAENuke(this, tar);
+
+							if(selectedMercSpell.spellid == 0 && !tar->GetSpecialAbility(UNSTUNABLE) && !tar->IsStunned()) {
+								uint8 stunChance = 15;
+								if(zone->random.Roll(stunChance)) {
+									selectedMercSpell = GetBestMercSpellForStun(this);
+								}
+							}
+
+							if(selectedMercSpell.spellid == 0) {
+								uint8 lureChance = 25;
+								if(zone->random.Roll(lureChance)) {
+									selectedMercSpell = GetBestMercSpellForNukeByTargetResists(this, tar);
+								}
+							}
+
+							if(selectedMercSpell.spellid == 0) {
+								selectedMercSpell = GetBestMercSpellForNuke(this);
+							}
+
+							break;
+					}
+
+					if(selectedMercSpell.spellid > 0) {
+						if(isDiscipline) {
+							castedSpell = UseDiscipline(selectedMercSpell.spellid, GetTarget()->GetID());
+						}
+						else {
+							castedSpell = AIDoSpellCast(selectedMercSpell.spellid, GetTarget(), -1);
+						}
+					}
+
+					break;
+				}
+				case SpellType_InCombatBuff: {
+					std::list<MercSpell> buffSpellList = GetMercSpellsBySpellType(this, SpellType_InCombatBuff);
+					Mob* tar = this;
+
+					for (auto itr = buffSpellList.begin();
+						 itr != buffSpellList.end(); ++itr) {
+						MercSpell selectedMercSpell = *itr;
+
+						if(!(spells[selectedMercSpell.spellid].targettype == ST_Self)) {
+							continue;
+						}
+
+						if (spells[selectedMercSpell.spellid].skill == EQEmu::skills::SkillBackstab && spells[selectedMercSpell.spellid].targettype == ST_Self) {
+							if(!hidden) {
+								continue;
+							}
+						}
+
+						if( !tar->IsImmuneToSpell(selectedMercSpell.spellid, this)
+							&& (tar->CanBuffStack(selectedMercSpell.spellid, mercLevel, true) >= 0)) {
+
+							uint32 TempDontBuffMeBeforeTime = tar->DontBuffMeBefore();
+
+							if(selectedMercSpell.spellid > 0) {
+								if(isDiscipline) {
+									castedSpell = UseDiscipline(selectedMercSpell.spellid, GetID());
+								}
+								else {
+									castedSpell = AIDoSpellCast(selectedMercSpell.spellid, this, -1);
+								}
+							}
+						}
+					}
+					break;
+				}
+				case SpellType_Cure: {
+					Mob* tar = nullptr;
+					for(int i = 0; i < MAX_GROUP_MEMBERS; i++) {
+						if(g->members[i] && !g->members[i]->qglobal) {
+							if(GetNeedsCured(g->members[i]) && (g->members[i]->DontCureMeBefore() < Timer::GetCurrentTime())) {
+								tar = g->members[i];
+							}
+						}
+					}
+
+					if(tar && !(g->GetNumberNeedingHealedInGroup(IsEngaged() ? 25 : 40, false) > 0) && !(g->GetNumberNeedingHealedInGroup(IsEngaged() ? 40 : 60, false) > 2))
+					{
+						selectedMercSpell = GetBestMercSpellForCure(this, tar);
+
+						if(selectedMercSpell.spellid == 0)
+							break;
+
+						uint32 TempDontCureMeBeforeTime = tar->DontCureMeBefore();
+
+						castedSpell = AIDoSpellCast(selectedMercSpell.spellid, tar, spells[selectedMercSpell.spellid].mana, &TempDontCureMeBeforeTime);
+
+						if(castedSpell) {
+							if(IsGroupSpell(selectedMercSpell.spellid)){
+
+								if(this->HasGroup()) {
+									Group *g = this->GetGroup();
+
+									if(g) {
+										for( int i = 0; i<MAX_GROUP_MEMBERS; i++) {
+											if(g->members[i] && !g->members[i]->qglobal) {
+												if(TempDontCureMeBeforeTime != tar->DontCureMeBefore())
+													g->members[i]->SetDontCureMeBefore(Timer::GetCurrentTime() + 4000);
+											}
 										}
 									}
 								}
+							}
+							else {
+								if(TempDontCureMeBeforeTime != tar->DontCureMeBefore())
+									tar->SetDontCureMeBefore(Timer::GetCurrentTime() + 4000);
+							}
+						}
+					}
+					break;
+				}
+				case SpellType_Resurrect: {
+					Corpse *corpse = GetGroupMemberCorpse();
+
+					if(corpse) {
+						selectedMercSpell = GetFirstMercSpellBySpellType(this, SpellType_Resurrect);
+
+						if(selectedMercSpell.spellid == 0)
+							break;
+
+						uint32 TempDontRootMeBeforeTime = corpse->DontRootMeBefore();
+
+						castedSpell = AIDoSpellCast(selectedMercSpell.spellid, corpse, spells[selectedMercSpell.spellid].mana, &TempDontRootMeBeforeTime);
+
+						//CastSpell(selectedMercSpell.spellid, corpse->GetID(), 1, -1, -1, &TempDontRootMeBeforeTime);
+						corpse->SetDontRootMeBefore(TempDontRootMeBeforeTime);
+					}
+
+					break;
+				}
+				case SpellType_Escape: {
+					Mob* tar = GetTarget();
+					uint8 hpr = (uint8)GetHPRatio();
+					bool mayGetAggro = false;
+
+					if(tar && (mercClass == CASTERDPS) || (mercClass == MELEEDPS)) {
+						mayGetAggro = HasOrMayGetAggro(); //classes have hate reducing spells
+
+						if (mayGetAggro) {
+							selectedMercSpell = GetFirstMercSpellBySpellType(this, SpellType_Escape);
+
+							if(selectedMercSpell.spellid == 0)
 								break;
-												 }
-							case SpellType_Resurrect: {
-								Corpse *corpse = GetGroupMemberCorpse();
 
-								if(corpse) {
-									selectedMercSpell = GetFirstMercSpellBySpellType(this, SpellType_Resurrect);
-
-									if(selectedMercSpell.spellid == 0)
-										break;
-
-									uint32 TempDontRootMeBeforeTime = corpse->DontRootMeBefore();
-
-									castedSpell = AIDoSpellCast(selectedMercSpell.spellid, corpse, spells[selectedMercSpell.spellid].mana, &TempDontRootMeBeforeTime);
-
-									//CastSpell(selectedMercSpell.spellid, corpse->GetID(), 1, -1, -1, &TempDontRootMeBeforeTime);
-									corpse->SetDontRootMeBefore(TempDontRootMeBeforeTime);
-								}
-
-								break;
-													  }
-							case SpellType_Escape: {
-								Mob* tar = GetTarget();
-								uint8 hpr = (uint8)GetHPRatio();
-								bool mayGetAggro = false;
-
-								if(tar && (mercClass == CASTERDPS) || (mercClass == MELEEDPS)) {
-									mayGetAggro = HasOrMayGetAggro(); //classes have hate reducing spells
-
-									if (mayGetAggro) {
-										selectedMercSpell = GetFirstMercSpellBySpellType(this, SpellType_Escape);
-
-										if(selectedMercSpell.spellid == 0)
-											break;
-
-										if(isDiscipline) {
-											castedSpell = UseDiscipline(selectedMercSpell.spellid, tar->GetID());
-										}
-										else {
-											castedSpell = AIDoSpellCast(selectedMercSpell.spellid, tar, -1);
-										}
-									}
-								}
-								break;
-												   }
+							if(isDiscipline) {
+								castedSpell = UseDiscipline(selectedMercSpell.spellid, tar->GetID());
+							}
+							else {
+								castedSpell = AIDoSpellCast(selectedMercSpell.spellid, tar, -1);
+							}
+						}
+					}
+					break;
+				}
 			}
 		}
 	}
@@ -2598,7 +2598,7 @@ int16 Merc::GetFocusEffect(focusType type, uint16 spell_id) {
 	//Improved Healing, Damage & Mana Reduction are handled differently in that some are random percentages
 	//In these cases we need to find the most powerful effect, so that each piece of gear wont get its own chance
 	if((type == focusManaCost || type == focusImprovedHeal || type == focusImprovedDamage)
-		&& RuleB(Spells, LiveLikeFocusEffects))
+	   && RuleB(Spells, LiveLikeFocusEffects))
 	{
 		rand_effectiveness = true;
 	}
@@ -2811,126 +2811,126 @@ int8 Merc::GetChanceToCastBySpellType(uint32 spellType) {
 	int8 chance = 0;
 
 	switch (spellType) {
-			case SpellType_Nuke: {
-				switch(mercClass)
-				{
+		case SpellType_Nuke: {
+			switch(mercClass)
+			{
 				case TANK: {
 					chance = 100;
 					break;
-						   }
+				}
 				case HEALER:{
 					break;
-							}
+				}
 				case MELEEDPS:{
 					chance = 100;
 					break;
-							  }
+				}
 				case CASTERDPS:{
 					chance = 100;
 					break;
-							   }
 				}
-				break;
-								 }
-			case SpellType_Heal: {
-				switch(mercClass)
-				{
+			}
+			break;
+		}
+		case SpellType_Heal: {
+			switch(mercClass)
+			{
 				case TANK: {
 					break;
-						   }
+				}
 				case HEALER:{
 					chance = 100;
 					break;
-							}
+				}
 				case MELEEDPS:{
 					break;
-							  }
+				}
 				case CASTERDPS:{
 					break;
-							   }
 				}
-				break;
-								 }
-			case SpellType_Root: {
-				switch(mercClass)
-				{
+			}
+			break;
+		}
+		case SpellType_Root: {
+			switch(mercClass)
+			{
 				case TANK: {
 					break;
-						   }
+				}
 				case HEALER:{
 					break;
-							}
+				}
 				case MELEEDPS:{
 					break;
-							  }
+				}
 				case CASTERDPS:{
 					break;
-							   }
 				}
-				break;
-								 }
-			case SpellType_Buff: {
-				switch(mercClass)
-				{
+			}
+			break;
+		}
+		case SpellType_Buff: {
+			switch(mercClass)
+			{
 				case TANK: {
 					break;
-						   }
+				}
 				case HEALER:{
 					chance = IsEngaged() ? 0 : 100;
 					break;
-							}
+				}
 				case MELEEDPS:{
 					break;
-							  }
+				}
 				case CASTERDPS:{
 					break;
-							   }
 				}
-				break;
-								 }
-			case SpellType_InCombatBuff: {
-				switch(mercClass)
-				{
+			}
+			break;
+		}
+		case SpellType_InCombatBuff: {
+			switch(mercClass)
+			{
 				case TANK: {
 					chance = 50;
 					break;
-						   }
+				}
 				case HEALER:{
 					break;
-							}
+				}
 				case MELEEDPS:{
 					chance = 50;
 					break;
-							  }
+				}
 				case CASTERDPS:{
 					break;
-							   }
 				}
-				break;
-										 }
-			case SpellType_Escape: {
-				switch(mercClass)
-				{
+			}
+			break;
+		}
+		case SpellType_Escape: {
+			switch(mercClass)
+			{
 				case TANK: {
 					break;
-						   }
+				}
 				case HEALER:{
 					break;
-							}
+				}
 				case MELEEDPS:{
 					chance = 100;
 					break;
-							  }
+				}
 				case CASTERDPS:{
 					chance = 100;
 					break;
-							   }
 				}
-				break;
-								   }
-			default:
-				chance = 0;
-				break;
+			}
+			break;
+		}
+		default:
+			chance = 0;
+			break;
 	}
 
 	return chance;
@@ -2941,7 +2941,7 @@ bool Merc::CheckStance(int16 stance) {
 	//checks of current stance matches stances listed as valid for spell in database
 	//stance = 0 for all stances, stance # for only that stance & -stance# for all but that stance
 	if (stance == 0 || (stance > 0 && stance == GetStance()) || (stance < 0 && std::abs(stance) != GetStance())) {
-			return true;
+		return true;
 	}
 
 	return false;
@@ -2998,16 +2998,16 @@ MercSpell Merc::GetFirstMercSpellBySpellType(Merc* caster, uint32 spellType) {
 			}
 
 			if((mercSpellList[i].type & spellType)
-				&& caster->CheckStance(mercSpellList[i].stance)
-				&& CheckSpellRecastTimers(caster, mercSpellList[i].spellid)) {
-					result.spellid = mercSpellList[i].spellid;
-					result.stance = mercSpellList[i].stance;
-					result.type = mercSpellList[i].type;
-					result.slot = mercSpellList[i].slot;
-					result.proc_chance = mercSpellList[i].proc_chance;
-					result.time_cancast = mercSpellList[i].time_cancast;
+			   && caster->CheckStance(mercSpellList[i].stance)
+			   && CheckSpellRecastTimers(caster, mercSpellList[i].spellid)) {
+				result.spellid = mercSpellList[i].spellid;
+				result.stance = mercSpellList[i].stance;
+				result.type = mercSpellList[i].type;
+				result.slot = mercSpellList[i].slot;
+				result.proc_chance = mercSpellList[i].proc_chance;
+				result.time_cancast = mercSpellList[i].time_cancast;
 
-					break;
+				break;
 			}
 		}
 	}
@@ -3036,15 +3036,15 @@ MercSpell Merc::GetMercSpellBySpellID(Merc* caster, uint16 spellid) {
 			}
 
 			if((mercSpellList[i].spellid == spellid)
-				&& caster->CheckStance(mercSpellList[i].stance)) {
-					result.spellid = mercSpellList[i].spellid;
-					result.stance = mercSpellList[i].stance;
-					result.type = mercSpellList[i].type;
-					result.slot = mercSpellList[i].slot;
-					result.proc_chance = mercSpellList[i].proc_chance;
-					result.time_cancast = mercSpellList[i].time_cancast;
+			   && caster->CheckStance(mercSpellList[i].stance)) {
+				result.spellid = mercSpellList[i].spellid;
+				result.stance = mercSpellList[i].stance;
+				result.type = mercSpellList[i].type;
+				result.slot = mercSpellList[i].slot;
+				result.proc_chance = mercSpellList[i].proc_chance;
+				result.time_cancast = mercSpellList[i].time_cancast;
 
-					break;
+				break;
 			}
 		}
 	}
@@ -3128,18 +3128,18 @@ MercSpell Merc::GetBestMercSpellForVeryFastHeal(Merc* caster) {
 		std::list<MercSpell> mercSpellList = GetMercSpellsForSpellEffect(caster, SE_CurrentHP);
 
 		for (auto mercSpellListItr = mercSpellList.begin(); mercSpellListItr != mercSpellList.end();
-		     ++mercSpellListItr) {
+			 ++mercSpellListItr) {
 			// Assuming all the spells have been loaded into this list by level and in descending order
 			if(IsVeryFastHealSpell(mercSpellListItr->spellid)
-				&& CheckSpellRecastTimers(caster, mercSpellListItr->spellid)) {
-					result.spellid = mercSpellListItr->spellid;
-					result.stance = mercSpellListItr->stance;
-					result.type = mercSpellListItr->type;
-					result.slot = mercSpellListItr->slot;
-					result.proc_chance = mercSpellListItr->proc_chance;
-					result.time_cancast = mercSpellListItr->time_cancast;
+			   && CheckSpellRecastTimers(caster, mercSpellListItr->spellid)) {
+				result.spellid = mercSpellListItr->spellid;
+				result.stance = mercSpellListItr->stance;
+				result.type = mercSpellListItr->type;
+				result.slot = mercSpellListItr->slot;
+				result.proc_chance = mercSpellListItr->proc_chance;
+				result.time_cancast = mercSpellListItr->time_cancast;
 
-					break;
+				break;
 			}
 		}
 	}
@@ -3161,18 +3161,18 @@ MercSpell Merc::GetBestMercSpellForFastHeal(Merc* caster) {
 		std::list<MercSpell> mercSpellList = GetMercSpellsForSpellEffect(caster, SE_CurrentHP);
 
 		for (auto mercSpellListItr = mercSpellList.begin(); mercSpellListItr != mercSpellList.end();
-		     ++mercSpellListItr) {
+			 ++mercSpellListItr) {
 			// Assuming all the spells have been loaded into this list by level and in descending order
 			if(IsFastHealSpell(mercSpellListItr->spellid)
-				&& CheckSpellRecastTimers(caster, mercSpellListItr->spellid)) {
-					result.spellid = mercSpellListItr->spellid;
-					result.stance = mercSpellListItr->stance;
-					result.type = mercSpellListItr->type;
-					result.slot = mercSpellListItr->slot;
-					result.proc_chance = mercSpellListItr->proc_chance;
-					result.time_cancast = mercSpellListItr->time_cancast;
+			   && CheckSpellRecastTimers(caster, mercSpellListItr->spellid)) {
+				result.spellid = mercSpellListItr->spellid;
+				result.stance = mercSpellListItr->stance;
+				result.type = mercSpellListItr->type;
+				result.slot = mercSpellListItr->slot;
+				result.proc_chance = mercSpellListItr->proc_chance;
+				result.time_cancast = mercSpellListItr->time_cancast;
 
-					break;
+				break;
 			}
 		}
 	}
@@ -3194,7 +3194,7 @@ MercSpell Merc::GetBestMercSpellForHealOverTime(Merc* caster) {
 		std::list<MercSpell> mercHoTSpellList = GetMercSpellsForSpellEffect(caster, SE_HealOverTime);
 
 		for (auto mercSpellListItr = mercHoTSpellList.begin(); mercSpellListItr != mercHoTSpellList.end();
-		     ++mercSpellListItr) {
+			 ++mercSpellListItr) {
 			// Assuming all the spells have been loaded into this list by level and in descending order
 			if(IsHealOverTimeSpell(mercSpellListItr->spellid)) {
 
@@ -3235,18 +3235,18 @@ MercSpell Merc::GetBestMercSpellForPercentageHeal(Merc* caster) {
 		std::list<MercSpell> mercSpellList = GetMercSpellsForSpellEffect(caster, SE_CurrentHP);
 
 		for (auto mercSpellListItr = mercSpellList.begin(); mercSpellListItr != mercSpellList.end();
-		     ++mercSpellListItr) {
+			 ++mercSpellListItr) {
 			// Assuming all the spells have been loaded into this list by level and in descending order
 			if(IsCompleteHealSpell(mercSpellListItr->spellid)
-				&& CheckSpellRecastTimers(caster, mercSpellListItr->spellid)) {
-					result.spellid = mercSpellListItr->spellid;
-					result.stance = mercSpellListItr->stance;
-					result.type = mercSpellListItr->type;
-					result.slot = mercSpellListItr->slot;
-					result.proc_chance = mercSpellListItr->proc_chance;
-					result.time_cancast = mercSpellListItr->time_cancast;
+			   && CheckSpellRecastTimers(caster, mercSpellListItr->spellid)) {
+				result.spellid = mercSpellListItr->spellid;
+				result.stance = mercSpellListItr->stance;
+				result.type = mercSpellListItr->type;
+				result.slot = mercSpellListItr->slot;
+				result.proc_chance = mercSpellListItr->proc_chance;
+				result.time_cancast = mercSpellListItr->time_cancast;
 
-					break;
+				break;
 			}
 		}
 	}
@@ -3268,18 +3268,18 @@ MercSpell Merc::GetBestMercSpellForRegularSingleTargetHeal(Merc* caster) {
 		std::list<MercSpell> mercSpellList = GetMercSpellsForSpellEffect(caster, SE_CurrentHP);
 
 		for (auto mercSpellListItr = mercSpellList.begin(); mercSpellListItr != mercSpellList.end();
-		     ++mercSpellListItr) {
+			 ++mercSpellListItr) {
 			// Assuming all the spells have been loaded into this list by level and in descending order
 			if(IsRegularSingleTargetHealSpell(mercSpellListItr->spellid)
-				&& CheckSpellRecastTimers(caster, mercSpellListItr->spellid)) {
-					result.spellid = mercSpellListItr->spellid;
-					result.stance = mercSpellListItr->stance;
-					result.type = mercSpellListItr->type;
-					result.slot = mercSpellListItr->slot;
-					result.proc_chance = mercSpellListItr->proc_chance;
-					result.time_cancast = mercSpellListItr->time_cancast;
+			   && CheckSpellRecastTimers(caster, mercSpellListItr->spellid)) {
+				result.spellid = mercSpellListItr->spellid;
+				result.stance = mercSpellListItr->stance;
+				result.type = mercSpellListItr->type;
+				result.slot = mercSpellListItr->slot;
+				result.proc_chance = mercSpellListItr->proc_chance;
+				result.time_cancast = mercSpellListItr->time_cancast;
 
-					break;
+				break;
 			}
 		}
 	}
@@ -3301,19 +3301,19 @@ MercSpell Merc::GetFirstMercSpellForSingleTargetHeal(Merc* caster) {
 		std::list<MercSpell> mercSpellList = GetMercSpellsForSpellEffect(caster, SE_CurrentHP);
 
 		for (auto mercSpellListItr = mercSpellList.begin(); mercSpellListItr != mercSpellList.end();
-		     ++mercSpellListItr) {
+			 ++mercSpellListItr) {
 			// Assuming all the spells have been loaded into this list by level and in descending order
 			if((IsRegularSingleTargetHealSpell(mercSpellListItr->spellid)
 				|| IsFastHealSpell(mercSpellListItr->spellid))
-				&& CheckSpellRecastTimers(caster, mercSpellListItr->spellid)) {
-					result.spellid = mercSpellListItr->spellid;
-					result.stance = mercSpellListItr->stance;
-					result.type = mercSpellListItr->type;
-					result.slot = mercSpellListItr->slot;
-					result.proc_chance = mercSpellListItr->proc_chance;
-					result.time_cancast = mercSpellListItr->time_cancast;
+			   && CheckSpellRecastTimers(caster, mercSpellListItr->spellid)) {
+				result.spellid = mercSpellListItr->spellid;
+				result.stance = mercSpellListItr->stance;
+				result.type = mercSpellListItr->type;
+				result.slot = mercSpellListItr->slot;
+				result.proc_chance = mercSpellListItr->proc_chance;
+				result.time_cancast = mercSpellListItr->time_cancast;
 
-					break;
+				break;
 			}
 		}
 	}
@@ -3335,18 +3335,18 @@ MercSpell Merc::GetBestMercSpellForGroupHeal(Merc* caster) {
 		std::list<MercSpell> mercSpellList = GetMercSpellsForSpellEffect(caster, SE_CurrentHP);
 
 		for (auto mercSpellListItr = mercSpellList.begin(); mercSpellListItr != mercSpellList.end();
-		     ++mercSpellListItr) {
+			 ++mercSpellListItr) {
 			// Assuming all the spells have been loaded into this list by level and in descending order
 			if(IsRegularGroupHealSpell(mercSpellListItr->spellid)
-				&& CheckSpellRecastTimers(caster, mercSpellListItr->spellid)) {
-					result.spellid = mercSpellListItr->spellid;
-					result.stance = mercSpellListItr->stance;
-					result.type = mercSpellListItr->type;
-					result.slot = mercSpellListItr->slot;
-					result.proc_chance = mercSpellListItr->proc_chance;
-					result.time_cancast = mercSpellListItr->time_cancast;
+			   && CheckSpellRecastTimers(caster, mercSpellListItr->spellid)) {
+				result.spellid = mercSpellListItr->spellid;
+				result.stance = mercSpellListItr->stance;
+				result.type = mercSpellListItr->type;
+				result.slot = mercSpellListItr->slot;
+				result.proc_chance = mercSpellListItr->proc_chance;
+				result.time_cancast = mercSpellListItr->time_cancast;
 
-					break;
+				break;
 			}
 		}
 	}
@@ -3368,7 +3368,7 @@ MercSpell Merc::GetBestMercSpellForGroupHealOverTime(Merc* caster) {
 		std::list<MercSpell> mercHoTSpellList = GetMercSpellsForSpellEffect(caster, SE_HealOverTime);
 
 		for (auto mercSpellListItr = mercHoTSpellList.begin(); mercSpellListItr != mercHoTSpellList.end();
-		     ++mercSpellListItr) {
+			 ++mercSpellListItr) {
 			// Assuming all the spells have been loaded into this list by level and in descending order
 			if(IsGroupHealOverTimeSpell(mercSpellListItr->spellid)) {
 
@@ -3409,18 +3409,18 @@ MercSpell Merc::GetBestMercSpellForGroupCompleteHeal(Merc* caster) {
 		std::list<MercSpell> mercSpellList = GetMercSpellsForSpellEffect(caster, SE_CompleteHeal);
 
 		for (auto mercSpellListItr = mercSpellList.begin(); mercSpellListItr != mercSpellList.end();
-		     ++mercSpellListItr) {
+			 ++mercSpellListItr) {
 			// Assuming all the spells have been loaded into this list by level and in descending order
 			if(IsGroupCompleteHealSpell(mercSpellListItr->spellid)
-				&& CheckSpellRecastTimers(caster, mercSpellListItr->spellid)) {
-					result.spellid = mercSpellListItr->spellid;
-					result.stance = mercSpellListItr->stance;
-					result.type = mercSpellListItr->type;
-					result.slot = mercSpellListItr->slot;
-					result.proc_chance = mercSpellListItr->proc_chance;
-					result.time_cancast = mercSpellListItr->time_cancast;
+			   && CheckSpellRecastTimers(caster, mercSpellListItr->spellid)) {
+				result.spellid = mercSpellListItr->spellid;
+				result.stance = mercSpellListItr->stance;
+				result.type = mercSpellListItr->type;
+				result.slot = mercSpellListItr->slot;
+				result.proc_chance = mercSpellListItr->proc_chance;
+				result.time_cancast = mercSpellListItr->time_cancast;
 
-					break;
+				break;
 			}
 		}
 	}
@@ -3442,20 +3442,20 @@ MercSpell Merc::GetBestMercSpellForAETaunt(Merc* caster) {
 		std::list<MercSpell> mercSpellList = GetMercSpellsForSpellEffect(caster, SE_Taunt);
 
 		for (auto mercSpellListItr = mercSpellList.begin(); mercSpellListItr != mercSpellList.end();
-		     ++mercSpellListItr) {
+			 ++mercSpellListItr) {
 			// Assuming all the spells have been loaded into this list by level and in descending order
 			if((spells[mercSpellListItr->spellid].targettype == ST_AECaster
 				|| spells[mercSpellListItr->spellid].targettype == ST_AETarget
 				|| spells[mercSpellListItr->spellid].targettype == ST_UndeadAE)
-				&& CheckSpellRecastTimers(caster, mercSpellListItr->spellid)) {
-					result.spellid = mercSpellListItr->spellid;
-					result.stance = mercSpellListItr->stance;
-					result.type = mercSpellListItr->type;
-					result.slot = mercSpellListItr->slot;
-					result.proc_chance = mercSpellListItr->proc_chance;
-					result.time_cancast = mercSpellListItr->time_cancast;
+			   && CheckSpellRecastTimers(caster, mercSpellListItr->spellid)) {
+				result.spellid = mercSpellListItr->spellid;
+				result.stance = mercSpellListItr->stance;
+				result.type = mercSpellListItr->type;
+				result.slot = mercSpellListItr->slot;
+				result.proc_chance = mercSpellListItr->proc_chance;
+				result.time_cancast = mercSpellListItr->time_cancast;
 
-					break;
+				break;
 			}
 		}
 	}
@@ -3477,18 +3477,18 @@ MercSpell Merc::GetBestMercSpellForTaunt(Merc* caster) {
 		std::list<MercSpell> mercSpellList = GetMercSpellsForSpellEffect(caster, SE_Taunt);
 
 		for (auto mercSpellListItr = mercSpellList.begin(); mercSpellListItr != mercSpellList.end();
-		     ++mercSpellListItr) {
+			 ++mercSpellListItr) {
 			// Assuming all the spells have been loaded into this list by level and in descending order
 			if((spells[mercSpellListItr->spellid].targettype == ST_Target)
-				&& CheckSpellRecastTimers(caster, mercSpellListItr->spellid)) {
-					result.spellid = mercSpellListItr->spellid;
-					result.stance = mercSpellListItr->stance;
-					result.type = mercSpellListItr->type;
-					result.slot = mercSpellListItr->slot;
-					result.proc_chance = mercSpellListItr->proc_chance;
-					result.time_cancast = mercSpellListItr->time_cancast;
+			   && CheckSpellRecastTimers(caster, mercSpellListItr->spellid)) {
+				result.spellid = mercSpellListItr->spellid;
+				result.stance = mercSpellListItr->stance;
+				result.type = mercSpellListItr->type;
+				result.slot = mercSpellListItr->slot;
+				result.proc_chance = mercSpellListItr->proc_chance;
+				result.time_cancast = mercSpellListItr->time_cancast;
 
-					break;
+				break;
 			}
 		}
 	}
@@ -3510,7 +3510,7 @@ MercSpell Merc::GetBestMercSpellForHate(Merc* caster) {
 		std::list<MercSpell> mercSpellList = GetMercSpellsForSpellEffect(caster, SE_InstantHate);
 
 		for (auto mercSpellListItr = mercSpellList.begin(); mercSpellListItr != mercSpellList.end();
-		     ++mercSpellListItr) {
+			 ++mercSpellListItr) {
 			// Assuming all the spells have been loaded into this list by level and in descending order
 			if(CheckSpellRecastTimers(caster, mercSpellListItr->spellid)) {
 				result.spellid = mercSpellListItr->spellid;
@@ -3663,7 +3663,7 @@ MercSpell Merc::GetBestMercSpellForStun(Merc* caster) {
 		std::list<MercSpell> mercSpellList = GetMercSpellsForSpellEffect(caster, SE_Stun);
 
 		for (auto mercSpellListItr = mercSpellList.begin(); mercSpellListItr != mercSpellList.end();
-		     ++mercSpellListItr) {
+			 ++mercSpellListItr) {
 			// Assuming all the spells have been loaded into this list by level and in descending order
 			if(CheckSpellRecastTimers(caster, mercSpellListItr->spellid)) {
 				result.spellid = mercSpellListItr->spellid;
@@ -3698,15 +3698,15 @@ MercSpell Merc::GetBestMercSpellForAENuke(Merc* caster, Mob* tar) {
 
 		switch(caster->GetStance())
 		{
-		case MercStanceBurnAE:
-			initialCastChance = 50;
-			break;
-		case MercStanceBalanced:
-			initialCastChance = 25;
-			break;
-		case MercStanceBurn:
-			initialCastChance = 0;
-			break;
+			case MercStanceBurnAE:
+				initialCastChance = 50;
+				break;
+			case MercStanceBalanced:
+				initialCastChance = 25;
+				break;
+			case MercStanceBurn:
+				initialCastChance = 0;
+				break;
 		}
 
 		//check of we even want to cast an AE nuke
@@ -3746,36 +3746,36 @@ MercSpell Merc::GetBestMercSpellForTargetedAENuke(Merc* caster, Mob* tar) {
 
 	switch(caster->GetStance())
 	{
-	case MercStanceBurnAE:
-		numTargetsCheck = 1;
-		break;
-	case MercStanceBalanced:
-	case MercStanceBurn:
-		numTargetsCheck = 2;
-		break;
+		case MercStanceBurnAE:
+			numTargetsCheck = 1;
+			break;
+		case MercStanceBalanced:
+		case MercStanceBurn:
+			numTargetsCheck = 2;
+			break;
 	}
 
 	if(caster) {
 		std::list<MercSpell> mercSpellList = GetMercSpellsBySpellType(caster, SpellType_Nuke);
 
 		for (auto mercSpellListItr = mercSpellList.begin(); mercSpellListItr != mercSpellList.end();
-		     ++mercSpellListItr) {
+			 ++mercSpellListItr) {
 			// Assuming all the spells have been loaded into this list by level and in descending order
 			if(IsAENukeSpell(mercSpellListItr->spellid) && !IsAERainNukeSpell(mercSpellListItr->spellid)
-				&& !IsPBAENukeSpell(mercSpellListItr->spellid) && CheckSpellRecastTimers(caster, mercSpellListItr->spellid)) {
-					uint8 numTargets = 0;
-					if(CheckAENuke(caster, tar, mercSpellListItr->spellid, numTargets)) {
-						if(numTargets >= numTargetsCheck && zone->random.Roll(castChance)) {
-							result.spellid = mercSpellListItr->spellid;
-							result.stance = mercSpellListItr->stance;
-							result.type = mercSpellListItr->type;
-							result.slot = mercSpellListItr->slot;
-							result.proc_chance = mercSpellListItr->proc_chance;
-							result.time_cancast = mercSpellListItr->time_cancast;
-						}
+			   && !IsPBAENukeSpell(mercSpellListItr->spellid) && CheckSpellRecastTimers(caster, mercSpellListItr->spellid)) {
+				uint8 numTargets = 0;
+				if(CheckAENuke(caster, tar, mercSpellListItr->spellid, numTargets)) {
+					if(numTargets >= numTargetsCheck && zone->random.Roll(castChance)) {
+						result.spellid = mercSpellListItr->spellid;
+						result.stance = mercSpellListItr->stance;
+						result.type = mercSpellListItr->type;
+						result.slot = mercSpellListItr->slot;
+						result.proc_chance = mercSpellListItr->proc_chance;
+						result.time_cancast = mercSpellListItr->time_cancast;
 					}
+				}
 
-					break;
+				break;
 			}
 		}
 	}
@@ -3798,20 +3798,20 @@ MercSpell Merc::GetBestMercSpellForPBAENuke(Merc* caster, Mob* tar) {
 
 	switch(caster->GetStance())
 	{
-	case MercStanceBurnAE:
-		numTargetsCheck = 2;
-		break;
-	case MercStanceBalanced:
-	case MercStanceBurn:
-		numTargetsCheck = 3;
-		break;
+		case MercStanceBurnAE:
+			numTargetsCheck = 2;
+			break;
+		case MercStanceBalanced:
+		case MercStanceBurn:
+			numTargetsCheck = 3;
+			break;
 	}
 
 	if(caster) {
 		std::list<MercSpell> mercSpellList = GetMercSpellsBySpellType(caster, SpellType_Nuke);
 
 		for (auto mercSpellListItr = mercSpellList.begin(); mercSpellListItr != mercSpellList.end();
-		     ++mercSpellListItr) {
+			 ++mercSpellListItr) {
 			// Assuming all the spells have been loaded into this list by level and in descending order
 			if(IsPBAENukeSpell(mercSpellListItr->spellid) && CheckSpellRecastTimers(caster, mercSpellListItr->spellid)) {
 				uint8 numTargets = 0;
@@ -3849,20 +3849,20 @@ MercSpell Merc::GetBestMercSpellForAERainNuke(Merc* caster, Mob* tar) {
 
 	switch(caster->GetStance())
 	{
-	case MercStanceBurnAE:
-		numTargetsCheck = 1;
-		break;
-	case MercStanceBalanced:
-	case MercStanceBurn:
-		numTargetsCheck = 2;
-		break;
+		case MercStanceBurnAE:
+			numTargetsCheck = 1;
+			break;
+		case MercStanceBalanced:
+		case MercStanceBurn:
+			numTargetsCheck = 2;
+			break;
 	}
 
 	if(caster) {
 		std::list<MercSpell> mercSpellList = GetMercSpellsBySpellType(caster, SpellType_Nuke);
 
 		for (auto mercSpellListItr = mercSpellList.begin(); mercSpellListItr != mercSpellList.end();
-		     ++mercSpellListItr) {
+			 ++mercSpellListItr) {
 			// Assuming all the spells have been loaded into this list by level and in descending order
 			if(IsAERainNukeSpell(mercSpellListItr->spellid) && zone->random.Roll(castChance) && CheckSpellRecastTimers(caster, mercSpellListItr->spellid)) {
 				uint8 numTargets = 0;
@@ -3901,18 +3901,18 @@ MercSpell Merc::GetBestMercSpellForNuke(Merc* caster) {
 		std::list<MercSpell> mercSpellList = GetMercSpellsBySpellType(caster, SpellType_Nuke);
 
 		for (auto mercSpellListItr = mercSpellList.begin(); mercSpellListItr != mercSpellList.end();
-		     ++mercSpellListItr) {
+			 ++mercSpellListItr) {
 			// Assuming all the spells have been loaded into this list by level and in descending order
 			if(IsPureNukeSpell(mercSpellListItr->spellid) && !IsAENukeSpell(mercSpellListItr->spellid)
-				&& zone->random.Roll(castChance) && CheckSpellRecastTimers(caster, mercSpellListItr->spellid)) {
-					result.spellid = mercSpellListItr->spellid;
-					result.stance = mercSpellListItr->stance;
-					result.type = mercSpellListItr->type;
-					result.slot = mercSpellListItr->slot;
-					result.proc_chance = mercSpellListItr->proc_chance;
-					result.time_cancast = mercSpellListItr->time_cancast;
+			   && zone->random.Roll(castChance) && CheckSpellRecastTimers(caster, mercSpellListItr->spellid)) {
+				result.spellid = mercSpellListItr->spellid;
+				result.stance = mercSpellListItr->stance;
+				result.type = mercSpellListItr->type;
+				result.slot = mercSpellListItr->slot;
+				result.proc_chance = mercSpellListItr->proc_chance;
+				result.time_cancast = mercSpellListItr->time_cancast;
 
-					break;
+				break;
 			}
 		}
 	}
@@ -3945,7 +3945,7 @@ MercSpell Merc::GetBestMercSpellForNukeByTargetResists(Merc* caster, Mob* target
 		std::list<MercSpell> mercSpellList = GetMercSpellsBySpellType(caster, SpellType_Nuke);
 
 		for (auto mercSpellListItr = mercSpellList.begin(); mercSpellListItr != mercSpellList.end();
-		     ++mercSpellListItr) {
+			 ++mercSpellListItr) {
 			// Assuming all the spells have been loaded into this list by level and in descending order
 
 			if(IsPureNukeSpell(mercSpellListItr->spellid) && !IsAENukeSpell(mercSpellListItr->spellid) && CheckSpellRecastTimers(caster, mercSpellListItr->spellid)) {
@@ -3954,17 +3954,17 @@ MercSpell Merc::GetBestMercSpellForNukeByTargetResists(Merc* caster, Mob* target
 				}
 				else {
 					if(((target->GetMR() < target->GetCR()) || (target->GetMR() < target->GetFR())) && (GetSpellResistType(mercSpellListItr->spellid) == RESIST_MAGIC)
-						&& (spells[mercSpellListItr->spellid].ResistDiff > lureResisValue))
+					   && (spells[mercSpellListItr->spellid].ResistDiff > lureResisValue))
 					{
 						spellSelected = true;
 					}
 					else if(((target->GetCR() < target->GetMR()) || (target->GetCR() < target->GetFR())) && (GetSpellResistType(mercSpellListItr->spellid) == RESIST_COLD)
-						&& (spells[mercSpellListItr->spellid].ResistDiff > lureResisValue))
+							&& (spells[mercSpellListItr->spellid].ResistDiff > lureResisValue))
 					{
 						spellSelected = true;
 					}
 					else if(((target->GetFR() < target->GetCR()) || (target->GetFR() < target->GetMR())) && (GetSpellResistType(mercSpellListItr->spellid) == RESIST_FIRE)
-						&& (spells[mercSpellListItr->spellid].ResistDiff > lureResisValue))
+							&& (spells[mercSpellListItr->spellid].ResistDiff > lureResisValue))
 					{
 						spellSelected = true;
 					}
@@ -4293,40 +4293,40 @@ bool Merc::CheckConfidence() {
 		CurrentCon = this->GetLevelCon(mob->GetLevel());
 		switch(CurrentCon) {
 
-					case CON_GREEN: {
-						ConRating = 0.1;
-						break;
-									}
+			case CON_GREEN: {
+				ConRating = 0.1;
+				break;
+			}
 
-					case CON_LIGHTBLUE: {
-						ConRating = 0.2;
-						break;
-										}
+			case CON_LIGHTBLUE: {
+				ConRating = 0.2;
+				break;
+			}
 
-					case CON_BLUE: {
-						ConRating = 0.6;
-						break;
-								   }
+			case CON_BLUE: {
+				ConRating = 0.6;
+				break;
+			}
 
-					case CON_WHITE: {
-						ConRating = 1.0;
-						break;
-									}
+			case CON_WHITE: {
+				ConRating = 1.0;
+				break;
+			}
 
-					case CON_YELLOW: {
-						ConRating = 1.2;
-						break;
-									 }
+			case CON_YELLOW: {
+				ConRating = 1.2;
+				break;
+			}
 
-					case CON_RED: {
-						ConRating = 1.5;
-						break;
-								  }
+			case CON_RED: {
+				ConRating = 1.5;
+				break;
+			}
 
-					default: {
-						ConRating = 0;
-						break;
-							 }
+			default: {
+				ConRating = 0;
+				break;
+			}
 		}
 
 		ConfidenceCheck += ConRating;
@@ -4473,42 +4473,42 @@ void Merc::DoClassAttacks(Mob *target) {
 	bool did_attack = false;
 	//class specific stuff...
 	switch(GetClass()) {
-			case MELEEDPS:
-				if(level >= 10) {
-					reuse = BackstabReuseTime * 1000;
-					TryBackstab(target, reuse);
+		case MELEEDPS:
+			if(level >= 10) {
+				reuse = BackstabReuseTime * 1000;
+				TryBackstab(target, reuse);
+				did_attack = true;
+			}
+			break;
+		case TANK:{
+			if(level >= RuleI(Combat, NPCBashKickLevel)){
+				if(zone->random.Int(0, 100) > 25) //tested on live, warrior mobs both kick and bash, kick about 75% of the time, casting doesn't seem to make a difference.
+				{
+					DoAnim(animKick, 0, false);
+					int32 dmg = GetBaseSkillDamage(EQEmu::skills::SkillKick);
+
+					if (GetWeaponDamage(target, (const EQEmu::ItemData*)nullptr) <= 0)
+						dmg = DMG_INVULNERABLE;
+
+					reuse = KickReuseTime * 1000;
+					DoSpecialAttackDamage(target, EQEmu::skills::SkillKick, dmg, 1, -1, reuse);
 					did_attack = true;
 				}
-				break;
-			case TANK:{
-				if(level >= RuleI(Combat, NPCBashKickLevel)){
-					if(zone->random.Int(0, 100) > 25) //tested on live, warrior mobs both kick and bash, kick about 75% of the time, casting doesn't seem to make a difference.
-					{
-						DoAnim(animKick, 0, false);
-						int32 dmg = GetBaseSkillDamage(EQEmu::skills::SkillKick);
+				else
+				{
+					DoAnim(animTailRake, 0, false);
+					int32 dmg = GetBaseSkillDamage(EQEmu::skills::SkillBash);
 
-						if (GetWeaponDamage(target, (const EQEmu::ItemData*)nullptr) <= 0)
-							dmg = DMG_INVULNERABLE;
+					if (GetWeaponDamage(target, (const EQEmu::ItemData*)nullptr) <= 0)
+						dmg = DMG_INVULNERABLE;
 
-						reuse = KickReuseTime * 1000;
-						DoSpecialAttackDamage(target, EQEmu::skills::SkillKick, dmg, 1, -1, reuse);
-						did_attack = true;
-					}
-					else
-					{
-						DoAnim(animTailRake, 0, false);
-						int32 dmg = GetBaseSkillDamage(EQEmu::skills::SkillBash);
-
-						if (GetWeaponDamage(target, (const EQEmu::ItemData*)nullptr) <= 0)
-							dmg = DMG_INVULNERABLE;
-
-						reuse = BashReuseTime * 1000;
-						DoSpecialAttackDamage(target, EQEmu::skills::SkillBash, dmg, 1, -1, reuse);
-						did_attack = true;
-					}
+					reuse = BashReuseTime * 1000;
+					DoSpecialAttackDamage(target, EQEmu::skills::SkillBash, dmg, 1, -1, reuse);
+					did_attack = true;
 				}
-				break;
-					  }
+			}
+			break;
+		}
 	}
 
 	classattack_timer.Start(reuse / HasteModifier);
@@ -4911,7 +4911,7 @@ void Merc::UpdateMercStats(Client *c, bool setmax)
 		Log(Logs::General, Logs::Mercenaries, "Updating Mercenary Stats for %s (%s).", GetName(),
 			c->GetName());
 		const NPCType *npc_type = database.GetMercType(
-		    zone->GetMercTemplate(c->GetMercInfo().MercTemplateID)->MercNPCID, GetRace(), c->GetLevel());
+				zone->GetMercTemplate(c->GetMercInfo().MercTemplateID)->MercNPCID, GetRace(), c->GetLevel());
 		if (npc_type) {
 			max_hp = npc_type->max_hp;
 			base_hp = npc_type->max_hp;
@@ -5166,139 +5166,139 @@ void Client::SendMercResponsePackets(uint32 ResponseType)
 {
 	switch (ResponseType)
 	{
-	case 0: // Mercenary Spawned Successfully?
-		SendMercMerchantResponsePacket(0);
-		break;
-	case 1: //You do not have enough funds to make that purchase!
-		SendMercMerchantResponsePacket(1);
-		break;
-	case 2: //Mercenary does not exist!
-		SendMercMerchantResponsePacket(2);
-		break;
-	case 3: //Mercenary failed to spawn!
-		SendMercMerchantResponsePacket(3);
-		break;
-	case 4: //Mercenaries are not allowed in raids!
-		SendMercMerchantResponsePacket(4);
-		break;
-	case 5: //You already have a pending mercenary purchase!
-		SendMercMerchantResponsePacket(5);
-		break;
-	case 6: //You have the maximum number of mercenaries.  You must dismiss one before purchasing a new one!
-		SendMercMerchantResponsePacket(6);
-		break;
-	case 7: //You must dismiss your suspended mercenary before purchasing a new one!
-		if (ClientVersion() < EQEmu::versions::ClientVersion::RoF)
-			SendMercMerchantResponsePacket(7);
-		else
-			//You have the maximum number of mercenaries.  You must dismiss one before purchasing a new one!
+		case 0: // Mercenary Spawned Successfully?
+			SendMercMerchantResponsePacket(0);
+			break;
+		case 1: //You do not have enough funds to make that purchase!
+			SendMercMerchantResponsePacket(1);
+			break;
+		case 2: //Mercenary does not exist!
+			SendMercMerchantResponsePacket(2);
+			break;
+		case 3: //Mercenary failed to spawn!
+			SendMercMerchantResponsePacket(3);
+			break;
+		case 4: //Mercenaries are not allowed in raids!
+			SendMercMerchantResponsePacket(4);
+			break;
+		case 5: //You already have a pending mercenary purchase!
+			SendMercMerchantResponsePacket(5);
+			break;
+		case 6: //You have the maximum number of mercenaries.  You must dismiss one before purchasing a new one!
 			SendMercMerchantResponsePacket(6);
-		break;
-	case 8: //You can not purchase a mercenary because your group is full!
-		if (ClientVersion() < EQEmu::versions::ClientVersion::RoF)
-			SendMercMerchantResponsePacket(8);
-		else
-			SendMercMerchantResponsePacket(7);
-		break;
-	case 9: //You can not purchase a mercenary because you are in combat!
-		if (ClientVersion() < EQEmu::versions::ClientVersion::RoF)
-			//Mercenary failed to spawn!
+			break;
+		case 7: //You must dismiss your suspended mercenary before purchasing a new one!
+			if (ClientVersion() < EQEmu::versions::ClientVersion::RoF)
+				SendMercMerchantResponsePacket(7);
+			else
+				//You have the maximum number of mercenaries.  You must dismiss one before purchasing a new one!
+				SendMercMerchantResponsePacket(6);
+			break;
+		case 8: //You can not purchase a mercenary because your group is full!
+			if (ClientVersion() < EQEmu::versions::ClientVersion::RoF)
+				SendMercMerchantResponsePacket(8);
+			else
+				SendMercMerchantResponsePacket(7);
+			break;
+		case 9: //You can not purchase a mercenary because you are in combat!
+			if (ClientVersion() < EQEmu::versions::ClientVersion::RoF)
+				//Mercenary failed to spawn!
+				SendMercMerchantResponsePacket(3);
+			else
+				SendMercMerchantResponsePacket(8);
+			break;
+		case 10: //You have recently dismissed a mercenary and must wait a few more seconds before you can purchase a new one!
+			if (ClientVersion() < EQEmu::versions::ClientVersion::RoF)
+				//Mercenary failed to spawn!
+				SendMercMerchantResponsePacket(3);
+			else
+				SendMercMerchantResponsePacket(9);
+			break;
+		case 11: //An error occurred created your mercenary!
+			if (ClientVersion() < EQEmu::versions::ClientVersion::RoF)
+				SendMercMerchantResponsePacket(9);
+			else
+				SendMercMerchantResponsePacket(10);
+			break;
+		case 12: //Upkeep Charge Message
+			if (ClientVersion() < EQEmu::versions::ClientVersion::RoF)
+				SendMercMerchantResponsePacket(10);
+			else
+				SendMercMerchantResponsePacket(11);
+			break;
+		case 13: // ???
+			if (ClientVersion() < EQEmu::versions::ClientVersion::RoF)
+				SendMercMerchantResponsePacket(11);
+			else
+				SendMercMerchantResponsePacket(12);
+			break;
+		case 14: //You ran out of funds to pay for your mercenary!
+			if (ClientVersion() < EQEmu::versions::ClientVersion::RoF)
+				SendMercMerchantResponsePacket(12);
+			else
+				SendMercMerchantResponsePacket(13);
+			break;
+		case 15: // ???
+			if (ClientVersion() < EQEmu::versions::ClientVersion::RoF)
+				SendMercMerchantResponsePacket(13);
+			else
+				SendMercMerchantResponsePacket(14);
+			break;
+		case 16: //Your mercenary is about to be suspended due to insufficient funds!
+			if (ClientVersion() < EQEmu::versions::ClientVersion::RoF)
+				SendMercMerchantResponsePacket(14);
+			else
+				SendMercMerchantResponsePacket(15);
+			break;
+		case 17: //There is no mercenary liaison nearby!
+			if (ClientVersion() < EQEmu::versions::ClientVersion::RoF)
+				SendMercMerchantResponsePacket(15);
+			else
+				SendMercMerchantResponsePacket(16);
+			break;
+		case 18: //You are too far from the liaison!
+			if (ClientVersion() < EQEmu::versions::ClientVersion::RoF)
+				SendMercMerchantResponsePacket(16);
+			else
+				SendMercMerchantResponsePacket(17);
+			break;
+		case 19: //You do not meet the requirements for that mercenary!
+			if (ClientVersion() < EQEmu::versions::ClientVersion::RoF)
+				SendMercMerchantResponsePacket(17);
+			else
+				SendMercMerchantResponsePacket(18);
+			break;
+		case 20: //You are unable to interact with the liaison!
+			if (ClientVersion() < EQEmu::versions::ClientVersion::RoF)
+				//You are too far from the liaison!
+				SendMercMerchantResponsePacket(16);
+			else
+				SendMercMerchantResponsePacket(19);
+			break;
+		case 21: //You do not have a high enough membership level to purchase this mercenary!
+			if (ClientVersion() < EQEmu::versions::ClientVersion::RoF)
+				//You do not meet the requirements for that mercenary!
+				SendMercMerchantResponsePacket(17);
+			else
+				SendMercMerchantResponsePacket(20);
+			break;
+		case 22: //Your purchase has failed because this mercenary requires a Gold membership!
+			if (ClientVersion() < EQEmu::versions::ClientVersion::RoF)
+				//You do not meet the requirements for that mercenary!
+				SendMercMerchantResponsePacket(17);
+			else
+				SendMercMerchantResponsePacket(21);
+			break;
+		case 23: //Your purchase has failed because this mercenary requires at least a Silver membership!
+			if (ClientVersion() < EQEmu::versions::ClientVersion::RoF)
+				//You do not meet the requirements for that mercenary!
+				SendMercMerchantResponsePacket(17);
+			else
+				SendMercMerchantResponsePacket(22);
+			break;
+		default: //Mercenary failed to spawn!
 			SendMercMerchantResponsePacket(3);
-		else
-			SendMercMerchantResponsePacket(8);
-		break;
-	case 10: //You have recently dismissed a mercenary and must wait a few more seconds before you can purchase a new one!
-		if (ClientVersion() < EQEmu::versions::ClientVersion::RoF)
-			//Mercenary failed to spawn!
-			SendMercMerchantResponsePacket(3);
-		else
-			SendMercMerchantResponsePacket(9);
-		break;
-	case 11: //An error occurred created your mercenary!
-		if (ClientVersion() < EQEmu::versions::ClientVersion::RoF)
-			SendMercMerchantResponsePacket(9);
-		else
-			SendMercMerchantResponsePacket(10);
-		break;
-	case 12: //Upkeep Charge Message
-		if (ClientVersion() < EQEmu::versions::ClientVersion::RoF)
-			SendMercMerchantResponsePacket(10);
-		else
-			SendMercMerchantResponsePacket(11);
-		break;
-	case 13: // ???
-		if (ClientVersion() < EQEmu::versions::ClientVersion::RoF)
-			SendMercMerchantResponsePacket(11);
-		else
-			SendMercMerchantResponsePacket(12);
-		break;
-	case 14: //You ran out of funds to pay for your mercenary!
-		if (ClientVersion() < EQEmu::versions::ClientVersion::RoF)
-			SendMercMerchantResponsePacket(12);
-		else
-			SendMercMerchantResponsePacket(13);
-		break;
-	case 15: // ???
-		if (ClientVersion() < EQEmu::versions::ClientVersion::RoF)
-			SendMercMerchantResponsePacket(13);
-		else
-			SendMercMerchantResponsePacket(14);
-		break;
-	case 16: //Your mercenary is about to be suspended due to insufficient funds!
-		if (ClientVersion() < EQEmu::versions::ClientVersion::RoF)
-			SendMercMerchantResponsePacket(14);
-		else
-			SendMercMerchantResponsePacket(15);
-		break;
-	case 17: //There is no mercenary liaison nearby!
-		if (ClientVersion() < EQEmu::versions::ClientVersion::RoF)
-			SendMercMerchantResponsePacket(15);
-		else
-			SendMercMerchantResponsePacket(16);
-		break;
-	case 18: //You are too far from the liaison!
-		if (ClientVersion() < EQEmu::versions::ClientVersion::RoF)
-			SendMercMerchantResponsePacket(16);
-		else
-			SendMercMerchantResponsePacket(17);
-		break;
-	case 19: //You do not meet the requirements for that mercenary!
-		if (ClientVersion() < EQEmu::versions::ClientVersion::RoF)
-			SendMercMerchantResponsePacket(17);
-		else
-			SendMercMerchantResponsePacket(18);
-		break;
-	case 20: //You are unable to interact with the liaison!
-		if (ClientVersion() < EQEmu::versions::ClientVersion::RoF)
-			//You are too far from the liaison!
-			SendMercMerchantResponsePacket(16);
-		else
-			SendMercMerchantResponsePacket(19);
-		break;
-	case 21: //You do not have a high enough membership level to purchase this mercenary!
-		if (ClientVersion() < EQEmu::versions::ClientVersion::RoF)
-			//You do not meet the requirements for that mercenary!
-			SendMercMerchantResponsePacket(17);
-		else
-			SendMercMerchantResponsePacket(20);
-		break;
-	case 22: //Your purchase has failed because this mercenary requires a Gold membership!
-		if (ClientVersion() < EQEmu::versions::ClientVersion::RoF)
-			//You do not meet the requirements for that mercenary!
-			SendMercMerchantResponsePacket(17);
-		else
-			SendMercMerchantResponsePacket(21);
-		break;
-	case 23: //Your purchase has failed because this mercenary requires at least a Silver membership!
-		if (ClientVersion() < EQEmu::versions::ClientVersion::RoF)
-			//You do not meet the requirements for that mercenary!
-			SendMercMerchantResponsePacket(17);
-		else
-			SendMercMerchantResponsePacket(22);
-		break;
-	default: //Mercenary failed to spawn!
-		SendMercMerchantResponsePacket(3);
-		break;
+			break;
 	}
 	Log(Logs::General, Logs::Mercenaries, "SendMercResponsePackets %i for %s.", ResponseType, GetName());
 
@@ -6196,12 +6196,12 @@ void Client::SendMercAssignPacket(uint32 entityID, uint32 unk01, uint32 unk02) {
 void NPC::LoadMercTypes() {
 
 	std::string query = StringFormat("SELECT DISTINCT MTyp.dbstring, MTyp.clientversion "
-		"FROM merc_merchant_entries MME, merc_merchant_template_entries MMTE, "
-		"merc_types MTyp, merc_templates MTem "
-		"WHERE MME.merchant_id = %i "
-		"AND MME.merc_merchant_template_id = MMTE.merc_merchant_template_id "
-		"AND MMTE.merc_template_id = MTem.merc_template_id "
-		"AND MTem.merc_type_id = MTyp.merc_type_id;", GetNPCTypeID());
+											 "FROM merc_merchant_entries MME, merc_merchant_template_entries MMTE, "
+											 "merc_types MTyp, merc_templates MTem "
+											 "WHERE MME.merchant_id = %i "
+											 "AND MME.merc_merchant_template_id = MMTE.merc_merchant_template_id "
+											 "AND MMTE.merc_template_id = MTem.merc_template_id "
+											 "AND MTem.merc_type_id = MTyp.merc_type_id;", GetNPCTypeID());
 	auto results = database.QueryDatabase(query);
 	if (!results.Success())
 	{
@@ -6224,16 +6224,16 @@ void NPC::LoadMercTypes() {
 void NPC::LoadMercs() {
 
 	std::string query = StringFormat("SELECT DISTINCT MTem.merc_template_id, MTyp.dbstring AS merc_type_id, "
-		"MTem.dbstring AS merc_subtype_id, 0 AS CostFormula, "
-		"CASE WHEN MTem.clientversion > MTyp.clientversion "
-		"THEN MTem.clientversion "
-		"ELSE MTyp.clientversion END AS clientversion, MTem.merc_npc_type_id "
-		"FROM merc_merchant_entries MME, merc_merchant_template_entries MMTE, "
-		"merc_types MTyp, merc_templates MTem "
-		"WHERE MME.merchant_id = %i AND "
-		"MME.merc_merchant_template_id = MMTE.merc_merchant_template_id "
-		"AND MMTE.merc_template_id = MTem.merc_template_id "
-		"AND MTem.merc_type_id = MTyp.merc_type_id;", GetNPCTypeID());
+											 "MTem.dbstring AS merc_subtype_id, 0 AS CostFormula, "
+											 "CASE WHEN MTem.clientversion > MTyp.clientversion "
+											 "THEN MTem.clientversion "
+											 "ELSE MTyp.clientversion END AS clientversion, MTem.merc_npc_type_id "
+											 "FROM merc_merchant_entries MME, merc_merchant_template_entries MMTE, "
+											 "merc_types MTyp, merc_templates MTem "
+											 "WHERE MME.merchant_id = %i AND "
+											 "MME.merc_merchant_template_id = MMTE.merc_merchant_template_id "
+											 "AND MMTE.merc_template_id = MTem.merc_template_id "
+											 "AND MTem.merc_type_id = MTyp.merc_type_id;", GetNPCTypeID());
 	auto results = database.QueryDatabase(query);
 
 	if (!results.Success())
@@ -6291,7 +6291,7 @@ std::list<MercType> NPC::GetMercTypesList(uint32 clientVersion) {
 	if(GetNumMercTypes() > 0)
 	{
 		for (auto mercTypeListItr = mercTypeList.begin(); mercTypeListItr != mercTypeList.end();
-		     ++mercTypeListItr) {
+			 ++mercTypeListItr) {
 			if(mercTypeListItr->ClientVersion <= clientVersion)
 			{
 				MercType mercType;
@@ -6348,14 +6348,14 @@ uint32 Merc::CalcPurchaseCost(uint32 templateID , uint8 level, uint8 currency_ty
 			int levels_above_cutoff;
 			switch (mercData->CostFormula)
 			{
-			case 0:
-				levels_above_cutoff = level > 10 ? (level - 10) : 0;
-				cost = levels_above_cutoff * 300;
-				cost += level >= 10 ? 100 : 0;
-				cost /= 100;
-				break;
-			default:
-				break;
+				case 0:
+					levels_above_cutoff = level > 10 ? (level - 10) : 0;
+					cost = levels_above_cutoff * 300;
+					cost += level >= 10 ? 100 : 0;
+					cost /= 100;
+					break;
+				default:
+					break;
 			}
 		}
 		else if(currency_type == 19)
@@ -6382,14 +6382,14 @@ uint32 Merc::CalcUpkeepCost(uint32 templateID , uint8 level, uint8 currency_type
 			int levels_above_cutoff;
 			switch (mercData->CostFormula)
 			{
-			case 0:
-				levels_above_cutoff = level > 10 ? (level - 10) : 0;
-				cost = levels_above_cutoff * 300;
-				cost += level >= 10 ? 100 : 0;
-				cost /= 100;
-				break;
-			default:
-				break;
+				case 0:
+					levels_above_cutoff = level > 10 ? (level - 10) : 0;
+					cost = levels_above_cutoff * 300;
+					cost += level >= 10 ? 100 : 0;
+					cost /= 100;
+					break;
+				default:
+					break;
 			}
 		}
 		else if(currency_type == 19)

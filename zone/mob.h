@@ -21,7 +21,7 @@
 #include "common.h"
 #include "entity.h"
 #include "hate_list.h"
-#include "pathing.h"
+#include "pathfinder_interface.h"
 #include "position.h"
 #include "aa_ability.h"
 #include "aa.h"
@@ -67,77 +67,77 @@ const uint8 MAX_CON_LEVELS = 65;
 
 // green_server, lb_server, green_client, lb_client
 const uint8 CON_LEVELS_MAP[MAX_CON_LEVELS][4] = {
-	{ 0, 0, 0, 0 }, // 1
-	{ 0, 0, 0, 0 }, // 2
-	{ 0, 0, 0, 0 }, // 3
-	{ 0, 0, 0, 0 }, // 4
-	{ 1, 0, 1, 0 }, // 5
-	{ 2, 0, 2 ,0 }, // 6
-	{ 3, 0, 3, 0 }, // 7
-	{ 3, 5, 4, 5 }, // 8
-	{ 3, 5, 3, 5 }, // 9
-	{ 4, 6, 4, 6 }, // 10
-	{ 5, 7, 5, 7 }, // 11
-	{ 6, 8, 6, 8 }, // 12
-	{ 6, 8, 6, 8 }, // 13
-	{ 7, 9, 7, 9 }, // 14
-	{ 8, 10, 8, 10 }, // 15
-	{ 9, 11, 9, 11 }, // 16
-	{ 9, 11, 9, 11 }, // 17
-	{ 10, 12, 10, 12 }, // 18
-	{ 11, 13, 11, 13 }, // 19
-	{ 12, 14, 12, 14 }, // 20
-	{ 12, 14, 12, 14 }, // 21
-	{ 13, 15, 13, 15 }, // 22
-	{ 14, 16, 14, 16 }, // 23
-	{ 15, 17, 15, 17 }, // 24
-	{ 15, 17, 15, 17 }, // 25
-	{ 16, 18, 16, 18 }, // 26
-	{ 17, 19, 17, 19 }, // 27
-	{ 18, 20, 18, 20 }, // 28
-	{ 18, 20, 18, 20 }, // 29
-	{ 19, 21, 19, 21 }, // 30
-	{ 19, 22, 19, 22 }, // 31
-	{ 20, 23, 20, 23 }, // 32
-	{ 20, 23, 20, 23 }, // 33
-	{ 21, 24, 21, 24 }, // 34
-	{ 22, 25, 22, 25 }, // 35
-	{ 23, 26, 23, 26 }, // 36
-	{ 23, 26, 23, 26 }, // 37
-	{ 24, 27, 24, 27 }, // 38
-	{ 25, 28, 25, 28 }, // 39
-	{ 26, 29, 26, 29 }, // 40
-	{ 26, 29, 25, 29 }, // 41
-	{ 27, 30, 26, 30 }, // 42
-	{ 27, 31, 27, 31 }, // 43
-	{ 28, 32, 28, 32 }, // 44
-	{ 28, 32, 28, 32 }, // 45
-	{ 29, 33, 29, 33 }, // 46
-	{ 30, 34, 30, 34 }, // 47
-	{ 31, 35, 31, 35 }, // 48
-	{ 31, 35, 31, 35 }, // 49
-	{ 32, 36, 32, 36 }, // 50
-	{ 33, 37, 33, 37 }, // 51
-	{ 34, 38, 34, 38 }, // 52
-	{ 34, 38, 34, 38 }, // 53
-	{ 35, 39, 35, 39 }, // 54
-	{ 35, 40, 35, 40 }, // 55
-	{ 36, 41, 36, 41 }, // 56
-	{ 36, 41, 36, 41 }, // 57
-	{ 37, 42, 37, 42 }, // 58
-	{ 38, 43, 38, 43 }, // 59
-	{ 39, 44, 39, 44 }, // 60
-	{ 42, 47, 40, 45 }, // 61
-	{ 45, 50, 41, 46 }, // 62
-	{ 47, 52, 42, 47 }, // 63
-	{ 48, 53, 43, 48 }, // 64
-	{ 49, 54, 44, 49 } // 65
+		{ 0, 0, 0, 0 }, // 1
+		{ 0, 0, 0, 0 }, // 2
+		{ 0, 0, 0, 0 }, // 3
+		{ 0, 0, 0, 0 }, // 4
+		{ 1, 0, 1, 0 }, // 5
+		{ 2, 0, 2 ,0 }, // 6
+		{ 3, 0, 3, 0 }, // 7
+		{ 3, 5, 4, 5 }, // 8
+		{ 3, 5, 3, 5 }, // 9
+		{ 4, 6, 4, 6 }, // 10
+		{ 5, 7, 5, 7 }, // 11
+		{ 6, 8, 6, 8 }, // 12
+		{ 6, 8, 6, 8 }, // 13
+		{ 7, 9, 7, 9 }, // 14
+		{ 8, 10, 8, 10 }, // 15
+		{ 9, 11, 9, 11 }, // 16
+		{ 9, 11, 9, 11 }, // 17
+		{ 10, 12, 10, 12 }, // 18
+		{ 11, 13, 11, 13 }, // 19
+		{ 12, 14, 12, 14 }, // 20
+		{ 12, 14, 12, 14 }, // 21
+		{ 13, 15, 13, 15 }, // 22
+		{ 14, 16, 14, 16 }, // 23
+		{ 15, 17, 15, 17 }, // 24
+		{ 15, 17, 15, 17 }, // 25
+		{ 16, 18, 16, 18 }, // 26
+		{ 17, 19, 17, 19 }, // 27
+		{ 18, 20, 18, 20 }, // 28
+		{ 18, 20, 18, 20 }, // 29
+		{ 19, 21, 19, 21 }, // 30
+		{ 19, 22, 19, 22 }, // 31
+		{ 20, 23, 20, 23 }, // 32
+		{ 20, 23, 20, 23 }, // 33
+		{ 21, 24, 21, 24 }, // 34
+		{ 22, 25, 22, 25 }, // 35
+		{ 23, 26, 23, 26 }, // 36
+		{ 23, 26, 23, 26 }, // 37
+		{ 24, 27, 24, 27 }, // 38
+		{ 25, 28, 25, 28 }, // 39
+		{ 26, 29, 26, 29 }, // 40
+		{ 26, 29, 25, 29 }, // 41
+		{ 27, 30, 26, 30 }, // 42
+		{ 27, 31, 27, 31 }, // 43
+		{ 28, 32, 28, 32 }, // 44
+		{ 28, 32, 28, 32 }, // 45
+		{ 29, 33, 29, 33 }, // 46
+		{ 30, 34, 30, 34 }, // 47
+		{ 31, 35, 31, 35 }, // 48
+		{ 31, 35, 31, 35 }, // 49
+		{ 32, 36, 32, 36 }, // 50
+		{ 33, 37, 33, 37 }, // 51
+		{ 34, 38, 34, 38 }, // 52
+		{ 34, 38, 34, 38 }, // 53
+		{ 35, 39, 35, 39 }, // 54
+		{ 35, 40, 35, 40 }, // 55
+		{ 36, 41, 36, 41 }, // 56
+		{ 36, 41, 36, 41 }, // 57
+		{ 37, 42, 37, 42 }, // 58
+		{ 38, 43, 38, 43 }, // 59
+		{ 39, 44, 39, 44 }, // 60
+		{ 42, 47, 40, 45 }, // 61
+		{ 45, 50, 41, 46 }, // 62
+		{ 47, 52, 42, 47 }, // 63
+		{ 48, 53, 43, 48 }, // 64
+		{ 49, 54, 44, 49 } // 65
 };
 
 class Mob : public Entity {
 public:
 	enum CLIENT_CONN_STATUS { CLIENT_CONNECTING, CLIENT_CONNECTED, CLIENT_LINKDEAD,
-						CLIENT_KICKED, DISCONNECTED, CLIENT_ERROR, CLIENT_CONNECTINGALL };
+		CLIENT_KICKED, DISCONNECTED, CLIENT_ERROR, CLIENT_CONNECTINGALL };
 	enum eStandingPetOrder { SPO_Follow, SPO_Sit, SPO_Guard };
 
 	struct SpecialAbility {
@@ -224,10 +224,10 @@ public:
 	float MobAngle(Mob *other = 0, float ourx = 0.0f, float oury = 0.0f) const;
 	// greater than 90 is behind
 	inline bool BehindMob(Mob *other = 0, float ourx = 0.0f, float oury = 0.0f) const
-		{ return (!other || other == this) ? true : MobAngle(other, ourx, oury) > 90.0f; }
+	{ return (!other || other == this) ? true : MobAngle(other, ourx, oury) > 90.0f; }
 	// less than 56 is in front, greater than 56 is usually where the client generates the messages
 	inline bool InFrontMob(Mob *other = 0, float ourx = 0.0f, float oury = 0.0f) const
-		{ return (!other || other == this) ? true : MobAngle(other, ourx, oury) < 56.0f; }
+	{ return (!other || other == this) ? true : MobAngle(other, ourx, oury) < 56.0f; }
 	bool IsFacingMob(Mob *other); // kind of does the same as InFrontMob, but derived from client
 	float HeadingAngleToMob(Mob *other) { return HeadingAngleToMob(other->GetX(), other->GetY()); }
 	float HeadingAngleToMob(float other_x, float other_y); // to keep consistent with client generated messages
@@ -235,7 +235,7 @@ public:
 	virtual void ThrowingAttack(Mob* other) { }
 	// 13 = Primary (default), 14 = secondary
 	virtual bool Attack(Mob* other, int Hand = EQEmu::inventory::slotPrimary, bool FromRiposte = false, bool IsStrikethrough = false,
-		bool IsFromSpell = false, ExtraAttackOptions *opts = nullptr) = 0;
+						bool IsFromSpell = false, ExtraAttackOptions *opts = nullptr) = 0;
 	void DoAttack(Mob *other, DamageHitInfo &hit, ExtraAttackOptions *opts = nullptr);
 	int MonkSpecialAttack(Mob* other, uint8 skill_used);
 	virtual void TryBackstab(Mob *other,int ReuseTime = 10);
@@ -296,17 +296,17 @@ public:
 	void SendLevelAppearance();
 	void SendStunAppearance();
 	void SendAppearanceEffect(uint32 parm1, uint32 parm2, uint32 parm3, uint32 parm4, uint32 parm5,
-		Client *specific_target=nullptr);
+							  Client *specific_target=nullptr);
 	void SendTargetable(bool on, Client *specific_target = nullptr);
 	virtual void SendArmorAppearance(Client *one_client = nullptr);
 	virtual void SendWearChange(uint8 material_slot, Client *one_client = nullptr);
 	virtual void SendTextureWC(uint8 slot, uint16 texture, uint32 hero_forge_model = 0, uint32 elite_material = 0,
-		uint32 unknown06 = 0, uint32 unknown18 = 0);
+							   uint32 unknown06 = 0, uint32 unknown18 = 0);
 	virtual void SetSlotTint(uint8 material_slot, uint8 red_tint, uint8 green_tint, uint8 blue_tint);
 	virtual void WearChange(uint8 material_slot, uint16 texture, uint32 color, uint32 hero_forge_model = 0);
 	void DoAnim(const int animnum, int type=0, bool ackreq = true, eqFilterType filter = FilterNone);
 	void ProjectileAnimation(Mob* to, int item_id, bool IsArrow = false, float speed = 0,
-		float angle = 0, float tilt = 0, float arc = 0, const char *IDFile = nullptr, EQEmu::skills::SkillType skillInUse = EQEmu::skills::SkillArchery);
+							 float angle = 0, float tilt = 0, float arc = 0, const char *IDFile = nullptr, EQEmu::skills::SkillType skillInUse = EQEmu::skills::SkillArchery);
 	void ChangeSize(float in_size, bool bNoRestriction = false);
 	uint8 SeeInvisible();
 	inline bool SeeInvisibleUndead() const { return see_invis_undead; }
@@ -324,12 +324,12 @@ public:
 
 	//Spell
 	void SendSpellEffect(uint32 effectid, uint32 duration, uint32 finish_delay, bool zone_wide,
-		uint32 unk020, bool perm_effect = false, Client *c = nullptr);
+						 uint32 unk020, bool perm_effect = false, Client *c = nullptr);
 	bool IsBeneficialAllowed(Mob *target);
 	virtual int GetCasterLevel(uint16 spell_id);
 	void ApplySpellsBonuses(uint16 spell_id, uint8 casterlevel, StatBonuses* newbon, uint16 casterID = 0,
-		uint8 WornType = 0, int32 ticsremaining = 0, int buffslot = -1, int instrument_mod = 10,
-		bool IsAISpellEffect = false, uint16 effect_id = 0, int32 se_base = 0, int32 se_limit = 0, int32 se_max = 0);
+							uint8 WornType = 0, int32 ticsremaining = 0, int buffslot = -1, int instrument_mod = 10,
+							bool IsAISpellEffect = false, uint16 effect_id = 0, int32 se_base = 0, int32 se_limit = 0, int32 se_max = 0);
 	void NegateSpellsBonuses(uint16 spell_id);
 	virtual float GetActSpellRange(uint16 spell_id, float range, bool IsBard = false);
 	virtual int32 GetActSpellDamage(uint16 spell_id, int32 value, Mob* target = nullptr);
@@ -339,8 +339,8 @@ public:
 	virtual int32 GetActSpellDuration(uint16 spell_id, int32 duration);
 	virtual int32 GetActSpellCasttime(uint16 spell_id, int32 casttime);
 	float ResistSpell(uint8 resist_type, uint16 spell_id, Mob *caster, bool use_resist_override = false,
-		int resist_override = 0, bool CharismaCheck = false, bool CharmTick = false, bool IsRoot = false,
-		int level_override = -1);
+					  int resist_override = 0, bool CharismaCheck = false, bool CharmTick = false, bool IsRoot = false,
+					  int level_override = -1);
 	int ResistPhysical(int level_diff, uint8 caster_level);
 	int ResistElementalWeaponDmg(const EQEmu::ItemInstance *item);
 	int CheckBaneDamage(const EQEmu::ItemInstance *item);
@@ -350,23 +350,23 @@ public:
 	void ZeroCastingVars();
 	virtual void SpellProcess();
 	virtual bool CastSpell(uint16 spell_id, uint16 target_id, EQEmu::CastingSlot slot = EQEmu::CastingSlot::Item, int32 casttime = -1,
-		int32 mana_cost = -1, uint32* oSpellWillFinish = 0, uint32 item_slot = 0xFFFFFFFF,
-		uint32 timer = 0xFFFFFFFF, uint32 timer_duration = 0, int16 *resist_adjust = nullptr,
-		uint32 aa_id = 0);
+						   int32 mana_cost = -1, uint32* oSpellWillFinish = 0, uint32 item_slot = 0xFFFFFFFF,
+						   uint32 timer = 0xFFFFFFFF, uint32 timer_duration = 0, int16 *resist_adjust = nullptr,
+						   uint32 aa_id = 0);
 	virtual bool DoCastSpell(uint16 spell_id, uint16 target_id, EQEmu::CastingSlot slot = EQEmu::CastingSlot::Item, int32 casttime = -1,
-		int32 mana_cost = -1, uint32* oSpellWillFinish = 0, uint32 item_slot = 0xFFFFFFFF,
-		uint32 timer = 0xFFFFFFFF, uint32 timer_duration = 0, int16 resist_adjust = 0,
-		uint32 aa_id = 0);
+							 int32 mana_cost = -1, uint32* oSpellWillFinish = 0, uint32 item_slot = 0xFFFFFFFF,
+							 uint32 timer = 0xFFFFFFFF, uint32 timer_duration = 0, int16 resist_adjust = 0,
+							 uint32 aa_id = 0);
 	void CastedSpellFinished(uint16 spell_id, uint32 target_id, EQEmu::CastingSlot slot, uint16 mana_used,
-		uint32 inventory_slot = 0xFFFFFFFF, int16 resist_adjust = 0);
+							 uint32 inventory_slot = 0xFFFFFFFF, int16 resist_adjust = 0);
 	bool SpellFinished(uint16 spell_id, Mob *target, EQEmu::CastingSlot slot = EQEmu::CastingSlot::Item, uint16 mana_used = 0,
-		uint32 inventory_slot = 0xFFFFFFFF, int16 resist_adjust = 0, bool isproc = false, int level_override = -1);
+					   uint32 inventory_slot = 0xFFFFFFFF, int16 resist_adjust = 0, bool isproc = false, int level_override = -1);
 	void SendBeginCast(uint16 spell_id, uint32 casttime);
 	virtual bool SpellOnTarget(uint16 spell_id, Mob* spelltar, bool reflect = false,
-		bool use_resist_adjust = false, int16 resist_adjust = 0, bool isproc = false, int level_override = -1);
+							   bool use_resist_adjust = false, int16 resist_adjust = 0, bool isproc = false, int level_override = -1);
 	virtual bool SpellEffect(Mob* caster, uint16 spell_id, float partial = 100, int level_override = -1);
 	virtual bool DetermineSpellTargets(uint16 spell_id, Mob *&spell_target, Mob *&ae_center,
-		CastAction_type &CastAction, EQEmu::CastingSlot slot, bool isproc = false);
+									   CastAction_type &CastAction, EQEmu::CastingSlot slot, bool isproc = false);
 	virtual bool CheckFizzle(uint16 spell_id);
 	virtual bool CheckSpellLevelRestriction(uint16 spell_id);
 	virtual bool IsImmuneToSpell(uint16 spell_id, Mob *caster);
@@ -470,7 +470,7 @@ public:
 	bool AffectedBySpellExcludingSlot(int slot, int effect);
 	virtual bool Death(Mob* killerMob, int32 damage, uint16 spell_id, EQEmu::skills::SkillType attack_skill) = 0;
 	virtual void Damage(Mob* from, int32 damage, uint16 spell_id, EQEmu::skills::SkillType attack_skill,
-		bool avoidable = true, int8 buffslot = -1, bool iBuffTic = false, eSpecialAttacks special = eSpecialAttacks::None) = 0;
+						bool avoidable = true, int8 buffslot = -1, bool iBuffTic = false, eSpecialAttacks special = eSpecialAttacks::None) = 0;
 	inline virtual void SetHP(int32 hp) { if (hp >= max_hp) cur_hp = max_hp; else cur_hp = hp;}
 	bool ChangeHP(Mob* other, int32 amount, uint16 spell_id = 0, int8 buffslot = -1, bool iBuffTic = false);
 	inline void SetOOCRegen(int32 newoocregen) {oocregen = newoocregen;}
@@ -504,7 +504,7 @@ public:
 	inline const char* GetLastName() const { return lastname; }
 	const char *GetCleanName();
 	virtual void SetName(const char *new_name = nullptr) { new_name ? strn0cpy(name, new_name, 64) :
-		strn0cpy(name, GetName(), 64); return; };
+														   strn0cpy(name, GetName(), 64); return; };
 	inline Mob* GetTarget() const { return target; }
 	virtual void SetTarget(Mob* mob);
 	virtual bool UseOwnersResistances(uint16 spell_id);
@@ -633,7 +633,7 @@ public:
 	inline uint32 GetLevelCon(uint8 iOtherLevel) const {
 		return this ? GetLevelCon(GetLevel(), iOtherLevel) : CON_GREEN; }
 	virtual void AddToHateList(Mob* other, uint32 hate = 0, int32 damage = 0, bool iYellForHelp = true,
-		bool bFrenzy = false, bool iBuffTic = false, uint16 spell_id = SPELL_UNKNOWN, bool pet_comand = false);
+							   bool bFrenzy = false, bool iBuffTic = false, uint16 spell_id = SPELL_UNKNOWN, bool pet_comand = false);
 	bool RemoveFromHateList(Mob* mob);
 	void SetHateAmountOnEnt(Mob* other, int32 hate = 0, int32 damage = 0) { hate_list.SetHateAmountOnEnt(other,hate,damage);}
 	void HalveAggro(Mob *other) { uint32 in_hate = GetHateAmount(other); SetHateAmountOnEnt(other, (in_hate > 1 ? in_hate / 2 : 1)); }
@@ -654,7 +654,7 @@ public:
 	bool HateSummon();
 	void FaceTarget(Mob* mob_to_face = 0);
 	void SetHeading(float iHeading) { if(m_Position.w != iHeading) { pLastChange = Timer::GetCurrentTime();
-		m_Position.w = iHeading; } }
+			m_Position.w = iHeading; } }
 	void WipeHateList(bool npc_only = false);
 	void AddFeignMemory(Client* attacker);
 	void RemoveFromFeignMemory(Client* attacker);
@@ -698,7 +698,7 @@ public:
 	void ShowBuffs(Client* client);
 	void ShowBuffList(Client* client);
 	bool PlotPositionAroundTarget(Mob* target, float &x_dest, float &y_dest, float &z_dest,
-		bool lookForAftArc = true);
+								  bool lookForAftArc = true);
 
 	//Procs
 	void TriggerDefensiveProcs(Mob *on, uint16 hand = EQEmu::inventory::slotPrimary, bool FromSkillProc = false, int damage = 0);
@@ -738,24 +738,24 @@ public:
 	virtual void Message(uint32 type, const char* message, ...) { }
 	virtual void Message_StringID(uint32 type, uint32 string_id, uint32 distance = 0) { }
 	virtual void Message_StringID(uint32 type, uint32 string_id, const char* message, const char* message2 = 0,
-		const char* message3 = 0, const char* message4 = 0, const char* message5 = 0, const char* message6 = 0,
-		const char* message7 = 0, const char* message8 = 0, const char* message9 = 0, uint32 distance = 0) { }
+								  const char* message3 = 0, const char* message4 = 0, const char* message5 = 0, const char* message6 = 0,
+								  const char* message7 = 0, const char* message8 = 0, const char* message9 = 0, uint32 distance = 0) { }
 	virtual void FilteredMessage_StringID(Mob *sender, uint32 type, eqFilterType filter, uint32 string_id) { }
 	virtual void FilteredMessage_StringID(Mob *sender, uint32 type, eqFilterType filter,
-			uint32 string_id, const char *message1, const char *message2 = nullptr,
-			const char *message3 = nullptr, const char *message4 = nullptr,
-			const char *message5 = nullptr, const char *message6 = nullptr,
-			const char *message7 = nullptr, const char *message8 = nullptr,
-			const char *message9 = nullptr) { }
+										  uint32 string_id, const char *message1, const char *message2 = nullptr,
+										  const char *message3 = nullptr, const char *message4 = nullptr,
+										  const char *message5 = nullptr, const char *message6 = nullptr,
+										  const char *message7 = nullptr, const char *message8 = nullptr,
+										  const char *message9 = nullptr) { }
 	void Say(const char *format, ...);
 	void Say_StringID(uint32 string_id, const char *message3 = 0, const char *message4 = 0, const char *message5 = 0,
-		const char *message6 = 0, const char *message7 = 0, const char *message8 = 0, const char *message9 = 0);
+					  const char *message6 = 0, const char *message7 = 0, const char *message8 = 0, const char *message9 = 0);
 	void Say_StringID(uint32 type, uint32 string_id, const char *message3 = 0, const char *message4 = 0, const char *message5 = 0,
-		const char *message6 = 0, const char *message7 = 0, const char *message8 = 0, const char *message9 = 0);
+					  const char *message6 = 0, const char *message7 = 0, const char *message8 = 0, const char *message9 = 0);
 	void SayTo_StringID(Client *to, uint32 string_id, const char *message3 = 0, const char *message4 = 0, const char *message5 = 0,
-		const char *message6 = 0, const char *message7 = 0, const char *message8 = 0, const char *message9 = 0);
+						const char *message6 = 0, const char *message7 = 0, const char *message8 = 0, const char *message9 = 0);
 	void SayTo_StringID(Client *to, uint32 type, uint32 string_id, const char *message3 = 0, const char *message4 = 0, const char *message5 = 0,
-		const char *message6 = 0, const char *message7 = 0, const char *message8 = 0, const char *message9 = 0);
+						const char *message6 = 0, const char *message7 = 0, const char *message8 = 0, const char *message9 = 0);
 	void Shout(const char *format, ...);
 	void Emote(const char *format, ...);
 	void QuestJournalledSay(Client *QuestInitiator, const char *str);
@@ -764,10 +764,10 @@ public:
 	int16 CalcFocusEffect(focusType type, uint16 focus_id, uint16 spell_id, bool best_focus=false);
 	uint8 IsFocusEffect(uint16 spellid, int effect_index, bool AA=false,uint32 aa_effect=0);
 	void SendIllusionPacket(uint16 in_race, uint8 in_gender = 0xFF, uint8 in_texture = 0xFF, uint8 in_helmtexture = 0xFF,
-		uint8 in_haircolor = 0xFF, uint8 in_beardcolor = 0xFF, uint8 in_eyecolor1 = 0xFF, uint8 in_eyecolor2 = 0xFF,
-		uint8 in_hairstyle = 0xFF, uint8 in_luclinface = 0xFF, uint8 in_beard = 0xFF, uint8 in_aa_title = 0xFF,
-		uint32 in_drakkin_heritage = 0xFFFFFFFF, uint32 in_drakkin_tattoo = 0xFFFFFFFF,
-		uint32 in_drakkin_details = 0xFFFFFFFF, float in_size = -1.0f);
+							uint8 in_haircolor = 0xFF, uint8 in_beardcolor = 0xFF, uint8 in_eyecolor1 = 0xFF, uint8 in_eyecolor2 = 0xFF,
+							uint8 in_hairstyle = 0xFF, uint8 in_luclinface = 0xFF, uint8 in_beard = 0xFF, uint8 in_aa_title = 0xFF,
+							uint32 in_drakkin_heritage = 0xFFFFFFFF, uint32 in_drakkin_tattoo = 0xFFFFFFFF,
+							uint32 in_drakkin_details = 0xFFFFFFFF, float in_size = -1.0f);
 	bool RandomizeFeatures(bool send_illusion = true, bool set_variables = true);
 	virtual void Stun(int duration);
 	virtual void UnStun();
@@ -1020,8 +1020,7 @@ public:
 
 	inline bool			CheckAggro(Mob* other) {return hate_list.IsEntOnHateList(other);}
 	float				CalculateHeadingToTarget(float in_x, float in_y) {return HeadingAngleToMob(in_x, in_y); }
-	bool				CalculateNewPosition(float x, float y, float z, int speed, bool checkZ = false, bool calcHeading = true);
-	virtual bool		CalculateNewPosition2(float x, float y, float z, int speed, bool checkZ = true, bool calcHeading = true);
+	virtual bool		CalculateNewPosition(float x, float y, float z, int speed, bool checkZ = true, bool calcheading = true);
 	float				CalculateDistance(float x, float y, float z);
 	float				GetGroundZ(float new_x, float new_y, float z_offset=0.0);
 	void				SendTo(float new_x, float new_y, float new_z);
@@ -1084,7 +1083,7 @@ public:
 	void SetNextIncHPEvent( int inchpevent );
 
 	inline bool DivineAura() const { return spellbonuses.DivineAura; }
- 	inline bool Sanctuary() const { return spellbonuses.Sanctuary; }
+	inline bool Sanctuary() const { return spellbonuses.Sanctuary; }
 
 	bool HasNPCSpecialAtk(const char* parse);
 	int GetSpecialAbility(int ability);
@@ -1188,7 +1187,6 @@ public:
 	void ResetAssistCap() { npc_assist_cap = 0; }
 	int GetWeaponDamage(Mob *against, const EQEmu::ItemData *weapon_item);
 	int GetWeaponDamage(Mob *against, const EQEmu::ItemInstance *weapon_item, uint32 *hate = nullptr);
-	float FindGroundZ(float new_x, float new_y, float z_offset = 0.0);
 	float last_z;
 
 	float GetPlayerHeight(uint16 race);
@@ -1352,9 +1350,10 @@ protected:
 	int GetBaseSkillDamage(EQEmu::skills::SkillType skill, Mob *target = nullptr);
 	virtual int16 GetFocusEffect(focusType type, uint16 spell_id) { return 0; }
 	void CalculateNewFearpoint();
+	float FindGroundZ(float new_x, float new_y, float z_offset=0.0);
 	float FindDestGroundZ(glm::vec3 dest, float z_offset=0.0);
 	glm::vec3 UpdatePath(float ToX, float ToY, float ToZ, float Speed, bool &WaypointChange, bool &NodeReached);
-	void PrintRoute();
+	glm::vec3 HandleStuckPath(const glm::vec3 &To, const glm::vec3 &From);
 
 	virtual float GetSympatheticProcChances(uint16 spell_id, int16 ProcRateMod, int32 ItemProcRate = 0);
 	int16 GetSympatheticSpellProcRate(uint16 spell_id);
@@ -1542,16 +1541,11 @@ protected:
 	// Pathing
 	//
 	glm::vec3 PathingDestination;
+	IPathfinder::IPath Route;
+	std::unique_ptr<Timer> PathRecalcTimer;
+	bool DistractedFromGrid;
 	glm::vec3 PathingLastPosition;
 	int PathingLoopCount;
-	int PathingLastNodeVisited;
-	std::deque<int> Route;
-	LOSType PathingLOSState;
-	Timer *PathingLOSCheckTimer;
-	Timer *PathingRouteUpdateTimerShort;
-	Timer *PathingRouteUpdateTimerLong;
-	bool DistractedFromGrid;
-	int PathingTraversedNodes;
 
 	uint32 pDontHealMeBefore;
 	uint32 pDontBuffMeBefore;
