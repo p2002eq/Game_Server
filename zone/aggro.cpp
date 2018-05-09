@@ -392,20 +392,25 @@ int EntityList::GetHatedCount(Mob *attacker, Mob *exclude, bool incgreencon)
 
 	for (auto it = npc_list.begin(); it != npc_list.end(); ++it) {
 		NPC *mob = it->second;
-		if (!mob || (mob == exclude))
+		if (!mob || (mob == exclude)) {
 			continue;
+		}
 
-		if (!mob->IsEngaged())
+		if (!mob->IsEngaged()) {
 			continue;
+		}
 
-		if (mob->IsFeared() || mob->IsMezzed())
+		if (mob->IsFeared() || mob->IsMezzed()) {
 			continue;
+		}
 
-		if (!incgreencon && attacker->GetLevelCon(mob->GetLevel()) == CON_GREEN)
+		if (!incgreencon && attacker->GetLevelCon(mob->GetLevel()) == CON_GREEN) {
 			continue;
+		}
 
-		if (!mob->CheckAggro(attacker))
+		/* if (!mob->CheckAggro(attacker)) {
 			continue;
+		} */
 
 		float AggroRange = mob->GetAggroRange();
 
@@ -413,8 +418,10 @@ int EntityList::GetHatedCount(Mob *attacker, Mob *exclude, bool incgreencon)
 
 		AggroRange *= AggroRange;
 
-		if (DistanceSquared(mob->GetPosition(), attacker->GetPosition()) > AggroRange)
+		if (DistanceSquared(mob->GetPosition(), attacker->GetPosition()) > AggroRange) {
+			Log(Logs::General, Logs::Combat, "Entity is outside of AggroRange = %i", AggroRange);
 			continue;
+		}
 
 		Count++;
 	}
