@@ -50,7 +50,8 @@ RULE_INT(Character, CorpseResTimeMS, 10800000) // time before cant res corpse(3 
 RULE_BOOL(Character, LeaveCorpses, true)
 RULE_BOOL(Character, LeaveNakedCorpses, false)
 RULE_INT(Character, MaxDraggedCorpses, 2)
-RULE_REAL(Character, DragCorpseDistance, 400) // If the corpse is <= this distance from the player, it won't move
+RULE_REAL(Character, DragCorpseDistance, 400) // /Corpsedrag If the corpse is <= this distance from the player, it won't move
+RULE_REAL(Character, CorpseDistance, 400) // /Corpse If the corpse is <= this distance from the player, it won't move
 RULE_REAL(Character, ExpMultiplier, 1.0)
 RULE_REAL(Character, AAExpMultiplier, 1.0)
 RULE_REAL(Character, GroupExpMultiplier, 1.0)
