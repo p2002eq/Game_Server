@@ -789,9 +789,7 @@ void Client::AI_Process()
 	if(RuleB(Combat, EnableFearPathing)){
 		if(currently_fleeing) {
 			if (fix_z_timer_engaged.Check()) {
-				if(this->GetRace() != 72 && this->GetRace() != 73 && this->GetRace() != 141 && zone->GetZoneID() != 216) {
-					this->FixZ(1);
-				}
+				this->FixZ(1);
 			}
 
 			if(IsRooted()) {
@@ -1166,9 +1164,7 @@ void Mob::AI_Process() {
 			if (this->GetTarget()) {
 				/* If we are engaged, moving and following client, let's look for best Z more often */
 				float target_distance = DistanceNoZ(this->GetPosition(), this->GetTarget()->GetPosition());
-				if(this->GetRace() != 72 && this->GetRace() != 73 && this->GetRace() != 141 && zone->GetZoneID() != 216) {
-					this->FixZ(1);
-				}
+				this->FixZ(1);
 
 				if (target_distance <= 15 && !this->CheckLosFN(this->GetTarget())) {
 					Mob *target = this->GetTarget();
@@ -1794,9 +1790,7 @@ void NPC::AI_DoMovement() {
 						SetHeading(m_CurrentWayPoint.w);
 					}
 
-					if(this->GetRace() != 72 && this->GetRace() != 73 && this->GetRace() != 141 && zone->GetZoneID() != 216) {
-						this->FixZ(1);
-					}
+					this->FixZ(1);
 
 					SendPosition();
 
