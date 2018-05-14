@@ -879,7 +879,7 @@ float Mob::GetZOffset() const {
 			offset = 4.0f;
 			break;
 		case 323:
-			offset = 5.0f;
+			offset = 1.0f;
 			break;
 		case 663:
 			offset = 5.0f;
