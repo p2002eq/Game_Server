@@ -136,7 +136,7 @@ void Client::AddEXP(uint32 in_add_exp, uint8 conlevel, bool resexp) {
 	add_exp -= add_aaxp;
 
 	// General EXP Modifier
-	if (RuleR(Character, ExpMultiplier) >= 0) {
+	if (RuleR(Character, ExpMultiplier) >= 0 and GetLevel() <= RuleI(Character, MaxLevelExpMultiplier)) {
 		totalexpmod  = totalexpmod * RuleR(Character, ExpMultiplier);
 	}
 
