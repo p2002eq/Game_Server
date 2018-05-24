@@ -453,6 +453,7 @@ void Mob::AI_Init()
 	AI_feign_remember_timer.reset(nullptr);
 	AI_scan_area_timer.reset(nullptr);
 	AI_check_signal_timer.reset(nullptr);
+	AI_scan_door_open_timer.reset(nullptr);
 
 	minLastFightingDelayMoving = RuleI(NPC, LastFightingDelayMovingMin);
 	maxLastFightingDelayMoving = RuleI(NPC, LastFightingDelayMovingMax);
@@ -496,15 +497,16 @@ void Mob::AI_Start(uint32 iMoveDelay) {
 	else
 		pLastFightingDelayMoving = 0;
 
-	pAIControlled = true;
+	pAIControlled  = true;
 	AI_think_timer = std::unique_ptr<Timer>(new Timer(AIthink_duration));
 	AI_think_timer->Trigger();
-	AI_walking_timer = std::unique_ptr<Timer>(new Timer(0));
-	AI_movement_timer = std::unique_ptr<Timer>(new Timer(AImovement_duration));
-	AI_target_check_timer = std::unique_ptr<Timer>(new Timer(AItarget_check_duration));
+	AI_walking_timer        = std::unique_ptr<Timer>(new Timer(0));
+	AI_movement_timer       = std::unique_ptr<Timer>(new Timer(AImovement_duration));
+	AI_target_check_timer   = std::unique_ptr<Timer>(new Timer(AItarget_check_duration));
 	AI_feign_remember_timer = std::unique_ptr<Timer>(new Timer(AIfeignremember_delay));
+	AI_scan_door_open_timer = std::unique_ptr<Timer>(new Timer(AI_scan_door_open_interval));
 
-	if(CastToNPC()->WillAggroNPCs())
+	if (CastToNPC()->WillAggroNPCs())
 		AI_scan_area_timer = std::unique_ptr<Timer>(new Timer(RandomTimer(RuleI(NPC, NPCToNPCAggroTimerMin), RuleI(NPC, NPCToNPCAggroTimerMax))));
 
 	AI_check_signal_timer = std::unique_ptr<Timer>(new Timer(AI_check_signal_timer_delay));
@@ -572,6 +574,7 @@ void Mob::AI_Stop() {
 	AI_scan_area_timer.reset(nullptr);
 	AI_feign_remember_timer.reset(nullptr);
 	AI_check_signal_timer.reset(nullptr);
+	AI_scan_door_open_timer.reset(nullptr);
 
 	hate_list.WipeHateList();
 }
@@ -786,9 +789,7 @@ void Client::AI_Process()
 	if(RuleB(Combat, EnableFearPathing)){
 		if(currently_fleeing) {
 			if (fix_z_timer_engaged.Check()) {
-				if(this->GetRace() != 72 && this->GetRace() != 73 && this->GetRace() != 141 && zone->GetZoneID() != 216) {
-					this->FixZ(1);
-				}
+				this->FixZ(1);
 			}
 
 			if(IsRooted()) {
@@ -1070,6 +1071,43 @@ void Mob::AI_Process() {
 		engaged = false;
 	}
 
+	if (moving) {
+		if (AI_scan_door_open_timer->Check()) {
+
+			auto &door_list = entity_list.GetDoorsList();
+			for (auto itr : door_list) {
+				Doors *door = itr.second;
+
+				if (door->GetKeyItem()) {
+					continue;
+				}
+
+				if (door->GetLockpick()) {
+					continue;
+				}
+
+				if (door->IsDoorOpen()) {
+					continue;
+				}
+
+				float distance                = DistanceSquared(this->m_Position, door->GetPosition());
+				float distance_scan_door_open = 20;
+
+				if (distance <= (distance_scan_door_open * distance_scan_door_open)) {
+					/**
+ 					* Make sure we're opening a door within height relevance and not platforms
+ 					* above or below
+ 					*/
+					if (std::abs(this->m_Position.z - door->GetPosition().z) > 10) {
+						continue;
+					}
+
+					door->ForceOpen(this);
+				}
+			}
+		}
+	}
+
 	// Begin: Additions for Wiz Fear Code
 	//
 	if(RuleB(Combat, EnableFearPathing)){
@@ -1126,9 +1164,7 @@ void Mob::AI_Process() {
 			if (this->GetTarget()) {
 				/* If we are engaged, moving and following client, let's look for best Z more often */
 				float target_distance = DistanceNoZ(this->GetPosition(), this->GetTarget()->GetPosition());
-				if(this->GetRace() != 72 && this->GetRace() != 73 && this->GetRace() != 141 && zone->GetZoneID() != 216) {
-					this->FixZ(1);
-				}
+				this->FixZ(1);
 
 				if (target_distance <= 15 && !this->CheckLosFN(this->GetTarget())) {
 					Mob *target = this->GetTarget();
@@ -1754,9 +1790,7 @@ void NPC::AI_DoMovement() {
 						SetHeading(m_CurrentWayPoint.w);
 					}
 
-					if(this->GetRace() != 72 && this->GetRace() != 73 && this->GetRace() != 141 && zone->GetZoneID() != 216) {
-						this->FixZ(1);
-					}
+					this->FixZ(1);
 
 					SendPosition();
 

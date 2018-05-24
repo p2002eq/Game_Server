@@ -1368,14 +1368,14 @@ void Corpse::QueryLoot(Client* to) {
 }
 
 bool Corpse::Summon(Client* client, bool spell, bool CheckDistance) {
-	uint32 dist2 = 10000; // pow(100, 2);
+	uint32 dist2 = RuleR(Character, CorpseDistance); // pow(100, 2);
 	if (!spell) {
 		if (this->GetCharID() == client->CharacterID()) {
 			if (IsLocked() && client->Admin() < 100) {
 				client->Message(13, "That corpse is locked by a GM.");
 				return false;
 			}
-			if (!CheckDistance || (DistanceSquaredNoZ(m_Position, client->GetPosition()) <= dist2)) {
+			if (!CheckDistance || (DistanceSquared(m_Position, client->GetPosition()) <= dist2)) {
 				GMMove(client->GetX(), client->GetY(), client->GetZ());
 				is_corpse_changed = true;
 			}
@@ -1390,7 +1390,7 @@ bool Corpse::Summon(Client* client, bool spell, bool CheckDistance) {
 			std::list<std::string>::iterator itr;
 			for(itr = client->consent_list.begin(); itr != client->consent_list.end(); ++itr) {
 				if(strcmp(this->GetOwnerName(), itr->c_str()) == 0) {
-					if (!CheckDistance || (DistanceSquaredNoZ(m_Position, client->GetPosition()) <= dist2)) {
+					if (!CheckDistance || (DistanceSquared(m_Position, client->GetPosition()) <= dist2)) {
 						GMMove(client->GetX(), client->GetY(), client->GetZ());
 						is_corpse_changed = true;
 					}

@@ -50,7 +50,8 @@ RULE_INT(Character, CorpseResTimeMS, 10800000) // time before cant res corpse(3 
 RULE_BOOL(Character, LeaveCorpses, true)
 RULE_BOOL(Character, LeaveNakedCorpses, false)
 RULE_INT(Character, MaxDraggedCorpses, 2)
-RULE_REAL(Character, DragCorpseDistance, 400) // If the corpse is <= this distance from the player, it won't move
+RULE_REAL(Character, DragCorpseDistance, 20) // /Corpsedrag If the corpse is <= this distance from the player, it won't move
+RULE_REAL(Character, CorpseDistance, 1200) // /Corpse If the corpse is <= this distance from the player, it won't move
 RULE_REAL(Character, ExpMultiplier, 1.0)
 RULE_REAL(Character, AAExpMultiplier, 1.0)
 RULE_REAL(Character, GroupExpMultiplier, 1.0)
@@ -73,6 +74,7 @@ RULE_REAL(Character, AAExpMultiplierRed, 1.0)
 RULE_INT(Character, MaxAAExpPerKill, 3596474)
 
 RULE_REAL(Character, ExpInstanceMultiplier, 0.20)
+RULE_INT(Character, MaxLevelExpMultiplier, 60) // Maximum level allowed to receive Bonus EXP modifier
 
 RULE_BOOL(Character, UseXPConScaling, true)
 RULE_INT(Character, ShowExpValues, 0) //0 - normal, 1 - Show raw experience values, 2 - Show raw experience values AND percent.

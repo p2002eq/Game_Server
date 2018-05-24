@@ -392,20 +392,25 @@ int EntityList::GetHatedCount(Mob *attacker, Mob *exclude, bool incgreencon)
 
 	for (auto it = npc_list.begin(); it != npc_list.end(); ++it) {
 		NPC *mob = it->second;
-		if (!mob || (mob == exclude))
+		if (!mob || (mob == exclude)) {
 			continue;
+		}
 
-		if (!mob->IsEngaged())
+		if (!mob->IsEngaged()) {
 			continue;
+		}
 
-		if (mob->IsFeared() || mob->IsMezzed())
+		if (mob->IsFeared() || mob->IsMezzed()) {
 			continue;
+		}
 
-		if (!incgreencon && attacker->GetLevelCon(mob->GetLevel()) == CON_GREEN)
+		if (!incgreencon && attacker->GetLevelCon(mob->GetLevel()) == CON_GREEN) {
 			continue;
+		}
 
-		if (!mob->CheckAggro(attacker))
+		/* if (!mob->CheckAggro(attacker)) {
 			continue;
+		} */
 
 		float AggroRange = mob->GetAggroRange();
 
@@ -413,8 +418,10 @@ int EntityList::GetHatedCount(Mob *attacker, Mob *exclude, bool incgreencon)
 
 		AggroRange *= AggroRange;
 
-		if (DistanceSquared(mob->GetPosition(), attacker->GetPosition()) > AggroRange)
+		if (DistanceSquared(mob->GetPosition(), attacker->GetPosition()) > AggroRange) {
+			Log(Logs::General, Logs::Combat, "Entity is outside of AggroRange = %i", AggroRange);
 			continue;
+		}
 
 		Count++;
 	}
@@ -904,7 +911,9 @@ bool Mob::CombatRange(Mob* other, float fixed_size_mod)
 	if (size_mod > 10000)
 		size_mod = size_mod / 7;
 
-	float _DistNoRoot = DistanceSquared(m_Position, other->GetPosition());
+	float _DistNoRoot = DistanceSquaredNoZ(m_Position, other->GetPosition());
+	float _zDist = m_Position.z - other->GetZ();
+	_zDist *= _zDist;
 
 	if (GetSpecialAbility(NPC_CHASE_DISTANCE)){
 
@@ -933,6 +942,10 @@ bool Mob::CombatRange(Mob* other, float fixed_size_mod)
 
 	if (_DistNoRoot <= size_mod)
 	{
+		//A hack to kill an exploit till we get something better.
+		if (flymode == 0 && _zDist > 500 && !CheckLastLosState()) {
+			return false;
+		}
 		return true;
 	}
 	return false;

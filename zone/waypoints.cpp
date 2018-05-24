@@ -481,9 +481,7 @@ bool Mob::MakeNewPositionAndSendUpdate(float x, float y, float z, int speed, boo
 		m_Position.z = new_z;
 
 		if(fix_z_timer.Check() && (!this->IsEngaged() || flee_mode || currently_fleeing)) {
-			if(this->GetRace() != 72 && this->GetRace() != 73 && this->GetRace() != 141 && zone->GetZoneID() != 216) {
-				this->FixZ(1);
-			}
+			this->FixZ(1);
 		}
 
 		tar_ndx++;
@@ -589,9 +587,7 @@ bool Mob::MakeNewPositionAndSendUpdate(float x, float y, float z, int speed, boo
 	}
 
 	if (fix_z_timer.Check() && !this->IsEngaged()) {
-		if(this->GetRace() != 72 && this->GetRace() != 73 && this->GetRace() != 141 && zone->GetZoneID() != 216) {
-			this->FixZ(1);
-		}
+		this->FixZ(1);
 	}
 
 	SetMoving(true);
@@ -748,61 +744,59 @@ void Mob::SendToFixZ(float new_x, float new_y, float new_z) {
 	}
 }
 
-float Mob::GetFixedZ(glm::vec3 dest, int32 z_find_offset)
-{
+float Mob::GetFixedZ(glm::vec3 dest, int32 z_find_offset) {
 	BenchTimer timer;
 	timer.reset();
 	float new_z = dest.z;
 
-	if (zone->HasMap() && RuleB(Map, FixZWhenMoving) && 
-									(flymode != 1 && flymode != 2))
-	{
-		if (!RuleB(Watermap, CheckForWaterWhenMoving) || !zone->HasWaterMap() 
-			|| (zone->HasWaterMap() && 
-			!zone->watermap->InWater(glm::vec3(m_Position))))
-		{
-			/* Any more than 5 in the offset makes NPC's hop/snap to ceiling in small corridors */
-			new_z = this->FindDestGroundZ(dest,z_find_offset);
-			if (new_z != BEST_Z_INVALID)
-			{
-				new_z += this->GetZOffset();
+	if (zone->HasMap() && RuleB(Map, FixZWhenMoving)) {
 
-				// If bad new Z restore old one
-				if (new_z < -2000) {
-					new_z = m_Position.z;
-				}
+		if (flymode == 1 || flymode == 2)
+			return new_z;
+
+		if (this->IsBoat())
+			return new_z;
+
+		if (zone->HasWaterMap() && zone->watermap->InWater(glm::vec3(m_Position)))
+			return new_z;
+
+		/*
+		 * Any more than 5 in the offset makes NPC's hop/snap to ceiling in small corridors
+		 */
+		new_z = this->FindDestGroundZ(dest, z_find_offset);
+		if (new_z != BEST_Z_INVALID) {
+			new_z += this->GetZOffset();
+
+			if (new_z < -2000) {
+				new_z = m_Position.z;
 			}
 		}
-
 		auto duration = timer.elapsed();
 
 		Log(Logs::Moderate, Logs::FixZ,
-			"Mob::FixZ() (%s) returned %4.3f at %4.3f, %4.3f, %4.3f - Took %lf", 
-			this->GetCleanName(), new_z, m_Position.x, m_Position.y, 
+			"Mob::FixZ() (%s) returned %4.3f at %4.3f, %4.3f, %4.3f - Took %lf",
+			this->GetCleanName(), new_z, m_Position.x, m_Position.y,
 			m_Position.z, duration);
 	}
 
 	return new_z;
 }
 
-void Mob::FixZ(int32 z_find_offset /*= 5*/)
-{
+void Mob::FixZ(int32 z_find_offset /*= 5*/) {
 	glm::vec3 current_loc(m_Position);
-	float new_z=GetFixedZ(current_loc, z_find_offset);
+	float new_z = GetFixedZ(current_loc, z_find_offset);
 
-	if (new_z != m_Position.z)
-	{
+	if (new_z != m_Position.z) {
 		if ((new_z > -2000) && new_z != BEST_Z_INVALID) {
 			if (RuleB(Map, MobZVisualDebug))
 				this->SendAppearanceEffect(78, 0, 0, 0, 0);
-			
+
 			m_Position.z = new_z;
-		}
-		else {
+		} else {
 			if (RuleB(Map, MobZVisualDebug))
 				this->SendAppearanceEffect(103, 0, 0, 0, 0);
 
-			Log(Logs::General, Logs::FixZ, "%s is failing to find Z %f", 
+			Log(Logs::General, Logs::FixZ, "%s is failing to find Z %f",
 				this->GetCleanName(), std::abs(m_Position.z - new_z));
 		}
 	}
@@ -885,7 +879,7 @@ float Mob::GetZOffset() const {
 			offset = 4.0f;
 			break;
 		case 323:
-			offset = 5.0f;
+			offset = 1.0f;
 			break;
 		case 663:
 			offset = 5.0f;
