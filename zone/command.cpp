@@ -193,7 +193,7 @@ int command_init(void)
 		command_add("disarmtrap",  "Analog for ldon disarm trap for the newer clients since we still don't have it working.", 80, command_disarmtrap) ||
 		command_add("distance", "- Reports the distance between you and your target.",  80, command_distance) ||
 		command_add("doanim", "[animnum] [type] - Send an EmoteAnim for you or your target", 50, command_doanim) ||
-		command_add("dps", "- Get a report of DPS on target", 0, command_dps) ||
+		command_add("dps", "- Get a report of DPS on target", 30, command_dps) ||
 		command_add("emote", "['name'/'world'/'zone'] [type] [message] - Send an emote message", 80, command_emote) ||
 		command_add("emotesearch", "Searches NPC Emotes", 80, command_emotesearch) ||
 		command_add("emoteview", "Lists all NPC Emotes", 80, command_emoteview) ||
@@ -250,7 +250,7 @@ int command_init(void)
 		command_add("iplookup", "[charname] - Look up IP address of charname", 200, command_iplookup) ||
 		command_add("issue", "- Report an issue with the server", 0, command_issue) ||
 		command_add("iteminfo", "- Get information about the item on your cursor", 10, command_iteminfo) ||
-		command_add("itemscore", "- Get itemscore of the item on your cursor", 0, command_itemscore) ||
+		command_add("itemscore", "- Get itemscore of the item on your cursor", 30, command_itemscore) ||
 		command_add("itemsearch", "[search criteria] - Search for an item", 10, command_itemsearch) ||
 		command_add("kick", "[charname] - Disconnect charname", 150, command_kick) ||
 		command_add("kill", "- Kill your target", 100, command_kill) ||
@@ -394,7 +394,7 @@ int command_init(void)
 		command_add("title", "[text] [1 = create title table row] - Set your or your player target's title", 50, command_title) ||
 		command_add("titlesuffix", "[text] [1 = create title table row] - Set your or your player target's title suffix", 50, command_titlesuffix) ||
 		command_add("traindisc", "[level] - Trains all the disciplines usable by the target, up to level specified. (may freeze client for a few seconds)", 150, command_traindisc) ||
-		command_add("toggle", " - Toggle server options", 0, command_toggle) ||
+		command_add("toggle", " - Toggle server options", 30, command_toggle) ||
 		command_add("trapinfo", "- Gets infomation about the traps currently spawned in the zone.", 81, command_trapinfo) ||
 		command_add("tune",  "Calculate ideal statical values related to combat.",  100, command_tune) ||
 		command_add("ucs", "- Attempts to reconnect to the UCS server", 0, command_ucs) ||
