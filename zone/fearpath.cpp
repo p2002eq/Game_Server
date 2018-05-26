@@ -31,81 +31,77 @@ extern Zone* zone;
 
 //this is called whenever we are damaged to process possible fleeing
 void Mob::CheckFlee() {
-	//Log(Logs::General, Logs::Combat, "[Debug] Check Flee - Started Check");
+
+	// if mob is dead why would you run?
+	if(GetHP() == 0) {
+		return;
+	}
+
 	//if were already fleeing, don't need to check more...
 	if(flee_mode && currently_fleeing) {
-		//Log(Logs::General, Logs::Combat, "[Debug] Already Fleeing");
 		return;
 	}
 
 	//dont bother if we are immune to fleeing
 	if(GetSpecialAbility(IMMUNE_FLEEING) || spellbonuses.ImmuneToFlee) {
-		//Log(Logs::General, Logs::Combat, "[Debug] Immune to Fleeing");
 		return;
 	}
 
+	//Check if Flee Timer is cleared
 	if(!flee_timer.Check()) {
-		//Log(Logs::General, Logs::Combat, "[Debug] Flee Timer hasn't tripped");
-		return;    //only do all this stuff every little while, since
-		//its not essential that we start running RIGHT away
-	}
-
-	//see if were possibly hurt enough
-	float ratio = GetHPRatio();
-	float fleeratio = GetSpecialAbility(FLEE_PERCENT);
-	fleeratio = fleeratio > 0 ? fleeratio : RuleI(Combat, FleeHPRatio);
-
-	if(ratio >= fleeratio) {
-		//Log(Logs::General, Logs::Combat, "[Debug] Ratio (%i) >= Flee Ratio (%i)", ratio, fleeratio);
 		return;
 	}
 
-	//we might be hurt enough, check con now..
+	int hpratio = GetIntHPRatio();
+	int fleeratio = GetSpecialAbility(FLEE_PERCENT); // if a special flee_percent exists
 	Mob *hate_top = GetHateTop();
+
+	// If no special flee_percent check for Green or Other con rates
+	if(GetLevelCon(hate_top->GetLevel(), GetLevel()) == CON_GREEN && fleeratio == 0) {
+		fleeratio = RuleI(Combat, FleeGreenHPRatio);
+	} else if(fleeratio == 0) {
+		fleeratio = RuleI(Combat, FleeHPRatio );
+	}
+
+	// Mob does not have low enough health to flee
+	if(hpratio >= fleeratio) {
+		return;
+	}
+
+	//Sanity Check this should never happen...
 	if(!hate_top) {
-		//this should never happen...
 		StartFleeing();
 		return;
 	}
 
-	float other_ratio = hate_top->GetHPRatio();
+	int other_ratio = hate_top->GetIntHPRatio();
+	// If the Client is nearing death the NPC will not flee and instead try to kill the client.
 	if(other_ratio < 20) {
-		//our hate top is almost dead too... stay and fight
 		return;
 	}
 
-	//base our flee ratio on our con. this is how the
-	//attacker sees the mob, since this is all we can observe
+	// Flee Chance checking based on con.
 	uint32 con = GetLevelCon(hate_top->GetLevel(), GetLevel());
-	float run_ratio;
+	int flee_chance;
 	switch(con) {
 		//these values are not 100% researched
 		case CON_GREEN:
-			run_ratio = fleeratio * 9 / 10;
-			//Log(Logs::General, Logs::Combat, "[Debug] Green Con - Run Ratio (%i) = Fleeratio (%i) * 9 / 10", run_ratio, fleeratio);
+			flee_chance = 90;
 			break;
 		case CON_LIGHTBLUE:
-			run_ratio = fleeratio * 9 / 10;
-			//Log(Logs::General, Logs::Combat, "[Debug] LB Con - Run Ratio (%i) = Fleeratio (%i) * 9 / 10", run_ratio, fleeratio);
+			flee_chance = 90;
 			break;
 		case CON_BLUE:
-			run_ratio = fleeratio * 8 / 10;
-			//Log(Logs::General, Logs::Combat, "[Debug] Blue Con - Run Ratio (%i) = Fleeratio (%i) * 8 / 10", run_ratio, fleeratio);
+			flee_chance = 80;
 			break;
 		default:
-			run_ratio = fleeratio * 7 / 10;
-			//Log(Logs::General, Logs::Combat, "[Debug] White/Yellow/Red Con - Run Ratio (%i) = Fleeratio (%i) * 7 / 10", run_ratio, fleeratio);
+			flee_chance = 70;
 			break;
 	}
 
-	//Log(Logs::General, Logs::Combat, "[Debug] Ratio (%i) < run_ratio (%i)", ratio, run_ratio);
-	if(ratio < run_ratio)
-	{
-		Log(Logs::General, Logs::Combat, "[Debug] Entity List. GetHatedCount (%i)", entity_list.GetHatedCount(hate_top, this, true));
-		if (entity_list.GetHatedCount(hate_top, this, true) == 0) {
-			Log(Logs::General, Logs::Combat, "[Debug] Start Fleeing!");
-			StartFleeing();
-		}
+	// If we got here we are allowed to roll on flee chance if there is not other hated NPC's in the area.
+	if(zone->random.Roll(flee_chance) && entity_list.GetHatedCount(hate_top, this, true) == 0) {
+		StartFleeing();
 	}
 }
 

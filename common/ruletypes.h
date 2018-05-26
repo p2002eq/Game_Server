@@ -467,6 +467,7 @@ RULE_INT(Combat, LevelDifferenceRollCheck, 20)
 RULE_REAL(Combat, LevelDifferenceRollBonus, 0.5)
 RULE_BOOL(Combat, EnableFearPathing, true)
 RULE_REAL(Combat, FleeMultiplier, 2.0) // Determines how quickly a NPC will slow down while fleeing. Decrease multiplier to slow NPC down quicker.
+RULE_INT(Combat, FleeGreenHPRatio, 50) //HP % when a Green NPC begins to flee.
 RULE_INT(Combat, FleeHPRatio, 25) //HP % when a NPC begins to flee.
 RULE_BOOL(Combat, FleeIfNotAlone, false) // If false, mobs won't flee if other mobs are in combat with it.
 RULE_BOOL(Combat, AdjustProcPerMinute, true)
