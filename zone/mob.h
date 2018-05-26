@@ -63,6 +63,90 @@ enum class eSpecialAttacks : int {
 	ChaoticStab
 };
 
+struct DPS_Struct {
+	explicit DPS_Struct(
+			uint32 engage_start,
+			int acct_id,
+			int type_id,
+			int ent_id,
+			std::string character_name,
+			int hp_self_gain_total,
+			int hp_self_gain_net,
+			int hp_self_loss_total,
+			int hp_self_loss_net,
+			int hp_target_gain_total,
+			int hp_target_gain_net,
+			int hp_target_loss_total,
+			int hp_target_loss_net,
+			int mana_self_gain_total,
+			int mana_self_gain_net,
+			int mana_self_loss_total,
+			int mana_self_loss_net,
+			int mana_target_gain_total,
+			int mana_target_gain_net,
+			int mana_target_loss_total,
+			int mana_target_loss_net,
+			int class_id,
+			std::string class_name,
+			int item_score,
+			int level,
+			int aggro_count) :
+			engage_start(engage_start),
+			acct_id(acct_id),
+			type_id(type_id),
+			ent_id(ent_id),
+			character_name(character_name),
+			hp_self_gain_total(hp_self_gain_total),
+			hp_self_gain_net(hp_self_gain_net),
+			hp_self_loss_total(hp_self_loss_total),
+			hp_self_loss_net(hp_self_loss_net),
+			hp_target_gain_total(hp_target_gain_total),
+			hp_target_gain_net(hp_target_gain_net),
+			hp_target_loss_total(hp_target_loss_total),
+			hp_target_loss_net(hp_target_loss_net),
+			mana_self_gain_total(mana_self_gain_total),
+			mana_self_gain_net(mana_self_gain_net),
+			mana_self_loss_total(mana_self_loss_total),
+			mana_self_loss_net(mana_self_loss_net),
+			mana_target_gain_total(mana_target_gain_total),
+			mana_target_gain_net(mana_target_gain_net),
+			mana_target_loss_total(mana_target_loss_total),
+			mana_target_loss_net(mana_target_loss_net),
+			tier(tier),
+			class_id(class_id),
+			class_name(class_name),
+			item_score(item_score),
+			level(level),
+			aggro_count(aggro_count) {};
+	uint32 engage_start;
+	int acct_id;
+	int type_id;
+	int ent_id;
+	std::string character_name;
+	int hp_self_gain_total;
+	int hp_self_gain_net;
+	int hp_self_loss_total;
+	int hp_self_loss_net;
+	int hp_target_gain_total;
+	int hp_target_gain_net;
+	int hp_target_loss_total;
+	int hp_target_loss_net;
+	int mana_self_gain_total;
+	int mana_self_gain_net;
+	int mana_self_loss_total;
+	int mana_self_loss_net;
+	int mana_target_gain_total;
+	int mana_target_gain_net;
+	int mana_target_loss_total;
+	int mana_target_loss_net;
+	int tier;
+	int class_id;
+	std::string class_name;
+	int item_score;
+	int level;
+	int aggro_count;
+};
+
 const uint8 MAX_CON_LEVELS = 65;
 
 // green_server, lb_server, green_client, lb_client
@@ -216,7 +300,14 @@ public:
 	inline virtual bool IsMob() const { return true; }
 	inline virtual bool InZone() const { return true; }
 
+	std::vector<DPS_Struct> DPS();
 	//Somewhat sorted: needs documenting!
+	void AddHPEvent(Mob *other, int total, int net, bool is_dealer);
+	void AddManaEvent(Mob *other, int total, int net, bool is_dealer);
+
+	void EngageReset();
+	void EngageFlushOnNextEngage();
+	std::vector<DPS_Struct> dps;
 
 	//Attack
 	virtual void RogueBackstab(Mob* other, bool min_damage = false, int ReuseTime = 10);
@@ -1189,7 +1280,11 @@ public:
 	int GetWeaponDamage(Mob *against, const EQEmu::ItemInstance *weapon_item, uint32 *hate = nullptr);
 	float last_z;
 
+	int GetAggroCount();
+
 	float GetPlayerHeight(uint16 race);
+
+	int engage_duration;
 
 	// Bots HealRotation methods
 #ifdef BOTS
@@ -1593,6 +1688,7 @@ protected:
 	Timer aa_timers[aaTimerMax];
 
 	bool IsHorse;
+	bool engage_flush_on_next_engage;
 
 private:
 	void _StopSong(); //this is not what you think it is

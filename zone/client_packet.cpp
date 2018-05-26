@@ -815,6 +815,22 @@ void Client::CompleteConnect()
 
 	parse->EventPlayer(EVENT_ENTER_ZONE, this, "", 0);
 
+	//make sure account custom is set
+	std::string query = StringFormat("SELECT use_full_dps, use_self_dps FROM account_custom WHERE account_id = %u LIMIT 1", AccountID());
+
+	auto results = database.QueryDatabase(query);
+	if (results.Success()) {
+		if (results.RowCount() > 0) {
+			auto row = results.begin();
+			m_epp.use_full_dps = atoi(row[0]);
+			m_epp.use_self_dps = atoi(row[1]);
+		}
+		else {
+			std::string query = StringFormat("INSERT INTO account_custom (account_id) VALUES (%u)", AccountID());
+			auto results = database.QueryDatabase(query);
+		}
+	}
+
 	/* This sub event is for if a player logs in for the first time since entering world. */
 	if (firstlogon == 1) {
 		parse->EventPlayer(EVENT_CONNECT, this, "", 0);
@@ -9553,6 +9569,7 @@ void Client::Handle_OP_Mend(const EQApplicationPacket *app)
 			mendhp *= 2;
 			Message_StringID(4, MEND_CRITICAL);
 		}
+		entity_list.LogHPEvent(this, this, mendhp);
 		SetHP(GetHP() + mendhp);
 		SendHPUpdate();
 		Message_StringID(4, MEND_SUCCESS);

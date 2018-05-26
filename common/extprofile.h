@@ -56,6 +56,8 @@ struct ExtendedProfile_Struct {
 	int32				mercState; /* Not Used */
 	uint32				last_invsnapshot_time; /* Used */
 	uint32				next_invsnapshot_time; /* Used */
+	bool				use_full_dps; //Show full dps on a mob's death?
+	bool				use_self_dps; //Show self dps on a mob's death?
 };
 
 #pragma pack()
