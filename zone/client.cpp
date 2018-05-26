@@ -9184,6 +9184,11 @@ int Client::GetCharacterItemScore() {
 	int x;
 	const EQEmu::ItemInstance* inst;
 	int itemScore = 0;
+
+	if (GetGM()) {
+		return itemScore;
+	}
+
 	for (x = EQEmu::legacy::EQUIPMENT_BEGIN; x < EQEmu::legacy::EQUIPMENT_END; x++) { // include cursor or not?
 		inst = GetInv().GetItem(x);
 		if (!inst) continue;
