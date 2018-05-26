@@ -130,6 +130,7 @@ Mob::Mob(const char* in_name,
 	currently_fleeing = false;
 
 	last_major_update_position = m_Position;
+	is_distance_roamer = false;
 
 	AI_Init();
 	SetMoving(false);
@@ -1479,6 +1480,7 @@ void Mob::SendPosition() {
 	if (DistanceSquared(last_major_update_position, m_Position) >= (100 * 100)) {
 		entity_list.QueueClients(this, app, true, true);
 		last_major_update_position = m_Position;
+		is_distance_roamer = true;
 	}
 	else {
 		entity_list.QueueCloseClients(this, app, true, RuleI(Range, MobPositionUpdates), nullptr, false);
@@ -1511,8 +1513,11 @@ void Mob::SendPositionUpdate(uint8 iSendToSelf) {
 		if (IsClient()) {
 			CastToClient()->FastQueuePacket(&app, false);
 		}
-	}
-	else {
+	} else if (DistanceSquared(last_major_update_position, m_Position) >= (100 * 100)) {
+		entity_list.QueueClients(this, app, true, true);
+		last_major_update_position = m_Position;
+		is_distance_roamer = true;
+	} else {
 		entity_list.QueueCloseClients(this, app, (iSendToSelf == 0), RuleI(Range, MobPositionUpdates), nullptr, false);
 	}
 	nats.OnClientUpdateEvent(this->GetID(), spu);
