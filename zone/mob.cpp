@@ -399,6 +399,7 @@ Mob::Mob(const char* in_name,
 
 	movetimercompleted = false;
 	ForcedMovement = 0;
+	resisted = 0;
 	roamer = false;
 	rooted = false;
 	charmed = false;
