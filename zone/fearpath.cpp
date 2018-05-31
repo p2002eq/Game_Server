@@ -29,7 +29,7 @@ extern Zone* zone;
 
 #define FEAR_PATHING_DEBUG
 
-//this is called whenever we are damaged to process possible fleeing
+// this is called whenever we are damaged to process possible fleeing
 void Mob::CheckFlee() {
 
 	// if mob is dead why would you run?
@@ -37,17 +37,17 @@ void Mob::CheckFlee() {
 		return;
 	}
 
-	//if were already fleeing, don't need to check more...
+	// if were already fleeing, don't need to check more...
 	if(flee_mode && currently_fleeing) {
 		return;
 	}
 
-	//dont bother if we are immune to fleeing
+	// dont bother if we are immune to fleeing
 	if(GetSpecialAbility(IMMUNE_FLEEING) || spellbonuses.ImmuneToFlee) {
 		return;
 	}
 
-	//Check if Flee Timer is cleared
+	// Check if Flee Timer is cleared
 	if(!flee_timer.Check()) {
 		return;
 	}
@@ -56,6 +56,10 @@ void Mob::CheckFlee() {
 	int fleeratio = GetSpecialAbility(FLEE_PERCENT); // if a special flee_percent exists
 	Mob *hate_top = GetHateTop();
 
+	// Sanity Check for race conditions
+	if(hate_top == nullptr) {
+		return;
+	}
 	// If no special flee_percent check for Green or Other con rates
 	if(GetLevelCon(hate_top->GetLevel(), GetLevel()) == CON_GREEN && fleeratio == 0) {
 		fleeratio = RuleI(Combat, FleeGreenHPRatio);
@@ -68,7 +72,7 @@ void Mob::CheckFlee() {
 		return;
 	}
 
-	//Sanity Check this should never happen...
+	// Sanity Check this should never happen...
 	if(!hate_top) {
 		StartFleeing();
 		return;
@@ -84,7 +88,7 @@ void Mob::CheckFlee() {
 	uint32 con = GetLevelCon(hate_top->GetLevel(), GetLevel());
 	int flee_chance;
 	switch(con) {
-		//these values are not 100% researched
+		// these values are not 100% researched
 		case CON_GREEN:
 			flee_chance = 90;
 			break;

@@ -2133,9 +2133,12 @@ void NPC::Damage(Mob* other, int32 damage, uint16 spell_id, EQEmu::skills::Skill
 	//do a majority of the work...
 	CommonDamage(other, damage, spell_id, attack_skill, avoidable, buffslot, iBuffTic, special);
 
+	// see if we are going to start fleeing
 	if (damage > 0) {
-		//see if we are gunna start fleeing
-		if (!IsPet()) CheckFlee();
+		// Sanity Check to ensure mob is not dead and is not a pet
+		if (!other->IsCorpse() && !IsPet()) {
+			CheckFlee();
+		}
 	}
 }
 
