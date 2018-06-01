@@ -5614,7 +5614,6 @@ void Mob::CommonBreakInvisibleFromCombat()
 		BuffFadeByEffect(SE_Invisibility);
 		BuffFadeByEffect(SE_Invisibility2);
 		invisible = false;
-
 	}
 	if (invisible_undead) {
 		Log(Logs::Detail, Logs::Combat, "Removing invisibility vs. undead due to melee attack.");
@@ -5630,11 +5629,9 @@ void Mob::CommonBreakInvisibleFromCombat()
 
 	CancelSneakHide();
 
-	if (spellbonuses.NegateIfCombat) {
+	if (spellbonuses.NegateIfCombat)
 		BuffFadeByEffect(SE_NegateIfCombat);
-	}
 
-	SetInvisible(0);
 	hidden = false;
 	improved_hidden = false;
 }
