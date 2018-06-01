@@ -4126,6 +4126,7 @@ bool Mob::SpellOnTarget(uint16 spell_id, Mob *spelltar, bool reflect, bool use_r
 				spelltar->m_Delta.y += action->force * g_Math.FastCos(action->hit_heading);
 				spelltar->m_Delta.z += action->hit_pitch;
 				spelltar->ForcedMovement = 6;
+				SendPositionUpdate();
 			}
 		}
 	}
