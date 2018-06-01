@@ -412,6 +412,7 @@ bool Mob::DoCastSpell(uint16 spell_id, uint16 target_id, CastingSlot slot,
 		Log(Logs::Detail, Logs::Spells, "Spell casting canceled: fizzled. %d mana has been consumed", use_mana);
 
 		// fizzle 1/4 the mana away
+		entity_list.LogManaEvent(this, this, -use_mana);
 		Mob::SetMana(GetMana() - use_mana); // We send StopCasting which will update mana
 		StopCasting();
 
@@ -2451,6 +2452,7 @@ bool Mob::SpellFinished(uint16 spell_id, Mob *spell_target, CastingSlot slot, ui
 			mana_used = GetMana();
 		Log(Logs::Detail, Logs::Spells, "Spell %d: consuming %d mana", spell_id, mana_used);
 		if (!DoHPToManaCovert(mana_used)) {
+			entity_list.LogManaEvent(this, this, -mana_used);
 			SetMana(GetMana() - mana_used);
 			TryTriggerOnValueAmount(false, true);
 		}
@@ -2567,6 +2569,7 @@ bool Mob::ApplyNextBardPulse(uint16 spell_id, Mob *spell_target, CastingSlot slo
 		}
 
 		Log(Logs::Detail, Logs::Spells, "Bard Song Pulse %d: consuming %d mana (have %d)", spell_id, mana_used, GetMana());
+		entity_list.LogManaEvent(this, this, -mana_used);
 		SetMana(GetMana() - mana_used);
 	}
 
@@ -3954,10 +3957,12 @@ bool Mob::SpellOnTarget(uint16 spell_id, Mob *spelltar, bool reflect, bool use_r
 				if (spells[spell_id].resisttype == RESIST_PHYSICAL){
 					Message_StringID(MT_SpellFailure, PHYSICAL_RESIST_FAIL,spells[spell_id].name);
 					spelltar->Message_StringID(MT_SpellFailure, YOU_RESIST, spells[spell_id].name);
+					resisted = 1;
 				}
 				else {
 					Message_StringID(MT_SpellFailure, TARGET_RESISTED, spells[spell_id].name);
 					spelltar->Message_StringID(MT_SpellFailure, YOU_RESIST, spells[spell_id].name);
+					resisted = 1;
 				}
 
 				if (spelltar->IsAIControlled()) {
@@ -4116,10 +4121,13 @@ bool Mob::SpellOnTarget(uint16 spell_id, Mob *spelltar, bool reflect, bool use_r
 				spelltar->CastToClient()->SetKnockBackExemption(true);
 			}
 		} else if (RuleB(Spells, NPCSpellPush) && !spelltar->IsRooted() && spelltar->ForcedMovement == 0) {
-			spelltar->m_Delta.x += action->force * g_Math.FastSin(action->hit_heading);
-			spelltar->m_Delta.y += action->force * g_Math.FastCos(action->hit_heading);
-			spelltar->m_Delta.z += action->hit_pitch;
-			spelltar->ForcedMovement = 6;
+			if ((!resisted) && (!spelltar->IsImmuneToSpell(spell_id, this))) {
+				spelltar->m_Delta.x += action->force * g_Math.FastSin(action->hit_heading);
+				spelltar->m_Delta.y += action->force * g_Math.FastCos(action->hit_heading);
+				spelltar->m_Delta.z += action->hit_pitch;
+				spelltar->ForcedMovement = 6;
+				SendPositionUpdate();
+			}
 		}
 	}
 

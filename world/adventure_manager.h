@@ -35,6 +35,7 @@ public:
 	bool PopFinishedEvent(const char *name, AdventureFinishEvent &fe);
 	void Save();
 	void Load();
+	void RefreshItemScore();
 
 	Adventure **GetFinishedAdventures(const char *player, int &count);
 	Adventure *GetActiveAdventure(const char *player);
@@ -88,6 +89,7 @@ protected:
 	Timer *process_timer;
 	Timer *save_timer;
 	Timer *leaderboard_info_timer;
+	Timer *itemscore_timer;
 };
 
 #endif

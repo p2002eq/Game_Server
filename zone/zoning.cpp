@@ -734,7 +734,7 @@ void Client::Gate() {
 void NPC::Gate() {
 	if (IsNPC()) {
 		auto npcSpawnPoint = CastToNPC()->GetSpawnPoint();
-		if (DistanceSquaredNoZ(m_Position, npcSpawnPoint) < RuleI(NPC, NPCGateDistanceFromBind)) {
+		if (DistanceNoZ(m_Position, npcSpawnPoint) < RuleI(NPC, NPCGateDistanceFromBind)) {
 			return;
 		}
 	}

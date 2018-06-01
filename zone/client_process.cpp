@@ -284,9 +284,16 @@ bool Client::Process() {
 					}
 				}
 
-				if (force_spawn_updates && mob != this && distance <= client_update_range)
-					mob->SendPositionUpdateToClient(this);
+				if (force_spawn_updates && mob != this) {
+					if (mob->is_distance_roamer) {
+						mob->SendPositionUpdateToClient(this);
+						continue;
+					}
 
+					if (distance <= client_update_range) {
+						mob->SendPositionUpdateToClient(this);
+					}
+				}
 			}
 		}
 
@@ -1839,6 +1846,7 @@ void Client::OPGMSummon(const EQApplicationPacket *app)
 }
 
 void Client::DoHPRegen() {
+	entity_list.LogHPEvent(this, this, RestRegenHP);
 	SetHP(GetHP() + CalcHPRegen() + RestRegenHP);
 	SendHPUpdate();
 }

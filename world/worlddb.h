@@ -27,6 +27,12 @@ struct PlayerProfile_Struct;
 struct CharCreate_Struct;
 struct CharacterSelect_Struct;
 
+//Used by ItemScore system
+struct CharData_Struct {
+	explicit CharData_Struct(int pID, int pClassID) : ID(pID), classID(pClassID) {};
+	int ID;
+	int classID;
+};
 
 class WorldDatabase : public SharedDatabase {
 public:
@@ -39,6 +45,8 @@ public:
 
 	bool LoadCharacterCreateAllocations();
 	bool LoadCharacterCreateCombos();
+	bool GetAllCharacters(std::vector<CharData_Struct*> &chars);
+
 private:
 	void SetTitaniumDefaultStartZone(PlayerProfile_Struct* in_pp, CharCreate_Struct* in_cc);
 	void SetSoFDefaultStartZone(PlayerProfile_Struct* in_pp, CharCreate_Struct* in_cc);

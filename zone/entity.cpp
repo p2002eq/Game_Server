@@ -2755,7 +2755,7 @@ void EntityList::SendPositionUpdates(Client *client, uint32 cLastUpdate, float u
 				mob && !mob->IsCorpse()
 				&& (it->second != client)
 				&& (mob->IsClient() || iSendEvenIfNotChanged || (mob->LastChange() >= cLastUpdate))
-				&& (!it->second->IsClient() || !it->second->CastToClient()->GMHideMe(client))
+				&& (it->second->ShouldISpawnFor(client))
 				) {
 			if (
 					update_range == 0

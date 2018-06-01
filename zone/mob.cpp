@@ -130,6 +130,7 @@ Mob::Mob(const char* in_name,
 	currently_fleeing = false;
 
 	last_major_update_position = m_Position;
+	is_distance_roamer = false;
 
 	AI_Init();
 	SetMoving(false);
@@ -398,6 +399,7 @@ Mob::Mob(const char* in_name,
 
 	movetimercompleted = false;
 	ForcedMovement = 0;
+	resisted = 0;
 	roamer = false;
 	rooted = false;
 	charmed = false;
@@ -1479,6 +1481,7 @@ void Mob::SendPosition() {
 	if (DistanceSquared(last_major_update_position, m_Position) >= (100 * 100)) {
 		entity_list.QueueClients(this, app, true, true);
 		last_major_update_position = m_Position;
+		is_distance_roamer = true;
 	}
 	else {
 		entity_list.QueueCloseClients(this, app, true, RuleI(Range, MobPositionUpdates), nullptr, false);
@@ -1511,8 +1514,11 @@ void Mob::SendPositionUpdate(uint8 iSendToSelf) {
 		if (IsClient()) {
 			CastToClient()->FastQueuePacket(&app, false);
 		}
-	}
-	else {
+	} else if (DistanceSquared(last_major_update_position, m_Position) >= (100 * 100)) {
+		entity_list.QueueClients(this, app, true, true);
+		last_major_update_position = m_Position;
+		is_distance_roamer = true;
+	} else {
 		entity_list.QueueCloseClients(this, app, (iSendToSelf == 0), RuleI(Range, MobPositionUpdates), nullptr, false);
 	}
 	nats.OnClientUpdateEvent(this->GetID(), spu);
@@ -6088,6 +6094,7 @@ void Mob::CommonBreakInvisible()
 {
 	BreakInvisibleSpells();
 	CancelSneakHide();
+	SetInvisible(0);
 }
 
 void Mob::ShieldClear() {
@@ -6198,6 +6205,209 @@ void Mob::Shield(Mob* target, float range_multiplier) {
 		return;
 	}
 	return;
+}
+
+//Retrieve the vector of DPS
+std::vector<DPS_Struct> Mob::DPS() {
+	return dps;
+}
+
+//Add a mob's mana to the DPS counter system
+void Mob::AddManaEvent(Mob *other, int total, int net, bool is_dealer) {
+	if (other == nullptr) return;
+	if (IsPet()) return;
+	if (GetAggroCount() == 0 && GetHPRatio() > 99) return;
+
+	int level = other->GetLevel();
+	int ent_id = other->GetID();
+	int type_id = 0;
+	int acct_id = 0;
+	int class_id = (int)other->GetClass();
+	std::string class_list[] = { "WAR", "CLR", "PAL", "RNG", "SHD", "DRU", "MNK", "BRD", "ROG", "SHM", "NEC", "WIZ", "MAG", "ENC", "BST", "BER" };
+	std::string class_name = "UNK";
+	if (other->GetClass() > 0 && other->GetClass() < 17) class_name = class_list[other->GetClass() - 1];
+	int item_score = 0;
+	std::string character_name = other->GetCleanName();
+	int aggro_count = other->hate_list.GetAggroCount();
+
+	//pet mana isn't tracked
+	/*if (total < 1 && other->IsPet() && other->IsPetOwnerClient() && other->GetOwner() != nullptr) {
+		acct_id = other->CastToClient()->AccountID();
+		type_id = other->CastToClient()->CharacterID();
+		character_name = other->GetOwner()->GetCleanName();
+	}*/
+	if (other->IsClient()) {
+		acct_id = other->CastToClient()->AccountID();
+		type_id = other->CastToClient()->CharacterID();
+		item_score = other->CastToClient()->GetCharacterItemScore();
+	}
+	else if (other->IsNPC()) {
+		type_id = other->CastToNPC()->GetNPCTypeID();
+	}
+
+	//see if entry already is being tracked
+	for (auto&& d : dps) {
+		if (d.ent_id != ent_id) continue;
+		if (total > 0) {
+			if (is_dealer) {
+				d.mana_target_gain_net += net;
+				d.mana_target_gain_total += total;
+			}
+			else {
+				d.mana_self_gain_net += net;
+				d.mana_self_gain_total += total;
+			}
+		}
+		else { //invert the damage since it's negative
+			if (is_dealer) {
+				d.mana_target_loss_net += -net;
+				d.mana_target_loss_total += -total;
+			}
+			else {
+				d.mana_self_loss_net += -net;
+				d.mana_self_loss_total += -total;
+			}
+		}
+		d.aggro_count = aggro_count;
+		return;
+	}
+
+	Log(Logs::General, Logs::Combat, "Added new DPS entry for %s", character_name.c_str());
+	//new entry
+	dps.push_back(DPS_Struct(time(nullptr), //uint32 engage_start,
+							 acct_id,
+							 type_id,
+							 ent_id,
+							 character_name,
+							 0, //hp_self_gain_total;
+							 0, //hp_self_gain_net,
+							 0, //hp_self_loss_total,
+							 0, //hp_self_loss_net,
+							 0, //hp_target_gain_total,
+							 0, //hp_target_gain_net,
+							 0, //hp_target_loss_total,
+							 0, //hp_target_loss_net,
+							 ((!is_dealer && total > 0) ? total : 0), //mana_self_gain_total,
+							 ((!is_dealer && net > 0) ? net : 0), //mana_self_gain_net,
+							 ((!is_dealer && total < 0) ? -total : 0), //mana_self_loss_total,
+							 ((!is_dealer && net < 0) ? -net : 0), //mana_self_loss_net,
+							 ((is_dealer && total > 0) ? total : 0), //mana_target_gain_total,
+							 ((is_dealer && net > 0) ? net : 0), //mana_target_gain_net,
+							 ((is_dealer && total < 0) ? -total : 0), //mana_target_loss_total,
+							 ((is_dealer && net < 0) ? -net : 0), //mana_target_loss_net,
+							 class_id,
+							 class_name,
+							 item_score,
+							 level,
+							 aggro_count));
+}
+
+//Add a mob's heal to the DPS counter system
+void Mob::AddHPEvent(Mob *other, int total, int net, bool is_dealer) {
+	if (other == nullptr) return;
+	if (IsPet()) return;
+	if (total == 0) return;
+	if (GetAggroCount() == 0 && GetHPRatio() > 99) return;
+
+	int level = other->GetLevel();
+	int ent_id = other->GetID();
+	int type_id = 0;
+	int acct_id = 0;
+	int class_id = (int)other->GetClass();
+	std::string class_list[] = { "WAR", "CLR", "PAL", "RNG", "SHD", "DRU", "MNK", "BRD", "ROG", "SHM", "NEC", "WIZ", "MAG", "ENC", "BST", "BER" };
+	std::string class_name = "UNK";
+	if (other->GetClass() > 0 && other->GetClass() < 17) class_name = class_list[other->GetClass() - 1];
+
+	int item_score = 0;
+	std::string character_name = other->GetCleanName();
+	int aggro_count = other->hate_list.GetAggroCount();
+
+	//pet healing isn't tracked
+	if (total < 1 && other->IsPet() && other->IsPetOwnerClient() && other->GetOwner() != nullptr) {
+		acct_id = other->CastToClient()->AccountID();
+		type_id = other->CastToClient()->CharacterID();
+		character_name = other->GetOwner()->GetCleanName();
+	} else if (other->IsClient()) {
+		acct_id = other->CastToClient()->AccountID();
+		type_id = other->CastToClient()->CharacterID();
+	} else if (other->IsNPC()) {
+		type_id = other->CastToNPC()->GetNPCTypeID();
+	}
+
+	//see if entry already is being tracked
+	for (auto&& d : dps) {
+		if (d.ent_id != ent_id) continue;
+		if (total > 0) {
+			if (is_dealer) {
+				d.hp_target_gain_net += net;
+				d.hp_target_gain_total += total;
+			}
+			else {
+				d.hp_self_gain_net += net;
+				d.hp_self_gain_total += total;
+			}
+		}
+		else { //invert the damage since it's negative
+			if (is_dealer) {
+				d.hp_target_loss_net += -net;
+				d.hp_target_loss_total += -total;
+			}
+			else {
+				d.hp_self_loss_net += -net;
+				d.hp_self_loss_total += -total;
+			}
+		}
+		d.aggro_count = aggro_count;
+		return;
+	}
+
+	Log(Logs::General, Logs::Combat, "Added new DPS entry for %s", character_name.c_str());
+	//new entry
+	dps.push_back(DPS_Struct(
+			time(nullptr), //uint32 engage_start,
+			acct_id,
+			type_id,
+			ent_id,
+			character_name,
+			((!is_dealer && total > 0) ? total : 0), //hp_self_gain_total;
+			((!is_dealer && net > 0) ? net : 0), //hp_self_gain_net,
+			((!is_dealer && total < 0) ? -total : 0), //hp_self_loss_total,
+			((!is_dealer && net < 0) ? -net : 0), //hp_self_loss_net,
+			((is_dealer && total > 0) ? total : 0), //hp_target_gain_total,
+			((is_dealer && net > 0) ? net : 0), //hp_target_gain_net,
+			((is_dealer && total < 0) ? -total : 0), //hp_target_loss_total,
+			((is_dealer && net < 0) ? -net : 0), //hp_target_loss_net,
+			0, //mana_self_gain_total,
+			0, //mana_self_gain_net,
+			0, //mana_self_loss_total,
+			0, //mana_self_loss_net,
+			0, //mana_target_gain_total,
+			0, //mana_target_gain_net,
+			0, //mana_target_loss_total,
+			0, //mana_target_loss_net,
+			class_id,
+			class_name,
+			item_score,
+			level,
+			aggro_count));
+}
+
+
+//Resets the engage, this is triggered when a mob hits full health.
+void Mob::EngageReset() {
+	Log(Logs::General, Logs::Combat, "Resetting DPS for %s", GetCleanName());
+	engage_duration = 0;
+	engage_flush_on_next_engage = false;
+	dps.clear();
+}
+
+void Mob::EngageFlushOnNextEngage() {
+	engage_flush_on_next_engage = true;
+}
+
+//Count the number of monsters aggro'd on mob
+int Mob::GetAggroCount() {
+	return hate_list.GetAggroCount();
 }
 
 #ifdef BOTS

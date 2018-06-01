@@ -78,12 +78,6 @@ RULE_INT(Character, MaxLevelExpMultiplier, 60) // Maximum level allowed to recei
 
 RULE_BOOL(Character, UseXPConScaling, true)
 RULE_INT(Character, ShowExpValues, 0) //0 - normal, 1 - Show raw experience values, 2 - Show raw experience values AND percent.
-RULE_INT(Character, GreenModifier, 20)
-RULE_INT(Character, LightBlueModifier, 40)
-RULE_INT(Character, BlueModifier, 90)
-RULE_INT(Character, WhiteModifier, 100)
-RULE_INT(Character, YellowModifier, 125)
-RULE_INT(Character, RedModifier, 150)
 RULE_INT(Character, AutosaveIntervalS, 300)	//0=disabled
 RULE_INT(Character, HPRegenMultiplier, 100)
 RULE_INT(Character, ManaRegenMultiplier, 100)
@@ -118,14 +112,10 @@ RULE_INT(Character, RestRegenPercent, 0) // Set to >0 to enable rest state bonus
 RULE_INT(Character, RestRegenTimeToActivate, 30) // Time in seconds for rest state regen to kick in.
 RULE_INT(Character, RestRegenRaidTimeToActivate, 300) // Time in seconds for rest state regen to kick in with a raid target.
 RULE_BOOL(Character, RestRegenEndurance, false) // Whether rest regen will work for endurance or not.
-RULE_INT(Character, KillsPerGroupLeadershipAA, 250) // Number of dark blues or above per Group Leadership AA
-RULE_INT(Character, KillsPerRaidLeadershipAA, 250) // Number of dark blues or above per Raid Leadership AA
 RULE_INT(Character, MaxFearDurationForPlayerCharacter, 4) //4 tics, each tic calculates every 6 seconds.
 RULE_INT(Character, MaxCharmDurationForPlayerCharacter, 15)
 RULE_INT(Character, BaseHPRegenBonusRaces, 4352)	//a bitmask of race(s) that receive the regen bonus. Iksar (4096) & Troll (256) = 4352. see common/races.h for the bitmask values
 RULE_BOOL(Character, SoDClientUseSoDHPManaEnd, false)	// Setting this to true will allow SoD clients to use the SoD HP/Mana/End formulas and previous clients will use the old formulas
-RULE_BOOL(Character, UseOldRaceExpPenalties, false)	// Setting this to true will enable racial exp penalties for Iksar, Troll, Ogre, and Barbarian, as well as the bonus for Halflings
-RULE_BOOL(Character, UseOldClassExpPenalties, false)	// Setting this to true will enable old class exp penalties for Paladin, SK, Ranger, Bard, Monk, Wizard, Enchanter, Magician, and Necromancer, as well as the bonus for Rogues and Warriors
 RULE_BOOL(Character, RespawnFromHover, false)		// Use Respawn window, or not.
 RULE_INT(Character, RespawnFromHoverTimer, 300)	// Respawn Window countdown timer, in SECONDS
 RULE_BOOL(Character, UseNewStatsWindow, true)		// New stats window shows everything
@@ -171,7 +161,6 @@ RULE_INT(Character, AvoidanceCap, 750) // 750 Is a pretty good value, seen peopl
 RULE_BOOL(Character, AllowMQTarget, false) // Disables putting players in the 'hackers' list for targeting beyond the clip plane or attempting to target something untargetable
 RULE_BOOL(Character, UseOldBindWound, false) // Uses the original bind wound behavior
 RULE_BOOL(Character, GrantHoTTOnCreate, false) // Grant Health of Target's Target leadership AA on character creation
-RULE_BOOL(Character, UseOldConSystem, false) // Grant Health of Target's Target leadership AA on character creation
 RULE_BOOL(Character, OPClientUpdateVisualDebug, false) // Shows a pulse and forward directional particle each time the client sends its position to server
 RULE_INT(Character, UnusedAAPointCap, 30) // Cap for Unused AA Points.  Default: 30.  NOTE: DO NOT LOWER THIS WITHOUT KNOWING WHAT YOU ARE DOING.  MAY RESULT IN PLAYERS LOSING AAs.
 RULE_CATEGORY_END()
@@ -199,6 +188,23 @@ RULE_INT(Guild, PlayerCreationLimit, 1)		// Only allow use of the UF+ window if 
 RULE_INT(Guild, PlayerCreationRequiredStatus, 0)	// Required admin status.
 RULE_INT(Guild, PlayerCreationRequiredLevel, 0)	// Required Level of the player attempting to create the guild.
 RULE_INT(Guild, PlayerCreationRequiredTime, 0)	// Required Time Entitled On Account (in Minutes) to create the guild.
+RULE_CATEGORY_END()
+
+RULE_CATEGORY(ItemScore)
+RULE_INT(ItemScore, Class1, 0)
+RULE_INT(ItemScore, Class2, 0)
+RULE_INT(ItemScore, Class3, 0)
+RULE_INT(ItemScore, Class4, 0)
+RULE_INT(ItemScore, Class5, 0)
+RULE_INT(ItemScore, Class6, 0)
+RULE_INT(ItemScore, Class7, 0)
+RULE_INT(ItemScore, Class8, 0)
+RULE_INT(ItemScore, Class9, 0)
+RULE_INT(ItemScore, Class10, 0)
+RULE_INT(ItemScore, Class11, 0)
+RULE_INT(ItemScore, Class12, 0)
+RULE_INT(ItemScore, Class13, 0)
+RULE_INT(ItemScore, Class14, 0)
 RULE_CATEGORY_END()
 
 RULE_CATEGORY(Skills)
@@ -290,73 +296,24 @@ RULE_INT(Zone, GlobalLootMultiplier, 1) // Sets Global Loot drop multiplier for 
 RULE_BOOL(Zone, NATSEntityEventAllEnabled, false) // Enables publishing all event opcodes
 RULE_CATEGORY_END()
 
-RULE_CATEGORY(AlKabor)
-RULE_BOOL(AlKabor, AllowTickSplit, false) //AK behavior is true
-RULE_BOOL(AlKabor, StripBuffsOnLowHP, true) //AK behavior is true
-RULE_BOOL(AlKabor, OutOfRangeGroupXPBonus, true) //AK behavior is true
-RULE_BOOL(AlKabor, GroupEXPBonuses, false) //AK behavior is true
-RULE_BOOL(AlKabor, Count6thGroupMember, false) //AK behavior is false
-RULE_BOOL(AlKabor, GreensGiveXPToGroup, true) //AK behavior is true
-RULE_BOOL(AlKabor, AllowCharmPetRaidTanks, true) // AK behavior is true.  If false, NPCs will ignore charmed pets once MaxEntitiesCharmTanks players get on an NPC's hate list as per April 2003 patch.
-RULE_INT(AlKabor, MaxEntitiesCharmTanks, 8) // If AllowCharmPetRaidTanks is false, this is the max number of entities on an NPC's hate list before the NPC will ignore charmed pets.  April 2003 patch set this to 4 on Live.
-RULE_CATEGORY_END()
-
 RULE_CATEGORY(Map)
 //enable these to help prevent mob hopping when they are pathing
-RULE_BOOL(Map, FixPathingZWhenLoading, true)		//increases zone boot times a bit to reduce hopping.
-RULE_BOOL(Map, FixPathingZAtWaypoints, false)	//alternative to `WhenLoading`, accomplishes the same thing but does it at each waypoint instead of once at boot time.
-RULE_BOOL(Map, FixPathingZWhenMoving, false)		//very CPU intensive, but helps hopping with widely spaced waypoints.
 RULE_BOOL(Map, FixPathingZOnSendTo, false)		//try to repair Z coords in the SendTo routine as well.
 RULE_BOOL(Map, FixZWhenMoving, true)		// Automatically fix NPC Z coordinates when moving/pathing/engaged (Far less CPU intensive than its predecessor)
 RULE_BOOL(Map, MobZVisualDebug, false)		// Displays spell effects determining whether or not NPC is hitting Best Z calcs (blue for hit, red for miss)
-RULE_REAL(Map, FixPathingZMaxDeltaMoving, 20)	//at runtime while pathing: max change in Z to allow the BestZ code to apply.
-RULE_REAL(Map, FixPathingZMaxDeltaWaypoint, 20)	//at runtime at each waypoint: max change in Z to allow the BestZ code to apply.
 RULE_REAL(Map, FixPathingZMaxDeltaSendTo, 20)	//at runtime in SendTo: max change in Z to allow the BestZ code to apply.
-RULE_REAL(Map, FixPathingZMaxDeltaLoading, 45)	//while loading each waypoint: max change in Z to allow the BestZ code to apply.
 RULE_INT(Map, FindBestZHeightAdjust, 1)		// Adds this to the current Z before seeking the best Z position
 RULE_CATEGORY_END()
 
 RULE_CATEGORY(Pathing)
-// Some of these rules may benefit by being made into columns in the zone table,
-// for instance, in dungeons, the min LOS distances could be substantially lowered.
 RULE_BOOL(Pathing, Aggro, true)		// Enable pathing for aggroed mobs.
 RULE_BOOL(Pathing, AggroReturnToGrid, true)	// Enable pathing for aggroed roaming mobs returning to their previous waypoint.
 RULE_BOOL(Pathing, Guard, true)		// Enable pathing for mobs moving to their guard point.
 RULE_BOOL(Pathing, Find, true)		// Enable pathing for FindPerson requests from the client.
 RULE_BOOL(Pathing, Fear, true)		// Enable pathing for fear
-RULE_REAL(Pathing, ZDiffThresholdNew, 80)	// If a mob las LOS to it's target, it will run to it if the Z difference is < this.
-RULE_INT(Pathing, LOSCheckFrequency, 1000)	// A mob will check for LOS to it's target this often (milliseconds).
-RULE_INT(Pathing, RouteUpdateFrequencyShort, 1000)	// How often a new route will be calculated if the target has moved.
-RULE_INT(Pathing, RouteUpdateFrequencyLong, 5000)	// How often a new route will be calculated if the target has moved.
-// When a path has a path node route and it's target changes position, if it has RouteUpdateFrequencyNodeCount or less nodes to go on it's
-// current path, it will recalculate it's path based on the RouteUpdateFrequencyShort timer, otherwise it will use the
-// RouteUpdateFrequencyLong timer.
-RULE_INT(Pathing, RouteUpdateFrequencyNodeCount, 5)
-RULE_REAL(Pathing, MinDistanceForLOSCheckShort, 40000) // (NoRoot). While following a path, only check for LOS to target within this distance.
-RULE_REAL(Pathing, MinDistanceForLOSCheckLong, 1000000) // (NoRoot). Min distance when initially attempting to acquire the target.
-RULE_INT(Pathing, MinNodesLeftForLOSCheck, 4)	// Only check for LOS when we are down to this many path nodes left to run.
-// This next rule was put in for situations where the mob and it's target may be on different sides of a 'hazard', e.g. a pit
-// If the mob has LOS to it's target, even though there is a hazard in it's way, it may break off from the node path and run at
-// the target, only to later detect the hazard and re-acquire a node path. Depending upon the placement of the path nodes, this
-// can lead to the mob looping. The rule is intended to allow the mob to at least get closer to it's target each time before
-// checking LOS and trying to head straight for it.
-RULE_INT(Pathing, MinNodesTraversedForLOSCheck, 3)	// Only check for LOS after we have traversed this many path nodes.
-RULE_INT(Pathing, CullNodesFromStart, 1)		// Checks LOS from Start point to second node for this many nodes and removes first node if there is LOS
-RULE_INT(Pathing, CullNodesFromEnd, 1)		// Checks LOS from End point to second to last node for this many nodes and removes last node if there is LOS
-RULE_REAL(Pathing, CandidateNodeRangeXY, 400)		// When searching for path start/end nodes, only nodes within this range will be considered.
-RULE_REAL(Pathing, CandidateNodeRangeZ, 10)		// When searching for path start/end nodes, only nodes within this range will be considered.
-
-RULE_REAL(Pathing, NoHazardsAccurateStepSize, 10.0)
-RULE_REAL(Pathing, NoHazardsAccurateZDiff, 15.0)
-RULE_BOOL(Pathing, UseNoHazardsAccurate, false)
-
 RULE_CATEGORY_END()
 
 RULE_CATEGORY(Watermap)
-// enable these to use the water detection code. Requires Water Maps generated by awater utility
-RULE_BOOL(Watermap, CheckWaypointsInWaterWhenLoading, false) // Does not apply BestZ as waypoints are loaded if they are in water
-RULE_BOOL(Watermap, CheckForWaterAtWaypoints, false)		// Check if a mob has moved into/out of water when at waypoints and sets flymode
-RULE_BOOL(Watermap, CheckForWaterWhenMoving, false)		// Checks if a mob has moved into/out of water each time it's loc is recalculated
 RULE_BOOL(Watermap, CheckForWaterOnSendTo, false)		// Checks if a mob has moved into/out of water on SendTo
 RULE_BOOL(Watermap, CheckForWaterWhenFishing, false)		// Only lets a player fish near water (if a water map exists for the zone)
 RULE_REAL(Watermap, FishingRodLength, 30)			// How far in front of player water must be for fishing to work
@@ -365,7 +322,6 @@ RULE_REAL(Watermap, FishingLineStepSize, 1)		// Basic step size for fishing calc
 RULE_CATEGORY_END()
 
 RULE_CATEGORY(Spells)
-RULE_INT(Spells, AutoResistDiff, 15)
 RULE_REAL(Spells, ResistChance, 2.0) //chance to resist given no resists and same level
 RULE_INT(Spells, NPCResistMod, 0) // skew total NPC resists, resist += this
 RULE_INT(Spells, NPCResistModDamage, 0) // skew NPC resists for damage spells, resist += this
@@ -382,7 +338,6 @@ RULE_INT(Spells, BaseCritRatio, 100) //base % bonus to damage on a successful sp
 RULE_INT(Spells, WizCritLevel, 12) //level wizards first get spell crits
 RULE_INT(Spells, WizCritChance, 7) //wiz's crit chance, on top of BaseCritChance
 RULE_INT(Spells, WizCritRatio, 0) //wiz's crit bonus, on top of BaseCritRatio (should be 0 for Live-like)
-RULE_INT(Spells, ResistPerLevelDiff, 85) //8.5 resist per level difference.
 RULE_INT(Spells, TranslocateTimeLimit, 0) // If not zero, time in seconds to accept a Translocate.
 RULE_INT(Spells, SacrificeMinLevel, 46)	//first level Sacrifice will work on
 RULE_INT(Spells, SacrificeMaxLevel, 69)	//last level Sacrifice will work on
@@ -445,7 +400,6 @@ RULE_BOOL(Spells, FlatItemExtraSpellAmt, false) // allow SpellDmg stat to affect
 RULE_BOOL(Spells, IgnoreSpellDmgLvlRestriction, false) // ignore the 5 level spread on applying SpellDmg
 RULE_REAL(Spells, BreakFeignDeathWhenCastOn, 50.0) // percentage that fd will break when you resist a spell
 RULE_REAL(Spells, BreakSneakWhenCastOn, 2.0) // percentage that sneak will break when you resist a spell
-RULE_INT(Spells, SpellResistSoftCap, 255) 	// Softcap for spell resists.
 RULE_BOOL(Spells, AllowItemTGB, false) // TGB doesn't work with items on live, custom servers want it though
 RULE_BOOL(Spells, NPCInnateProcOverride, true) //  NPC innate procs override the target type to single target.
 RULE_BOOL(Spells, OldRainTargets, false) // use old incorrectly implemented max targets for rains
@@ -466,16 +420,13 @@ RULE_INT(Combat, PetAttackMagicLevel, 30)
 RULE_INT(Combat, LevelDifferenceRollCheck, 20)
 RULE_REAL(Combat, LevelDifferenceRollBonus, 0.5)
 RULE_BOOL(Combat, EnableFearPathing, true)
-RULE_REAL(Combat, FleeMultiplier, 2.0) // Determines how quickly a NPC will slow down while fleeing. Decrease multiplier to slow NPC down quicker.
+RULE_INT(Combat, FleeGreenHPRatio, 50) //HP % when a Green NPC begins to flee.
 RULE_INT(Combat, FleeHPRatio, 25) //HP % when a NPC begins to flee.
-RULE_BOOL(Combat, FleeIfNotAlone, false) // If false, mobs won't flee if other mobs are in combat with it.
 RULE_BOOL(Combat, AdjustProcPerMinute, true)
 RULE_REAL(Combat, AvgProcsPerMinute, 2.0)
 RULE_REAL(Combat, ProcPerMinDexContrib, 0.075)
 RULE_REAL(Combat, BaseProcChance, 0.035)
 RULE_REAL(Combat, ProcDexDivideBy, 11000)
-RULE_BOOL(Combat, AdjustSpecialProcPerMinute, true)  //Set PPM for special abilities like HeadShot (Live does this as of 4-14)
-RULE_REAL(Combat, AvgSpecialProcsPerMinute, 2.0) //Unclear what best value is atm.
 RULE_REAL(Combat, BaseHitChance, 69.0)
 RULE_REAL(Combat, NPCBonusHitChance, 26.0)
 RULE_REAL(Combat, HitFalloffMinor, 5.0) //hit will fall off up to 5% over the initial level range
@@ -488,7 +439,6 @@ RULE_REAL(Combat, AgiHitFactor, 0.01)
 RULE_REAL(Combat, MinChancetoHit, 5.0) //Minimum % chance to hit with regular melee/ranged
 RULE_REAL(Combat, MaxChancetoHit, 95.0) //Maximum % chance to hit with regular melee/ranged
 RULE_INT(Combat, MinRangedAttackDist, 25) //Minimum Distance to use Ranged Attacks
-RULE_BOOL(Combat, ArcheryBonusRequiresStationary, true) //does the 2x archery bonus chance require a stationary npc
 RULE_REAL(Combat, ArcheryBaseDamageBonus, 0.85) // % Modifier to Base Archery Damage (.5 = 50% base damage, 1 = 100%, 2 = 200%)
 RULE_REAL(Combat, ArcheryNPCMultiplier, 1.0) // this is multiplied by the regular dmg to get the archery dmg
 RULE_REAL(Combat, BashACBonusDivisor, 25.0f) // this divides the AC value contribution to bash damage, lower to increase damage
@@ -497,15 +447,6 @@ RULE_INT(Combat, MaxRampageTargets, 3) //max number of people hit with rampage
 RULE_INT(Combat, DefaultRampageTargets, 1) // default number of people to hit with rampage
 RULE_BOOL(Combat, RampageHitsTarget, false) // rampage will hit the target if it still has targets left
 RULE_INT(Combat, MaxFlurryHits, 2) //max number of extra hits from flurry
-RULE_INT(Combat, MonkDamageTableBonus, 5) //% bonus monks get to their damage table calcs
-RULE_INT(Combat, FlyingKickBonus, 25) //% Modifier that this skill gets to str and skill bonuses
-RULE_INT(Combat, DragonPunchBonus, 20) //% Modifier that this skill gets to str and skill bonuses
-RULE_INT(Combat, EagleStrikeBonus, 15) //% Modifier that this skill gets to str and skill bonuses
-RULE_INT(Combat, TigerClawBonus, 10) //% Modifier that this skill gets to str and skill bonuses
-RULE_INT(Combat, RoundKickBonus, 5) //% Modifier that this skill gets to str and skill bonuses
-RULE_INT(Combat, FrenzyBonus, 0) //% Modifier to damage
-RULE_INT(Combat, BackstabBonus, 0) //% Modifier to damage
-RULE_BOOL(Combat, ProcTargetOnly, true) //true = procs will only affect our target, false = procs will affect all of our targets
 RULE_REAL(Combat, NPCACFactor, 2.25)
 RULE_INT(Combat, ClothACSoftcap, 75)
 RULE_INT(Combat, LeatherACSoftcap, 100)
@@ -540,7 +481,6 @@ RULE_BOOL(Combat, TauntOverLevel, 1) //Allows you to taunt NPC's over warriors l
 RULE_REAL(Combat, TauntSkillFalloff, 0.33)//For every taunt skill point that's not maxed you lose this % chance to taunt.
 RULE_BOOL(Combat, EXPFromDmgShield, false) //Determine if damage from a damage shield counts for EXP gain.
 RULE_INT(Combat, MonkACBonusWeight, 15)
-RULE_INT(Combat, ClientStunLevel, 55) //This is the level where client kicks and bashes can stun the target
 RULE_INT(Combat, QuiverHasteCap, 1000) //Quiver haste cap 1000 on live for a while, currently 700 on live
 RULE_BOOL(Combat, UseArcheryBonusRoll, false) //Make the 51+ archery bonus require an actual roll
 RULE_INT(Combat, ArcheryBonusChance, 50)
@@ -550,9 +490,6 @@ RULE_BOOL(Combat, OneProcPerWeapon, true) //If enabled, One proc per weapon per 
 RULE_BOOL(Combat, ProjectileDmgOnImpact, true) //If enabled, projectiles (ie arrows) will hit on impact, instead of instantly.
 RULE_BOOL(Combat, MeleePush, true) // enable melee push
 RULE_INT(Combat, MeleePushChance, 50) // (NPCs) chance the target will be pushed. Made up, 100 actually isn't that bad
-RULE_REAL(Combat, MeleePushForceClient, 0.00) // percent to add or remove from push for players
-RULE_REAL(Combat, MeleePushSizeMod, 0.75)
-RULE_REAL(Combat, MeleePushForcePet, 0.00) // percent to add or remove from push for pets
 RULE_BOOL(Combat, UseLiveCombatRounds, true) // turn this false if you don't want to worry about fixing up combat rounds for NPCs
 RULE_INT(Combat, NPCAssistCap, 5) // Maxiumium number of NPCs that will assist another NPC at once
 RULE_INT(Combat, NPCAssistCapTimer, 6000) // Time in milliseconds a NPC will take to clear assist aggro cap space
@@ -592,10 +529,8 @@ RULE_BOOL(NPC, LiveLikeEnrage, false) // If set to true then only player control
 RULE_BOOL(NPC, EnableMeritBasedFaction, false) // If set to true, faction will given in the same way as experience (solo/group/raid)
 RULE_INT(NPC, NPCToNPCAggroTimerMin, 500)
 RULE_INT(NPC, NPCToNPCAggroTimerMax, 6000)
-RULE_BOOL(NPC, IgnoreQuestLoot, false)
 RULE_BOOL(NPC, UseClassAsLastName, true) // Uses class archetype as LastName for npcs with none
 RULE_BOOL(NPC, NewLevelScaling, true) // Better level scaling, use old if new formulas would break your server
-RULE_BOOL(NPC, CastOutOfEraSpells, false)
 RULE_REAL(NPC,NPCBackstabMod, 3.1) // Multiplier for NPC Backstab, Higher = Lower backstab amount
 RULE_INT(NPC, NPCGateDistanceFromBind, 25) // Distance from bind before gate will function
 RULE_CATEGORY_END()
@@ -607,7 +542,6 @@ RULE_INT(Aggro, MeleeRangeAggroMod, 10) //10%
 RULE_INT(Aggro, CurrentTargetAggroMod, 0) //0% -- will prefer our current target to any other; makes it harder for our npcs to switch targets.
 RULE_INT(Aggro, CriticallyWoundedAggroMod, 100) //100%
 RULE_INT(Aggro, SpellAggroMod, 100)
-RULE_INT(Aggro, SongAggroMod, 33)
 RULE_INT(Aggro, PetSpellAggroMod, 10)
 RULE_REAL(Aggro, TunnelVisionAggroMod, 0.75) //people not currently the top hate generate this much hate on a Tunnel Vision mob
 RULE_INT(Aggro, MaxScalingProcAggro, 400) // Set to -1 for no limit. Maxmimum amount of aggro that HP scaling SPA effect in a proc will add.
@@ -742,7 +676,6 @@ RULE_INT(Adventure, ItemIDToEnablePorts, 41000) //0 to disable, otherwise using 
 RULE_INT(Adventure, LDoNTrapDistanceUse, 625)
 RULE_REAL(Adventure, LDoNBaseTrapDifficulty, 15.0)
 RULE_REAL(Adventure, LDoNCriticalFailTrapThreshold, 10.0)
-RULE_INT(Adventure, LDoNAdventureExpireTime, 1800) //30 minutes to expire
 RULE_CATEGORY_END()
 
 RULE_CATEGORY(AA)

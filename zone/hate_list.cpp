@@ -186,6 +186,19 @@ Mob* HateList::GetClosestEntOnHateList(Mob *hater, bool clients_first) {
 	return close_entity;
 }
 
+//Count how many players (non-pet) are on aggro list
+int HateList::GetClientAggroCount()
+{
+	int clientCount = 0;
+	auto iterator = list.begin();
+	while (iterator != list.end())
+	{
+		if ((*iterator)->entity_on_hatelist && (*iterator)->entity_on_hatelist->IsClient()) clientCount++;
+		++iterator;
+	}
+	return clientCount;
+}
+
 void HateList::AddEntToHateList(Mob *in_entity, int32 in_hate, int32 in_damage, bool in_is_entity_frenzied, bool iAddIfNotExist)
 {
 	if (!in_entity)
@@ -677,5 +690,39 @@ void HateList::SpellCast(Mob *caster, uint32 spell_id, float range, Mob* ae_cent
 			caster->SpellOnTarget(spell_id, cur);
 		}
 		iter++;
+	}
+}
+
+//When a death happens, this trigger causes entities on the hate list a trigger
+void HateList::OnDeathTrigger()
+{
+
+	// uint32 rank;
+	auto iterator = list.begin();
+	while (iterator != list.end())
+	{
+		struct_HateList *h = (*iterator);
+		Mob *mobHated = h->entity_on_hatelist;
+
+		// Custom non-implemented feature
+		/*if (mobHated->IsClient()) {
+			uint8 rank = mobHated->CastToClient()->GetBuildRank(SHADOWKNIGHT, RB_SHD_ROTTENCORE);
+			if (rank > 0) {
+				uint32 counters = mobHated->CastToClient()->GetCoreCounter();
+				mobHated->CastToClient()->AddCoreCounter(1);
+				if (counters < mobHated->CastToClient()->GetCoreCounter()) {
+					mobHated->Message(MT_FocusEffect, "Rotten Core %u increased to %u counters.", rank, mobHated->CastToClient()->GetCoreCounter());
+				}
+			}
+			rank = mobHated->CastToClient()->GetBuildRank(ROGUE, RB_ROG_KILLINGSPREE);
+			if (rank > 0) {
+				uint32 counters = mobHated->CastToClient()->GetCoreCounter();
+				mobHated->CastToClient()->AddCoreCounter(1);
+				if (counters < mobHated->CastToClient()->GetCoreCounter()) {
+					mobHated->Message(MT_FocusEffect, "Killing Spree %u increased to %u counters.", rank, mobHated->CastToClient()->GetCoreCounter());
+				}
+			}
+		} */
+		++iterator;
 	}
 }
