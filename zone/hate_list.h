@@ -57,7 +57,8 @@ public:
 	int32 GetEntHateAmount(Mob *ent, bool in_damage = false);
 
 	std::list<struct_HateList*>& GetHateList() { return list; }
-
+	int GetAggroCount() { return list.size(); }
+	int GetClientAggroCount();
 	void AddEntToHateList(Mob *ent, int32 in_hate = 0, int32 in_damage = 0, bool in_is_frenzied = false, bool add_to_hate_list_if_not_exist = true);
 	void DoFactionHits(int32 npc_faction_level_id);
 	void IsEntityInFrenzyMode();
@@ -66,7 +67,7 @@ public:
 	void SetHateOwner(Mob *new_hate_owner) { hate_owner = new_hate_owner; }
 	void SpellCast(Mob *caster, uint32 spell_id, float range, Mob *ae_center = nullptr);
 	void WipeHateList(bool npc_only = false);
-
+	void OnDeathTrigger();
 
 protected:
 	struct_HateList* Find(Mob *ent);

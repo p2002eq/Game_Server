@@ -393,6 +393,7 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial, int level_ove
 #ifdef SPELL_EFFECT_SPAM
 						snprintf(effect_desc, _EDLEN, "Current Mana: %+i", effect_value);
 #endif
+						entity_list.LogManaEvent(caster, this, effect_value);
 						SetMana(GetMana() + effect_value);
 						if (caster)
 							caster->SetMana(caster->GetMana() + std::abs(effect_value));
@@ -412,6 +413,7 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial, int level_ove
 				if (buffslot >= 0)
 					break;
 
+				entity_list.LogManaEvent(caster, this, effect_value);
 				SetMana(GetMana() + effect_value);
 				if (effect_value < 0)
 					TryTriggerOnValueAmount(false, true);
@@ -428,6 +430,7 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial, int level_ove
 #ifdef SPELL_EFFECT_SPAM
 				snprintf(effect_desc, _EDLEN, "Current Mana Once: %+i", effect_value);
 #endif
+				entity_list.LogManaEvent(caster, this, effect_value);
 				SetMana(GetMana() + effect_value);
 				break;
 			}
@@ -1586,6 +1589,7 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial, int level_ove
 
 				pet_ActSpellCost = pet_ActSpellCost*ImprovedReclaimMod/100;
 
+				entity_list.LogManaEvent(caster, caster, pet_ActSpellCost);
 				caster->SetMana(caster->GetMana() + pet_ActSpellCost);
 
 					if(caster->IsClient())
@@ -2501,6 +2505,7 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial, int level_ove
 
 				else {
 					heal_amt = ratio*max_mana/10;
+					entity_list.LogManaEvent(caster, caster, -max_mana);
 					caster->SetMana(caster->GetMana() - max_mana);
 				}
 
@@ -2532,6 +2537,7 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial, int level_ove
 				int mana_damage = 0;
 				int32 mana_to_use = GetMana() - spell.base[i];
 				if(mana_to_use > -1) {
+					entity_list.LogManaEvent(caster, this, -spell.base[i]);
 					SetMana(GetMana() - spell.base[i]);
 					TryTriggerOnValueAmount(false, true);
 					// we take full dmg(-10 to make the damage the right sign)
@@ -2634,6 +2640,7 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial, int level_ove
 
 					else {
 						dmg = ratio*max_mana/10;
+						entity_list.LogManaEvent(caster, caster, -max_mana);
 						caster->SetMana(caster->GetMana() - max_mana);
 						TryTriggerOnValueAmount(false, true);
 					}
@@ -5896,6 +5903,7 @@ bool Mob::TryDeathSave() {
 				if ((GetMaxHP() - GetHP()) < HealAmt)
 					HealAmt = GetMaxHP() - GetHP();
 
+                entity_list.LogHPEvent(this, this, HealAmt);
 				SetHP((GetHP()+HealAmt));
 				Message(263, "The gods have healed you for %i points of damage.", HealAmt);
 
@@ -5929,6 +5937,7 @@ bool Mob::TryDeathSave() {
 					if ((GetMaxHP() - GetHP()) < HealAmt)
 						HealAmt = GetMaxHP() - GetHP();
 
+                    entity_list.LogHPEvent(this, this, HealAmt);
 					SetHP((GetHP()+HealAmt));
 					Message(263, "The gods have healed you for %i points of damage.", HealAmt);
 
@@ -6742,6 +6751,7 @@ void Mob::ResourceTap(int32 damage, uint16 spellid)
 				}
 	
 				if (spells[spellid].base2[i] == 1) // Mana Tap
+					entity_list.LogManaEvent(this, this, damage);
 					SetMana(GetMana() + damage);
 	
 				if (spells[spellid].base2[i] == 2 && IsClient()) // Endurance Tap

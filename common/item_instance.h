@@ -276,6 +276,10 @@ namespace EQEmu
 		int GetItemHeroicDR(bool augments = false) const;
 		int GetItemHeroicCorrup(bool augments = false) const;
 		int GetItemHaste(bool augments = false) const;
+		std::string GetSlotName(int slot) const;
+		std::string GetSlotNames() const;
+
+		int GetItemScore() const;
 
 	protected:
 		//////////////////////////

@@ -2834,6 +2834,8 @@ bool Client::BindWound(Mob *bindmob, bool start, bool fail)
 							// cap it at that value. Dont know if live does it this way
 							// but it makes sense to me.
 							int chp = bindmob->GetHP() + bindhps;
+                            entity_list.LogHPEvent(bindmob, this, chp);
+
 							if (chp > max_hp)
 								chp = max_hp;
 
@@ -9177,3 +9179,20 @@ void Client::SetPetCommandState(int button, int state)
 	FastQueuePacket(&app);
 }
 
+//Obtain an item score for a character based on worn inventory.
+int Client::GetCharacterItemScore() {
+	int x;
+	const EQEmu::ItemInstance* inst;
+	int itemScore = 0;
+
+	if (GetGM()) {
+		return itemScore;
+	}
+
+	for (x = EQEmu::legacy::EQUIPMENT_BEGIN; x < EQEmu::legacy::EQUIPMENT_END; x++) { // include cursor or not?
+		inst = GetInv().GetItem(x);
+		if (!inst) continue;
+		itemScore += inst->GetItemScore();
+	}
+	return itemScore;
+}

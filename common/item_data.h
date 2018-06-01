@@ -540,6 +540,7 @@ namespace EQEmu
 		bool IsTypeShield() const;
 
 		static bool CheckLoreConflict(const ItemData* l_item, const ItemData* r_item);
+		int GetItemScore() const;
 		bool CheckLoreConflict(const ItemData* item) const { return CheckLoreConflict(this, item); }
 	};
 

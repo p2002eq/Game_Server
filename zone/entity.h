@@ -428,6 +428,8 @@ public:
 	Mob*	GetTargetForMez(Mob* caster);
 	uint32	CheckNPCsClose(Mob *center);
 	NPC*	GetTargetToShield(NPC* shielder);
+	void LogHPEvent(Mob *caster, Mob *target, int hp);
+	void LogManaEvent(Mob *caster, Mob *target, int man);
 
 	Corpse* GetClosestCorpse(Mob* sender, const char *Name);
 	NPC*	GetClosestBanker(Mob* sender, uint32 &distance);
