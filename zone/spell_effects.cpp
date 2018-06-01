@@ -2169,7 +2169,7 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial, int level_ove
 			}
 
 
-			case SE_TemporaryPets: //Dook- swarms and wards:
+			case SE_TemporaryPets:
 			{
 				if (!caster)
 					break;
@@ -2185,7 +2185,7 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial, int level_ove
 				break;
 			}
 
-			case SE_FadingMemories:		//Dook- escape etc
+			case SE_FadingMemories:
 			{
 #ifdef SPELL_EFFECT_SPAM
 				snprintf(effect_desc, _EDLEN, "Fading Memories");

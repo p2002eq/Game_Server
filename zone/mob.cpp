@@ -6088,6 +6088,7 @@ void Mob::CommonBreakInvisible()
 {
 	BreakInvisibleSpells();
 	CancelSneakHide();
+	SetInvisible(0);
 }
 
 void Mob::ShieldClear() {
