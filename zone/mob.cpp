@@ -6179,7 +6179,7 @@ void Mob::Shield(Mob* target, float range_multiplier) {
 		if (shield_target->shielder[x].shielder_id == 0)
 		{
 			entity_list.MessageClose_StringID(this, false, 100, 0,
-											  START_SHIELDING, GetName(), shield_target->GetName());
+											  START_SHIELDING, shield_target->GetName(), GetName());
 
 			shield_target->shielder[x].shielder_id = GetID();
 			shield_target->shielder[x].shielder_bonus = shieldbonus;
