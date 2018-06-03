@@ -803,110 +803,109 @@ void Mob::FixZ(int32 z_find_offset /*= 5*/) {
 }
 
 float Mob::GetZOffset() const {
-	float offset;
+	float offset = 3.125f;
 
 	switch (race) {
-		case 436:
+		case RACE_BASILISK_436:
 			offset = 0.577f;
 			break;
-		case 430:
+		case RACE_DRAKE_430:
 			offset = 0.5f;
 			break;
-		case 432:
+		case RACE_DRAKE_432:
 			offset = 1.9f;
 			break;
-		case 435:
+		case RACE_DRAGON_435:
 			offset = 0.93f;
 			break;
-		case 450:
+		case RACE_LAVA_SPIDER_450:
 			offset = 0.938f;
 			break;
-		case 479:
+		case RACE_ALLIGATOR_479:
 			offset = 0.8f;
 			break;
-		case 451:
+		case RACE_LAVA_SPIDER_QUEEN_451:
 			offset = 0.816f;
 			break;
-		case 437:
+		case RACE_DRAGON_437:
 			offset = 0.527f;
 			break;
-		case 439:
+		case RACE_PUMA_439:
 			offset = 1.536f;
 			break;
-		case 415:
+		case RACE_RAT_415:
 			offset = 1.0f;
 			break;
-		case 438:
+		case RACE_DRAGON_438:
 			offset = 0.776f;
 			break;
-		case 452:
+		case RACE_DRAGON_452:
 			offset = 0.776f;
 			break;
-		case 441:
+		case RACE_SPIDER_QUEEN_441:
 			offset = 0.816f;
 			break;
-		case 440:
+		case RACE_SPIDER_440:
 			offset = 0.938f;
 			break;
-		case 468:
+		case RACE_SNAKE_468:
 			offset = 1.0f;
 			break;
-		case 459:
+		case RACE_CORATHUS_459:
 			offset = 1.0f;
 			break;
-		case 462:
+		case RACE_DRACHNID_COCOON_462:
 			offset = 1.5f;
 			break;
-		case 530:
+		case RACE_DRAGON_530:
 			offset = 1.2f;
 			break;
-		case 549:
+		case RACE_GOO_549:
 			offset = 0.5f;
 			break;
-		case 548:
+		case RACE_GOO_548:
 			offset = 0.5f;
 			break;
-		case 547:
+		case RACE_GOO_547:
 			offset = 0.5f;
 			break;
-		case 604:
+		case RACE_DRACOLICH_604:
 			offset = 1.2f;
 			break;
-		case 653:
+		case RACE_TELMIRA_653:
 			offset = 5.9f;
 			break;
-		case 658:
+		case RACE_MORELL_THULE_658:
 			offset = 4.0f;
 			break;
-		case 323:
-			offset = 1.0f;
-			break;
-		case 663:
+		case RACE_AMYGDALAN_663:
 			offset = 5.0f;
 			break;
-		case 664:
+		case RACE_SANDMAN_664:
 			offset = 4.0f;
 			break;
-		case 703:
+		case RACE_ALARAN_SENTRY_STONE_703:
 			offset = 9.0f;
 			break;
-		case 688:
+		case RACE_RABBIT_668:
 			offset = 5.0f;
 			break;
-		case 669:
+		case RACE_BLIND_DREAMER_669:
 			offset = 7.0f;
 			break;
-		case 687:
+		case RACE_GORAL_687:
 			offset = 2.0f;
 			break;
-		case 686:
+		case RACE_SELYRAH_686:
 			offset = 2.0f;
 			break;
 		default:
 			offset = 3.125f;
 	}
 
-	return 0.2 * GetSize() * offset;
+	float mob_size = (GetSize() > 0 ? GetSize() : GetDefaultRaceSize());
+
+	return static_cast<float>(0.2 * mob_size * offset);
 }
 
 // This function will try to move the mob along the relative angle a set distance
