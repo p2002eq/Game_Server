@@ -237,10 +237,10 @@ void RuleManager::SaveRules(Database *database, const char *ruleset_name) {
 
 bool RuleManager::LoadRules(Database *database, const char *ruleset_name) {
 	
-	int ruleset_id = GetRulesetID(database, ruleset_name);
+	int ruleset_id = this->GetRulesetID(database, ruleset_name);
 	if (ruleset_id < 0) {
 		Log(Logs::Detail, Logs::Rules, "Failed to find ruleset '%s' for load operation. Canceling.", ruleset_name);
-		return(false);
+		return (false);
 	}
 
 	Log(Logs::Detail, Logs::Rules, "Loading rule set '%s' (%d)", ruleset_name, ruleset_id);
@@ -298,15 +298,19 @@ void RuleManager::_SaveRule(Database *database, RuleType type, uint16 index) {
 	std::string query = StringFormat("REPLACE INTO rule_values "
                                     "(ruleset_id, rule_name, rule_value) "
                                     " VALUES(%d, '%s', '%s')",
-                                    m_activeRuleset, _GetRuleName(type, index), value_string);
-    auto results = database->QueryDatabase(query);
+									 m_activeRuleset,
+									 _GetRuleName(type, index),
+									 value_string
+	);
+
+	database->QueryDatabase(query);
 
 }
 
 
 int RuleManager::GetRulesetID(Database *database, const char *ruleset_name) {
 
-	uint32 len = strlen(ruleset_name);
+	uint32 len = static_cast<uint32>(strlen(ruleset_name));
 	auto rst = new char[2 * len + 1];
 	database->DoEscapeString(rst, ruleset_name, len);
 

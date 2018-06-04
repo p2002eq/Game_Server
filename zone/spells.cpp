@@ -2546,6 +2546,11 @@ bool Mob::ApplyNextBardPulse(uint16 spell_id, Mob *spell_target, CastingSlot slo
 		return(false);
 	}
 
+	// Solon's Bewitching Bravura should not tick
+	if(spell_id == 750) {
+		return(false);
+	}
+
 	//determine the type of spell target we have
 	Mob *ae_center = nullptr;
 	CastAction_type CastAction;
