@@ -1778,13 +1778,8 @@ void WorldServer::HandleMessage(uint16 opcode, const EQ::Net::Packet &p)
 		}
 		break;
 	}
-	case ServerOP_ReloadRules: {
-		worldserver.SendEmoteMessage(
-				0, 0, 0, 15,
-				"Rules reloaded for Zone: '%s' Instance ID: %u",
-				zone->GetLongName(),
-				zone->GetInstanceID()
-		);
+	case ServerOP_ReloadRules:
+	{
 		RuleManager::Instance()->LoadRules(&database, RuleManager::Instance()->GetActiveRuleset());
 		break;
 	}
