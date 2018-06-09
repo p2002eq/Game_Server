@@ -1594,11 +1594,14 @@ void Client::Damage(Mob* other, int32 damage, uint16 spell_id, EQEmu::skills::Sk
 
 bool Client::Death(Mob* killerMob, int32 damage, uint16 spell, EQEmu::skills::SkillType attack_skill)
 {
+	Log(Logs::General, Logs::Debug, "Entered Death Routine.");
 	if (!ClientFinishedLoading())
 		return false;
 
-	if (dead)
-		return false;	//cant die more than once...
+	if (dead) {
+		Log(Logs::General, Logs::Debug, "Is Dead, cannot die more than once");
+		return false;    //cant die more than once...
+	}
 
 	if (!spell)
 		spell = SPELL_UNKNOWN;
@@ -3799,7 +3802,7 @@ void Mob::CommonDamage(Mob* attacker, int &damage, const uint16 spell_id, const 
 
 		//send an HP update if we are hurt
 		if (GetHP() < GetMaxHP())
-			SendHPUpdate(!iBuffTic); // the OP_Damage actually updates the client in these cases, so we skip the HP update for them
+			SendHPUpdate();
 	}	//end `if damage was done`
 
 	//send damage packet...

@@ -5285,8 +5285,10 @@ void Client::Handle_OP_Death(const EQApplicationPacket *app)
 		return;
 	}
 
-	if (GetHP() > 0)
+	if (GetHP() > 0) {
+		Log(Logs::General, Logs::Debug, "Handle_OP_Death - GetHP > 0");
 		return;
+	}
 
 	Mob* killer = entity_list.GetMob(ds->killer_id);
 	Death(killer, ds->damage, ds->spell_id, (EQEmu::skills::SkillType)ds->attack_skill);
@@ -5834,9 +5836,12 @@ void Client::Handle_OP_EnvDamage(const EQApplicationPacket *app)
 	}
 
 	if (GetHP() <= 0) {
+		Log(Logs::General, Logs::Debug, "Player has less than 0 HP from Enviromental Damage, Sending mod_client_death_env and Death packet.");
 		mod_client_death_env();
 		Death(0, 32000, SPELL_UNKNOWN, EQEmu::skills::SkillHandtoHand);
+		return;
 	}
+
 	SendHPUpdate();
 	return;
 }
