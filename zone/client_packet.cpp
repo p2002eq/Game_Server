@@ -5780,7 +5780,6 @@ void Client::Handle_OP_EndLootRequest(const EQApplicationPacket *app)
 
 void Client::Handle_OP_EnvDamage(const EQApplicationPacket *app)
 {
-
 	if (!ClientFinishedLoading())
 	{
 		SetHP(GetHP() - 1);
@@ -5788,7 +5787,7 @@ void Client::Handle_OP_EnvDamage(const EQApplicationPacket *app)
 	}
 
 	if (app->size != sizeof(EnvDamage2_Struct)) {
-		Log(Logs::General, Logs::Error, "Received invalid sized OP_EnvDamage: got %d, expected %d", app->size,
+		Log(Logs::General, Logs::Debug, "Received invalid sized OP_EnvDamage: got %d, expected %d", app->size,
 			sizeof(EnvDamage2_Struct));
 		DumpPacket(app);
 		return;
@@ -5798,18 +5797,13 @@ void Client::Handle_OP_EnvDamage(const EQApplicationPacket *app)
 	int damage = ed->damage;
 
 	if (ed->dmgtype == 252) { // FALLING DAMAGE
-		if (zone->HasWaterMap()) {
-			auto targetPosition = glm::vec3(this->GetX(), this->GetY(), this->GetZ());
-			if (!zone->watermap->InLiquid(targetPosition))
-				return;
-		}
-
 		int mod = spellbonuses.ReduceFallDamage + itembonuses.ReduceFallDamage + aabonuses.ReduceFallDamage;
 		damage -= damage * mod / 100;
 	}
 
-	if (damage < 0)
+	if (damage < 0) {
 		damage = 31337;
+	}
 
 	if (admin >= minStatusToAvoidFalling && GetGM()) {
 		Message(13, "Your GM status protects you from %i points of type %i environmental damage.", ed->damage, ed->dmgtype);
@@ -5836,7 +5830,6 @@ void Client::Handle_OP_EnvDamage(const EQApplicationPacket *app)
 	}
 
 	if (GetHP() <= 0) {
-		Log(Logs::General, Logs::Debug, "Player has less than 0 HP from Enviromental Damage, Sending mod_client_death_env and Death packet.");
 		mod_client_death_env();
 		Death(0, 32000, SPELL_UNKNOWN, EQEmu::skills::SkillHandtoHand);
 		return;
