@@ -1269,7 +1269,7 @@ public:
 
 	// exp.cpp
 	uint32 GetEXPForLevel(uint16 level, bool aa = false);
-	void AddEXP(uint32 in_add_exp, uint8 conlevel = 0xFF, bool resexp = false);
+	void AddEXP(uint32 in_add_exp, uint8 conlevel = 0xFF, bool resexp = false, uint32 mod_level = 0);
 	bool IsInRange(Mob* defender);
 	bool IsInLevelRange(uint8 maxlevel);
 	void AddQuestEXP(uint32 in_add_exp);
