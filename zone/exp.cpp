@@ -78,7 +78,17 @@ uint32 Mob::GetBaseEXP() {
 	return basexp;
 }
 
-void Client::AddEXP(uint32 in_add_exp, uint8 conlevel, bool resexp) {
+void Client::AddEXP(uint32 in_add_exp, uint8 conlevel, bool resexp, uint32 mob_level) {
+
+	float mob_level_exp_mod = 0.0;
+	if (mob_level && mob_level > 0) {
+		int divsor = RuleI(Character, ExpByLevelDivsor);
+		if (divsor < 1) {
+			divsor = 1; //cant divide by zero
+		}
+		float multiplyer = RuleR(Character, ExpByLevelMultiplyer);
+		mob_level_exp_mod = mob_level * multiplyer / divsor;
+	}
 
 	this->EVENT_ITEM_ScriptStopReturn();
 
@@ -97,6 +107,9 @@ void Client::AddEXP(uint32 in_add_exp, uint8 conlevel, bool resexp) {
 	float totalexpmod = 1.0;
 	float totalaamod = 1.0;
 	uint32 add_aaxp = 0;
+
+	totalexpmod += mob_level_exp_mod;
+	totalaamod += mob_level_exp_mod;
 
 	// Figure out Con Based Bonus
 	if (RuleB(Character, ExpConBasedBonus)) {
@@ -827,7 +840,7 @@ void Group::SplitExp(uint32 exp, Mob* other) {
 					if (conlevel == CON_GREEN)
 						conlevel = Mob::GetLevelCon(cmember->GetLevel(), other->GetLevel());
 
-					cmember->AddEXP(static_cast<uint32>(splitgroupxp), conlevel);
+					cmember->AddEXP(static_cast<uint32>(splitgroupxp), conlevel, other->GetLevel());
 					Log(Logs::Detail, Logs::Group, "%s splits %0.2f with the rest of the group. Their share: %0.2f",
 						cmember->GetName(), groupexp, splitgroupxp);
 					//if(cmember->Admin() > 80)
@@ -885,7 +898,7 @@ void Raid::SplitExp(uint32 exp, Mob* other) {
 			if (diff >= (maxdiff)) { /*Instead of person who killed the mob, the person who has the highest level in the group*/
 				uint32 tmp = (cmember->GetLevel()+3) * (cmember->GetLevel()+3) * 75 * 35 / 10;
 				uint32 tmp2 = (groupexp / membercount) + 1;
-				cmember->AddEXP( tmp < tmp2 ? tmp : tmp2, conlevel );
+				cmember->AddEXP( tmp < tmp2 ? tmp : tmp2, conlevel, other->GetLevel());
 			}
 		}
 	}

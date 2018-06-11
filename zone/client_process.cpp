@@ -133,8 +133,15 @@ bool Client::Process() {
 
 		// SendHPUpdate calls hpupdate_timer.Start so it can delay this timer, so lets not reset with the check
 		// since the function will anyways
-		if (hpupdate_timer.Check(false))
+		if (hpupdate_timer.Check(false)) {
 			SendHPUpdate();
+		}
+
+		//Test
+		if (GetHP() < 0) {
+			Log(Logs::General, Logs::Debug, "GetHP < 0 - Killing!");
+			Death(0, 32000, SPELL_UNKNOWN, EQEmu::skills::SkillHandtoHand);
+		}
 
 		/* I haven't naturally updated my position in 10 seconds, updating manually */
 		if (!is_client_moving && position_update_timer.Check()) {
