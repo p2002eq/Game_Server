@@ -840,7 +840,7 @@ void Group::SplitExp(uint32 exp, Mob* other) {
 					if (conlevel == CON_GREEN)
 						conlevel = Mob::GetLevelCon(cmember->GetLevel(), other->GetLevel());
 
-					cmember->AddEXP(static_cast<uint32>(splitgroupxp), conlevel, other->GetLevel());
+					cmember->AddEXP(static_cast<uint32>(splitgroupxp), conlevel, false, other->GetLevel());
 					Log(Logs::Detail, Logs::Group, "%s splits %0.2f with the rest of the group. Their share: %0.2f",
 						cmember->GetName(), groupexp, splitgroupxp);
 					//if(cmember->Admin() > 80)
@@ -898,7 +898,7 @@ void Raid::SplitExp(uint32 exp, Mob* other) {
 			if (diff >= (maxdiff)) { /*Instead of person who killed the mob, the person who has the highest level in the group*/
 				uint32 tmp = (cmember->GetLevel()+3) * (cmember->GetLevel()+3) * 75 * 35 / 10;
 				uint32 tmp2 = (groupexp / membercount) + 1;
-				cmember->AddEXP( tmp < tmp2 ? tmp : tmp2, conlevel, other->GetLevel());
+				cmember->AddEXP( tmp < tmp2 ? tmp : tmp2, conlevel, false, other->GetLevel());
 			}
 		}
 	}
