@@ -400,8 +400,12 @@ void Client::SetEXP(uint32 set_exp, uint32 set_aaxp, bool isrezzexp) {
 		//Message(15, "You have gained %d skill points!!", m_pp.aapoints - last_unspentAA);
 		char val1[20]={0};
 		Message_StringID(MT_Experience, GAIN_ABILITY_POINT,ConvertArray(m_pp.aapoints, val1),m_pp.aapoints == 1 ? "" : "(s)");	//You have gained an ability point! You now have %1 ability point%2.
-		
+
 		/* QS: PlayerLogAARate */
+		if (RuleB(QueryServ, PlayerLogAARate))
+		{
+			QServ->QSAARate(this->CharacterID(), m_pp.aapoints, last_unspentAA);
+		}
 	}
 
 	uint8 maxlevel = RuleI(Character, MaxExpLevel) + 1;

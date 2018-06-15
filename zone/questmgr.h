@@ -271,6 +271,7 @@ public:
 	bool DisableRecipe(uint32 recipe_id);
 	void ClearNPCTypeCache(int npctype_id);
 	void ReloadZoneStaticData();
+	void QSQGlobalUpdate(int charid, const char* varname, const char* newvalue, uint32 zoneid, int32 instanceid);
 	void SendDebug(std::string message, int level);
 
 	Client *GetInitiator() const;

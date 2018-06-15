@@ -1882,11 +1882,14 @@ bool Client::Death(Mob* killerMob, int32 damage, uint16 spell, EQEmu::skills::Sk
 	}
 
 	/* QS: PlayerLogDeaths */
-	if (RuleB(QueryServ, PlayerLogDeaths)) {
-		const char * killer_name = "";
-		if (killerMob && killerMob->GetCleanName()) { killer_name = killerMob->GetCleanName(); }
-		std::string event_desc = StringFormat("Died in zoneid:%i instid:%i by '%s', spellid:%i, damage:%i", this->GetZoneID(), this->GetInstanceID(), killer_name, spell, damage);
-		QServ->PlayerLogEvent(Player_Log_Deaths, this->CharacterID(), event_desc);
+	if (RuleB(QueryServ, PlayerLogDeaths))
+	{
+		char killer_name[128];
+		if (killerMob && killerMob->GetCleanName())
+		{
+			strncpy(killer_name, killerMob->GetCleanName(), 128);
+		}
+		QServ->QSDeathBy(this->CharacterID(), this->GetZoneID(), this->GetInstanceID(), killer_name, spell, damage);
 	}
 
 	parse->EventPlayer(EVENT_DEATH_COMPLETE, this, buffer, 0);
