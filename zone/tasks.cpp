@@ -1187,7 +1187,9 @@ void TaskManager::SendTaskSelectorNew(Client *c, Mob *mob, int TaskCount, int *T
 	auto outapp = new EQApplicationPacket(OP_OpenNewTasksWindow, PacketLength);
 
 	outapp->WriteUInt32(ValidTasks);	// TaskCount
-	outapp->WriteUInt32(2);			// Type, valid values: 1-3, 1 is shared task
+	outapp->WriteUInt32(2);			// Type, valid values: 0-3. 0 = Task, 1 = Shared Task, 2 = Quest, 3 = ???
+	// so I guess an NPC can only offer one type of quests or we can only open a selection with one type :P (so quest call can tell us I guess)
+	// this is also sent in OP_TaskDescription
 	outapp->WriteUInt32(mob->GetID());	// TaskGiver
 
 	for(int i=0; i<TaskCount;i++) { // max 40
@@ -3098,7 +3100,6 @@ void ClientTaskState::ProcessTaskProximities(Client *c, float X, float Y, float 
 
 TaskGoalListManager::TaskGoalListManager() {
 
-	TaskGoalLists = nullptr;
 	NumberOfLists = 0;
 
 }
@@ -3110,7 +3111,6 @@ TaskGoalListManager::~TaskGoalListManager() {
 		safe_delete_array(TaskGoalLists[i].GoalItemEntries);
 
 	}
-	safe_delete_array(TaskGoalLists);
 }
 
 bool TaskGoalListManager::LoadLists() {
@@ -3119,7 +3119,7 @@ bool TaskGoalListManager::LoadLists() {
 
 	for(int i=0; i< NumberOfLists; i++)
 		safe_delete_array(TaskGoalLists[i].GoalItemEntries);
-	safe_delete_array(TaskGoalLists);
+	TaskGoalLists.clear();
 
 	const char *ERR_MYSQLERROR = "Error in TaskGoalListManager::LoadLists: %s %s";
 
@@ -3136,18 +3136,15 @@ bool TaskGoalListManager::LoadLists() {
 	NumberOfLists = results.RowCount();
 	Log(Logs::General, Logs::Tasks, "[GLOBALLOAD] Database returned a count of %i lists", NumberOfLists);
 
-	TaskGoalLists = new TaskGoalList_Struct[NumberOfLists];
+	TaskGoalLists.reserve(NumberOfLists);
 
 	int listIndex = 0;
 
 	for(auto row = results.begin(); row != results.end(); ++row) {
 		int listID = atoi(row[0]);
 		int listSize = atoi(row[1]);
+		TaskGoalLists.push_back({listID, listSize, 0, 0, nullptr});
 
-		TaskGoalLists[listIndex].ListID = listID;
-		TaskGoalLists[listIndex].Size = listSize;
-		TaskGoalLists[listIndex].Min = 0;
-		TaskGoalLists[listIndex].Max = 0;
 		TaskGoalLists[listIndex].GoalItemEntries = new int[listSize];
 
 		listIndex++;
