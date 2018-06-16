@@ -712,7 +712,8 @@ RULE_BOOL(QueryServ, PlayerLogAAPurchases, false) // Log Player AA Purchases
 RULE_BOOL(QueryServ, PlayerLogTradeSkillEvents, false) // Log Player Tradeskill Transactions
 RULE_BOOL(QueryServ, PlayerLogIssuedCommandes, false) // Log Player Issued Commands
 RULE_BOOL(QueryServ, PlayerLogMoneyTransactions, false) // Log Player Money Transaction/Splits
-RULE_BOOL(QueryServ, PlayerLogAlternateCurrencyTransactions, false) // Log Ploayer Alternate Currency Transactions
+RULE_BOOL(QueryServ, PlayerLogAlternateCurrencyTransactions, false) // Log Player Alternate Currency Transactions
+RULE_BOOL(QueryServ, PlayerLogLoot, false) // Log Player Looting cash/Items
 RULE_CATEGORY_END()
 
 RULE_CATEGORY(Inventory)

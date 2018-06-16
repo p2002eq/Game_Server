@@ -141,6 +141,9 @@
 #define ServerOP_LFPUpdate			0x0213
 #define ServerOP_LFPMatches			0x0214
 #define ServerOP_ClientVersionSummary 0x0215
+#define ServerOP_Soulmark			0x0216
+#define ServerOP_AddSoulmark		0x0217
+#define ServerOP_ReloadSkills		0x0218
 #define ServerOP_LSInfo				0x1000
 #define ServerOP_LSStatus			0x1001
 #define ServerOP_LSClientAuth		0x1002
@@ -204,10 +207,16 @@
 #define ServerOP_CZSignalNPC						0x5017
 #define ServerOP_CZSetEntityVariableByNPCTypeID		0x5018
 #define ServerOP_WWMarquee							0x5019
-#define ServerOP_QSPlayerDropItem					0x5020
+#define ServerOP_QSPlayerAARateHourly				0x5020
+#define ServerOP_QSPlayerDropItem					0x5021
+#define ServerOP_QSPlayerAAPurchase					0x5022
+#define ServerOP_QSPlayerDeathBy					0x5023
+#define ServerOP_QSPlayerTSEvents					0x5024
+#define ServerOP_QSPlayerQGlobalUpdates				0x5025
+#define ServerOP_QSPlayerLootRecords				0x5026
 
 /* Query Serv Generic Packet Flag/Type Enumeration */
-enum { QSG_LFGuild = 0 }; 
+enum { QSG_LFGuild = 0 };
 enum {	QSG_LFGuild_PlayerMatches = 0, QSG_LFGuild_UpdatePlayerInfo, QSG_LFGuild_RequestPlayerInfo, QSG_LFGuild_UpdateGuildInfo, QSG_LFGuild_GuildMatches,
 	QSG_LFGuild_RequestGuildInfo };
 
@@ -258,6 +267,43 @@ public:
 		ret->compressed = this->compressed;
 		ret->InflatedSize = this->InflatedSize;
 		return ret;
+	}
+	bool Deflate() {
+		if (compressed)
+			return false;
+		if ((!this->pBuffer) || (!this->size))
+			return false;
+		uchar* tmp = new uchar[this->size + 128];
+		uint32 tmpsize = DeflatePacket(this->pBuffer, this->size, tmp, this->size + 128);
+		if (!tmpsize) {
+			safe_delete_array(tmp);
+			return false;
+		}
+		this->compressed = true;
+		this->InflatedSize = this->size;
+		this->size = tmpsize;
+		uchar* tmpdel = this->pBuffer;
+		this->pBuffer = tmp;
+		safe_delete_array(tmpdel);
+		return true;
+	}
+	bool Inflate() {
+		if (!compressed)
+			return false;
+		if ((!this->pBuffer) || (!this->size))
+			return false;
+		uchar* tmp = new uchar[InflatedSize];
+		uint32 tmpsize = InflatePacket(this->pBuffer, this->size, tmp, InflatedSize);
+		if (!tmpsize) {
+			safe_delete_array(tmp);
+			return false;
+		}
+		compressed = false;
+		this->size = tmpsize;
+		uchar* tmpdel = this->pBuffer;
+		this->pBuffer = tmp;
+		safe_delete_array(tmpdel);
+		return true;
 	}
 
 	void WriteUInt8(uint8 value) { *(uint8 *)(pBuffer + _wpos) = value; _wpos += sizeof(uint8); }
@@ -1267,14 +1313,72 @@ struct QSTransactionItems_Struct {
 };
 
 struct QSMerchantLogTransaction_Struct {
+	uint32					char_id;
+	uint16					char_slot;
+	uint32					item_id;
+	uint16					charges;
 	uint32					zone_id;
 	uint32					merchant_id;
 	MoneyUpdate_Struct		merchant_money;
 	uint16					merchant_count;
-	uint32					char_id;
 	MoneyUpdate_Struct		char_money;
 	uint16					char_count;
 	QSTransactionItems_Struct items[0];
+};
+
+struct QSPlayerAARateHourly_Struct {
+	uint32 charid;
+	uint32 add_points;
+};
+
+struct QSPlayerAAPurchase_Struct {
+	uint32 charid;
+	char aatype[8];
+	char aaname;
+	int aaid;
+	int cost;
+	int zone_id;
+	int32 instance_id;
+};
+
+struct QSPlayerDeathBy_Struct {
+	uint32 charid;
+	uint32 zone_id;
+	int32 instance_id;
+	char killed_by[128];
+	uint16 spell;
+	uint32 damage;
+};
+
+struct QSPlayerTSEvents_Struct {
+	uint32 charid;
+	uint32 zone_id;
+	int32 instance_id;
+	char results[8];
+	uint32 recipe_id;
+	uint32 tradeskill;
+	uint16 trivial;
+	float chance;
+};
+
+struct QSPlayerQGlobalUpdate_Struct {
+	uint32 charid;
+	char action[8];
+	uint32 zone_id;
+	int32 instance_id;
+	char varname[32];
+	char newvalue[32];
+};
+
+struct QSPlayerLootRecords_struct {
+	uint32 charid;
+	char corpse_name[64];
+	char type[12];
+	uint32 zone_id;
+	uint32 item_id;
+	char item_name[64];
+	int8 charges;
+	MoneyUpdate_Struct money;
 };
 
 struct QSGeneralQuery_Struct {
@@ -1314,6 +1418,18 @@ struct ReloadWorld_Struct{
 
 struct ServerRequestTellQueue_Struct {
 	char	name[64];
+};
+
+struct ServerRequestSoulMark_Struct {
+	char	name[64];
+	SoulMarkList_Struct entry;
+};
+
+struct ServerIsOwnerOnline_Struct {
+	char   name[64];
+	uint32 corpseid;
+	uint16 zoneid;
+	uint8  online;
 };
 
 struct UCSServerStatus_Struct {

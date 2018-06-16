@@ -48,14 +48,6 @@ TaskManager::TaskManager() {
 TaskManager::~TaskManager() {
 	for(int i=0; i<MAXTASKS; i++) {
 		if(Tasks[i] != nullptr) {
-			for(int j=0; j<Tasks[i]->ActivityCount; j++) {
-				safe_delete_array(Tasks[i]->Activity[j].Text1);
-				safe_delete_array(Tasks[i]->Activity[j].Text2);
-				safe_delete_array(Tasks[i]->Activity[j].Text3);
-			}
-			safe_delete_array(Tasks[i]->Title);
-			safe_delete_array(Tasks[i]->Description);
-			safe_delete_array(Tasks[i]->Reward);
 			safe_delete(Tasks[i]);
 		}
 	}
@@ -68,24 +60,24 @@ bool TaskManager::LoadTaskSets() {
 	for(int i=0; i<MAXTASKSETS; i++)
 		TaskSets[i].clear();
 
-    std::string query = StringFormat("SELECT `id`, `taskid` from `tasksets` "
-                                    "WHERE `id` > 0 AND `id` < %i "
-                                    "AND `taskid` >= 0 AND `taskid` < %i "
-                                    "ORDER BY `id`, `taskid` ASC",
-                                    MAXTASKSETS, MAXTASKS);
-    auto results = database.QueryDatabase(query);
-    if (!results.Success()) {
-        Log(Logs::General, Logs::Error, "[TASKS]Error in TaskManager::LoadTaskSets: %s", results.ErrorMessage().c_str());
+	std::string query = StringFormat("SELECT `id`, `taskid` from `tasksets` "
+											 "WHERE `id` > 0 AND `id` < %i "
+											 "AND `taskid` >= 0 AND `taskid` < %i "
+											 "ORDER BY `id`, `taskid` ASC",
+									 MAXTASKSETS, MAXTASKS);
+	auto results = database.QueryDatabase(query);
+	if (!results.Success()) {
+		Log(Logs::General, Logs::Error, "[TASKS]Error in TaskManager::LoadTaskSets: %s", results.ErrorMessage().c_str());
 		return false;
-    }
+	}
 
 	for (auto row = results.begin(); row != results.end(); ++row) {
-        int taskSet = atoi(row[0]);
-        int taskID = atoi(row[1]);
+		int taskSet = atoi(row[0]);
+		int taskID = atoi(row[1]);
 
-        TaskSets[taskSet].push_back(taskID);
-        Log(Logs::General, Logs::Tasks, "[GLOBALLOAD] Adding TaskID %4i to TaskSet %4i", taskID, taskSet);
-    }
+		TaskSets[taskSet].push_back(taskID);
+		Log(Logs::General, Logs::Tasks, "[GLOBALLOAD] Adding TaskID %4i to TaskSet %4i", taskID, taskSet);
+	}
 
 	return true;
 }
@@ -98,15 +90,6 @@ bool TaskManager::LoadSingleTask(int TaskID) {
 
 	// If this task already exists in memory, free all the dynamically allocated strings.
 	if(Tasks[TaskID]) {
-
-		for(int j=0; j<Tasks[TaskID]->ActivityCount; j++) {
-			safe_delete_array(Tasks[TaskID]->Activity[j].Text1);
-			safe_delete_array(Tasks[TaskID]->Activity[j].Text2);
-			safe_delete_array(Tasks[TaskID]->Activity[j].Text3);
-		}
-		safe_delete_array(Tasks[TaskID]->Title);
-		safe_delete_array(Tasks[TaskID]->Description);
-		safe_delete_array(Tasks[TaskID]->Reward);
 		safe_delete(Tasks[TaskID]);
 	}
 
@@ -119,12 +102,12 @@ void TaskManager::ReloadGoalLists() {
 		Log(Logs::Detail, Logs::Tasks,"TaskManager::LoadTasks LoadLists failed");
 }
 
-bool TaskManager::LoadTasks(int singleTask) {
-
+bool TaskManager::LoadTasks(int singleTask)
+{
 	// If TaskID !=0, then just load the task specified.
 	Log(Logs::General, Logs::Tasks, "[GLOBALLOAD] TaskManager::LoadTasks Called");
 
-    std::string query;
+	std::string query;
 	if(singleTask == 0) {
 		if(!GoalListManager.LoadLists())
 			Log(Logs::Detail, Logs::Tasks,"TaskManager::LoadTasks LoadLists failed");
@@ -132,162 +115,161 @@ bool TaskManager::LoadTasks(int singleTask) {
 		if(!LoadTaskSets())
 			Log(Logs::Detail, Logs::Tasks,"TaskManager::LoadTasks LoadTaskSets failed");
 
-		query = StringFormat("SELECT `id`, `duration`, `title`, `description`, `reward`, "
-                            "`rewardid`, `cashreward`, `xpreward`, `rewardmethod`, "
-                            "`startzone`, `minlevel`, `maxlevel`, `repeatable` "
-                            "FROM `tasks` WHERE `id` < %i", MAXTASKS);
-	}
-	else
-		query = StringFormat("SELECT `id`, `duration`, `title`, `description`, `reward`, "
-                            "`rewardid`, `cashreward`, `xpreward`, `rewardmethod`, "
-                            "`startzone`, `minlevel`, `maxlevel`, `repeatable` "
-                            "FROM `tasks` WHERE `id` = %i",singleTask);
+		query = StringFormat("SELECT `id`, `type`, `duration`, `duration_code`, `title`, `description`, "
+									 "`reward`, `rewardid`, `cashreward`, `xpreward`, `rewardmethod`, `startzone`, "
+									 "`minlevel`, `maxlevel`, `repeatable` FROM `tasks` WHERE `id` < %i",
+							 MAXTASKS);
+	} else
+		query = StringFormat("SELECT `id`, `type`, `duration`, `duration_code`, `title`, `description`, "
+									 "`reward`, `rewardid`, `cashreward`, `xpreward`, `rewardmethod`, `startzone`, "
+									 "`minlevel`, `maxlevel`, `repeatable` FROM `tasks` WHERE `id` = %i",
+							 singleTask);
 
-    const char *ERR_MYSQLERROR = "[TASKS]Error in TaskManager::LoadTasks: %s";
+	const char *ERR_MYSQLERROR = "[TASKS]Error in TaskManager::LoadTasks: %s";
 
-    auto results = database.QueryDatabase(query);
-    if (!results.Success()) {
-        Log(Logs::General, Logs::Error, ERR_MYSQLERROR, results.ErrorMessage().c_str());
+	auto results = database.QueryDatabase(query);
+	if (!results.Success()) {
+		Log(Logs::General, Logs::Error, ERR_MYSQLERROR, results.ErrorMessage().c_str());
 		return false;
-    }
+	}
 
-    for(auto row = results.begin(); row != results.end(); ++row) {
-        int taskID = atoi(row[0]);
+	for(auto row = results.begin(); row != results.end(); ++row) {
+		int taskID = atoi(row[0]);
 
-        if((taskID <= 0) || (taskID >= MAXTASKS)) {
-            // This shouldn't happen, as the SELECT is bounded by MAXTASKS
-			Log(Logs::General, Logs::Error, "[TASKS]Task ID %i out of range while loading tasks from database", taskID);
+		if((taskID <= 0) || (taskID >= MAXTASKS)) {
+			// This shouldn't happen, as the SELECT is bounded by MAXTASKS
+			Log(Logs::General, Logs::Error,
+				"[TASKS]Task ID %i out of range while loading tasks from database", taskID);
 			continue;
-        }
+		}
 
 		Tasks[taskID] = new TaskInformation;
-		Tasks[taskID]->Duration = atoi(row[1]);
-		Tasks[taskID]->Title = new char[strlen(row[2]) + 1];
-		strcpy(Tasks[taskID]->Title, row[2]);
-		Tasks[taskID]->Description = new char[strlen(row[3]) + 1];
-		strcpy(Tasks[taskID]->Description, row[3]);
-		Tasks[taskID]->Reward = new char[strlen(row[4]) + 1];
-		strcpy(Tasks[taskID]->Reward, row[4]);
-		Tasks[taskID]->RewardID = atoi(row[5]);
-		Tasks[taskID]->CashReward = atoi(row[6]);
-		Tasks[taskID]->XPReward = atoi(row[7]);
-		Tasks[taskID]->RewardMethod = (TaskMethodType)atoi(row[8]);
-		Tasks[taskID]->StartZone = atoi(row[9]);
-		Tasks[taskID]->MinLevel = atoi(row[10]);
-		Tasks[taskID]->MaxLevel = atoi(row[11]);
-		Tasks[taskID]->Repeatable = atoi(row[12]);
+		Tasks[taskID]->type = static_cast<TaskType>(atoi(row[1]));
+		Tasks[taskID]->Duration = atoi(row[2]);
+		Tasks[taskID]->dur_code = static_cast<DurationCode>(atoi(row[3]));
+		Tasks[taskID]->Title = row[4];
+		Tasks[taskID]->Description = row[5];
+		Tasks[taskID]->Reward = row[6];
+		Tasks[taskID]->RewardID = atoi(row[7]);
+		Tasks[taskID]->CashReward = atoi(row[8]);
+		Tasks[taskID]->XPReward = atoi(row[9]);
+		Tasks[taskID]->RewardMethod = (TaskMethodType)atoi(row[10]);
+		Tasks[taskID]->StartZone = atoi(row[11]);
+		Tasks[taskID]->MinLevel = atoi(row[12]);
+		Tasks[taskID]->MaxLevel = atoi(row[13]);
+		Tasks[taskID]->Repeatable = atoi(row[14]);
 		Tasks[taskID]->ActivityCount = 0;
 		Tasks[taskID]->SequenceMode = ActivitiesSequential;
 		Tasks[taskID]->LastStep = 0;
 
-		Log(Logs::General, Logs::Tasks, "[GLOBALLOAD] TaskID: %5i, Duration: %8i, StartZone: %3i Reward: %s MinLevel %i MaxLevel %i Repeatable: %s",
-					taskID, Tasks[taskID]->Duration, Tasks[taskID]->StartZone, Tasks[taskID]->Reward,
-					Tasks[taskID]->MinLevel, Tasks[taskID]->MaxLevel,
-					Tasks[taskID]->Repeatable ? "Yes" : "No");
-		Log(Logs::General, Logs::Tasks, "[GLOBALLOAD] Title: %s", Tasks[taskID]->Title);
-    }
-
+		Log(Logs::General, Logs::Tasks,
+			"[GLOBALLOAD] TaskID: %5i, Duration: %8i, StartZone: %3i Reward: %s MinLevel %i MaxLevel %i "
+					"Repeatable: %s",
+			taskID, Tasks[taskID]->Duration, Tasks[taskID]->StartZone, Tasks[taskID]->Reward.c_str(),
+			Tasks[taskID]->MinLevel, Tasks[taskID]->MaxLevel, Tasks[taskID]->Repeatable ? "Yes" : "No");
+		Log(Logs::General, Logs::Tasks, "[GLOBALLOAD] Title: %s", Tasks[taskID]->Title.c_str());
+	}
 
 	if(singleTask==0)
 		query = StringFormat("SELECT `taskid`, `step`, `activityid`, `activitytype`, "
-                            "`text1`, `text2`, `text3`, `goalid`, `goalmethod`, "
-                            "`goalcount`, `delivertonpc`, `zoneid`, `optional` "
-                            "FROM `activities` "
-                            "WHERE `taskid` < %i AND `activityid` < %i "
-                            "ORDER BY taskid, activityid ASC", MAXTASKS, MAXACTIVITIESPERTASK);
+									 "`text1`, `text2`, `text3`, `goalid`, `goalmethod`, "
+									 "`goalcount`, `delivertonpc`, `zoneid`, `optional` "
+									 "FROM `activities` "
+									 "WHERE `taskid` < %i AND `activityid` < %i "
+									 "ORDER BY taskid, activityid ASC",
+							 MAXTASKS, MAXACTIVITIESPERTASK);
 	else
 		query = StringFormat("SELECT `taskid`, `step`, `activityid`, `activitytype`, "
-                            "`text1`, `text2`, `text3`, `goalid`, `goalmethod`, "
-                            "`goalcount`, `delivertonpc`, `zoneid`, `optional` "
-                            "FROM `activities` "
-                            "WHERE `taskid` = %i AND `activityid` < %i "
-                            "ORDER BY taskid, activityid ASC", singleTask, MAXACTIVITIESPERTASK);
-    results = database.QueryDatabase(query);
-    if (!results.Success()) {
-        Log(Logs::General, Logs::Error, ERR_MYSQLERROR, results.ErrorMessage().c_str());
+									 "`text1`, `text2`, `text3`, `goalid`, `goalmethod`, "
+									 "`goalcount`, `delivertonpc`, `zoneid`, `optional` "
+									 "FROM `activities` "
+									 "WHERE `taskid` = %i AND `activityid` < %i "
+									 "ORDER BY taskid, activityid ASC",
+							 singleTask, MAXACTIVITIESPERTASK);
+	results = database.QueryDatabase(query);
+	if (!results.Success()) {
+		Log(Logs::General, Logs::Error, ERR_MYSQLERROR, results.ErrorMessage().c_str());
 		return false;
-    }
+	}
 
 	for(auto row = results.begin(); row != results.end(); ++row) {
-        int taskID = atoi(row[0]);
-        int step = atoi(row[1]);
+		int taskID = atoi(row[0]);
+		int step = atoi(row[1]);
 
-        int activityID = atoi(row[2]);
+		int activityID = atoi(row[2]);
 
-        if((taskID <= 0) || (taskID >= MAXTASKS) || (activityID < 0) || (activityID >= MAXACTIVITIESPERTASK)) {
-            // This shouldn't happen, as the SELECT is bounded by MAXTASKS
-            Log(Logs::General, Logs::Error, "[TASKS]Task or Activity ID (%i, %i) out of range while loading "
-                                            "activities from database", taskID, activityID);
-            continue;
-        }
+		if((taskID <= 0) || (taskID >= MAXTASKS) || (activityID < 0) || (activityID >= MAXACTIVITIESPERTASK)) {
+			// This shouldn't happen, as the SELECT is bounded by MAXTASKS
+			Log(Logs::General, Logs::Error,
+				"[TASKS]Task or Activity ID (%i, %i) out of range while loading "
+						"activities from database",
+				taskID, activityID);
+			continue;
+		}
 
-        if(Tasks[taskID]==nullptr) {
-            Log(Logs::General, Logs::Error, "[TASKS]Activity for non-existent task (%i, %i) while loading activities from database", taskID, activityID);
-            continue;
-        }
+		if(Tasks[taskID]==nullptr) {
+			Log(Logs::General, Logs::Error,
+				"[TASKS]Activity for non-existent task (%i, %i) while loading activities from database",
+				taskID, activityID);
+			continue;
+		}
 
-        Tasks[taskID]->Activity[Tasks[taskID]->ActivityCount].StepNumber = step;
+		Tasks[taskID]->Activity[Tasks[taskID]->ActivityCount].StepNumber = step;
 
-        if(step != 0)
-            Tasks[taskID]->SequenceMode = ActivitiesStepped;
+		if(step != 0)
+			Tasks[taskID]->SequenceMode = ActivitiesStepped;
 
-        if(step >Tasks[taskID]->LastStep)
-            Tasks[taskID]->LastStep = step;
+		if(step >Tasks[taskID]->LastStep)
+			Tasks[taskID]->LastStep = step;
 
-        // Task Activities MUST be numbered sequentially from 0. If not, log an error
-        // and set the task to nullptr. Subsequent activities for this task will raise
-        // ERR_NOTASK errors.
-        // Change to (activityID != (Tasks[taskID]->ActivityCount + 1)) to index from 1
-        if(activityID != Tasks[taskID]->ActivityCount) {
-            Log(Logs::General, Logs::Error, "[TASKS]Activities for Task %i are not sequential starting at 0. Not loading task.", taskID, activityID);
-            Tasks[taskID] = nullptr;
-            continue;
-        }
+		// Task Activities MUST be numbered sequentially from 0. If not, log an error
+		// and set the task to nullptr. Subsequent activities for this task will raise
+		// ERR_NOTASK errors.
+		// Change to (activityID != (Tasks[taskID]->ActivityCount + 1)) to index from 1
+		if(activityID != Tasks[taskID]->ActivityCount) {
+			Log(Logs::General, Logs::Error,
+				"[TASKS]Activities for Task %i are not sequential starting at 0. Not loading task.", taskID,
+				activityID);
+			Tasks[taskID] = nullptr;
+			continue;
+		}
 
-        Tasks[taskID]->Activity[Tasks[taskID]->ActivityCount].Type = atoi(row[3]);
+		Tasks[taskID]->Activity[Tasks[taskID]->ActivityCount].Type = atoi(row[3]);
 
-        Tasks[taskID]->Activity[Tasks[taskID]->ActivityCount].Text1 = new char[strlen(row[4]) + 1];
+		if (row[4][0])
+			Tasks[taskID]->Activity[Tasks[taskID]->ActivityCount].Text1 = row[4];
 
-        if(strlen(row[4])>0)
-            strcpy(Tasks[taskID]->Activity[Tasks[taskID]->ActivityCount].Text1, row[4]);
-        else
-            Tasks[taskID]->Activity[Tasks[taskID]->ActivityCount].Text1[0]=0;
+		if (row[5][0])
+			Tasks[taskID]->Activity[Tasks[taskID]->ActivityCount].Text2 = row[5];
 
-        Tasks[taskID]->Activity[Tasks[taskID]->ActivityCount].Text2 = new char[strlen(row[5]) + 1];
+		if (row[6][0])
+			Tasks[taskID]->Activity[Tasks[taskID]->ActivityCount].Text3 = row[6];
 
-        if(strlen(row[5])>0)
-            strcpy(Tasks[taskID]->Activity[Tasks[taskID]->ActivityCount].Text2, row[5]);
-        else
-            Tasks[taskID]->Activity[Tasks[taskID]->ActivityCount].Text2[0]=0;
+		Tasks[taskID]->Activity[Tasks[taskID]->ActivityCount].GoalID = atoi(row[7]);
+		Tasks[taskID]->Activity[Tasks[taskID]->ActivityCount].GoalMethod = (TaskMethodType)atoi(row[8]);
+		Tasks[taskID]->Activity[Tasks[taskID]->ActivityCount].GoalCount = atoi(row[9]);
+		Tasks[taskID]->Activity[Tasks[taskID]->ActivityCount].DeliverToNPC = atoi(row[10]);
+		Tasks[taskID]->Activity[Tasks[taskID]->ActivityCount].ZoneID = atoi(row[11]);
+		Tasks[taskID]->Activity[Tasks[taskID]->ActivityCount].Optional = atoi(row[12]);
 
-        Tasks[taskID]->Activity[Tasks[taskID]->ActivityCount].Text3 = new char[strlen(row[6]) + 1];
+		Log(Logs::General, Logs::Tasks,
+			"[GLOBALLOAD] Activity Slot %2i: ID %i for Task %5i. Type: %3i, GoalID: %8i, "
+					"GoalMethod: %i, GoalCount: %3i, ZoneID:%3i",
+			Tasks[taskID]->ActivityCount, activityID, taskID,
+			Tasks[taskID]->Activity[Tasks[taskID]->ActivityCount].Type,
+			Tasks[taskID]->Activity[Tasks[taskID]->ActivityCount].GoalID,
+			Tasks[taskID]->Activity[Tasks[taskID]->ActivityCount].GoalMethod,
+			Tasks[taskID]->Activity[Tasks[taskID]->ActivityCount].GoalCount,
+			Tasks[taskID]->Activity[Tasks[taskID]->ActivityCount].ZoneID);
 
-        if(strlen(row[6])>0)
-            strcpy(Tasks[taskID]->Activity[Tasks[taskID]->ActivityCount].Text3, row[6]);
-        else
-            Tasks[taskID]->Activity[Tasks[taskID]->ActivityCount].Text3[0]=0;
+		Log(Logs::General, Logs::Tasks, "[GLOBALLOAD] Text1: %s",
+			Tasks[taskID]->Activity[Tasks[taskID]->ActivityCount].Text1.c_str());
+		Log(Logs::General, Logs::Tasks, "[GLOBALLOAD] Text2: %s",
+			Tasks[taskID]->Activity[Tasks[taskID]->ActivityCount].Text2.c_str());
+		Log(Logs::General, Logs::Tasks, "[GLOBALLOAD] Text3: %s",
+			Tasks[taskID]->Activity[Tasks[taskID]->ActivityCount].Text3.c_str());
 
-        Tasks[taskID]->Activity[Tasks[taskID]->ActivityCount].GoalID = atoi(row[7]);
-        Tasks[taskID]->Activity[Tasks[taskID]->ActivityCount].GoalMethod = (TaskMethodType)atoi(row[8]);
-        Tasks[taskID]->Activity[Tasks[taskID]->ActivityCount].GoalCount = atoi(row[9]);
-        Tasks[taskID]->Activity[Tasks[taskID]->ActivityCount].DeliverToNPC = atoi(row[10]);
-        Tasks[taskID]->Activity[Tasks[taskID]->ActivityCount].ZoneID = atoi(row[11]);
-        Tasks[taskID]->Activity[Tasks[taskID]->ActivityCount].Optional = atoi(row[12]);
-
-        Log(Logs::General, Logs::Tasks, "[GLOBALLOAD] Activity Slot %2i: ID %i for Task %5i. Type: %3i, GoalID: %8i, "
-                                "GoalMethod: %i, GoalCount: %3i, ZoneID:%3i",
-                                Tasks[taskID]->ActivityCount, activityID, taskID,
-                                Tasks[taskID]->Activity[Tasks[taskID]->ActivityCount].Type,
-                                Tasks[taskID]->Activity[Tasks[taskID]->ActivityCount].GoalID,
-                                Tasks[taskID]->Activity[Tasks[taskID]->ActivityCount].GoalMethod,
-                                Tasks[taskID]->Activity[Tasks[taskID]->ActivityCount].GoalCount,
-                                Tasks[taskID]->Activity[Tasks[taskID]->ActivityCount].ZoneID);
-
-		Log(Logs::General, Logs::Tasks, "[GLOBALLOAD] Text1: %s", Tasks[taskID]->Activity[Tasks[taskID]->ActivityCount].Text1);
-		Log(Logs::General, Logs::Tasks, "[GLOBALLOAD] Text2: %s", Tasks[taskID]->Activity[Tasks[taskID]->ActivityCount].Text2);
-		Log(Logs::General, Logs::Tasks, "[GLOBALLOAD] Text3: %s", Tasks[taskID]->Activity[Tasks[taskID]->ActivityCount].Text3);
-
-        Tasks[taskID]->ActivityCount++;
+		Tasks[taskID]->ActivityCount++;
 	}
 
 	return true;
@@ -301,7 +283,7 @@ bool TaskManager::SaveClientState(Client *c, ClientTaskState *state) {
 	// duration of a session will overcome this.
 	//
 	if(!c || !state)
-        return false;
+		return false;
 
 	const char *ERR_MYSQLERROR = "[TASKS]Error in TaskManager::SaveClientState %s";
 
@@ -310,119 +292,119 @@ bool TaskManager::SaveClientState(Client *c, ClientTaskState *state) {
 	Log(Logs::Detail, Logs::Tasks,"TaskManager::SaveClientState for character ID %d", characterID);
 
 	if(state->ActiveTaskCount > 0) {
-		for(int task=0; task<MAXACTIVETASKS; task++) {
-			int taskID = state->ActiveTasks[task].TaskID;
+		for(int task=0; task<MAXACTIVEQUESTS; task++) {
+			int taskID = state->ActiveQuests[task].TaskID;
 			if(taskID==TASKSLOTEMPTY)
-                continue;
+				continue;
 
-			if(state->ActiveTasks[task].Updated) {
+			if(state->ActiveQuests[task].Updated) {
 
 				Log(Logs::General, Logs::Tasks, "[CLIENTSAVE] TaskManager::SaveClientState for character ID %d, Updating TaskIndex %i TaskID %i", characterID, task, taskID);
 
-                std::string query = StringFormat("REPLACE INTO character_tasks (charid, taskid, slot, acceptedtime) "
-                                                "VALUES (%i, %i, %i, %i)",
-                                                characterID, taskID, task, state->ActiveTasks[task].AcceptedTime);
-                auto results = database.QueryDatabase(query);
+				std::string query = StringFormat("REPLACE INTO character_tasks (charid, taskid, slot, acceptedtime) "
+														 "VALUES (%i, %i, %i, %i)",
+												 characterID, taskID, task, state->ActiveQuests[task].AcceptedTime);
+				auto results = database.QueryDatabase(query);
 				if (!results.Success()) {
 					Log(Logs::General, Logs::Error, ERR_MYSQLERROR, results.ErrorMessage().c_str());
 				}
 				else {
-					state->ActiveTasks[task].Updated = false;
+					state->ActiveQuests[task].Updated = false;
 				}
 
 			}
 
 			std::string query = "REPLACE INTO character_activities (charid, taskid, activityid, donecount, completed) "
-                                "VALUES ";
+					"VALUES ";
 
-            int updatedActivityCount = 0;
+			int updatedActivityCount = 0;
 			for(int activityIndex = 0; activityIndex<Tasks[taskID]->ActivityCount; ++activityIndex) {
 
-				if(!state->ActiveTasks[task].Activity[activityIndex].Updated)
-                    continue;
+				if(!state->ActiveQuests[task].Activity[activityIndex].Updated)
+					continue;
 
-                Log(Logs::General, Logs::Tasks, "[CLIENTSAVE] TaskManager::SaveClientSate for character ID %d, Updating Activity %i, %i",
-                                        characterID, task, activityIndex);
+				Log(Logs::General, Logs::Tasks, "[CLIENTSAVE] TaskManager::SaveClientSate for character ID %d, Updating Activity %i, %i",
+					characterID, task, activityIndex);
 
-                if(updatedActivityCount==0)
+				if(updatedActivityCount==0)
 					query += StringFormat("(%i, %i, %i, %i, %i)",
-                                        characterID, taskID, activityIndex,
-                                        state->ActiveTasks[task].Activity[activityIndex].DoneCount,
-                                        state->ActiveTasks[task].Activity[activityIndex].State == ActivityCompleted);
-                else
+										  characterID, taskID, activityIndex,
+										  state->ActiveQuests[task].Activity[activityIndex].DoneCount,
+										  state->ActiveQuests[task].Activity[activityIndex].State == ActivityCompleted);
+				else
 					query += StringFormat(", (%i, %i, %i, %i, %i)",
-                                        characterID, taskID, activityIndex,
-                                        state->ActiveTasks[task].Activity[activityIndex].DoneCount,
-                                        state->ActiveTasks[task].Activity[activityIndex].State == ActivityCompleted);
+										  characterID, taskID, activityIndex,
+										  state->ActiveQuests[task].Activity[activityIndex].DoneCount,
+										  state->ActiveQuests[task].Activity[activityIndex].State == ActivityCompleted);
 
-                updatedActivityCount++;
+				updatedActivityCount++;
 			}
 
 			if(updatedActivityCount == 0)
-                continue;
+				continue;
 
-            Log(Logs::General, Logs::Tasks, "[CLIENTSAVE] Executing query %s", query.c_str());
-            auto results = database.QueryDatabase(query);
+			Log(Logs::General, Logs::Tasks, "[CLIENTSAVE] Executing query %s", query.c_str());
+			auto results = database.QueryDatabase(query);
 
-            if(!results.Success()) {
-                Log(Logs::General, Logs::Error, ERR_MYSQLERROR, results.ErrorMessage().c_str());
-                continue;
-            }
+			if(!results.Success()) {
+				Log(Logs::General, Logs::Error, ERR_MYSQLERROR, results.ErrorMessage().c_str());
+				continue;
+			}
 
-            state->ActiveTasks[task].Updated=false;
-            for(int activityIndex=0; activityIndex<Tasks[taskID]->ActivityCount; ++activityIndex)
-                state->ActiveTasks[task].Activity[activityIndex].Updated=false;
+			state->ActiveQuests[task].Updated=false;
+			for(int activityIndex=0; activityIndex<Tasks[taskID]->ActivityCount; ++activityIndex)
+				state->ActiveQuests[task].Activity[activityIndex].Updated=false;
 
 		}
 	}
 
 	if(!RuleB(TaskSystem, RecordCompletedTasks) || (state->CompletedTasks.size() <= (unsigned int)state->LastCompletedTaskLoaded)) {
-        state->LastCompletedTaskLoaded = state->CompletedTasks.size();
-        return true;
-    }
+		state->LastCompletedTaskLoaded = state->CompletedTasks.size();
+		return true;
+	}
 
-    const char* completedTaskQuery = "REPLACE INTO completed_tasks (charid, completedtime, taskid, activityid) "
-                        "VALUES (%i, %i, %i, %i)";
+	const char* completedTaskQuery = "REPLACE INTO completed_tasks (charid, completedtime, taskid, activityid) "
+			"VALUES (%i, %i, %i, %i)";
 
 	for(unsigned int i=state->LastCompletedTaskLoaded; i<state->CompletedTasks.size(); i++) {
 
-        Log(Logs::General, Logs::Tasks, "[CLIENTSAVE] TaskManager::SaveClientState Saving Completed Task at slot %i", i);
-        int taskID = state->CompletedTasks[i].TaskID;
+		Log(Logs::General, Logs::Tasks, "[CLIENTSAVE] TaskManager::SaveClientState Saving Completed Task at slot %i", i);
+		int taskID = state->CompletedTasks[i].TaskID;
 
-        if((taskID <= 0) || (taskID >= MAXTASKS) || (Tasks[taskID] == nullptr))
-            continue;
+		if((taskID <= 0) || (taskID >= MAXTASKS) || (Tasks[taskID] == nullptr))
+			continue;
 
-        // First we save a record with an ActivityID of -1.
-        // This indicates this task was completed at the given time. We infer that all
-        // none optional activities were completed.
-        //
-        std::string query = StringFormat(completedTaskQuery, characterID, state->CompletedTasks[i].CompletedTime, taskID, -1);
-        auto results = database.QueryDatabase(query);
-        if(!results.Success()) {
-            Log(Logs::General, Logs::Error, ERR_MYSQLERROR, results.ErrorMessage().c_str());
-            continue;
-        }
+		// First we save a record with an ActivityID of -1.
+		// This indicates this task was completed at the given time. We infer that all
+		// none optional activities were completed.
+		//
+		std::string query = StringFormat(completedTaskQuery, characterID, state->CompletedTasks[i].CompletedTime, taskID, -1);
+		auto results = database.QueryDatabase(query);
+		if(!results.Success()) {
+			Log(Logs::General, Logs::Error, ERR_MYSQLERROR, results.ErrorMessage().c_str());
+			continue;
+		}
 
-        // If the Rule to record non-optional task completion is not enabled, don't save it
-        if(!RuleB(TaskSystem, RecordCompletedOptionalActivities))
-            continue;
+		// If the Rule to record non-optional task completion is not enabled, don't save it
+		if(!RuleB(TaskSystem, RecordCompletedOptionalActivities))
+			continue;
 
-        // Insert one record for each completed optional task.
+		// Insert one record for each completed optional task.
 
-        for(int j=0; j<Tasks[taskID]->ActivityCount; j++) {
-            if(!Tasks[taskID]->Activity[j].Optional || !state->CompletedTasks[i].ActivityDone[j])
-                continue;
+		for(int j=0; j<Tasks[taskID]->ActivityCount; j++) {
+			if(!Tasks[taskID]->Activity[j].Optional || !state->CompletedTasks[i].ActivityDone[j])
+				continue;
 
-            query = StringFormat(completedTaskQuery, characterID, state->CompletedTasks[i].CompletedTime, taskID, j);
-            results = database.QueryDatabase(query);
-            if(!results.Success())
-                Log(Logs::General, Logs::Error, ERR_MYSQLERROR, results.ErrorMessage().c_str());
+			query = StringFormat(completedTaskQuery, characterID, state->CompletedTasks[i].CompletedTime, taskID, j);
+			results = database.QueryDatabase(query);
+			if(!results.Success())
+				Log(Logs::General, Logs::Error, ERR_MYSQLERROR, results.ErrorMessage().c_str());
 
-        }
+		}
 
-    }
+	}
 
-    state->LastCompletedTaskLoaded = state->CompletedTasks.size();
+	state->LastCompletedTaskLoaded = state->CompletedTasks.size();
 	return true;
 }
 
@@ -456,7 +438,7 @@ void Client::RemoveClientTaskState() {
 bool TaskManager::LoadClientState(Client *c, ClientTaskState *state) {
 
 	if(!c || !state)
-        return false;
+		return false;
 
 	int characterID = c->CharacterID();
 
@@ -464,178 +446,178 @@ bool TaskManager::LoadClientState(Client *c, ClientTaskState *state) {
 
 	Log(Logs::General, Logs::Tasks, "[CLIENTLOAD] TaskManager::LoadClientState for character ID %d", characterID);
 
-    std::string query = StringFormat("SELECT `taskid`, `slot`, `acceptedtime` "
-                                    "FROM `character_tasks` "
-                                    "WHERE `charid` = %i ORDER BY acceptedtime", characterID);
-    auto results = database.QueryDatabase(query);
-    if (!results.Success()) {
-        Log(Logs::General, Logs::Error, "[TASKS]Error in TaskManager::LoadClientState load Tasks: %s", results.ErrorMessage().c_str());
+	std::string query = StringFormat("SELECT `taskid`, `slot`, `acceptedtime` "
+											 "FROM `character_tasks` "
+											 "WHERE `charid` = %i ORDER BY acceptedtime", characterID);
+	auto results = database.QueryDatabase(query);
+	if (!results.Success()) {
+		Log(Logs::General, Logs::Error, "[TASKS]Error in TaskManager::LoadClientState load Tasks: %s", results.ErrorMessage().c_str());
 		return false;
-    }
+	}
 
-    for(auto row = results.begin(); row != results.end(); ++row) {
-        int taskID = atoi(row[0]);
-        int slot = atoi(row[1]);
+	for(auto row = results.begin(); row != results.end(); ++row) {
+		int taskID = atoi(row[0]);
+		int slot = atoi(row[1]);
 
-        if((taskID<0) || (taskID>=MAXTASKS)) {
-            Log(Logs::General, Logs::Error, "[TASKS]Task ID %i out of range while loading character tasks from database", taskID);
-            continue;
-        }
+		if((taskID<0) || (taskID>=MAXTASKS)) {
+			Log(Logs::General, Logs::Error, "[TASKS]Task ID %i out of range while loading character tasks from database", taskID);
+			continue;
+		}
 
-        if((slot<0) || (slot>=MAXACTIVETASKS)) {
-            Log(Logs::General, Logs::Error, "[TASKS] Slot %i out of range while loading character tasks from database", slot);
-            continue;
-        }
+		if((slot<0) || (slot>=MAXACTIVEQUESTS)) {
+			Log(Logs::General, Logs::Error, "[TASKS] Slot %i out of range while loading character tasks from database", slot);
+			continue;
+		}
 
-        if(state->ActiveTasks[slot].TaskID != TASKSLOTEMPTY) {
-            Log(Logs::General, Logs::Error, "[TASKS] Slot %i for Task %is is already occupied.", slot, taskID);
-            continue;
-        }
+		if(state->ActiveQuests[slot].TaskID != TASKSLOTEMPTY) {
+			Log(Logs::General, Logs::Error, "[TASKS] Slot %i for Task %is is already occupied.", slot, taskID);
+			continue;
+		}
 
-        int acceptedtime = atoi(row[2]);
+		int acceptedtime = atoi(row[2]);
 
-        state->ActiveTasks[slot].TaskID = taskID;
-        state->ActiveTasks[slot].CurrentStep = -1;
-        state->ActiveTasks[slot].AcceptedTime = acceptedtime;
-        state->ActiveTasks[slot].Updated = false;
+		state->ActiveQuests[slot].TaskID = taskID;
+		state->ActiveQuests[slot].CurrentStep = -1;
+		state->ActiveQuests[slot].AcceptedTime = acceptedtime;
+		state->ActiveQuests[slot].Updated = false;
 
-        for(int i=0; i<MAXACTIVITIESPERTASK; i++)
-            state->ActiveTasks[slot].Activity[i].ActivityID = -1;
+		for(int i=0; i<MAXACTIVITIESPERTASK; i++)
+			state->ActiveQuests[slot].Activity[i].ActivityID = -1;
 
-        ++state->ActiveTaskCount;
+		++state->ActiveTaskCount;
 
-        Log(Logs::General, Logs::Tasks, "[CLIENTLOAD] TaskManager::LoadClientState. Char: %i Task ID %i, Accepted Time: %8X", characterID, taskID, acceptedtime);
+		Log(Logs::General, Logs::Tasks, "[CLIENTLOAD] TaskManager::LoadClientState. Char: %i Task ID %i, Accepted Time: %8X", characterID, taskID, acceptedtime);
 	}
 
 	// Load Activities
 	Log(Logs::General, Logs::Tasks, "[CLIENTLOAD] LoadClientState. Loading activities for character ID %d", characterID);
 
-    query = StringFormat("SELECT `taskid`, `activityid`, `donecount`, `completed` "
-                        "FROM `character_activities` "
-                        "WHERE `charid` = %i "
-                        "ORDER BY `taskid` ASC, `activityid` ASC", characterID);
-    results = database.QueryDatabase(query);
-    if (!results.Success()){
+	query = StringFormat("SELECT `taskid`, `activityid`, `donecount`, `completed` "
+								 "FROM `character_activities` "
+								 "WHERE `charid` = %i "
+								 "ORDER BY `taskid` ASC, `activityid` ASC", characterID);
+	results = database.QueryDatabase(query);
+	if (!results.Success()){
 		Log(Logs::General, Logs::Error, "[TASKS]Error in TaskManager::LoadClientState load Activities: %s", results.ErrorMessage().c_str());
 		return false;
 	}
 
-    for (auto row = results.begin(); row != results.end(); ++row) {
-        int taskID = atoi(row[0]);
-        if((taskID<0) || (taskID>=MAXTASKS)) {
-            Log(Logs::General, Logs::Error, "[TASKS]Task ID %i out of range while loading character activities from database", taskID);
-            continue;
-        }
+	for (auto row = results.begin(); row != results.end(); ++row) {
+		int taskID = atoi(row[0]);
+		if((taskID<0) || (taskID>=MAXTASKS)) {
+			Log(Logs::General, Logs::Error, "[TASKS]Task ID %i out of range while loading character activities from database", taskID);
+			continue;
+		}
 
-        int activityID = atoi(row[1]);
-        if((activityID<0) || (activityID>=MAXACTIVITIESPERTASK)) {
-            Log(Logs::General, Logs::Error, "[TASKS]Activity ID %i out of range while loading character activities from database", activityID);
-            continue;
-        }
+		int activityID = atoi(row[1]);
+		if((activityID<0) || (activityID>=MAXACTIVITIESPERTASK)) {
+			Log(Logs::General, Logs::Error, "[TASKS]Activity ID %i out of range while loading character activities from database", activityID);
+			continue;
+		}
 
-        // Find Active Task Slot
-        int activeTaskIndex = -1;
+		// Find Active Task Slot
+		int activeTaskIndex = -1;
 
-        for(int i=0; i<MAXACTIVETASKS; i++)
-            if(state->ActiveTasks[i].TaskID == taskID) {
-                activeTaskIndex = i;
-                break;
-            }
+		for(int i=0; i<MAXACTIVEQUESTS; i++)
+			if(state->ActiveQuests[i].TaskID == taskID) {
+				activeTaskIndex = i;
+				break;
+			}
 
-        if(activeTaskIndex == -1) {
-            Log(Logs::General, Logs::Error, "[TASKS]Activity %i found for task %i which client does not have.", activityID, taskID);
-            continue;
-        }
+		if(activeTaskIndex == -1) {
+			Log(Logs::General, Logs::Error, "[TASKS]Activity %i found for task %i which client does not have.", activityID, taskID);
+			continue;
+		}
 
-        int doneCount = atoi(row[2]);
-        bool completed = atoi(row[3]);
-        state->ActiveTasks[activeTaskIndex].Activity[activityID].ActivityID = activityID;
-        state->ActiveTasks[activeTaskIndex].Activity[activityID].DoneCount = doneCount;
-        if(completed)
-            state->ActiveTasks[activeTaskIndex].Activity[activityID].State = ActivityCompleted;
-        else
-            state->ActiveTasks[activeTaskIndex].Activity[activityID].State = ActivityHidden;
+		int doneCount = atoi(row[2]);
+		bool completed = atoi(row[3]);
+		state->ActiveQuests[activeTaskIndex].Activity[activityID].ActivityID = activityID;
+		state->ActiveQuests[activeTaskIndex].Activity[activityID].DoneCount = doneCount;
+		if(completed)
+			state->ActiveQuests[activeTaskIndex].Activity[activityID].State = ActivityCompleted;
+		else
+			state->ActiveQuests[activeTaskIndex].Activity[activityID].State = ActivityHidden;
 
-        state->ActiveTasks[activeTaskIndex].Activity[activityID].Updated = false;
+		state->ActiveQuests[activeTaskIndex].Activity[activityID].Updated = false;
 
-        Log(Logs::General, Logs::Tasks, "[CLIENTLOAD] TaskManager::LoadClientState. Char: %i Task ID %i, ActivityID: %i, DoneCount: %i, Completed: %i", characterID, taskID, activityID, doneCount, completed);
-
-    }
-
-	if(RuleB(TaskSystem, RecordCompletedTasks)) {
-        query = StringFormat("SELECT `taskid`, `activityid`, `completedtime` "
-                            "FROM `completed_tasks` "
-                            "WHERE `charid` = %i ORDER BY completedtime, taskid, activityid",
-							characterID);
-        results = database.QueryDatabase(query);
-        if (!results.Success()) {
-            Log(Logs::General, Logs::Error, "[TASKS]Error in TaskManager::LoadClientState load completed tasks: %s", results.ErrorMessage().c_str());
-			return false;
-        }
-
-		CompletedTaskInformation cti;
-
-        for(int i=0; i<MAXACTIVITIESPERTASK; i++)
-            cti.ActivityDone[i] = false;
-
-        int previousTaskID = -1;
-        int previousCompletedTime = -1;
-
-        for(auto row = results.begin(); row != results.end(); ++row) {
-
-            int taskID = atoi(row[0]);
-            if((taskID <= 0) || (taskID >=MAXTASKS)) {
-                Log(Logs::General, Logs::Error, "[TASKS]Task ID %i out of range while loading completed tasks from database", taskID);
-                continue;
-            }
-
-            // An ActivityID of -1 means mark all the none optional activities in the
-            // task as complete. If the Rule to record optional activities is enabled,
-            // subsequent records for this task will flag any optional tasks that were
-            // completed.
-            int activityID = atoi(row[1]);
-            if((activityID<-1) || (activityID>=MAXACTIVITIESPERTASK)) {
-                Log(Logs::General, Logs::Error, "[TASKS]Activity ID %i out of range while loading completed tasks from database", activityID);
-                continue;
-            }
-
-            int completedTime = atoi(row[2]);
-            if((previousTaskID != -1) && ((taskID != previousTaskID) || (completedTime != previousCompletedTime))) {
-                state->CompletedTasks.push_back(cti);
-                for(int i=0; i<MAXACTIVITIESPERTASK; i++)
-                    cti.ActivityDone[i] = false;
-            }
-
-            cti.TaskID = previousTaskID = taskID;
-            cti.CompletedTime = previousCompletedTime = completedTime;
-
-            // If ActivityID is -1, Mark all the non-optional tasks as completed.
-            if(activityID < 0) {
-                TaskInformation* task = Tasks[taskID];
-                if(task == nullptr)
-                    continue;
-
-                for(int i=0; i<task->ActivityCount; i++)
-                    if(!task->Activity[i].Optional)
-                        cti.ActivityDone[i] = true;
-            }
-            else
-                cti.ActivityDone[activityID] = true;
-
-        }
-
-        if(previousTaskID != -1)
-            state->CompletedTasks.push_back(cti);
-
-        state->LastCompletedTaskLoaded = state->CompletedTasks.size();
+		Log(Logs::General, Logs::Tasks, "[CLIENTLOAD] TaskManager::LoadClientState. Char: %i Task ID %i, ActivityID: %i, DoneCount: %i, Completed: %i", characterID, taskID, activityID, doneCount, completed);
 
 	}
 
-    query = StringFormat("SELECT `taskid` FROM character_enabledtasks "
-                        "WHERE `charid` = %i AND `taskid` >0 AND `taskid` < %i "
-                        "ORDER BY `taskid` ASC",
-                        characterID, MAXTASKS);
-    results = database.QueryDatabase(query);
+	if(RuleB(TaskSystem, RecordCompletedTasks)) {
+		query = StringFormat("SELECT `taskid`, `activityid`, `completedtime` "
+									 "FROM `completed_tasks` "
+									 "WHERE `charid` = %i ORDER BY completedtime, taskid, activityid",
+							 characterID);
+		results = database.QueryDatabase(query);
+		if (!results.Success()) {
+			Log(Logs::General, Logs::Error, "[TASKS]Error in TaskManager::LoadClientState load completed tasks: %s", results.ErrorMessage().c_str());
+			return false;
+		}
+
+		CompletedTaskInformation cti;
+
+		for(int i=0; i<MAXACTIVITIESPERTASK; i++)
+			cti.ActivityDone[i] = false;
+
+		int previousTaskID = -1;
+		int previousCompletedTime = -1;
+
+		for(auto row = results.begin(); row != results.end(); ++row) {
+
+			int taskID = atoi(row[0]);
+			if((taskID <= 0) || (taskID >=MAXTASKS)) {
+				Log(Logs::General, Logs::Error, "[TASKS]Task ID %i out of range while loading completed tasks from database", taskID);
+				continue;
+			}
+
+			// An ActivityID of -1 means mark all the none optional activities in the
+			// task as complete. If the Rule to record optional activities is enabled,
+			// subsequent records for this task will flag any optional tasks that were
+			// completed.
+			int activityID = atoi(row[1]);
+			if((activityID<-1) || (activityID>=MAXACTIVITIESPERTASK)) {
+				Log(Logs::General, Logs::Error, "[TASKS]Activity ID %i out of range while loading completed tasks from database", activityID);
+				continue;
+			}
+
+			int completedTime = atoi(row[2]);
+			if((previousTaskID != -1) && ((taskID != previousTaskID) || (completedTime != previousCompletedTime))) {
+				state->CompletedTasks.push_back(cti);
+				for(int i=0; i<MAXACTIVITIESPERTASK; i++)
+					cti.ActivityDone[i] = false;
+			}
+
+			cti.TaskID = previousTaskID = taskID;
+			cti.CompletedTime = previousCompletedTime = completedTime;
+
+			// If ActivityID is -1, Mark all the non-optional tasks as completed.
+			if(activityID < 0) {
+				TaskInformation* task = Tasks[taskID];
+				if(task == nullptr)
+					continue;
+
+				for(int i=0; i<task->ActivityCount; i++)
+					if(!task->Activity[i].Optional)
+						cti.ActivityDone[i] = true;
+			}
+			else
+				cti.ActivityDone[activityID] = true;
+
+		}
+
+		if(previousTaskID != -1)
+			state->CompletedTasks.push_back(cti);
+
+		state->LastCompletedTaskLoaded = state->CompletedTasks.size();
+
+	}
+
+	query = StringFormat("SELECT `taskid` FROM character_enabledtasks "
+								 "WHERE `charid` = %i AND `taskid` >0 AND `taskid` < %i "
+								 "ORDER BY `taskid` ASC",
+						 characterID, MAXTASKS);
+	results = database.QueryDatabase(query);
 	if (!results.Success()) {
 		Log(Logs::General, Logs::Error, "[TASKS]Error in TaskManager::LoadClientState load enabled tasks: %s", results.ErrorMessage().c_str());
 	}
@@ -650,35 +632,35 @@ bool TaskManager::LoadClientState(Client *c, ClientTaskState *state) {
 	// Check that there is an entry in the client task state for every activity in each task
 	// This should only break if a ServerOP adds or deletes activites for a task that players already
 	// have active, or due to a bug.
-	for(int i=0; i<MAXACTIVETASKS; i++) {
-		int taskID = state->ActiveTasks[i].TaskID;
+	for(int i=0; i<MAXACTIVEQUESTS; i++) {
+		int taskID = state->ActiveQuests[i].TaskID;
 		if(taskID==TASKSLOTEMPTY) continue;
 		if(!Tasks[taskID]) {
 			c->Message(13, "Active Task Slot %i, references a task (%i), that does not exist. "
-						"Removing from memory. Contact a GM to resolve this.",i, taskID);
+					"Removing from memory. Contact a GM to resolve this.",i, taskID);
 
 			Log(Logs::General, Logs::Error, "[TASKS]Character %i has task %i which does not exist.", characterID, taskID);
-			state->ActiveTasks[i].TaskID=TASKSLOTEMPTY;
+			state->ActiveQuests[i].TaskID=TASKSLOTEMPTY;
 			continue;
 
 		}
 		for(int j=0; j<Tasks[taskID]->ActivityCount; j++) {
 
-			if(state->ActiveTasks[i].Activity[j].ActivityID != j) {
+			if(state->ActiveQuests[i].Activity[j].ActivityID != j) {
 				c->Message(13, "Active Task %i, %s. Activity count does not match expected value."
-							"Removing from memory. Contact a GM to resolve this.",
-							taskID, Tasks[taskID]->Title);
+								   "Removing from memory. Contact a GM to resolve this.",
+						   taskID, Tasks[taskID]->Title.c_str());
 
 				Log(Logs::General, Logs::Error, "[TASKS]Fatal error in character %i task state. Activity %i for "
 						"Task %i either missing from client state or from task.", characterID, j, taskID);
-				state->ActiveTasks[i].TaskID=TASKSLOTEMPTY;
+				state->ActiveQuests[i].TaskID=TASKSLOTEMPTY;
 				break;
 			}
 		}
 	}
 
-	for(int i=0; i<MAXACTIVETASKS; i++)
-		if(state->ActiveTasks[i].TaskID != TASKSLOTEMPTY)
+	for(int i=0; i<MAXACTIVEQUESTS; i++)
+		if(state->ActiveQuests[i].TaskID != TASKSLOTEMPTY)
 			state->UnlockActivities(characterID, i);
 
 	Log(Logs::General, Logs::Tasks, "[CLIENTLOAD] LoadClientState for Character ID %d DONE!", characterID);
@@ -704,7 +686,7 @@ void ClientTaskState::EnableTask(int characterID, int taskCount, int *tasks) {
 			// Our list of enabled tasks is sorted, so we can quit if we find a taskid higher than
 			// the one we are looking for.
 			if((*iterator) > tasks[i])
-                break;
+				break;
 			++iterator;
 		}
 
@@ -720,14 +702,14 @@ void ClientTaskState::EnableTask(int characterID, int taskCount, int *tasks) {
 		Log(Logs::General, Logs::Tasks, "[UPDATE] %i", EnabledTasks[i]);
 
 	if(tasksEnabled.empty() )
-        return;
+		return;
 
 	std::stringstream queryStream;
 	queryStream << "REPLACE INTO character_enabledtasks (charid, taskid) VALUES ";
 	for(unsigned int i=0; i<tasksEnabled.size(); i++)
 		queryStream << (i ? ", " : "") <<  StringFormat("(%i, %i)", characterID, tasksEnabled[i]);
 
-    std::string query = queryStream.str();
+	std::string query = queryStream.str();
 
 	if (tasksEnabled.size()) {
 		Log(Logs::General, Logs::Tasks, "[UPDATE] Executing query %s", query.c_str());
@@ -755,7 +737,7 @@ void ClientTaskState::DisableTask(int charID, int taskCount, int *taskList) {
 			}
 
 			if((*iterator) > taskList[i])
-                break;
+				break;
 
 			++iterator;
 		}
@@ -771,13 +753,13 @@ void ClientTaskState::DisableTask(int charID, int taskCount, int *taskList) {
 		Log(Logs::General, Logs::Tasks, "[UPDATE] %i", EnabledTasks[i]);
 
 	if(tasksDisabled.empty())
-        return;
+		return;
 
 	std::stringstream queryStream;
 	queryStream << StringFormat("DELETE FROM character_enabledtasks WHERE charid = %i AND (", charID);
 
 	for(unsigned int i=0; i<tasksDisabled.size(); i++)
-        queryStream << (i ? StringFormat("taskid = %i ", tasksDisabled[i]) : StringFormat("OR taskid = %i ", tasksDisabled[i]));
+		queryStream << (i ? StringFormat("taskid = %i ", tasksDisabled[i]) : StringFormat("OR taskid = %i ", tasksDisabled[i]));
 
 	queryStream << ")";
 
@@ -921,7 +903,7 @@ int TaskManager::GetTaskMinLevel(int TaskID)
 	{
 		return Tasks[TaskID]->MinLevel;
 	}
-		
+
 	return -1;
 }
 
@@ -944,7 +926,7 @@ void TaskManager::TaskSetSelector(Client *c, ClientTaskState *state, Mob *mob, i
 	int PlayerLevel = c->GetLevel();
 
 	Log(Logs::General, Logs::Tasks, "[UPDATE] TaskSetSelector called for taskset %i. EnableTaskSize is %i", TaskSetID,
-				state->EnabledTasks.size());
+		state->EnabledTasks.size());
 	if((TaskSetID<=0) || (TaskSetID>=MAXTASKSETS)) return;
 
 	if(!TaskSets[TaskSetID].empty()) {
@@ -958,7 +940,7 @@ void TaskManager::TaskSetSelector(Client *c, ClientTaskState *state, Mob *mob, i
 
 			while((Iterator != TaskSets[TaskSetID].end()) && (TaskListIndex < MAXCHOOSERENTRIES)) {
 				if(AppropriateLevel((*Iterator), PlayerLevel) && !state->IsTaskActive((*Iterator)) &&
-					(IsTaskRepeatable((*Iterator)) || !state->IsTaskCompleted((*Iterator))))
+				   (IsTaskRepeatable((*Iterator)) || !state->IsTaskCompleted((*Iterator))))
 					TaskList[TaskListIndex++] = (*Iterator);
 
 				++Iterator;
@@ -974,18 +956,18 @@ void TaskManager::TaskSetSelector(Client *c, ClientTaskState *state, Mob *mob, i
 
 
 	while((EnabledTaskIndex < state->EnabledTasks.size()) && (TaskSetIndex < TaskSets[TaskSetID].size()) &&
-			(TaskListIndex < MAXCHOOSERENTRIES)) {
+		  (TaskListIndex < MAXCHOOSERENTRIES)) {
 
 		Log(Logs::General, Logs::Tasks, "[UPDATE] Comparing EnabledTasks[%i] (%i) with TaskSets[%i][%i] (%i)",
-				EnabledTaskIndex, state->EnabledTasks[EnabledTaskIndex], TaskSetID, TaskSetIndex,
-				TaskSets[TaskSetID][TaskSetIndex]);
+			EnabledTaskIndex, state->EnabledTasks[EnabledTaskIndex], TaskSetID, TaskSetIndex,
+			TaskSets[TaskSetID][TaskSetIndex]);
 
 		if((TaskSets[TaskSetID][TaskSetIndex] > 0) &&
-			(state->EnabledTasks[EnabledTaskIndex] == TaskSets[TaskSetID][TaskSetIndex])) {
+		   (state->EnabledTasks[EnabledTaskIndex] == TaskSets[TaskSetID][TaskSetIndex])) {
 
 			if(AppropriateLevel(TaskSets[TaskSetID][TaskSetIndex], PlayerLevel) &&
-				!state->IsTaskActive(TaskSets[TaskSetID][TaskSetIndex]) &&
-				(IsTaskRepeatable(TaskSets[TaskSetID][TaskSetIndex]) ||
+			   !state->IsTaskActive(TaskSets[TaskSetID][TaskSetIndex]) &&
+			   (IsTaskRepeatable(TaskSets[TaskSetID][TaskSetIndex]) ||
 				!state->IsTaskCompleted(TaskSets[TaskSetID][TaskSetIndex]))) {
 
 				TaskList[TaskListIndex++] = TaskSets[TaskSetID][TaskSetIndex];
@@ -1052,9 +1034,9 @@ void TaskManager::SendTaskSelector(Client *c, Mob *mob, int TaskCount, int *Task
 
 		ValidTasks++;
 
-		PacketLength = PacketLength + sizeof(AvailableTaskData1_Struct) + strlen(Tasks[TaskList[i]]->Title) + 1 +
-					strlen(Tasks[TaskList[i]]->Description) + 1 + sizeof(AvailableTaskData2_Struct) + 10 +
-					sizeof(AvailableTaskTrailer_Struct) + 5;
+		PacketLength = PacketLength + sizeof(AvailableTaskData1_Struct) + Tasks[TaskList[i]]->Title.size() + 1 +
+					   Tasks[TaskList[i]]->Description.size() + 1 + sizeof(AvailableTaskData2_Struct) + 10 +
+					   sizeof(AvailableTaskTrailer_Struct) + 5;
 	}
 
 	if(ValidTasks == 0) return;
@@ -1087,15 +1069,15 @@ void TaskManager::SendTaskSelector(Client *c, Mob *mob, int TaskCount, int *Task
 
 		AvailableTaskData1->TimeLimit = Tasks[TaskList[i]]->Duration;
 
-		AvailableTaskData1->unknown2 = 0;
+		AvailableTaskData1->unknown2 = static_cast<int>(Tasks[TaskList[i]]->dur_code); // guess
 
 		Ptr = (char *)AvailableTaskData1 + sizeof(AvailableTaskData1_Struct);
 
-		sprintf(Ptr, "%s", Tasks[TaskList[i]]->Title);
+		sprintf(Ptr, "%s", Tasks[TaskList[i]]->Title.c_str());
 
 		Ptr = Ptr + strlen(Ptr) + 1;
 
-		sprintf(Ptr, "%s", Tasks[TaskList[i]]->Description);
+		sprintf(Ptr, "%s", Tasks[TaskList[i]]->Description.c_str());
 
 		Ptr = Ptr + strlen(Ptr) + 1;
 
@@ -1167,8 +1149,8 @@ void TaskManager::SendTaskSelectorNew(Client *c, Mob *mob, int TaskCount, int *T
 		ValidTasks++;
 
 		PacketLength += 21;	// Task Data - strings
-		PacketLength += strlen(Tasks[TaskList[i]]->Title) + 1 +
-						strlen(Tasks[TaskList[i]]->Description) + 1;
+		PacketLength += Tasks[TaskList[i]]->Title.size() + 1 +
+						Tasks[TaskList[i]]->Description.size() + 1;
 
 		sprintf(StartZone, "%i", Tasks[TaskList[i]]->StartZone);
 		/*
@@ -1187,10 +1169,12 @@ void TaskManager::SendTaskSelectorNew(Client *c, Mob *mob, int TaskCount, int *T
 	auto outapp = new EQApplicationPacket(OP_OpenNewTasksWindow, PacketLength);
 
 	outapp->WriteUInt32(ValidTasks);	// TaskCount
-	outapp->WriteUInt32(2);			// Unknown2
+	outapp->WriteUInt32(2);			// Type, valid values: 0-3. 0 = Task, 1 = Shared Task, 2 = Quest, 3 = ???
+	// so I guess an NPC can only offer one type of quests or we can only open a selection with one type :P (so quest call can tell us I guess)
+	// this is also sent in OP_TaskDescription
 	outapp->WriteUInt32(mob->GetID());	// TaskGiver
 
-	for(int i=0; i<TaskCount;i++) {
+	for(int i=0; i<TaskCount;i++) { // max 40
 
 		if(!AppropriateLevel(TaskList[i], PlayerLevel)) continue;
 
@@ -1199,14 +1183,14 @@ void TaskManager::SendTaskSelectorNew(Client *c, Mob *mob, int TaskCount, int *T
 		if(!IsTaskRepeatable(TaskList[i]) && c->IsTaskCompleted(TaskList[i])) continue;
 
 		outapp->WriteUInt32(TaskList[i]);	// TaskID
-		outapp->WriteFloat(1.0f);
+		outapp->WriteFloat(1.0f); // affects color, difficulty?
 		outapp->WriteUInt32(Tasks[TaskList[i]]->Duration);
-		outapp->WriteUInt32(0);				// Unknown7
+		outapp->WriteUInt32(static_cast<int>(Tasks[TaskList[i]]->dur_code));	// 1 = Short, 2 = Medium, 3 = Long, anything else Unlimited
 
-		outapp->WriteString(Tasks[TaskList[i]]->Title);
-		outapp->WriteString(Tasks[TaskList[i]]->Description);
+		outapp->WriteString(Tasks[TaskList[i]]->Title.c_str()); // max 64 with null
+		outapp->WriteString(Tasks[TaskList[i]]->Description.c_str()); // max 4000 with null
 
-		outapp->WriteUInt8(0);				// Unknown10 - Empty string ?
+		outapp->WriteUInt8(0);				// Has reward set flag
 		outapp->WriteUInt32(1);				// ActivityCount - Hard set to 1 for now
 
 		// Activity stuff below - Will need to iterate through each task
@@ -1217,19 +1201,27 @@ void TaskManager::SendTaskSelectorNew(Client *c, Mob *mob, int TaskCount, int *T
 
 		outapp->WriteUInt32(0);				// ActivityNumber
 		outapp->WriteUInt32(1);				// ActivityType
-		outapp->WriteUInt32(0);				// Unknown14
-		outapp->WriteString("Text1 Test");
+		outapp->WriteUInt32(0);				// solo, group, raid?
+		outapp->WriteString("Text1 Test");	// max length 64 -- affects what string ID it will use for the description, should be a name here?
+
+		// this string is item names
 		outapp->WriteUInt32(11);			// Text2Len
 		outapp->WriteString("Text2 Test");
+
 		outapp->WriteUInt32(1);				// GoalCount
+
+		// this string is skill IDs? probably one of the "use on" tasks
 		outapp->WriteUInt32(3);				// NumString1Len
 		outapp->WriteString("-1");
+
+		// this string is spell IDs? probably one of the "use on" tasks
 		outapp->WriteUInt32(3);				// NumString2Len
 		outapp->WriteString("-1");
+
 		//outapp->WriteString(itoa(Tasks[TaskList[i]]->Activity[ActivityID].ZoneID));
-		outapp->WriteString(StartZone);		// Zone number in ascii
-		outapp->WriteString("Text3 Test");
-		outapp->WriteString(StartZone);		// Zone number in ascii
+		outapp->WriteString(StartZone);		// Zone number in ascii max length 64, can be multiple with separated by ;
+		outapp->WriteString("Text3 Test");	// max length 128 -- overrides the automatic descriptions
+		outapp->WriteString(StartZone);			// Zone number in ascii max length 64, probably can be separated by ; too, haven't found it used
 	}
 
 	c->QueuePacket(outapp);
@@ -1268,7 +1260,7 @@ void TaskManager::ExplainTask(Client*c, int TaskID) {
 	}
 
 	char Explanation[1000], *ptr;
-	c->Message(0, "Task %4i: Title: %s", TaskID, Tasks[TaskID]->Description);
+	c->Message(0, "Task %4i: Title: %s", TaskID, Tasks[TaskID]->Description.c_str());
 	c->Message(0, "%3i Activities", Tasks[TaskID]->ActivityCount);
 	ptr = Explanation;
 	for(int i=0; i<Tasks[TaskID]->ActivityCount; i++) {
@@ -1289,8 +1281,8 @@ ClientTaskState::ClientTaskState() {
 	LastCompletedTaskLoaded = 0;
 	CheckedTouchActivities = false;
 
-	for(int i=0; i<MAXACTIVETASKS; i++)
-		ActiveTasks[i].TaskID = TASKSLOTEMPTY;
+	for(int i=0; i<MAXACTIVEQUESTS; i++)
+		ActiveQuests[i].TaskID = TASKSLOTEMPTY;
 }
 
 ClientTaskState::~ClientTaskState() {
@@ -1301,17 +1293,17 @@ int ClientTaskState::GetActiveTaskID(int index) {
 
 	// Return the TaskID from the client's specified Active Task slot.
 
-	if((index<0) || (index>=MAXACTIVETASKS)) return 0;
+	if((index<0) || (index>=MAXACTIVEQUESTS)) return 0;
 
-	return ActiveTasks[index].TaskID;
+	return ActiveQuests[index].TaskID;
 }
 
 static void DeleteCompletedTaskFromDatabase(int charID, int taskID) {
 
-    Log(Logs::General, Logs::Tasks, "[UPDATE] DeleteCompletedTasksFromDatabase. CharID = %i, TaskID = %i", charID, taskID);
+	Log(Logs::General, Logs::Tasks, "[UPDATE] DeleteCompletedTasksFromDatabase. CharID = %i, TaskID = %i", charID, taskID);
 
-    const std::string query = StringFormat("DELETE FROM completed_tasks WHERE charid=%i AND taskid = %i", charID, taskID);
-    auto results = database.QueryDatabase(query);
+	const std::string query = StringFormat("DELETE FROM completed_tasks WHERE charid=%i AND taskid = %i", charID, taskID);
+	auto results = database.QueryDatabase(query);
 	if(!results.Success()) {
 		return;
 	}
@@ -1323,7 +1315,7 @@ bool ClientTaskState::UnlockActivities(int CharID, int TaskIndex) {
 
 	bool AllActivitiesComplete = true;
 
-	TaskInformation* Task = taskmanager->Tasks[ActiveTasks[TaskIndex].TaskID];
+	TaskInformation* Task = taskmanager->Tasks[ActiveQuests[TaskIndex].TaskID];
 
 	if(Task==nullptr) return true;
 
@@ -1331,21 +1323,21 @@ bool ClientTaskState::UnlockActivities(int CharID, int TaskIndex) {
 	// marked as hidden. For Sequential (non-stepped) mode, we mark the first
 	// activity as active if not complete.
 	Log(Logs::General, Logs::Tasks, "[UPDATE] CharID: %i Task: %i Sequence mode is %i",
-				CharID, ActiveTasks[TaskIndex].TaskID, Task->SequenceMode);
+		CharID, ActiveQuests[TaskIndex].TaskID, Task->SequenceMode);
 	if(Task->SequenceMode == ActivitiesSequential) {
 
-		if(ActiveTasks[TaskIndex].Activity[0].State != ActivityCompleted)
-			ActiveTasks[TaskIndex].Activity[0].State = ActivityActive;
+		if(ActiveQuests[TaskIndex].Activity[0].State != ActivityCompleted)
+			ActiveQuests[TaskIndex].Activity[0].State = ActivityActive;
 
 		// Enable the next Hidden task.
 		for(int i=0; i<Task->ActivityCount; i++) {
-			if((ActiveTasks[TaskIndex].Activity[i].State == ActivityActive) &&
-				(!Task->Activity[i].Optional)) {
+			if((ActiveQuests[TaskIndex].Activity[i].State == ActivityActive) &&
+			   (!Task->Activity[i].Optional)) {
 				AllActivitiesComplete = false;
 				break;
 			}
-			if(ActiveTasks[TaskIndex].Activity[i].State == ActivityHidden) {
-				ActiveTasks[TaskIndex].Activity[i].State = ActivityActive;
+			if(ActiveQuests[TaskIndex].Activity[i].State == ActivityHidden) {
+				ActiveQuests[TaskIndex].Activity[i].State = ActivityActive;
 				AllActivitiesComplete = false;
 				break;
 			}
@@ -1357,7 +1349,7 @@ bool ClientTaskState::UnlockActivities(int CharID, int TaskIndex) {
 				int ErasedElements = 0;
 				while(Iterator != CompletedTasks.end()) {
 					int TaskID = (*Iterator).TaskID;
-					if(TaskID == ActiveTasks[TaskIndex].TaskID) {
+					if(TaskID == ActiveQuests[TaskIndex].TaskID) {
 						Iterator = CompletedTasks.erase(Iterator);
 						ErasedElements++;
 					}
@@ -1367,17 +1359,17 @@ bool ClientTaskState::UnlockActivities(int CharID, int TaskIndex) {
 				Log(Logs::General, Logs::Tasks, "[UPDATE] Erased Element count is %i", ErasedElements);
 				if(ErasedElements) {
 					LastCompletedTaskLoaded -= ErasedElements;
-					DeleteCompletedTaskFromDatabase(CharID, ActiveTasks[TaskIndex].TaskID);
+					DeleteCompletedTaskFromDatabase(CharID, ActiveQuests[TaskIndex].TaskID);
 				}
 
 			}
 
 			CompletedTaskInformation cti;
-			cti.TaskID = ActiveTasks[TaskIndex].TaskID;
+			cti.TaskID = ActiveQuests[TaskIndex].TaskID;
 			cti.CompletedTime = time(nullptr);
 
 			for(int i=0; i<Task->ActivityCount; i++)
-				cti.ActivityDone[i] = (ActiveTasks[TaskIndex].Activity[i].State == ActivityCompleted);
+				cti.ActivityDone[i] = (ActiveQuests[TaskIndex].Activity[i].State == ActivityCompleted);
 
 			CompletedTasks.push_back(cti);
 		}
@@ -1390,26 +1382,26 @@ bool ClientTaskState::UnlockActivities(int CharID, int TaskIndex) {
 
 	bool CurrentStepComplete = true;
 
-	Log(Logs::General, Logs::Tasks, "[UPDATE] Current Step is %i, Last Step is %i", ActiveTasks[TaskIndex].CurrentStep, Task->LastStep);
+	Log(Logs::General, Logs::Tasks, "[UPDATE] Current Step is %i, Last Step is %i", ActiveQuests[TaskIndex].CurrentStep, Task->LastStep);
 	// If CurrentStep is -1, this is the first call to this method since loading the
 	// client state. Unlock all activities with a step number of 0
-	if(ActiveTasks[TaskIndex].CurrentStep == -1) {
+	if(ActiveQuests[TaskIndex].CurrentStep == -1) {
 		for(int i=0; i<Task->ActivityCount; i++) {
 
 			if((Task->Activity[i].StepNumber == 0) &&
-				(ActiveTasks[TaskIndex].Activity[i].State == ActivityHidden)) {
-				ActiveTasks[TaskIndex].Activity[i].State = ActivityActive;
-				//ActiveTasks[TaskIndex].Activity[i].Updated=true;
+			   (ActiveQuests[TaskIndex].Activity[i].State == ActivityHidden)) {
+				ActiveQuests[TaskIndex].Activity[i].State = ActivityActive;
+				//ActiveQuests[TaskIndex].Activity[i].Updated=true;
 			}
 		}
-		ActiveTasks[TaskIndex].CurrentStep = 0;
+		ActiveQuests[TaskIndex].CurrentStep = 0;
 	}
 
-	for(int Step=ActiveTasks[TaskIndex].CurrentStep; Step<=Task->LastStep; Step++) {
+	for(int Step=ActiveQuests[TaskIndex].CurrentStep; Step<=Task->LastStep; Step++) {
 		for(int Activity=0; Activity<Task->ActivityCount; Activity++) {
-			if(Task->Activity[Activity].StepNumber == (int)ActiveTasks[TaskIndex].CurrentStep) {
-				if((ActiveTasks[TaskIndex].Activity[Activity].State != ActivityCompleted) &&
-					(!Task->Activity[Activity].Optional)) {
+			if(Task->Activity[Activity].StepNumber == (int)ActiveQuests[TaskIndex].CurrentStep) {
+				if((ActiveQuests[TaskIndex].Activity[Activity].State != ActivityCompleted) &&
+				   (!Task->Activity[Activity].Optional)) {
 					CurrentStepComplete = false;
 					AllActivitiesComplete = false;
 					break;
@@ -1417,7 +1409,7 @@ bool ClientTaskState::UnlockActivities(int CharID, int TaskIndex) {
 			}
 		}
 		if(!CurrentStepComplete) break;
-		ActiveTasks[TaskIndex].CurrentStep++;
+		ActiveQuests[TaskIndex].CurrentStep++;
 	}
 
 	if(AllActivitiesComplete) {
@@ -1430,7 +1422,7 @@ bool ClientTaskState::UnlockActivities(int CharID, int TaskIndex) {
 				int ErasedElements = 0;
 				while(Iterator != CompletedTasks.end()) {
 					int TaskID = (*Iterator).TaskID;
-					if(TaskID == ActiveTasks[TaskIndex].TaskID) {
+					if(TaskID == ActiveQuests[TaskIndex].TaskID) {
 						Iterator = CompletedTasks.erase(Iterator);
 						ErasedElements++;
 					}
@@ -1440,16 +1432,16 @@ bool ClientTaskState::UnlockActivities(int CharID, int TaskIndex) {
 				Log(Logs::General, Logs::Tasks, "[UPDATE] Erased Element count is %i", ErasedElements);
 				if(ErasedElements) {
 					LastCompletedTaskLoaded -= ErasedElements;
-					DeleteCompletedTaskFromDatabase(CharID, ActiveTasks[TaskIndex].TaskID);
+					DeleteCompletedTaskFromDatabase(CharID, ActiveQuests[TaskIndex].TaskID);
 				}
 
 			}
 			CompletedTaskInformation cti;
-			cti.TaskID = ActiveTasks[TaskIndex].TaskID;
+			cti.TaskID = ActiveQuests[TaskIndex].TaskID;
 			cti.CompletedTime = time(nullptr);
 
 			for(int i=0; i<Task->ActivityCount; i++)
-				cti.ActivityDone[i] = (ActiveTasks[TaskIndex].Activity[i].State == ActivityCompleted);
+				cti.ActivityDone[i] = (ActiveQuests[TaskIndex].Activity[i].State == ActivityCompleted);
 
 			CompletedTasks.push_back(cti);
 		}
@@ -1459,10 +1451,10 @@ bool ClientTaskState::UnlockActivities(int CharID, int TaskIndex) {
 	// Mark all non-completed tasks in the current step as active
 	//
 	for(int Activity=0; Activity<Task->ActivityCount; Activity++) {
-		if((Task->Activity[Activity].StepNumber == (int)ActiveTasks[TaskIndex].CurrentStep) &&
-			(ActiveTasks[TaskIndex].Activity[Activity].State == ActivityHidden)) {
-				ActiveTasks[TaskIndex].Activity[Activity].State = ActivityActive;
-			ActiveTasks[TaskIndex].Activity[Activity].Updated=true;
+		if((Task->Activity[Activity].StepNumber == (int)ActiveQuests[TaskIndex].CurrentStep) &&
+		   (ActiveQuests[TaskIndex].Activity[Activity].State == ActivityHidden)) {
+			ActiveQuests[TaskIndex].Activity[Activity].State = ActivityActive;
+			ActiveQuests[TaskIndex].Activity[Activity].Updated=true;
 		}
 	}
 
@@ -1493,24 +1485,24 @@ bool ClientTaskState::UpdateTasksByNPC(Client *c, int ActivityType, int NPCTypeI
 
 	if(!taskmanager || ActiveTaskCount == 0) return false;
 
-	for(int i=0; i<MAXACTIVETASKS; i++) {
-		if(ActiveTasks[i].TaskID == TASKSLOTEMPTY) continue;
+	for(int i=0; i<MAXACTIVEQUESTS; i++) {
+		if(ActiveQuests[i].TaskID == TASKSLOTEMPTY) continue;
 
 		// Check if there are any active kill activities for this task
 
-		TaskInformation* Task = taskmanager->Tasks[ActiveTasks[i].TaskID];
+		TaskInformation* Task = taskmanager->Tasks[ActiveQuests[i].TaskID];
 
 		if(Task == nullptr) return false;
 
 		for(int j=0; j<Task->ActivityCount; j++) {
 			// We are not interested in completed or hidden activities
-			if(ActiveTasks[i].Activity[j].State != ActivityActive) continue;
+			if(ActiveQuests[i].Activity[j].State != ActivityActive) continue;
 			// We are only interested in Kill activities
 			if(Task->Activity[j].Type != ActivityType) continue;
 			// Is there a zone restriction on the activity ?
 			if((Task->Activity[j].ZoneID >0) && (Task->Activity[j].ZoneID != (int)zone->GetZoneID())) {
 				Log(Logs::General, Logs::Tasks, "[UPDATE] Char: %s Task: %i, Activity %i, Activity type %i for NPC %i failed zone check",
-							c->GetName(), ActiveTasks[i].TaskID, j, ActivityType, NPCTypeID);
+					c->GetName(), ActiveQuests[i].TaskID, j, ActivityType, NPCTypeID);
 				continue;
 			}
 			// Is the activity to kill this type of NPC ?
@@ -1522,7 +1514,7 @@ bool ClientTaskState::UpdateTasksByNPC(Client *c, int ActivityType, int NPCTypeI
 
 				case METHODLIST:
 					if(!taskmanager->GoalListManager.IsInList(Task->Activity[j].GoalID,
-											NPCTypeID)) continue;
+															  NPCTypeID)) continue;
 					break;
 
 				default:
@@ -1546,16 +1538,16 @@ int ClientTaskState::ActiveSpeakTask(int NPCTypeID) {
 
 	if(!taskmanager || ActiveTaskCount == 0) return 0;
 
-	for(int i=0; i<MAXACTIVETASKS; i++) {
-		if(ActiveTasks[i].TaskID == TASKSLOTEMPTY) continue;
+	for(int i=0; i<MAXACTIVEQUESTS; i++) {
+		if(ActiveQuests[i].TaskID == TASKSLOTEMPTY) continue;
 
-		TaskInformation* Task = taskmanager->Tasks[ActiveTasks[i].TaskID];
+		TaskInformation* Task = taskmanager->Tasks[ActiveQuests[i].TaskID];
 
 		if(Task == nullptr) continue;
 
 		for(int j=0; j<Task->ActivityCount; j++) {
 			// We are not interested in completed or hidden activities
-			if(ActiveTasks[i].Activity[j].State != ActivityActive) continue;
+			if(ActiveQuests[i].Activity[j].State != ActivityActive) continue;
 			if(Task->Activity[j].Type != ActivitySpeakWith) continue;
 			// Is there a zone restriction on the activity ?
 			if((Task->Activity[j].ZoneID >0) && (Task->Activity[j].ZoneID != (int)zone->GetZoneID())) {
@@ -1563,7 +1555,7 @@ int ClientTaskState::ActiveSpeakTask(int NPCTypeID) {
 			}
 			// Is the activity to speak with this type of NPC ?
 			if((Task->Activity[j].GoalMethod == METHODQUEST) &&
-				(Task->Activity[j].GoalID == NPCTypeID)) return ActiveTasks[i].TaskID;
+			   (Task->Activity[j].GoalID == NPCTypeID)) return ActiveQuests[i].TaskID;
 		}
 	}
 	return 0;
@@ -1577,16 +1569,16 @@ int ClientTaskState::ActiveSpeakActivity(int NPCTypeID, int TaskID) {
 	if(!taskmanager || ActiveTaskCount == 0) return -1;
 	if((TaskID<=0) || (TaskID>=MAXTASKS)) return -1;
 
-	for(int i=0; i<MAXACTIVETASKS; i++) {
-		if(ActiveTasks[i].TaskID != TaskID) continue;
+	for(int i=0; i<MAXACTIVEQUESTS; i++) {
+		if(ActiveQuests[i].TaskID != TaskID) continue;
 
-		TaskInformation* Task = taskmanager->Tasks[ActiveTasks[i].TaskID];
+		TaskInformation* Task = taskmanager->Tasks[ActiveQuests[i].TaskID];
 
 		if(Task == nullptr) continue;
 
 		for(int j=0; j<Task->ActivityCount; j++) {
 			// We are not interested in completed or hidden activities
-			if(ActiveTasks[i].Activity[j].State != ActivityActive) continue;
+			if(ActiveQuests[i].Activity[j].State != ActivityActive) continue;
 			if(Task->Activity[j].Type != ActivitySpeakWith) continue;
 			// Is there a zone restriction on the activity ?
 			if((Task->Activity[j].ZoneID >0) && (Task->Activity[j].ZoneID != (int)zone->GetZoneID())) {
@@ -1594,7 +1586,7 @@ int ClientTaskState::ActiveSpeakActivity(int NPCTypeID, int TaskID) {
 			}
 			// Is the activity to speak with this type of NPC ?
 			if((Task->Activity[j].GoalMethod == METHODQUEST) &&
-				(Task->Activity[j].GoalID == NPCTypeID)) return j;
+			   (Task->Activity[j].GoalID == NPCTypeID)) return j;
 		}
 		return 0;
 	}
@@ -1613,24 +1605,24 @@ void ClientTaskState::UpdateTasksForItem(Client *c, ActivityType Type, int ItemI
 
 	if(ActiveTaskCount == 0) return;
 
-	for(int i=0; i<MAXACTIVETASKS; i++) {
-		if(ActiveTasks[i].TaskID == TASKSLOTEMPTY) continue;
+	for(int i=0; i<MAXACTIVEQUESTS; i++) {
+		if(ActiveQuests[i].TaskID == TASKSLOTEMPTY) continue;
 
 		// Check if there are any active loot activities for this task
 
-		TaskInformation* Task = taskmanager->Tasks[ActiveTasks[i].TaskID];
+		TaskInformation* Task = taskmanager->Tasks[ActiveQuests[i].TaskID];
 
 		if(Task == nullptr) return;
 
 		for(int j=0; j<Task->ActivityCount; j++) {
 			// We are not interested in completed or hidden activities
-			if(ActiveTasks[i].Activity[j].State != ActivityActive) continue;
+			if(ActiveQuests[i].Activity[j].State != ActivityActive) continue;
 			// We are only interested in the ActivityType we were called with
 			if(Task->Activity[j].Type != (int)Type) continue;
 			// Is there a zone restriction on the activity ?
 			if((Task->Activity[j].ZoneID >0) && (Task->Activity[j].ZoneID != (int)zone->GetZoneID())) {
 				Log(Logs::General, Logs::Tasks, "[UPDATE] Char: %s Activity type %i for Item %i failed zone check",
-							c->GetName(), Type, ItemID);
+					c->GetName(), Type, ItemID);
 				continue;
 			}
 			// Is the activity related to this item ?
@@ -1665,23 +1657,23 @@ void ClientTaskState::UpdateTasksOnExplore(Client *c, int ExploreID) {
 	Log(Logs::General, Logs::Tasks, "[UPDATE] ClientTaskState::UpdateTasksOnExplore(%i)", ExploreID);
 	if(ActiveTaskCount == 0) return;
 
-	for(int i=0; i<MAXACTIVETASKS; i++) {
-		if(ActiveTasks[i].TaskID == TASKSLOTEMPTY) continue;
+	for(int i=0; i<MAXACTIVEQUESTS; i++) {
+		if(ActiveQuests[i].TaskID == TASKSLOTEMPTY) continue;
 
 		// Check if there are any active explore activities for this task
 
-		TaskInformation* Task = taskmanager->Tasks[ActiveTasks[i].TaskID];
+		TaskInformation* Task = taskmanager->Tasks[ActiveQuests[i].TaskID];
 
 		if(Task == nullptr) return;
 
 		for(int j=0; j<Task->ActivityCount; j++) {
 			// We are not interested in completed or hidden activities
-			if(ActiveTasks[i].Activity[j].State != ActivityActive) continue;
+			if(ActiveQuests[i].Activity[j].State != ActivityActive) continue;
 			// We are only interested in explore activities
 			if(Task->Activity[j].Type != ActivityExplore) continue;
 			if((Task->Activity[j].ZoneID >0) && (Task->Activity[j].ZoneID != (int)zone->GetZoneID())) {
 				Log(Logs::General, Logs::Tasks, "[UPDATE] Char: %s Explore exploreid %i failed zone check",
-							c->GetName(), ExploreID);
+					c->GetName(), ExploreID);
 				continue;
 			}
 			// Is the activity to explore this area id ?
@@ -1693,7 +1685,7 @@ void ClientTaskState::UpdateTasksOnExplore(Client *c, int ExploreID) {
 
 				case METHODLIST:
 					if(!taskmanager->GoalListManager.IsInList(Task->Activity[j].GoalID,
-											ExploreID)) continue;
+															  ExploreID)) continue;
 					break;
 
 				default:
@@ -1704,7 +1696,7 @@ void ClientTaskState::UpdateTasksOnExplore(Client *c, int ExploreID) {
 			// (Only a goal count of 1 makes sense for explore activities?)
 			Log(Logs::General, Logs::Tasks, "[UPDATE] Increment on explore");
 			IncrementDoneCount(c, Task, i, j,
-						Task->Activity[j].GoalCount - ActiveTasks[i].Activity[j].DoneCount);
+							   Task->Activity[j].GoalCount - ActiveQuests[i].Activity[j].DoneCount);
 
 		}
 	}
@@ -1720,21 +1712,21 @@ bool ClientTaskState::UpdateTasksOnDeliver(Client *c, std::list<EQEmu::ItemInsta
 
 	if(ActiveTaskCount == 0) return false;
 
-	for(int i=0; i<MAXACTIVETASKS; i++) {
-		if(ActiveTasks[i].TaskID == TASKSLOTEMPTY) continue;
+	for(int i=0; i<MAXACTIVEQUESTS; i++) {
+		if(ActiveQuests[i].TaskID == TASKSLOTEMPTY) continue;
 
 		// Check if there are any active deliver activities for this task
 
-		TaskInformation* Task = taskmanager->Tasks[ActiveTasks[i].TaskID];
+		TaskInformation* Task = taskmanager->Tasks[ActiveQuests[i].TaskID];
 
 		if(Task == nullptr) return false;
 
 		for(int j=0; j<Task->ActivityCount; j++) {
 			// We are not interested in completed or hidden activities
-			if(ActiveTasks[i].Activity[j].State != ActivityActive) continue;
+			if(ActiveQuests[i].Activity[j].State != ActivityActive) continue;
 			// We are only interested in Deliver activities
 			if((Task->Activity[j].Type != ActivityDeliver) &&
-				(Task->Activity[j].Type != ActivityGiveCash)) continue;
+			   (Task->Activity[j].Type != ActivityGiveCash)) continue;
 			// Is there a zone restriction on the activity ?
 			if((Task->Activity[j].ZoneID >0) && (Task->Activity[j].ZoneID != (int)zone->GetZoneID())) {
 				Log(Logs::General, Logs::Tasks, "[UPDATE] Char: %s Deliver activity failed zone check (current zone %i, need zone %i",
@@ -1786,31 +1778,31 @@ void ClientTaskState::UpdateTasksOnTouch(Client *c, int ZoneID) {
 	Log(Logs::General, Logs::Tasks, "[UPDATE] ClientTaskState::UpdateTasksOnTouch(%i)", ZoneID);
 	if(ActiveTaskCount == 0) return;
 
-	for(int i=0; i<MAXACTIVETASKS; i++) {
-		if(ActiveTasks[i].TaskID == TASKSLOTEMPTY) continue;
+	for(int i=0; i<MAXACTIVEQUESTS; i++) {
+		if(ActiveQuests[i].TaskID == TASKSLOTEMPTY) continue;
 
 		// Check if there are any active explore activities for this task
 
-		TaskInformation* Task = taskmanager->Tasks[ActiveTasks[i].TaskID];
+		TaskInformation* Task = taskmanager->Tasks[ActiveQuests[i].TaskID];
 
 		if(Task == nullptr) return;
 
 		for(int j=0; j<Task->ActivityCount; j++) {
 			// We are not interested in completed or hidden activities
-			if(ActiveTasks[i].Activity[j].State != ActivityActive) continue;
+			if(ActiveQuests[i].Activity[j].State != ActivityActive) continue;
 			// We are only interested in touch activities
 			if(Task->Activity[j].Type != ActivityTouch) continue;
 			if(Task->Activity[j].GoalMethod != METHODSINGLEID) continue;
 			if(Task->Activity[j].ZoneID != ZoneID) {
 				Log(Logs::General, Logs::Tasks, "[UPDATE] Char: %s Touch activity failed zone check",
-							c->GetName());
+					c->GetName());
 				continue;
 			}
 			// We found an active task to zone into this zone, so set done count to goal count
 			// (Only a goal count of 1 makes sense for touch activities?)
 			Log(Logs::General, Logs::Tasks, "[UPDATE] Increment on Touch");
 			IncrementDoneCount(c, Task, i, j,
-						Task->Activity[j].GoalCount - ActiveTasks[i].Activity[j].DoneCount);
+							   Task->Activity[j].GoalCount - ActiveQuests[i].Activity[j].DoneCount);
 		}
 	}
 
@@ -1820,48 +1812,48 @@ void ClientTaskState::IncrementDoneCount(Client *c, TaskInformation* Task, int T
 
 	Log(Logs::General, Logs::Tasks, "[UPDATE] IncrementDoneCount");
 
-	ActiveTasks[TaskIndex].Activity[ActivityID].DoneCount += Count;
+	ActiveQuests[TaskIndex].Activity[ActivityID].DoneCount += Count;
 
-	if(ActiveTasks[TaskIndex].Activity[ActivityID].DoneCount > Task->Activity[ActivityID].GoalCount)
-		ActiveTasks[TaskIndex].Activity[ActivityID].DoneCount = Task->Activity[ActivityID].GoalCount;
+	if(ActiveQuests[TaskIndex].Activity[ActivityID].DoneCount > Task->Activity[ActivityID].GoalCount)
+		ActiveQuests[TaskIndex].Activity[ActivityID].DoneCount = Task->Activity[ActivityID].GoalCount;
 
 	if (!ignore_quest_update){
 		char buf[24];
-		snprintf(buf, 23, "%d %d %d", ActiveTasks[TaskIndex].Activity[ActivityID].DoneCount, ActiveTasks[TaskIndex].Activity[ActivityID].ActivityID, ActiveTasks[TaskIndex].TaskID);
+		snprintf(buf, 23, "%d %d %d", ActiveQuests[TaskIndex].Activity[ActivityID].DoneCount, ActiveQuests[TaskIndex].Activity[ActivityID].ActivityID, ActiveQuests[TaskIndex].TaskID);
 		buf[23] = '\0';
 		parse->EventPlayer(EVENT_TASK_UPDATE, c, buf, 0);
 	}
 
-	ActiveTasks[TaskIndex].Activity[ActivityID].Updated=true;
+	ActiveQuests[TaskIndex].Activity[ActivityID].Updated=true;
 	// Have we reached the goal count for this activity ?
-	if(ActiveTasks[TaskIndex].Activity[ActivityID].DoneCount >= Task->Activity[ActivityID].GoalCount) {
+	if(ActiveQuests[TaskIndex].Activity[ActivityID].DoneCount >= Task->Activity[ActivityID].GoalCount) {
 		Log(Logs::General, Logs::Tasks, "[UPDATE] Done (%i) = Goal (%i) for Activity %i",
-				ActiveTasks[TaskIndex].Activity[ActivityID].DoneCount,
-				Task->Activity[ActivityID].GoalCount,
-				ActivityID);
+			ActiveQuests[TaskIndex].Activity[ActivityID].DoneCount,
+			Task->Activity[ActivityID].GoalCount,
+			ActivityID);
 
 		// Flag the activity as complete
-		ActiveTasks[TaskIndex].Activity[ActivityID].State = ActivityCompleted;
+		ActiveQuests[TaskIndex].Activity[ActivityID].State = ActivityCompleted;
 		// Unlock subsequent activities for this task
 		bool TaskComplete = UnlockActivities(c->CharacterID(), TaskIndex);
 		Log(Logs::General, Logs::Tasks, "[UPDATE] TaskCompleted is %i", TaskComplete);
 		// and by the 'Task Stage Completed' message
-		c->SendTaskActivityComplete(ActiveTasks[TaskIndex].TaskID, ActivityID, TaskIndex);
+		c->SendTaskActivityComplete(ActiveQuests[TaskIndex].TaskID, ActivityID, TaskIndex);
 		// Send the updated task/activity list to the client
 		taskmanager->SendSingleActiveTaskToClient(c, TaskIndex, TaskComplete, false);
 		// Inform the client the task has been updated, both by a chat message
-		c->Message(0, "Your task '%s' has been updated.", Task->Title);
+		c->Message(0, "Your task '%s' has been updated.", Task->Title.c_str());
 
 		if(Task->Activity[ActivityID].GoalMethod != METHODQUEST) {
 			if (!ignore_quest_update){
 				char buf[24];
-				snprintf(buf, 23, "%d %d", ActiveTasks[TaskIndex].TaskID, ActiveTasks[TaskIndex].Activity[ActivityID].ActivityID);
+				snprintf(buf, 23, "%d %d", ActiveQuests[TaskIndex].TaskID, ActiveQuests[TaskIndex].Activity[ActivityID].ActivityID);
 				buf[23] = '\0';
 				parse->EventPlayer(EVENT_TASK_STAGE_COMPLETE, c, buf, 0);
 			}
 			/* QS: PlayerLogTaskUpdates :: Update */
 			if (RuleB(QueryServ, PlayerLogTaskUpdates)){
-				std::string event_desc = StringFormat("Task Stage Complete :: taskid:%i activityid:%i donecount:%i in zoneid:%i instid:%i", ActiveTasks[TaskIndex].TaskID, ActiveTasks[TaskIndex].Activity[ActivityID].ActivityID, ActiveTasks[TaskIndex].Activity[ActivityID].DoneCount, c->GetZoneID(), c->GetInstanceID());
+				std::string event_desc = StringFormat("Task Stage Complete :: taskid:%i activityid:%i donecount:%i in zoneid:%i instid:%i", ActiveQuests[TaskIndex].TaskID, ActiveQuests[TaskIndex].Activity[ActivityID].ActivityID, ActiveQuests[TaskIndex].Activity[ActivityID].DoneCount, c->GetZoneID(), c->GetInstanceID());
 				QServ->PlayerLogEvent(Player_Log_Task_Updates, c->CharacterID(), event_desc);
 			}
 		}
@@ -1871,18 +1863,18 @@ void ClientTaskState::IncrementDoneCount(Client *c, TaskInformation* Task, int T
 		// client. This is the same sequence the packets are sent on live.
 		if(TaskComplete) {
 			char buf[24];
-			snprintf(buf, 23, "%d %d %d", ActiveTasks[TaskIndex].Activity[ActivityID].DoneCount, ActiveTasks[TaskIndex].Activity[ActivityID].ActivityID, ActiveTasks[TaskIndex].TaskID);
+			snprintf(buf, 23, "%d %d %d", ActiveQuests[TaskIndex].Activity[ActivityID].DoneCount, ActiveQuests[TaskIndex].Activity[ActivityID].ActivityID, ActiveQuests[TaskIndex].TaskID);
 			buf[23] = '\0';
 			parse->EventPlayer(EVENT_TASK_COMPLETE, c, buf, 0);
 
 			/* QS: PlayerLogTaskUpdates :: Complete */
 			if (RuleB(QueryServ, PlayerLogTaskUpdates)){
-				std::string event_desc = StringFormat("Task Complete :: taskid:%i activityid:%i donecount:%i in zoneid:%i instid:%i", ActiveTasks[TaskIndex].TaskID, ActiveTasks[TaskIndex].Activity[ActivityID].ActivityID, ActiveTasks[TaskIndex].Activity[ActivityID].DoneCount, c->GetZoneID(), c->GetInstanceID());
+				std::string event_desc = StringFormat("Task Complete :: taskid:%i activityid:%i donecount:%i in zoneid:%i instid:%i", ActiveQuests[TaskIndex].TaskID, ActiveQuests[TaskIndex].Activity[ActivityID].ActivityID, ActiveQuests[TaskIndex].Activity[ActivityID].DoneCount, c->GetZoneID(), c->GetInstanceID());
 				QServ->PlayerLogEvent(Player_Log_Task_Updates, c->CharacterID(), event_desc);
 			}
 
 			taskmanager->SendCompletedTasksToClient(c, this);
-			c->SendTaskActivityComplete(ActiveTasks[TaskIndex].TaskID, 0, TaskIndex, false);
+			c->SendTaskActivityComplete(ActiveQuests[TaskIndex].TaskID, 0, TaskIndex, false);
 			taskmanager->SaveClientState(c, this);
 			//c->SendTaskComplete(TaskIndex);
 			c->CancelTask(TaskIndex);
@@ -1896,8 +1888,8 @@ void ClientTaskState::IncrementDoneCount(Client *c, TaskInformation* Task, int T
 	}
 	else
 		// Send an update packet for this single activity
-		taskmanager->SendTaskActivityLong(c, ActiveTasks[TaskIndex].TaskID, ActivityID,
-							TaskIndex, Task->Activity[ActivityID].Optional);
+		taskmanager->SendTaskActivityLong(c, ActiveQuests[TaskIndex].TaskID, ActivityID,
+										  TaskIndex, Task->Activity[ActivityID].Optional);
 }
 
 void ClientTaskState::RewardTask(Client *c, TaskInformation *Task) {
@@ -2010,9 +2002,9 @@ bool ClientTaskState::IsTaskActive(int TaskID) {
 
 	if((ActiveTaskCount == 0) || (TaskID == 0)) return false;
 
-	for(int i=0; i<MAXACTIVETASKS; i++) {
+	for(int i=0; i<MAXACTIVEQUESTS; i++) {
 
-		if(ActiveTasks[i].TaskID==TaskID) return true;
+		if(ActiveQuests[i].TaskID==TaskID) return true;
 
 	}
 
@@ -2024,10 +2016,10 @@ void ClientTaskState::FailTask(Client *c, int TaskID) {
 	Log(Logs::General, Logs::Tasks, "[UPDATE] FailTask %i, ActiveTaskCount is %i", TaskID, ActiveTaskCount);
 	if(ActiveTaskCount == 0) return;
 
-	for(int i=0; i<MAXACTIVETASKS; i++) {
+	for(int i=0; i<MAXACTIVEQUESTS; i++) {
 
-		if(ActiveTasks[i].TaskID==TaskID) {
-			c->SendTaskFailed(ActiveTasks[i].TaskID, i);
+		if(ActiveQuests[i].TaskID==TaskID) {
+			c->SendTaskFailed(ActiveQuests[i].TaskID, i);
 			// Remove the task from the client
 			c->CancelTask(i);
 			return;
@@ -2046,8 +2038,8 @@ bool ClientTaskState::IsTaskActivityActive(int TaskID, int ActivityID) {
 
 	int ActiveTaskIndex = -1;
 
-	for(int i=0; i<MAXACTIVETASKS; i++) {
-		if(ActiveTasks[i].TaskID==TaskID) {
+	for(int i=0; i<MAXACTIVEQUESTS; i++) {
+		if(ActiveQuests[i].TaskID==TaskID) {
 			ActiveTaskIndex = i;
 			break;
 		}
@@ -2056,7 +2048,7 @@ bool ClientTaskState::IsTaskActivityActive(int TaskID, int ActivityID) {
 	// The client does not have this task
 	if(ActiveTaskIndex == -1) return false;
 
-	TaskInformation* Task = taskmanager->Tasks[ActiveTasks[ActiveTaskIndex].TaskID];
+	TaskInformation* Task = taskmanager->Tasks[ActiveQuests[ActiveTaskIndex].TaskID];
 
 	// The task is invalid
 	if(Task==nullptr) return false;
@@ -2065,10 +2057,10 @@ bool ClientTaskState::IsTaskActivityActive(int TaskID, int ActivityID) {
 	if(ActivityID >= Task->ActivityCount) return false;
 
 	Log(Logs::General, Logs::Tasks, "[UPDATE] ClientTaskState IsTaskActivityActive(%i, %i). State is %i ", TaskID, ActivityID,
-			ActiveTasks[ActiveTaskIndex].Activity[ActivityID].State);
+		ActiveQuests[ActiveTaskIndex].Activity[ActivityID].State);
 
 
-	return (ActiveTasks[ActiveTaskIndex].Activity[ActivityID].State == ActivityActive);
+	return (ActiveQuests[ActiveTaskIndex].Activity[ActivityID].State == ActivityActive);
 
 }
 
@@ -2082,8 +2074,8 @@ void ClientTaskState::UpdateTaskActivity(Client *c, int TaskID, int ActivityID, 
 
 	int ActiveTaskIndex = -1;
 
-	for (int i = 0; i < MAXACTIVETASKS; i++) {
-		if (ActiveTasks[i].TaskID == TaskID) {
+	for (int i = 0; i < MAXACTIVEQUESTS; i++) {
+		if (ActiveQuests[i].TaskID == TaskID) {
 			ActiveTaskIndex = i;
 			break;
 		}
@@ -2092,7 +2084,7 @@ void ClientTaskState::UpdateTaskActivity(Client *c, int TaskID, int ActivityID, 
 	// The client does not have this task
 	if(ActiveTaskIndex == -1) return;
 
-	TaskInformation* Task = taskmanager->Tasks[ActiveTasks[ActiveTaskIndex].TaskID];
+	TaskInformation* Task = taskmanager->Tasks[ActiveQuests[ActiveTaskIndex].TaskID];
 
 	// The task is invalid
 	if(Task==nullptr) return;
@@ -2101,7 +2093,7 @@ void ClientTaskState::UpdateTaskActivity(Client *c, int TaskID, int ActivityID, 
 	if(ActivityID >= Task->ActivityCount) return;
 
 	// The Activity is not currently active
-	if(ActiveTasks[ActiveTaskIndex].Activity[ActivityID].State != ActivityActive) return;
+	if(ActiveQuests[ActiveTaskIndex].Activity[ActivityID].State != ActivityActive) return;
 	Log(Logs::General, Logs::Tasks, "[UPDATE] Increment done count on UpdateTaskActivity");
 	IncrementDoneCount(c, Task, ActiveTaskIndex, ActivityID, Count, ignore_quest_update);
 
@@ -2116,8 +2108,8 @@ void ClientTaskState::ResetTaskActivity(Client *c, int TaskID, int ActivityID) {
 
 	int ActiveTaskIndex = -1;
 
-	for(int i=0; i<MAXACTIVETASKS; i++) {
-		if(ActiveTasks[i].TaskID==TaskID) {
+	for(int i=0; i<MAXACTIVEQUESTS; i++) {
+		if(ActiveQuests[i].TaskID==TaskID) {
 			ActiveTaskIndex = i;
 			break;
 		}
@@ -2126,7 +2118,7 @@ void ClientTaskState::ResetTaskActivity(Client *c, int TaskID, int ActivityID) {
 	// The client does not have this task
 	if(ActiveTaskIndex == -1) return;
 
-	TaskInformation* Task = taskmanager->Tasks[ActiveTasks[ActiveTaskIndex].TaskID];
+	TaskInformation* Task = taskmanager->Tasks[ActiveQuests[ActiveTaskIndex].TaskID];
 
 	// The task is invalid
 	if(Task==nullptr) return;
@@ -2135,34 +2127,34 @@ void ClientTaskState::ResetTaskActivity(Client *c, int TaskID, int ActivityID) {
 	if(ActivityID >= Task->ActivityCount) return;
 
 	// The Activity is not currently active
-	if(ActiveTasks[ActiveTaskIndex].Activity[ActivityID].State != ActivityActive) return;
+	if(ActiveQuests[ActiveTaskIndex].Activity[ActivityID].State != ActivityActive) return;
 
 	Log(Logs::General, Logs::Tasks, "[UPDATE] ResetTaskActivityCount");
 
-	ActiveTasks[ActiveTaskIndex].Activity[ActivityID].DoneCount = 0;
+	ActiveQuests[ActiveTaskIndex].Activity[ActivityID].DoneCount = 0;
 
-	ActiveTasks[ActiveTaskIndex].Activity[ActivityID].Updated=true;
+	ActiveQuests[ActiveTaskIndex].Activity[ActivityID].Updated=true;
 
 	// Send an update packet for this single activity
-	taskmanager->SendTaskActivityLong(c, ActiveTasks[ActiveTaskIndex].TaskID, ActivityID,
-						ActiveTaskIndex, Task->Activity[ActivityID].Optional);
+	taskmanager->SendTaskActivityLong(c, ActiveQuests[ActiveTaskIndex].TaskID, ActivityID,
+									  ActiveTaskIndex, Task->Activity[ActivityID].Optional);
 }
 
 void ClientTaskState::ShowClientTasks(Client *c) {
 
 	c->Message(0, "Task Information:");
 	//for(int i=0; i<ActiveTaskCount; i++) {
-	for(int i=0; i<MAXACTIVETASKS; i++) {
-		if(ActiveTasks[i].TaskID==TASKSLOTEMPTY)
+	for(int i=0; i<MAXACTIVEQUESTS; i++) {
+		if(ActiveQuests[i].TaskID==TASKSLOTEMPTY)
 			continue;
 
-		c->Message(0, "Task: %i %s", ActiveTasks[i].TaskID, taskmanager->Tasks[ActiveTasks[i].TaskID]->Title);
-		c->Message(0, "  Description: [%s]\n", taskmanager->Tasks[ActiveTasks[i].TaskID]->Description);
-		for(int j=0; j<taskmanager->GetActivityCount(ActiveTasks[i].TaskID); j++) {
+		c->Message(0, "Task: %i %s", ActiveQuests[i].TaskID, taskmanager->Tasks[ActiveQuests[i].TaskID]->Title.c_str());
+		c->Message(0, "  Description: [%s]\n", taskmanager->Tasks[ActiveQuests[i].TaskID]->Description.c_str());
+		for(int j=0; j<taskmanager->GetActivityCount(ActiveQuests[i].TaskID); j++) {
 			c->Message(0, "  Activity: %2d, DoneCount: %2d, Status: %d (0=Hidden, 1=Active, 2=Complete)",
-					ActiveTasks[i].Activity[j].ActivityID,
-					ActiveTasks[i].Activity[j].DoneCount,
-					ActiveTasks[i].Activity[j].State);
+					   ActiveQuests[i].Activity[j].ActivityID,
+					   ActiveQuests[i].Activity[j].DoneCount,
+					   ActiveQuests[i].Activity[j].State);
 		}
 	}
 
@@ -2172,19 +2164,19 @@ int ClientTaskState::TaskTimeLeft(int TaskID) {
 
 	if(ActiveTaskCount == 0) return -1;
 
-	for(int i=0; i<MAXACTIVETASKS; i++) {
+	for(int i=0; i<MAXACTIVEQUESTS; i++) {
 
-		if(ActiveTasks[i].TaskID != TaskID) continue;
+		if(ActiveQuests[i].TaskID != TaskID) continue;
 
 		int Now = time(nullptr);
 
-		TaskInformation* Task = taskmanager->Tasks[ActiveTasks[i].TaskID];
+		TaskInformation* Task = taskmanager->Tasks[ActiveQuests[i].TaskID];
 
 		if(Task == nullptr) return -1;
 
 		if(!Task->Duration) return -1;
 
-		int TimeLeft = (ActiveTasks[i].AcceptedTime + Task->Duration - Now);
+		int TimeLeft = (ActiveQuests[i].AcceptedTime + Task->Duration - Now);
 
 		// If Timeleft is negative, return 0, else return the number of seconds left
 
@@ -2225,17 +2217,17 @@ bool ClientTaskState::TaskOutOfTime(int Index) {
 
 	// Returns true if the Task in the specified slot has a time limit that has been exceeded.
 
-	if((Index < 0) || (Index>=MAXACTIVETASKS)) return false;
+	if((Index < 0) || (Index>=MAXACTIVEQUESTS)) return false;
 
-	if((ActiveTasks[Index].TaskID <= 0) || (ActiveTasks[Index].TaskID >= MAXTASKS)) return false;
+	if((ActiveQuests[Index].TaskID <= 0) || (ActiveQuests[Index].TaskID >= MAXTASKS)) return false;
 
 	int Now = time(nullptr);
 
-	TaskInformation* Task = taskmanager->Tasks[ActiveTasks[Index].TaskID];
+	TaskInformation* Task = taskmanager->Tasks[ActiveQuests[Index].TaskID];
 
 	if(Task == nullptr) return false;
 
-	return (Task->Duration && (ActiveTasks[Index].AcceptedTime + Task->Duration <= Now));
+	return (Task->Duration && (ActiveQuests[Index].AcceptedTime + Task->Duration <= Now));
 
 }
 
@@ -2245,13 +2237,13 @@ void ClientTaskState::TaskPeriodicChecks(Client *c) {
 
 	// Check for tasks that have failed because they have not been completed in the specified time
 	//
-	for(int i=0; i<MAXACTIVETASKS; i++) {
+	for(int i=0; i<MAXACTIVEQUESTS; i++) {
 
-		if(ActiveTasks[i].TaskID==TASKSLOTEMPTY) continue;
+		if(ActiveQuests[i].TaskID==TASKSLOTEMPTY) continue;
 
 		if(TaskOutOfTime(i)) {
 			// Send Red Task Failed Message
-			c->SendTaskFailed(ActiveTasks[i].TaskID, i);
+			c->SendTaskFailed(ActiveQuests[i].TaskID, i);
 			// Remove the task from the client
 			c->CancelTask(i);
 			// It is a conscious decision to only fail one task per call to this method,
@@ -2338,10 +2330,10 @@ void ClientTaskState::SendTaskHistory(Client *c, int TaskIndex) {
 		if(CompletedTasks[AdjustedTaskIndex].ActivityDone[i]) {
 			CompletedActivityCount++;
 			PacketLength = PacketLength + sizeof(TaskHistoryReplyData1_Struct) +
-								strlen(Task->Activity[i].Text1) + 1 +
-								strlen(Task->Activity[i].Text2) + 1 +
-								sizeof(TaskHistoryReplyData2_Struct) +
-								strlen(Task->Activity[i].Text3) + 1;
+						   Task->Activity[i].Text1.size() + 1 +
+						   Task->Activity[i].Text2.size() + 1 +
+						   sizeof(TaskHistoryReplyData2_Struct) +
+						   Task->Activity[i].Text3.size() + 1;
 		}
 	}
 
@@ -2361,8 +2353,8 @@ void ClientTaskState::SendTaskHistory(Client *c, int TaskIndex) {
 			thd1 = (TaskHistoryReplyData1_Struct*)Ptr;
 			thd1->ActivityType = Task->Activity[i].Type;
 			Ptr = (char *)thd1 + sizeof(TaskHistoryReplyData1_Struct);
-			VARSTRUCT_ENCODE_STRING(Ptr, Task->Activity[i].Text1);
-			VARSTRUCT_ENCODE_STRING(Ptr, Task->Activity[i].Text2);
+			VARSTRUCT_ENCODE_STRING(Ptr, Task->Activity[i].Text1.c_str());
+			VARSTRUCT_ENCODE_STRING(Ptr, Task->Activity[i].Text2.c_str());
 			thd2 = (TaskHistoryReplyData2_Struct*)Ptr;
 			thd2->GoalCount = Task->Activity[i].GoalCount;
 			thd2->unknown04 = 0xffffffff;
@@ -2370,7 +2362,7 @@ void ClientTaskState::SendTaskHistory(Client *c, int TaskIndex) {
 			thd2->ZoneID = Task->Activity[i].ZoneID;
 			thd2->unknown16 = 0x00000000;
 			Ptr = (char *)thd2 + sizeof(TaskHistoryReplyData2_Struct);
-			VARSTRUCT_ENCODE_STRING(Ptr, Task->Activity[i].Text3);
+			VARSTRUCT_ENCODE_STRING(Ptr, Task->Activity[i].Text3.c_str());
 		}
 	}
 
@@ -2454,7 +2446,7 @@ void TaskManager::SendCompletedTasksToClient(Client *c, ClientTaskState *State) 
 		FirstTaskToSend = State->CompletedTasks.size() - 50;
 
 	Log(Logs::General, Logs::Tasks, "[UPDATE] Completed Task Count: %i, First Task to send is %i, Last is %i",
-				State->CompletedTasks.size(), FirstTaskToSend, LastTaskToSend);
+		State->CompletedTasks.size(), FirstTaskToSend, LastTaskToSend);
 	/*
 	for(iterator=State->CompletedTasks.begin(); iterator!=State->CompletedTasks.end(); iterator++) {
 		int TaskID = (*iterator).TaskID;
@@ -2465,7 +2457,7 @@ void TaskManager::SendCompletedTasksToClient(Client *c, ClientTaskState *State) 
 	for(int i = FirstTaskToSend; i<LastTaskToSend; i++) {
 		int TaskID = State->CompletedTasks[i].TaskID;
 		if(Tasks[TaskID] == nullptr) continue;
-		PacketLength = PacketLength + 8 + strlen(Tasks[TaskID]->Title) + 1;
+		PacketLength = PacketLength + 8 + Tasks[TaskID]->Title.size() + 1;
 	}
 
 	auto outapp = new EQApplicationPacket(OP_CompletedTasks, PacketLength);
@@ -2482,7 +2474,7 @@ void TaskManager::SendCompletedTasksToClient(Client *c, ClientTaskState *State) 
 		*(uint32 *)buf = TaskID;
 		buf = buf + 4;
 
-		sprintf(buf, "%s", Tasks[TaskID]->Title);
+		sprintf(buf, "%s", Tasks[TaskID]->Title.c_str());
 		buf = buf + strlen(buf) + 1;
 		//*(uint32 *)buf = (*iterator).CompletedTime;
 		*(uint32 *)buf = State->CompletedTasks[i].CompletedTime;
@@ -2552,9 +2544,9 @@ void TaskManager::SendTaskActivityLong(Client *c, int TaskID, int ActivityID, in
 	TaskActivityTrailer_Struct* tat;
 
 	long PacketLength = sizeof(TaskActivityHeader_Struct) + +sizeof(TaskActivityData1_Struct) + sizeof(TaskActivityTrailer_Struct);
-	PacketLength = PacketLength + strlen(Tasks[TaskID]->Activity[ActivityID].Text1) + 1 +
-				strlen(Tasks[TaskID]->Activity[ActivityID].Text2) + 1 +
-				strlen(Tasks[TaskID]->Activity[ActivityID].Text3) + 1;
+	PacketLength = PacketLength + Tasks[TaskID]->Activity[ActivityID].Text1.size() + 1 +
+				   Tasks[TaskID]->Activity[ActivityID].Text2.size() + 1 +
+				   Tasks[TaskID]->Activity[ActivityID].Text3.size() + 1;
 
 	auto outapp = new EQApplicationPacket(OP_TaskActivity, PacketLength);
 
@@ -2577,10 +2569,10 @@ void TaskManager::SendTaskActivityLong(Client *c, int TaskID, int ActivityID, in
 	tah->unknown5 = 0x00000000;
 	// One of these unknown fields maybe related to the 'Use On' activity types
 	Ptr = (char *) tah + sizeof(TaskActivityHeader_Struct);
-	sprintf(Ptr, "%s", Tasks[TaskID]->Activity[ActivityID].Text1);
+	sprintf(Ptr, "%s", Tasks[TaskID]->Activity[ActivityID].Text1.c_str());
 	Ptr = Ptr + strlen(Ptr) + 1;
 
-	sprintf(Ptr, "%s", Tasks[TaskID]->Activity[ActivityID].Text2);
+	sprintf(Ptr, "%s", Tasks[TaskID]->Activity[ActivityID].Text2.c_str());
 	Ptr = Ptr + strlen(Ptr) + 1;
 
 	tad1 = (TaskActivityData1_Struct*)Ptr;
@@ -2604,7 +2596,7 @@ void TaskManager::SendTaskActivityLong(Client *c, int TaskID, int ActivityID, in
 	tad1->unknown3 = 0x00000000;
 
 	Ptr = (char *) tad1 + sizeof(TaskActivityData1_Struct);
-	sprintf(Ptr, "%s", Tasks[TaskID]->Activity[ActivityID].Text3);
+	sprintf(Ptr, "%s", Tasks[TaskID]->Activity[ActivityID].Text3.c_str());
 	Ptr = Ptr + strlen(Ptr) + 1;
 
 	tat = (TaskActivityTrailer_Struct*)Ptr;
@@ -2631,11 +2623,11 @@ void TaskManager::SendTaskActivityNew(Client *c, int TaskID, int ActivityID, int
 		String2Len = 4;
 
 	long PacketLength = 29 + 4 + 8 + 4 + 4 + 5;
-	PacketLength = PacketLength + strlen(Tasks[TaskID]->Activity[ActivityID].Text1) + 1 +
-				strlen(Tasks[TaskID]->Activity[ActivityID].Text2) + 1 +
-				strlen(Tasks[TaskID]->Activity[ActivityID].Text3) + 1 +
-				((strlen(itoa(Tasks[TaskID]->Activity[ActivityID].ZoneID)) + 1) * 2) +
-				3 + String2Len;
+	PacketLength = PacketLength + Tasks[TaskID]->Activity[ActivityID].Text1.size() + 1 +
+				   Tasks[TaskID]->Activity[ActivityID].Text2.size() + 1 +
+				   Tasks[TaskID]->Activity[ActivityID].Text3.size() + 1 +
+				   ((strlen(itoa(Tasks[TaskID]->Activity[ActivityID].ZoneID)) + 1) * 2) +
+				   3 + String2Len;
 
 	auto outapp = new EQApplicationPacket(OP_TaskActivity, PacketLength);
 
@@ -2656,10 +2648,10 @@ void TaskManager::SendTaskActivityNew(Client *c, int TaskID, int ActivityID, int
 	outapp->WriteUInt8(0);		// unknown5
 
 	// One of these unknown fields maybe related to the 'Use On' activity types
-	outapp->WriteString(Tasks[TaskID]->Activity[ActivityID].Text1);
+	outapp->WriteString(Tasks[TaskID]->Activity[ActivityID].Text1.c_str());
 
-	outapp->WriteUInt32((strlen(Tasks[TaskID]->Activity[ActivityID].Text2) + 1));	// String Length - Add in null terminator
-	outapp->WriteString(Tasks[TaskID]->Activity[ActivityID].Text2);
+	outapp->WriteUInt32(Tasks[TaskID]->Activity[ActivityID].Text2.size() + 1);	// String Length - Add in null terminator
+	outapp->WriteString(Tasks[TaskID]->Activity[ActivityID].Text2.c_str());
 
 	// Goal Count
 	if(Tasks[TaskID]->Activity[ActivityID].Type != ActivityGiveCash)
@@ -2683,7 +2675,7 @@ void TaskManager::SendTaskActivityNew(Client *c, int TaskID, int ActivityID, int
 	outapp->WriteString(itoa(Tasks[TaskID]->Activity[ActivityID].ZoneID));
 	outapp->WriteUInt32(0);		// unknown7
 
-	outapp->WriteString(Tasks[TaskID]->Activity[ActivityID].Text3);
+	outapp->WriteString(Tasks[TaskID]->Activity[ActivityID].Text3.c_str());
 
 	if(Tasks[TaskID]->Activity[ActivityID].Type != ActivityGiveCash)
 		outapp->WriteUInt32(c->GetTaskActivityDoneCount(ClientTaskIndex, ActivityID));	// DoneCount
@@ -2704,7 +2696,7 @@ void TaskManager::SendTaskActivityNew(Client *c, int TaskID, int ActivityID, int
 void TaskManager::SendActiveTasksToClient(Client *c, bool TaskComplete) {
 
 	//for(int TaskIndex=0; TaskIndex<c->GetActiveTaskCount(); TaskIndex++) {
-	for(int TaskIndex=0; TaskIndex<MAXACTIVETASKS; TaskIndex++) {
+	for(int TaskIndex=0; TaskIndex<MAXACTIVEQUESTS; TaskIndex++) {
 		int TaskID = c->GetActiveTaskID(TaskIndex);
 		if((TaskID==0) || (Tasks[TaskID] ==0)) continue;
 		int StartTime = c->GetTaskStartTime(TaskIndex);
@@ -2718,11 +2710,11 @@ void TaskManager::SendActiveTasksToClient(Client *c, bool TaskComplete) {
 				Log(Logs::General, Logs::Tasks, "[UPDATE]   Long: %i, %i, %i Complete=%i", TaskID, Activity, TaskIndex, TaskComplete);
 				if(Activity==GetActivityCount(TaskID)-1)
 					SendTaskActivityLong(c, TaskID, Activity, TaskIndex,
-								Tasks[TaskID]->Activity[Activity].Optional,
-								TaskComplete);
+										 Tasks[TaskID]->Activity[Activity].Optional,
+										 TaskComplete);
 				else
 					SendTaskActivityLong(c, TaskID, Activity, TaskIndex,
-								Tasks[TaskID]->Activity[Activity].Optional, 0);
+										 Tasks[TaskID]->Activity[Activity].Optional, 0);
 			}
 			else {
 				Log(Logs::General, Logs::Tasks, "[UPDATE]   Short: %i, %i, %i", TaskID, Activity, TaskIndex);
@@ -2738,7 +2730,7 @@ void TaskManager::SendActiveTasksToClient(Client *c, bool TaskComplete) {
 
 void TaskManager::SendSingleActiveTaskToClient(Client *c, int TaskIndex, bool TaskComplete, bool BringUpTaskJournal) {
 
-	if((TaskIndex < 0) || (TaskIndex >= MAXACTIVETASKS)) return;
+	if((TaskIndex < 0) || (TaskIndex >= MAXACTIVEQUESTS)) return;
 
 	int TaskID = c->GetActiveTaskID(TaskIndex);
 
@@ -2755,10 +2747,10 @@ void TaskManager::SendSingleActiveTaskToClient(Client *c, int TaskIndex, bool Ta
 			Log(Logs::General, Logs::Tasks, "[UPDATE]   Long: %i, %i, %i Complete=%i", TaskID, Activity, TaskIndex, TaskComplete);
 			if(Activity==GetActivityCount(TaskID)-1)
 				SendTaskActivityLong(c, TaskID, Activity, TaskIndex,
-							Tasks[TaskID]->Activity[Activity].Optional, TaskComplete);
+									 Tasks[TaskID]->Activity[Activity].Optional, TaskComplete);
 			else
 				SendTaskActivityLong(c, TaskID, Activity, TaskIndex,
-							Tasks[TaskID]->Activity[Activity].Optional, 0);
+									 Tasks[TaskID]->Activity[Activity].Optional, 0);
 		}
 		else {
 			Log(Logs::General, Logs::Tasks, "[UPDATE]   Short: %i, %i, %i", TaskID, Activity, TaskIndex);
@@ -2773,9 +2765,9 @@ void TaskManager::SendActiveTaskDescription(Client *c, int TaskID, int SequenceN
 	if ((TaskID < 1) || (TaskID >= MAXTASKS) || !Tasks[TaskID])
 		return;
 
-	int PacketLength = sizeof(TaskDescriptionHeader_Struct) + strlen(Tasks[TaskID]->Title) + 1
-				+ sizeof(TaskDescriptionData1_Struct) + strlen(Tasks[TaskID]->Description) + 1
-				+ sizeof(TaskDescriptionData2_Struct) + 1 + sizeof(TaskDescriptionTrailer_Struct);
+	int PacketLength = sizeof(TaskDescriptionHeader_Struct) + Tasks[TaskID]->Title.size() + 1
+					   + sizeof(TaskDescriptionData1_Struct) + Tasks[TaskID]->Description.size() + 1
+					   + sizeof(TaskDescriptionData2_Struct) + 1 + sizeof(TaskDescriptionTrailer_Struct);
 
 	std::string reward_text;
 	int ItemID = 0;
@@ -2801,8 +2793,8 @@ void TaskManager::SendActiveTaskDescription(Client *c, int TaskID, int SequenceN
 			linker.SetLinkType(EQEmu::saylink::SayLinkItemData);
 			linker.SetItemData(reward_item);
 			linker.SetTaskUse();
-			if (strlen(Tasks[TaskID]->Reward) != 0)
-				linker.SetProxyText(Tasks[TaskID]->Reward);
+			if (!Tasks[TaskID]->Reward.empty())
+				linker.SetProxyText(Tasks[TaskID]->Reward.c_str());
 
 			auto reward_link = linker.GenerateLink();
 			reward_text.append(reward_link);
@@ -2834,14 +2826,14 @@ void TaskManager::SendActiveTaskDescription(Client *c, int TaskID, int SequenceN
 		tdh->unknown2 = 0x00000201;
 	else
 		tdh->unknown2 = 0x00000200;
-		//tdh->unknown2 = 0x00000100; // This makes the Task Description have an S instead of Q, but the description doesn't show
+	//tdh->unknown2 = 0x00000100; // This makes the Task Description have an S instead of Q, but the description doesn't show
 
 	tdh->unknown3 = 0x00000000;
 	tdh->unknown4 = 0x00;
 
 	Ptr = (char *) tdh + sizeof(TaskDescriptionHeader_Struct);
 
-	sprintf(Ptr, "%s", Tasks[TaskID]->Title);
+	sprintf(Ptr, "%s", Tasks[TaskID]->Title.c_str());
 	Ptr = Ptr + strlen(Ptr) + 1;
 
 	tdd1 = (TaskDescriptionData1_Struct*)Ptr;
@@ -2853,7 +2845,7 @@ void TaskManager::SendActiveTaskDescription(Client *c, int TaskID, int SequenceN
 
 	Ptr = (char *) tdd1 + sizeof(TaskDescriptionData1_Struct);
 
-	sprintf(Ptr, "%s", Tasks[TaskID]->Description);
+	sprintf(Ptr, "%s", Tasks[TaskID]->Description.c_str());
 	Ptr = Ptr + strlen(Ptr) + 1;
 
 	tdd2 = (TaskDescriptionData2_Struct*)Ptr;
@@ -2885,25 +2877,25 @@ void TaskManager::SendActiveTaskDescription(Client *c, int TaskID, int SequenceN
 
 bool ClientTaskState::IsTaskActivityCompleted(int index, int ActivityID) {
 
-	return (ActiveTasks[index].Activity[ActivityID].State == ActivityCompleted);
+	return (ActiveQuests[index].Activity[ActivityID].State == ActivityCompleted);
 }
 
 ActivityState ClientTaskState::GetTaskActivityState(int index, int ActivityID) {
 
 
-	return ActiveTasks[index].Activity[ActivityID].State;
+	return ActiveQuests[index].Activity[ActivityID].State;
 }
 
 int ClientTaskState::GetTaskActivityDoneCount(int index, int ActivityID) {
 
-	return ActiveTasks[index].Activity[ActivityID].DoneCount;
+	return ActiveQuests[index].Activity[ActivityID].DoneCount;
 
 }
 
 int ClientTaskState::GetTaskActivityDoneCountFromTaskID(int TaskID, int ActivityID){
 	int ActiveTaskIndex = -1;
-	for(int i=0; i<MAXACTIVETASKS; i++) {
-		if(ActiveTasks[i].TaskID==TaskID) {
+	for(int i=0; i<MAXACTIVEQUESTS; i++) {
+		if(ActiveQuests[i].TaskID==TaskID) {
 			ActiveTaskIndex = i;
 			break;
 		}
@@ -2912,8 +2904,8 @@ int ClientTaskState::GetTaskActivityDoneCountFromTaskID(int TaskID, int Activity
 	if (ActiveTaskIndex == -1)
 		return 0;
 
-	if (ActiveTasks[ActiveTaskIndex].Activity[ActivityID].DoneCount){
-		return ActiveTasks[ActiveTaskIndex].Activity[ActivityID].DoneCount;
+	if (ActiveQuests[ActiveTaskIndex].Activity[ActivityID].DoneCount){
+		return ActiveQuests[ActiveTaskIndex].Activity[ActivityID].DoneCount;
 	}
 	else{
 		return 0;
@@ -2922,7 +2914,7 @@ int ClientTaskState::GetTaskActivityDoneCountFromTaskID(int TaskID, int Activity
 
 int ClientTaskState::GetTaskStartTime(int index) {
 
-	return ActiveTasks[index].AcceptedTime;
+	return ActiveQuests[index].AcceptedTime;
 
 }
 
@@ -2932,10 +2924,10 @@ void ClientTaskState::CancelAllTasks(Client *c) {
 	// It removes tasks from the in-game client state ready for them to be
 	// resent to the client, in case an updated task fails to load
 
-	for(int i=0; i<MAXACTIVETASKS; i++)
-		if(ActiveTasks[i].TaskID != TASKSLOTEMPTY) {
+	for(int i=0; i<MAXACTIVEQUESTS; i++)
+		if(ActiveQuests[i].TaskID != TASKSLOTEMPTY) {
 			CancelTask(c, i, false);
-			ActiveTasks[i].TaskID = TASKSLOTEMPTY;
+			ActiveQuests[i].TaskID = TASKSLOTEMPTY;
 		}
 
 
@@ -2960,26 +2952,26 @@ void ClientTaskState::CancelTask(Client *c, int SequenceNumber, bool RemoveFromD
 void ClientTaskState::RemoveTask(Client *c, int sequenceNumber) {
 
 	int characterID = c->CharacterID();
-    Log(Logs::General, Logs::Tasks, "[UPDATE] ClientTaskState Cancel Task %i ", sequenceNumber);
+	Log(Logs::General, Logs::Tasks, "[UPDATE] ClientTaskState Cancel Task %i ", sequenceNumber);
 
-    std::string query = StringFormat("DELETE FROM character_activities WHERE charid=%i AND taskid = %i",
-                                    characterID, ActiveTasks[sequenceNumber].TaskID);
-    auto results = database.QueryDatabase(query);
+	std::string query = StringFormat("DELETE FROM character_activities WHERE charid=%i AND taskid = %i",
+									 characterID, ActiveQuests[sequenceNumber].TaskID);
+	auto results = database.QueryDatabase(query);
 	if(!results.Success()) {
 		Log(Logs::General, Logs::Error, "[TASKS] Error in CientTaskState::CancelTask %s", results.ErrorMessage().c_str());
 		return;
 	}
-    Log(Logs::General, Logs::Tasks, "[UPDATE] CancelTask: %s", query.c_str());
+	Log(Logs::General, Logs::Tasks, "[UPDATE] CancelTask: %s", query.c_str());
 
-    query = StringFormat("DELETE FROM character_tasks WHERE charid=%i AND taskid = %i",
-                        characterID, ActiveTasks[sequenceNumber].TaskID);
+	query = StringFormat("DELETE FROM character_tasks WHERE charid=%i AND taskid = %i",
+						 characterID, ActiveQuests[sequenceNumber].TaskID);
 	results = database.QueryDatabase(query);
 	if(!results.Success())
 		Log(Logs::General, Logs::Error, "[TASKS] Error in CientTaskState::CancelTask %s", results.ErrorMessage().c_str());
 
 	Log(Logs::General, Logs::Tasks, "[UPDATE] CancelTask: %s", query.c_str());
 
-	ActiveTasks[sequenceNumber].TaskID = TASKSLOTEMPTY;
+	ActiveQuests[sequenceNumber].TaskID = TASKSLOTEMPTY;
 	ActiveTaskCount--;
 }
 
@@ -2997,13 +2989,13 @@ void ClientTaskState::AcceptNewTask(Client *c, int TaskID, int NPCID, bool enfor
 		return;
 	}
 
-	if(ActiveTaskCount==MAXACTIVETASKS) {
-		c->Message(13, "You already have the maximum allowable number of active tasks (%i)", MAXACTIVETASKS);
+	if(ActiveTaskCount==MAXACTIVEQUESTS) {
+		c->Message(13, "You already have the maximum allowable number of active tasks (%i)", MAXACTIVEQUESTS);
 		return;
 	}
 
-	for(int i=0; i<MAXACTIVETASKS; i++) {
-		if(ActiveTasks[i].TaskID==TaskID) {
+	for(int i=0; i<MAXACTIVEQUESTS; i++) {
+		if(ActiveQuests[i].TaskID==TaskID) {
 			c->Message(13, "You have already been assigned this task.");
 			return;
 		}
@@ -3023,10 +3015,10 @@ void ClientTaskState::AcceptNewTask(Client *c, int TaskID, int NPCID, bool enfor
 	// waste of bandwidth.
 	//
 	int FreeSlot = -1;
-	for(int i=0; i<MAXACTIVETASKS; i++) {
+	for(int i=0; i<MAXACTIVEQUESTS; i++) {
 		Log(Logs::General, Logs::Tasks, "[UPDATE] ClientTaskState Looking for free slot in slot %i, found TaskID of %i",
-				i, ActiveTasks[i].TaskID);
-		if(ActiveTasks[i].TaskID == 0) {
+			i, ActiveQuests[i].TaskID);
+		if(ActiveQuests[i].TaskID == 0) {
 			FreeSlot = i;
 			break;
 		}
@@ -3034,26 +3026,26 @@ void ClientTaskState::AcceptNewTask(Client *c, int TaskID, int NPCID, bool enfor
 
 	// This shouldn't happen unless there is a bug in the handling of ActiveTaskCount somewhere
 	if(FreeSlot == -1) {
-		c->Message(13, "You already have the maximum allowable number of active tasks (%i)", MAXACTIVETASKS);
+		c->Message(13, "You already have the maximum allowable number of active tasks (%i)", MAXACTIVEQUESTS);
 		return;
 	}
 
 
-	ActiveTasks[FreeSlot].TaskID = TaskID;
-	ActiveTasks[FreeSlot].AcceptedTime = time(nullptr);
-	ActiveTasks[FreeSlot].Updated = true;
-	ActiveTasks[FreeSlot].CurrentStep = -1;
+	ActiveQuests[FreeSlot].TaskID = TaskID;
+	ActiveQuests[FreeSlot].AcceptedTime = time(nullptr);
+	ActiveQuests[FreeSlot].Updated = true;
+	ActiveQuests[FreeSlot].CurrentStep = -1;
 
 	for(int i=0; i<taskmanager->Tasks[TaskID]->ActivityCount; i++) {
-		ActiveTasks[FreeSlot].Activity[i].ActivityID = i;
-		ActiveTasks[FreeSlot].Activity[i].DoneCount = 0;
-		ActiveTasks[FreeSlot].Activity[i].State = ActivityHidden;
-		ActiveTasks[FreeSlot].Activity[i].Updated = true;
+		ActiveQuests[FreeSlot].Activity[i].ActivityID = i;
+		ActiveQuests[FreeSlot].Activity[i].DoneCount = 0;
+		ActiveQuests[FreeSlot].Activity[i].State = ActivityHidden;
+		ActiveQuests[FreeSlot].Activity[i].Updated = true;
 	}
 	UnlockActivities(c->CharacterID(), FreeSlot);
 	ActiveTaskCount++;
 	taskmanager->SendSingleActiveTaskToClient(c, FreeSlot, false, true);
-	c->Message(0, "You have been assigned the task '%s'.", taskmanager->Tasks[TaskID]->Title);
+	c->Message(0, "You have been assigned the task '%s'.", taskmanager->Tasks[TaskID]->Title.c_str());
 
 	char *buf = 0;
 	MakeAnyLenString(&buf, "%d", TaskID);
@@ -3088,98 +3080,75 @@ void ClientTaskState::ProcessTaskProximities(Client *c, float X, float Y, float 
 	}
 }
 
-TaskGoalListManager::TaskGoalListManager() {
-
-	TaskGoalLists = nullptr;
+TaskGoalListManager::TaskGoalListManager()
+{
 	NumberOfLists = 0;
 
 }
 
-TaskGoalListManager::~TaskGoalListManager() {
+TaskGoalListManager::~TaskGoalListManager() {}
 
-	for(int i=0; i< NumberOfLists; i++) {
-
-		safe_delete_array(TaskGoalLists[i].GoalItemEntries);
-
-	}
-	safe_delete_array(TaskGoalLists);
-}
-
-bool TaskGoalListManager::LoadLists() {
+bool TaskGoalListManager::LoadLists()
+{
 
 	Log(Logs::General, Logs::Tasks, "[GLOBALLOAD] TaskGoalListManager::LoadLists Called");
 
-	for(int i=0; i< NumberOfLists; i++)
-		safe_delete_array(TaskGoalLists[i].GoalItemEntries);
-	safe_delete_array(TaskGoalLists);
+	TaskGoalLists.clear();
 
-    const char *ERR_MYSQLERROR = "Error in TaskGoalListManager::LoadLists: %s %s";
+	const char *ERR_MYSQLERROR = "Error in TaskGoalListManager::LoadLists: %s %s";
 
 	NumberOfLists = 0;
 
-    std::string query = "SELECT `listid`, COUNT(`entry`) "
-                        "FROM `goallists` GROUP by `listid` "
-                        "ORDER BY `listid`";
-    auto results = database.QueryDatabase(query);
-    if (!results.Success()) {
+	std::string query = "SELECT `listid`, COUNT(`entry`) "
+			"FROM `goallists` GROUP by `listid` "
+			"ORDER BY `listid`";
+	auto results = database.QueryDatabase(query);
+	if (!results.Success()) {
 		return false;
-    }
+	}
 
-    NumberOfLists = results.RowCount();
-    Log(Logs::General, Logs::Tasks, "[GLOBALLOAD] Database returned a count of %i lists", NumberOfLists);
+	NumberOfLists = results.RowCount();
+	Log(Logs::General, Logs::Tasks, "[GLOBALLOAD] Database returned a count of %i lists", NumberOfLists);
 
-    TaskGoalLists = new TaskGoalList_Struct[NumberOfLists];
+	TaskGoalLists.reserve(NumberOfLists);
 
-    int listIndex = 0;
+	int listIndex = 0;
 
-    for(auto row = results.begin(); row != results.end(); ++row) {
-        int listID = atoi(row[0]);
-        int listSize = atoi(row[1]);
+	for(auto row = results.begin(); row != results.end(); ++row) {
+		int listID = atoi(row[0]);
+		int listSize = atoi(row[1]);
+		TaskGoalLists.push_back({listID, 0, 0});
 
-        TaskGoalLists[listIndex].ListID = listID;
-        TaskGoalLists[listIndex].Size = listSize;
-        TaskGoalLists[listIndex].Min = 0;
-        TaskGoalLists[listIndex].Max = 0;
-        TaskGoalLists[listIndex].GoalItemEntries = new int[listSize];
+		TaskGoalLists[listIndex].GoalItemEntries.reserve(listSize);
 
-        listIndex++;
-    }
+		listIndex++;
+	}
 
 	for(int listIndex = 0; listIndex < NumberOfLists; listIndex++) {
 
 		int listID = TaskGoalLists[listIndex].ListID;
-		unsigned int size = TaskGoalLists[listIndex].Size;
-        query = StringFormat("SELECT `entry` from `goallists` "
-                            "WHERE `listid` = %i "
-							"ORDER BY `entry` ASC LIMIT %i",
-							listID, size);
-        results = database.QueryDatabase(query);
-        if (!results.Success()) {
-			TaskGoalLists[listIndex].Size = 0;
+		auto size = TaskGoalLists[listIndex].GoalItemEntries.capacity(); // this was only done for manual memory management, shouldn't need to do this
+		query = StringFormat("SELECT `entry` from `goallists` "
+									 "WHERE `listid` = %i "
+									 "ORDER BY `entry` ASC LIMIT %i",
+							 listID, size);
+		results = database.QueryDatabase(query);
+		if (!results.Success()) {
 			continue;
-        }
+		}
 
-        // This should only happen if a row is deleted in between us retrieving the counts
-        // at the start of this method and getting to here. It should not be possible for
-        // an INSERT to cause a problem, as the SELECT is used with a LIMIT
-        if(results.RowCount() < size)
-            TaskGoalLists[listIndex].Size = results.RowCount();
+		for (auto row = results.begin(); row != results.end(); ++row) {
 
-        int entryIndex = 0;
-        for (auto row = results.begin(); row != results.end(); ++row, ++entryIndex) {
+			int entry = atoi(row[0]);
 
-            int entry = atoi(row[0]);
+			if(entry < TaskGoalLists[listIndex].Min)
+				TaskGoalLists[listIndex].Min = entry;
 
-            if(entry < TaskGoalLists[listIndex].Min)
-                TaskGoalLists[listIndex].Min = entry;
+			if(entry > TaskGoalLists[listIndex].Max)
+				TaskGoalLists[listIndex].Max = entry;
 
-            if(entry > TaskGoalLists[listIndex].Max)
-                TaskGoalLists[listIndex].Max = entry;
-
-            TaskGoalLists[listIndex].GoalItemEntries[entryIndex] = entry;
-
-        }
-
+			TaskGoalLists[listIndex].GoalItemEntries.push_back(entry);
+		}
 	}
 
 	return true;
@@ -3189,24 +3158,13 @@ bool TaskGoalListManager::LoadLists() {
 int TaskGoalListManager::GetListByID(int ListID) {
 
 	// Find the list with the specified ListID and return the index
+	auto it = std::find_if(TaskGoalLists.begin(), TaskGoalLists.end(),
+						   [ListID](const TaskGoalList_Struct &t) { return t.ListID == ListID; });
 
-	int FirstEntry = 0;
-	int LastEntry = NumberOfLists - 1;
+	if (it == TaskGoalLists.end())
+		return -1;
 
-	while(FirstEntry <= LastEntry) {
-		int MiddleEntry = (FirstEntry + LastEntry) / 2;
-
-		if(ListID > TaskGoalLists[MiddleEntry].ListID)
-			FirstEntry = MiddleEntry + 1;
-		else if(ListID < TaskGoalLists[MiddleEntry].ListID)
-			LastEntry = MiddleEntry - 1;
-		else
-			return MiddleEntry;
-
-	}
-
-	return -1;
-
+	return std::distance(TaskGoalLists.begin(), it);
 }
 
 int TaskGoalListManager::GetFirstEntry(int ListID) {
@@ -3215,7 +3173,7 @@ int TaskGoalListManager::GetFirstEntry(int ListID) {
 
 	if((ListIndex < 0) || (ListIndex >= NumberOfLists)) return -1;
 
-	if(TaskGoalLists[ListIndex].Size == 0) return -1;
+	if(TaskGoalLists[ListIndex].GoalItemEntries.empty()) return -1;
 
 	return TaskGoalLists[ListIndex].GoalItemEntries[0];
 }
@@ -3228,45 +3186,35 @@ std::vector<int> TaskGoalListManager::GetListContents(int ListID) {
 
 	if((ListIndex < 0) || (ListIndex >= NumberOfLists)) return ListContents;
 
-	for(int i=0; i<TaskGoalLists[ListIndex].Size; i++)
-		ListContents.push_back(TaskGoalLists[ListIndex].GoalItemEntries[i]);
+	ListContents = TaskGoalLists[ListIndex].GoalItemEntries;
 
 	return ListContents;
 
 }
 
-
-
-bool TaskGoalListManager::IsInList(int ListID, int Entry) {
-
+bool TaskGoalListManager::IsInList(int ListID, int Entry)
+{
 	Log(Logs::General, Logs::Tasks, "[UPDATE] TaskGoalListManager::IsInList(%i, %i)", ListID, Entry);
 
 	int ListIndex = GetListByID(ListID);
 
-	if((ListIndex<0) || (ListIndex >= NumberOfLists)) return false;
+	if ((ListIndex < 0) || (ListIndex >= NumberOfLists))
+		return false;
 
 	if((Entry < TaskGoalLists[ListIndex].Min) || (Entry > TaskGoalLists[ListIndex].Max))
 		return false;
 
 	int FirstEntry = 0;
-	int LastEntry = TaskGoalLists[ListIndex].Size - 1;
+	auto &task = TaskGoalLists[ListIndex];
 
-	while(FirstEntry <= LastEntry) {
-		int MiddleEntry = (FirstEntry + LastEntry) / 2;
+	auto it = std::find(task.GoalItemEntries.begin(), task.GoalItemEntries.end(), Entry);
 
-		if(Entry > TaskGoalLists[ListIndex].GoalItemEntries[MiddleEntry])
-			FirstEntry = MiddleEntry + 1;
-		else if(Entry < TaskGoalLists[ListIndex].GoalItemEntries[MiddleEntry])
-			LastEntry = MiddleEntry - 1;
-		else {
-			Log(Logs::General, Logs::Tasks, "[UPDATE] TaskGoalListManager::IsInList(%i, %i) returning true", ListIndex, Entry);
-			return true;
-		}
+	if (it == task.GoalItemEntries.end())
+		return false;
 
-	}
-
-	return false;
-
+	Log(Logs::General, Logs::Tasks, "[UPDATE] TaskGoalListManager::IsInList(%i, %i) returning true", ListIndex,
+		Entry);
+	return true;
 }
 
 TaskProximityManager::TaskProximityManager() {
@@ -3285,26 +3233,26 @@ bool TaskProximityManager::LoadProximities(int zoneID) {
 	Log(Logs::General, Logs::Tasks, "[GLOBALLOAD] TaskProximityManager::LoadProximities Called for zone %i", zoneID);
 	TaskProximities.clear();
 
-    std::string query = StringFormat("SELECT `exploreid`, `minx`, `maxx`, "
-                                    "`miny`, `maxy`, `minz`, `maxz` "
-                                    "FROM `proximities` WHERE `zoneid` = %i "
-                                    "ORDER BY `zoneid` ASC", zoneID);
-    auto results = database.QueryDatabase(query);
-    if (!results.Success()) {
+	std::string query = StringFormat("SELECT `exploreid`, `minx`, `maxx`, "
+											 "`miny`, `maxy`, `minz`, `maxz` "
+											 "FROM `proximities` WHERE `zoneid` = %i "
+											 "ORDER BY `zoneid` ASC", zoneID);
+	auto results = database.QueryDatabase(query);
+	if (!results.Success()) {
 		return false;
-    }
+	}
 
 	for( auto row = results.begin(); row != results.end(); ++row) {
-        proximity.ExploreID = atoi(row[0]);
-        proximity.MinX = atof(row[1]);
-        proximity.MaxX = atof(row[2]);
-        proximity.MinY = atof(row[3]);
-        proximity.MaxY = atof(row[4]);
-        proximity.MinZ = atof(row[5]);
-        proximity.MaxZ = atof(row[6]);
+		proximity.ExploreID = atoi(row[0]);
+		proximity.MinX = atof(row[1]);
+		proximity.MaxX = atof(row[2]);
+		proximity.MinY = atof(row[3]);
+		proximity.MaxY = atof(row[4]);
+		proximity.MinZ = atof(row[5]);
+		proximity.MaxZ = atof(row[6]);
 
-        TaskProximities.push_back(proximity);
-    }
+		TaskProximities.push_back(proximity);
+	}
 
 	return true;
 
@@ -3317,10 +3265,10 @@ int TaskProximityManager::CheckProximities(float X, float Y, float Z) {
 		TaskProximity* P = &TaskProximities[i];
 
 		Log(Logs::General, Logs::Tasks, "[PROXIMITY] Checking %8.3f, %8.3f, %8.3f against %8.3f, %8.3f, %8.3f, %8.3f, %8.3f, %8.3f",
-				X, Y, Z, P->MinX, P->MaxX, P->MinY, P->MaxY, P->MinZ, P->MaxZ);
+			X, Y, Z, P->MinX, P->MaxX, P->MinY, P->MaxY, P->MinZ, P->MaxZ);
 
 		if(X < P->MinX || X > P->MaxX || Y < P->MinY || Y > P->MaxY ||
-			Z < P->MinZ || Z > P->MaxZ) continue;
+		   Z < P->MinZ || Z > P->MaxZ) continue;
 
 		return P->ExploreID;
 

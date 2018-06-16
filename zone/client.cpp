@@ -159,10 +159,10 @@ Client::Client(EQStreamInterface* ieqs)
 	m_AutoAttackTargetLocation(0.0f, 0.0f, 0.0f),
 	last_region_type(RegionTypeUnsupported),
 	m_dirtyautohaters(false),
-	npc_close_scan_timer(5000),
-	hp_self_update_throttle_timer(150),
-	hp_other_update_throttle_timer(150),
-	position_update_timer(5000)
+	npc_close_scan_timer(6000),
+	hp_self_update_throttle_timer(300),
+	hp_other_update_throttle_timer(500),
+	position_update_timer(10000)
 {
 	for (int client_filter = 0; client_filter < _FilterCount; client_filter++)
 		ClientFilters[client_filter] = FilterShow;

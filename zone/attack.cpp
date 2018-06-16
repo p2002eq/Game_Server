@@ -1882,11 +1882,14 @@ bool Client::Death(Mob* killerMob, int32 damage, uint16 spell, EQEmu::skills::Sk
 	}
 
 	/* QS: PlayerLogDeaths */
-	if (RuleB(QueryServ, PlayerLogDeaths)) {
-		const char * killer_name = "";
-		if (killerMob && killerMob->GetCleanName()) { killer_name = killerMob->GetCleanName(); }
-		std::string event_desc = StringFormat("Died in zoneid:%i instid:%i by '%s', spellid:%i, damage:%i", this->GetZoneID(), this->GetInstanceID(), killer_name, spell, damage);
-		QServ->PlayerLogEvent(Player_Log_Deaths, this->CharacterID(), event_desc);
+	if (RuleB(QueryServ, PlayerLogDeaths))
+	{
+		char killer_name[128];
+		if (killerMob && killerMob->GetCleanName())
+		{
+			strncpy(killer_name, killerMob->GetCleanName(), 128);
+		}
+		QServ->QSDeathBy(this->CharacterID(), this->GetZoneID(), this->GetInstanceID(), killer_name, spell, damage);
 	}
 
 	parse->EventPlayer(EVENT_DEATH_COMPLETE, this, buffer, 0);
@@ -2357,10 +2360,10 @@ bool NPC::Death(Mob* killer_mob, int32 damage, uint16 spell, EQEmu::skills::Skil
 		adminMessage.append(StringFormat("- took %i damage (%.1f DPS)\n", my_hp_target_loss_net, my_dps_target_loss));
 		adminMessage.append(StringFormat("------ Participants ----------\n"));
 
-		c->Message(MT_CritMelee, "------ %s DPS Report %d seconds ----------", GetCleanName(), cur_engage_duration);
-		c->Message(MT_CritMelee, "- dealt %i damage (%.1f DPS)", my_hp_self_loss_net, my_dps_loss);
-		c->Message(MT_CritMelee, "- took %i damage (%.1f DPS)", my_hp_target_loss_net, my_dps_target_loss);
-		c->Message(MT_CritMelee, "------ Participants ----------");
+		c->Message(MT_OtherDeath, "------ %s DPS Report %d seconds ----------", GetCleanName(), cur_engage_duration);
+		c->Message(MT_OtherDeath, "- dealt %i damage (%.1f DPS)", my_hp_self_loss_net, my_dps_loss);
+		c->Message(MT_OtherDeath, "- took %i damage (%.1f DPS)", my_hp_target_loss_net, my_dps_target_loss);
+		c->Message(MT_OtherDeath, "------ Participants ----------");
 		for (auto &&d : DPS()) {
 			if (d.ent_id == GetID()) { //if it's me
 				continue;
@@ -2371,7 +2374,7 @@ bool NPC::Death(Mob* killer_mob, int32 damage, uint16 spell, EQEmu::skills::Skil
 			cur_hps_dealt = (float) ((float) d.hp_target_gain_net / cur_engage_duration);
 
 			if (!c->GetEPP().use_full_dps && c->GetID() != d.ent_id) continue; //Don't show DPS if self only is flagged
-			c->Message(MT_CritMelee, "- %s: %i damage (%.1f DPS)", d.character_name.c_str(), d.hp_target_loss_net,
+			c->Message(MT_OtherDeath, "- %s: %i damage (%.1f DPS)", d.character_name.c_str(), d.hp_target_loss_net,
 					   cur_dps);
 			adminMessage.append(
 					StringFormat("- %s: %i damage (%.1f DPS)\n", d.character_name.c_str(), d.hp_target_loss_net,
@@ -2379,7 +2382,7 @@ bool NPC::Death(Mob* killer_mob, int32 damage, uint16 spell, EQEmu::skills::Skil
 		}
 		++iterator;
 	}
-	if (raid_target && IsNPC()) nats.SendAdminMessage(adminMessage);
+	if (IsRaidTarget() && IsNPC()) nats.SendAdminMessage(adminMessage);
 	if (killer_mob && GetClass() != LDON_TREASURE)
 		hate_list.AddEntToHateList(killer_mob, damage);
 

@@ -24,11 +24,12 @@ Copyright (C) 2001-2004 EQEMu Development Team (http://eqemulator.net)
 
 #include <list>
 #include <vector>
+#include <string>
 
 #define MAXTASKS 10000
 #define MAXTASKSETS 1000
-// The Client has a hard cap of 19 active tasks
-#define MAXACTIVETASKS 19
+// The Client has a hard cap of 19 active tasks, 29 in RoF2
+#define MAXACTIVEQUESTS 19
 // The Max Chooser (Task Selector entries) is capped at 40 in the Titanium Client.
 #define MAXCHOOSERENTRIES 40
 // The Client has a hard cap of 20 activities per task.
@@ -53,9 +54,8 @@ namespace EQEmu
 
 struct TaskGoalList_Struct {
 	int ListID;
-	int Size;
 	int Min, Max;
-	int *GoalItemEntries;
+	std::vector<int> GoalItemEntries;
 };
 
 // This is used for handling lists, loading them from the database, searching them.
@@ -75,7 +75,7 @@ public:
 
 private:
 
-	TaskGoalList_Struct *TaskGoalLists;
+	std::vector<TaskGoalList_Struct> TaskGoalLists;
 	int NumberOfLists;
 };
 
@@ -102,9 +102,9 @@ typedef enum { METHODSINGLEID = 0, METHODLIST = 1, METHODQUEST = 2 } TaskMethodT
 struct ActivityInformation {
 	int		StepNumber;
 	int		Type;
-	char	*Text1;
-	char	*Text2;
-	char	*Text3;
+	std::string Text1;
+	std::string Text2;
+	std::string Text3;
 	int		GoalID;
 	TaskMethodType GoalMethod;
 	int		GoalCount;
@@ -115,11 +115,27 @@ struct ActivityInformation {
 
 typedef enum { ActivitiesSequential = 0, ActivitiesStepped = 1 } SequenceType;
 
+enum class TaskType {
+	Task = 0,		// can have at max 1
+	Shared = 1,		// can have at max 1
+	Quest = 2,		// can have at max 19 or 29 depending on client
+	E = 3			// can have at max 19 or 29 depending on client, not present in live anymore
+};
+
+enum class DurationCode {
+	None = 0,
+	Short = 1,
+	Medium = 2,
+	Long = 3
+};
+
 struct TaskInformation {
+	TaskType type;
 	int	Duration;
-	char	*Title;
-	char	*Description;
-	char	*Reward;
+	DurationCode dur_code; // description for time investment for when Duration == 0
+	std::string Title;			// max length 64
+	std::string Description;	// max length 4000, 2048 on Tit
+	std::string Reward;
 	int	RewardID;
 	int	CashReward; // Expressed in copper
 	int	XPReward;
@@ -138,7 +154,7 @@ typedef enum { ActivityHidden = 0, ActivityActive = 1, ActivityCompleted = 2 } A
 
 typedef enum { ActivityDeliver = 1, ActivityKill = 2, ActivityLoot = 3, ActivitySpeakWith = 4, ActivityExplore = 5,
 			ActivityTradeSkill = 6, ActivityFish = 7, ActivityForage = 8, ActivityUse1 = 9, ActivityUse2 = 10,
-			ActivityTouch = 11, ActivityGiveCash = 100 } ActivityType;
+			ActivityTouch = 11, ActivityCollect = 13, ActivityGiveCash = 100 } ActivityType;
 
 
 struct ClientActivityInformation {
@@ -212,8 +228,8 @@ private:
 	bool UnlockActivities(int CharID, int TaskIndex);
 	void IncrementDoneCount(Client *c, TaskInformation *Task, int TaskIndex, int ActivityID, int Count = 1, bool ignore_quest_update = false);
 	int ActiveTaskCount;
-	ClientTaskInformation ActiveTasks[MAXACTIVETASKS];
-	std::vector<int>EnabledTasks;
+	ClientTaskInformation ActiveQuests[MAXACTIVEQUESTS];
+	std::vector<int> EnabledTasks;
 	std::vector<CompletedTaskInformation> CompletedTasks;
 	int LastCompletedTaskLoaded;
 	bool CheckedTouchActivities;

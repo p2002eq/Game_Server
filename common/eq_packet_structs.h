@@ -1791,6 +1791,39 @@ struct Disarm_Struct
 	uint32 unknown;
 };
 
+//C->S, used by the client for adding Soulmarks to a player.
+//0x41D0
+struct SoulMarkUpdate_Struct {
+	char gmname[64];
+	char gmacctname[32];
+	char charname[64];
+	char acctname[32];
+};
+
+//S->C and C->S ENTRY for informing us about players' soulmarks. Used in struct below this one.
+struct SoulMarkEntry_Struct {
+	char name[64]; //charname
+	char accountname[32]; //station name
+	char gmname[64];  //charname
+	char gmaccountname[32]; //gm station name
+	uint32 unix_timestamp; //time of remark
+	uint32 type; //time of remark
+	char description[256]; //actual text description
+};
+
+//S->C C->S PACKET
+//0x41D1
+struct SoulMarkList_Struct {
+	char interrogatename[64];
+	SoulMarkEntry_Struct entries[12]; //I have no idea why SOE hardcodes the amount of soulmarks, but it shall never exceed 12. Delete soulmarks I guess in the future /shrug
+};
+
+//C->S PACKET
+//0x41D2
+struct SoulMarkAdd_Struct{
+	SoulMarkEntry_Struct entry;
+};
+
 //Instill Doubt
 struct Instill_Doubt_Struct {
 	uint8 i_id;

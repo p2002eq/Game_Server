@@ -1125,6 +1125,7 @@ void Client::FinishAlternateAdvancementPurchase(AA::Rank *rank, bool ignore_cost
 		}
 	}
 
+
 	CalcBonuses();
 
 	if(cost > 0) {

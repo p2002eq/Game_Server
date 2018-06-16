@@ -184,6 +184,7 @@ int command_init(void)
 		command_add("date", "[yyyy] [mm] [dd] [HH] [MM] - Set EQ time", 90, command_date) ||
 		command_add("dbspawn2", "[spawngroup] [respawn] [variance] - Spawn an NPC from a predefined row in the spawn2 table", 100, command_dbspawn2) ||
 		command_add("delacct", "[accountname] - Delete an account", 150, command_delacct) ||
+		command_add("deletechar", "- Delete a character. WARNING THIS BYPASSES THE UNDELETE FUNCTION", 100, command_deletechar) ||
 		command_add("deletegraveyard", "[zone name] - Deletes the graveyard for the specified zone.",  200, command_deletegraveyard) ||
 		command_add("delpetition", "[petition number] - Delete a petition", 20, command_delpetition) ||
 		command_add("depop", "- Depop your NPC target", 50, command_depop) ||
@@ -8348,6 +8349,18 @@ void command_setgraveyard(Client *c, const Seperator *sep)
 	}
 
 	return;
+}
+
+void command_deletechar(Client *c, const Seperator *sep) {
+	if (sep->arg[1][0] != 0) {
+		if (!database.DeleteCharacter(sep->arg[1])) {
+			c->Message(CC_Red, "%s could not be deleted. Check the spelling of their name.", sep->arg[1]);
+		} else {
+			c->Message(CC_Green, "%s successfully deleted!", sep->arg[1]);
+		}
+	} else {
+		c->Message(CC_Default, "Usage: undeletechar [charname] - WARNING THIS BYPASSES THE UNDELETE FUNCTION");
+	}
 }
 
 void command_deletegraveyard(Client *c, const Seperator *sep)

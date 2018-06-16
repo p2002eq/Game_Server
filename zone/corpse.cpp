@@ -48,11 +48,13 @@ Child of the Mob class.
 
 #include "quest_parser_collection.h"
 #include "string_ids.h"
+#include "queryserv.h"
 #include "worldserver.h"
 #include <iostream>
 
 
 extern EntityList entity_list;
+extern QueryServ* QServ;
 extern Zone* zone;
 extern WorldServer worldserver;
 extern npcDecayTimes_Struct npcCorpseDecayTimes[100];
@@ -893,21 +895,24 @@ void Corpse::MakeLootRequestPackets(Client* client, const EQApplicationPacket* a
 		return;
 	}
 
-	if(being_looted_by == 0)
+	if(being_looted_by == 0) {
 		being_looted_by = 0xFFFFFFFF;
+	}
 
 	if(this->being_looted_by != 0xFFFFFFFF) {
 		// lets double check....
 		Entity* looter = entity_list.GetID(this->being_looted_by);
-		if(looter == nullptr)
+		if(looter == nullptr) {
 			this->being_looted_by = 0xFFFFFFFF;
+		}
 	}
 
 	uint8 Loot_Request_Type = 1;
 	bool loot_coin = false;
 	std::string tmp;
-	if(database.GetVariable("LootCoin", tmp))
+	if(database.GetVariable("LootCoin", tmp)) {
 		loot_coin = tmp[0] == 1 && tmp[1] == '\0';
+	}
 
 	if (DistanceSquaredNoZ(client->GetPosition(), m_Position) > 625) {
 		SendLootReqErrorPacket(client, LootResponse::TooFar);
@@ -960,6 +965,11 @@ void Corpse::MakeLootRequestPackets(Client* client, const EQApplicationPacket* a
 				d->platinum		= 0;
 				Group *cgroup = client->GetGroup();
 				cgroup->SplitMoney(GetCopper(), GetSilver(), GetGold(), GetPlatinum(), client);
+				/* QS: Player_Log_Looting */
+				if (RuleB(QueryServ, PlayerLogLoot))
+				{
+					QServ->QSLootRecords(client->CharacterID(), corpse_name, "CASH-SPLIT", client->GetZoneID(), 0, "null", 0, GetPlatinum(), GetGold(), GetSilver(), GetCopper());
+				}
 			}
 			else {
 				d->copper		= this->GetCopper();
@@ -967,6 +977,11 @@ void Corpse::MakeLootRequestPackets(Client* client, const EQApplicationPacket* a
 				d->gold			= this->GetGold();
 				d->platinum		= this->GetPlatinum();
 				client->AddMoneyToPP(GetCopper(), GetSilver(), GetGold(), GetPlatinum(), false);
+				/* QS: Player_Log_Looting */
+				if (RuleB(QueryServ, PlayerLogLoot))
+				{
+					QServ->QSLootRecords(client->CharacterID(), corpse_name, "CASH", client->GetZoneID(), 0, "null", 0, GetPlatinum(), GetGold(), GetSilver(), GetCopper());
+				}
 			}
 
 			RemoveCash();
