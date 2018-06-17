@@ -34,6 +34,7 @@ Copyright (C) 2001-2008 EQEMu Development Team (http://eqemulator.net)
 #include "client.h"
 #include "entity.h"
 #include "mob.h"
+#include "string_ids.h"
 
 #include "queryserv.h"
 #include "quest_parser_collection.h"
