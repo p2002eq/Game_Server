@@ -322,6 +322,7 @@ int command_init(void)
 		command_add("raidloot", "LEADER|GROUPLEADER|SELECTED|ALL - Sets your raid loot settings if you have permission to do so.", 0, command_raidloot) ||
 		command_add("randomfeatures", "- Temporarily randomizes the Facial Features of your target", 80, command_randomfeatures) ||
 		command_add("refreshgroup", "- Refreshes Group.",  0, command_refreshgroup) ||
+		command_add("reimburse", "- Adds items or plat to the Reimbursement table for a character.",  100, command_reimburse) ||
 		command_add("reloadaa", "Reloads AA data", 200, command_reloadaa) ||
 		command_add("reloadallrules", "Executes a reload of all rules.", 80, command_reloadallrules) ||
 		command_add("reloademote", "Reloads NPC Emotes", 80, command_reloademote) ||
@@ -1259,6 +1260,111 @@ void command_peqzone(Client *c, const Seperator *sep)
 	//zone to safe coords
 	c->GetPTimers().Start(pTimerPeqzoneReuse, RuleI(Zone, PEQZoneReuseTime));
 	c->MovePC(zoneid, 0.0f, 0.0f, 0.0f, 0.0f, 0, ZoneToSafeCoords);
+}
+
+void command_reimburse(Client *c, const Seperator *sep) {
+	if (sep->argnum > 0) {
+		if (strcasecmp(sep->arg[2], "item") == 0 && strcasecmp(sep->arg[3], "") == 0 && strcasecmp(sep->arg[4], "") == 0){
+			c->Message(13, "ERROR IN COMMAND FORMAT:");
+			c->Message(13, "#reimburse usage:");
+			c->Message(13, "--- #reimburse <character_name> <item> <item_id> <reason> - Reimburses a single item ID");
+			c->Message(13, "--- #reimburse <character name> <platinum> <amount> <reason> - Reimburses the amount of platinum");
+		} else if (strcasecmp(sep->arg[2], "platinum")) {
+
+			auto char_id = database.GetCharacterID(sep->arg[1]);
+
+			if(char_id == 0) {
+				c->Message(13, "Character does not exist.");
+				return;
+			}
+
+			int item_id = atoi(sep->arg[3]);
+
+			if(item_id < 0) {
+				c->Message(13, "ERROR IN COMMAND FORMAT:");
+				c->Message(13, "#reimburse usage:");
+				c->Message(13, "--- #reimburse <character_name> <item> <item_id> <reason> - Reimburses a single item ID");
+				c->Message(13, "--- #reimburse <character name> <platinum> <amount> <reason> - Reimburses the amount of platinum");
+				return;
+			}
+
+			std::string message;
+			int i = 4;
+			while(1) {
+				if(sep->arg[i][0] == 0) {
+					break;
+				}
+
+				if(message.length() > 0) {
+					message.push_back(' ');
+				}
+				message += sep->arg[i];
+				++i;
+			}
+
+			if(message.length() == 0) {
+				c->Message(13, "ERROR IN COMMAND FORMAT:");
+				c->Message(13, "#reimburse usage:");
+				c->Message(13, "--- #reimburse <character_name> <item> <item_id> <reason> - Reimburses a single item ID");
+				c->Message(13, "--- #reimburse <character name> <platinum> <amount> <reason> - Reimburses the amount of platinum");
+				return;
+			}
+
+			std::string query = StringFormat("INSERT INTO `cust_playerawards` (`CharID`, `Type`, `Amount_Or_ID`, `Reason`) VALUES (%i, 'Item', %i, '%s')",
+											 char_id, item_id, EscapeString(message).c_str());
+			auto results = database.QueryDatabase(query);
+
+		} else if (strcasecmp(sep->arg[2], "item")) {
+
+			auto char_id = database.GetCharacterID(sep->arg[1]);
+
+			if(char_id == 0) {
+				c->Message(13, "Character does not exist.");
+				return;
+			}
+
+			int amount = atoi(sep->arg[3]);
+
+			if(amount < 0) {
+				c->Message(13, "ERROR IN COMMAND FORMAT:");
+				c->Message(13, "#reimburse usage:");
+				c->Message(13, "--- #reimburse <character_name> <item> <item_id> <reason> - Reimburses a single item ID");
+				c->Message(13, "--- #reimburse <character name> <platinum> <amount> <reason> - Reimburses the amount of platinum");
+				return;
+			}
+
+			std::string message;
+			int i = 4;
+			while(1) {
+				if(sep->arg[i][0] == 0) {
+					break;
+				}
+
+				if(message.length() > 0) {
+					message.push_back(' ');
+				}
+				message += sep->arg[i];
+				++i;
+			}
+
+			if(message.length() == 0) {
+				c->Message(13, "ERROR IN COMMAND FORMAT:");
+				c->Message(13, "#reimburse usage:");
+				c->Message(13, "--- #reimburse <character_name> <item> <item_id> <reason> - Reimburses a single item ID");
+				c->Message(13, "--- #reimburse <character name> <platinum> <amount> <reason> - Reimburses the amount of platinum");
+				return;
+			}
+
+			std::string query = StringFormat("INSERT INTO `cust_playerawards` (`CharID`, `Type`, `Amount_Or_ID`, `Reason`) VALUES (%i, 'platinum', %i, '%s')",
+											 char_id, amount, EscapeString(message).c_str());
+			auto results = database.QueryDatabase(query);
+
+		}
+	} else {
+		c->Message(13, "#reimburse usage:");
+		c->Message(13, "--- #reimburse <character_name> <item> <item_id> <reason> - Reimburses a single item ID");
+		c->Message(13, "--- #reimburse <character name> <platinum> <amount> <reason> - Reimburses the amount of platinum");
+	}
 }
 
 void command_movechar(Client *c, const Seperator *sep)

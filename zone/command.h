@@ -229,6 +229,7 @@ void command_raidloot(Client* c, const Seperator *sep);
 void command_randomfeatures(Client *c, const Seperator *sep);
 void command_refreshgroup(Client *c, const Seperator *sep);
 void command_refundaa(Client *c, const Seperator *sep);
+void command_reimburse(Client *c, const Seperator *sep);
 void command_reloadaa(Client *c, const Seperator *sep);
 void command_reloadallrules(Client *c, const Seperator *sep);
 void command_reloademote(Client* c, const Seperator *sep);
