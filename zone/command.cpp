@@ -1264,106 +1264,69 @@ void command_peqzone(Client *c, const Seperator *sep)
 
 void command_reimburse(Client *c, const Seperator *sep) {
 	if (sep->argnum > 0) {
-		if (strcasecmp(sep->arg[2], "item") == 0 && strcasecmp(sep->arg[3], "") == 0 && strcasecmp(sep->arg[4], "") == 0){
+		if (strcasecmp(sep->arg[2], "") == 0 && strcasecmp(sep->arg[3], "") == 0){
 			c->Message(13, "ERROR IN COMMAND FORMAT:");
 			c->Message(13, "#reimburse usage:");
-			c->Message(13, "--- #reimburse <character_name> <item> <item_id> <reason> - Reimburses a single item ID");
-			c->Message(13, "--- #reimburse <character name> <platinum> <amount> <reason> - Reimburses the amount of platinum");
-		} else if (strcasecmp(sep->arg[2], "platinum")) {
-
+			c->Message(13, "--- #reimburse <character_name> <item_id> <reason> - Reimburses a single item ID");
+		} else {
+			std::string char_name = sep->arg[1];
 			auto char_id = database.GetCharacterID(sep->arg[1]);
-
 			if(char_id == 0) {
 				c->Message(13, "Character does not exist.");
 				return;
 			}
+			uint32 item_id = atoi(sep->arg[2]);
+			std::string item_name = "";
 
-			int item_id = atoi(sep->arg[3]);
+			if(item_id > 0) {
+				const EQEmu::ItemData *item = nullptr;
+				item = database.GetItem(item_id);
 
-			if(item_id < 0) {
+				if (item == nullptr) {
+					c->Message(13, "ERROR: ITEM DOES NOT EXIST");
+					return;
+				} else {
+					item_name = item->Name;
+				}
+
+				if(item_name.length() == 0) {
+					c->Message(13, "ERROR: ITEM DOES NOT EXIST");
+					return;
+				}
+
+
+			} else if (item_id <= 0){
 				c->Message(13, "ERROR IN COMMAND FORMAT:");
 				c->Message(13, "#reimburse usage:");
-				c->Message(13, "--- #reimburse <character_name> <item> <item_id> <reason> - Reimburses a single item ID");
-				c->Message(13, "--- #reimburse <character name> <platinum> <amount> <reason> - Reimburses the amount of platinum");
+				c->Message(13, "--- #reimburse <character_name> <item_id> <reason> - Reimburses a single item ID");
 				return;
 			}
-
 			std::string message;
-			int i = 4;
+			int i = 3;
 			while(1) {
 				if(sep->arg[i][0] == 0) {
 					break;
 				}
-
 				if(message.length() > 0) {
 					message.push_back(' ');
 				}
 				message += sep->arg[i];
 				++i;
 			}
-
 			if(message.length() == 0) {
 				c->Message(13, "ERROR IN COMMAND FORMAT:");
 				c->Message(13, "#reimburse usage:");
-				c->Message(13, "--- #reimburse <character_name> <item> <item_id> <reason> - Reimburses a single item ID");
-				c->Message(13, "--- #reimburse <character name> <platinum> <amount> <reason> - Reimburses the amount of platinum");
+				c->Message(13, "--- #reimburse <character_name> <item_id> <reason> - Reimburses a single item ID");
 				return;
 			}
-
-			std::string query = StringFormat("INSERT INTO `cust_playerawards` (`CharID`, `Type`, `Amount_Or_ID`, `Reason`) VALUES (%i, 'Item', %i, '%s')",
+			std::string query = StringFormat("INSERT INTO `cust_playerawards` (`CharID`, `Item_id`, `Reason`) VALUES (%i, %i, '%s')",
 											 char_id, item_id, EscapeString(message).c_str());
 			auto results = database.QueryDatabase(query);
-
-		} else if (strcasecmp(sep->arg[2], "item")) {
-
-			auto char_id = database.GetCharacterID(sep->arg[1]);
-
-			if(char_id == 0) {
-				c->Message(13, "Character does not exist.");
-				return;
-			}
-
-			int amount = atoi(sep->arg[3]);
-
-			if(amount < 0) {
-				c->Message(13, "ERROR IN COMMAND FORMAT:");
-				c->Message(13, "#reimburse usage:");
-				c->Message(13, "--- #reimburse <character_name> <item> <item_id> <reason> - Reimburses a single item ID");
-				c->Message(13, "--- #reimburse <character name> <platinum> <amount> <reason> - Reimburses the amount of platinum");
-				return;
-			}
-
-			std::string message;
-			int i = 4;
-			while(1) {
-				if(sep->arg[i][0] == 0) {
-					break;
-				}
-
-				if(message.length() > 0) {
-					message.push_back(' ');
-				}
-				message += sep->arg[i];
-				++i;
-			}
-
-			if(message.length() == 0) {
-				c->Message(13, "ERROR IN COMMAND FORMAT:");
-				c->Message(13, "#reimburse usage:");
-				c->Message(13, "--- #reimburse <character_name> <item> <item_id> <reason> - Reimburses a single item ID");
-				c->Message(13, "--- #reimburse <character name> <platinum> <amount> <reason> - Reimburses the amount of platinum");
-				return;
-			}
-
-			std::string query = StringFormat("INSERT INTO `cust_playerawards` (`CharID`, `Type`, `Amount_Or_ID`, `Reason`) VALUES (%i, 'platinum', %i, '%s')",
-											 char_id, amount, EscapeString(message).c_str());
-			auto results = database.QueryDatabase(query);
-
+			c->Message(14, "Successfully added item: %s (%i) to Vhanna for player: %s (%i) For Reason: (%s)", EscapeString(item_name).c_str(), item_id, EscapeString(char_name).c_str(), char_id, EscapeString(message).c_str());
 		}
 	} else {
 		c->Message(13, "#reimburse usage:");
-		c->Message(13, "--- #reimburse <character_name> <item> <item_id> <reason> - Reimburses a single item ID");
-		c->Message(13, "--- #reimburse <character name> <platinum> <amount> <reason> - Reimburses the amount of platinum");
+		c->Message(13, "--- #reimburse <character_name> <item_id> <reason> - Reimburses a single item ID");
 	}
 }
 
