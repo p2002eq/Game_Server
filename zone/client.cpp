@@ -7806,7 +7806,6 @@ const char* Client::GetClassPlural(Client* client) {
 	}
 }
 
-
 void Client::SendWebLink(const char *website)
 {
 	size_t len = strlen(website) + 1;
