@@ -3642,9 +3642,9 @@ uint32 ZoneDatabase::CreateGraveyardRecord(uint32 graveyard_zone_id, const glm::
                                     "SET `zone_id` = %u, `x` = %1.1f, `y` = %1.1f, `z` = %1.1f, `heading` = %1.1f",
                                     graveyard_zone_id, position.x, position.y, position.z, position.w);
 	auto results = QueryDatabase(query);
-	if (results.Success())
+	if (results.Success()) {
 		return results.LastInsertedID();
-	http://wiki.eqemulator.org/p?Animation_Reference_(DoAnim)
+	}
 	return 0;
 }
 uint32 ZoneDatabase::SendCharacterCorpseToGraveyard(uint32 dbid, uint32 zone_id, uint16 instance_id, const glm::vec4& position) {
