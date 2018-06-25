@@ -557,7 +557,9 @@ void Mob::SetInvisible(uint8 state /* = 0*/, uint8 type /*= 0*/)
 	}
 
 	// All types of invis and hide depops summoned pets and breaks charms
-	CastToMob()->RemovePet();
+	if(state != 0) {
+		CastToMob()->RemovePet();
+	}
 }
 
 //check to see if `this` is invisible to `other`
@@ -6094,6 +6096,7 @@ void Mob::CommonBreakInvisible()
 {
 	BreakInvisibleSpells();
 	CancelSneakHide();
+	SetInvisible(0);
 }
 
 void Mob::ShieldClear() {
