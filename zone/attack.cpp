@@ -3723,6 +3723,7 @@ void Mob::CommonDamage(Mob* attacker, int &damage, const uint16 spell_id, const 
 					attacker->GetCleanName() /* Message2 */
 			);
 			BuffFadeByEffect(SE_Mez);
+			SendPosition();
 		}
 
 		// broken up for readability

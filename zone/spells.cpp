@@ -2773,6 +2773,7 @@ void Mob::BardPulse(uint16 spell_id, Mob *caster) {
 			{
 				entity_list.QueueCloseClients(this, message_packet, false, RuleI(Range, SongMessages), 0, true, IsClient() ? FilterPCSpells : FilterNPCSpells);
 			}
+			SendPosition();
 			safe_delete(message_packet);
 			safe_delete(packet);
 			nats.OnDamageEvent(cd->source, cd);
