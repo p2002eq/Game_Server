@@ -62,9 +62,9 @@ bool TaskManager::LoadTaskSets() {
 		TaskSets[i].clear();
 
 	std::string query = StringFormat("SELECT `id`, `taskid` from `tasksets` "
-											 "WHERE `id` > 0 AND `id` < %i "
-											 "AND `taskid` >= 0 AND `taskid` < %i "
-											 "ORDER BY `id`, `taskid` ASC",
+									 "WHERE `id` > 0 AND `id` < %i "
+									 "AND `taskid` >= 0 AND `taskid` < %i "
+									 "ORDER BY `id`, `taskid` ASC",
 									 MAXTASKSETS, MAXTASKS);
 	auto results = database.QueryDatabase(query);
 	if (!results.Success()) {
@@ -109,21 +109,21 @@ bool TaskManager::LoadTasks(int singleTask)
 	Log(Logs::General, Logs::Tasks, "[GLOBALLOAD] TaskManager::LoadTasks Called");
 
 	std::string query;
-	if(singleTask == 0) {
-		if(!GoalListManager.LoadLists())
-			Log(Logs::Detail, Logs::Tasks,"TaskManager::LoadTasks LoadLists failed");
+	if (singleTask == 0) {
+		if (!GoalListManager.LoadLists())
+			Log(Logs::Detail, Logs::Tasks, "TaskManager::LoadTasks LoadLists failed");
 
-		if(!LoadTaskSets())
-			Log(Logs::Detail, Logs::Tasks,"TaskManager::LoadTasks LoadTaskSets failed");
+		if (!LoadTaskSets())
+			Log(Logs::Detail, Logs::Tasks, "TaskManager::LoadTasks LoadTaskSets failed");
 
 		query = StringFormat("SELECT `id`, `type`, `duration`, `duration_code`, `title`, `description`, "
-									 "`reward`, `rewardid`, `cashreward`, `xpreward`, `rewardmethod`, `startzone`, "
-									 "`minlevel`, `maxlevel`, `repeatable` FROM `tasks` WHERE `id` < %i",
+							 "`reward`, `rewardid`, `cashreward`, `xpreward`, `rewardmethod`, `startzone`, "
+							 "`minlevel`, `maxlevel`, `repeatable` FROM `tasks` WHERE `id` < %i",
 							 MAXTASKS);
 	} else
 		query = StringFormat("SELECT `id`, `type`, `duration`, `duration_code`, `title`, `description`, "
-									 "`reward`, `rewardid`, `cashreward`, `xpreward`, `rewardmethod`, `startzone`, "
-									 "`minlevel`, `maxlevel`, `repeatable` FROM `tasks` WHERE `id` = %i",
+							 "`reward`, `rewardid`, `cashreward`, `xpreward`, `rewardmethod`, `startzone`, "
+							 "`minlevel`, `maxlevel`, `repeatable` FROM `tasks` WHERE `id` = %i",
 							 singleTask);
 
 	const char *ERR_MYSQLERROR = "[TASKS]Error in TaskManager::LoadTasks: %s";
@@ -134,10 +134,10 @@ bool TaskManager::LoadTasks(int singleTask)
 		return false;
 	}
 
-	for(auto row = results.begin(); row != results.end(); ++row) {
+	for (auto row = results.begin(); row != results.end(); ++row) {
 		int taskID = atoi(row[0]);
 
-		if((taskID <= 0) || (taskID >= MAXTASKS)) {
+		if ((taskID <= 0) || (taskID >= MAXTASKS)) {
 			// This shouldn't happen, as the SELECT is bounded by MAXTASKS
 			Log(Logs::General, Logs::Error,
 				"[TASKS]Task ID %i out of range while loading tasks from database", taskID);
@@ -165,27 +165,27 @@ bool TaskManager::LoadTasks(int singleTask)
 
 		Log(Logs::General, Logs::Tasks,
 			"[GLOBALLOAD] TaskID: %5i, Duration: %8i, StartZone: %3i Reward: %s MinLevel %i MaxLevel %i "
-					"Repeatable: %s",
+			"Repeatable: %s",
 			taskID, Tasks[taskID]->Duration, Tasks[taskID]->StartZone, Tasks[taskID]->Reward.c_str(),
 			Tasks[taskID]->MinLevel, Tasks[taskID]->MaxLevel, Tasks[taskID]->Repeatable ? "Yes" : "No");
 		Log(Logs::General, Logs::Tasks, "[GLOBALLOAD] Title: %s", Tasks[taskID]->Title.c_str());
 	}
 
-	if(singleTask==0)
+	if (singleTask == 0)
 		query = StringFormat("SELECT `taskid`, `step`, `activityid`, `activitytype`, "
-									 "`text1`, `text2`, `text3`, `goalid`, `goalmethod`, "
-									 "`goalcount`, `delivertonpc`, `zoneid`, `optional` "
-									 "FROM `activities` "
-									 "WHERE `taskid` < %i AND `activityid` < %i "
-									 "ORDER BY taskid, activityid ASC",
+							 "`text1`, `text2`, `text3`, `goalid`, `goalmethod`, "
+							 "`goalcount`, `delivertonpc`, `zoneid`, `optional` "
+							 "FROM `activities` "
+							 "WHERE `taskid` < %i AND `activityid` < %i "
+							 "ORDER BY taskid, activityid ASC",
 							 MAXTASKS, MAXACTIVITIESPERTASK);
 	else
 		query = StringFormat("SELECT `taskid`, `step`, `activityid`, `activitytype`, "
-									 "`text1`, `text2`, `text3`, `goalid`, `goalmethod`, "
-									 "`goalcount`, `delivertonpc`, `zoneid`, `optional` "
-									 "FROM `activities` "
-									 "WHERE `taskid` = %i AND `activityid` < %i "
-									 "ORDER BY taskid, activityid ASC",
+							 "`text1`, `text2`, `text3`, `goalid`, `goalmethod`, "
+							 "`goalcount`, `delivertonpc`, `zoneid`, `optional` "
+							 "FROM `activities` "
+							 "WHERE `taskid` = %i AND `activityid` < %i "
+							 "ORDER BY taskid, activityid ASC",
 							 singleTask, MAXACTIVITIESPERTASK);
 	results = database.QueryDatabase(query);
 	if (!results.Success()) {
@@ -193,22 +193,22 @@ bool TaskManager::LoadTasks(int singleTask)
 		return false;
 	}
 
-	for(auto row = results.begin(); row != results.end(); ++row) {
+	for (auto row = results.begin(); row != results.end(); ++row) {
 		int taskID = atoi(row[0]);
 		int step = atoi(row[1]);
 
 		int activityID = atoi(row[2]);
 
-		if((taskID <= 0) || (taskID >= MAXTASKS) || (activityID < 0) || (activityID >= MAXACTIVITIESPERTASK)) {
+		if ((taskID <= 0) || (taskID >= MAXTASKS) || (activityID < 0) || (activityID >= MAXACTIVITIESPERTASK)) {
 			// This shouldn't happen, as the SELECT is bounded by MAXTASKS
 			Log(Logs::General, Logs::Error,
 				"[TASKS]Task or Activity ID (%i, %i) out of range while loading "
-						"activities from database",
+				"activities from database",
 				taskID, activityID);
 			continue;
 		}
 
-		if(Tasks[taskID]==nullptr) {
+		if (Tasks[taskID] == nullptr) {
 			Log(Logs::General, Logs::Error,
 				"[TASKS]Activity for non-existent task (%i, %i) while loading activities from database",
 				taskID, activityID);
@@ -217,17 +217,17 @@ bool TaskManager::LoadTasks(int singleTask)
 
 		Tasks[taskID]->Activity[Tasks[taskID]->ActivityCount].StepNumber = step;
 
-		if(step != 0)
+		if (step != 0)
 			Tasks[taskID]->SequenceMode = ActivitiesStepped;
 
-		if(step >Tasks[taskID]->LastStep)
+		if (step > Tasks[taskID]->LastStep)
 			Tasks[taskID]->LastStep = step;
 
 		// Task Activities MUST be numbered sequentially from 0. If not, log an error
 		// and set the task to nullptr. Subsequent activities for this task will raise
 		// ERR_NOTASK errors.
 		// Change to (activityID != (Tasks[taskID]->ActivityCount + 1)) to index from 1
-		if(activityID != Tasks[taskID]->ActivityCount) {
+		if (activityID != Tasks[taskID]->ActivityCount) {
 			Log(Logs::General, Logs::Error,
 				"[TASKS]Activities for Task %i are not sequential starting at 0. Not loading task.", taskID,
 				activityID);
@@ -255,7 +255,7 @@ bool TaskManager::LoadTasks(int singleTask)
 
 		Log(Logs::General, Logs::Tasks,
 			"[GLOBALLOAD] Activity Slot %2i: ID %i for Task %5i. Type: %3i, GoalID: %8i, "
-					"GoalMethod: %i, GoalCount: %3i, ZoneID:%3i",
+			"GoalMethod: %i, GoalCount: %3i, ZoneID:%3i",
 			Tasks[taskID]->ActivityCount, activityID, taskID,
 			Tasks[taskID]->Activity[Tasks[taskID]->ActivityCount].Type,
 			Tasks[taskID]->Activity[Tasks[taskID]->ActivityCount].GoalID,
@@ -292,7 +292,7 @@ bool TaskManager::SaveClientState(Client *c, ClientTaskState *state) {
 
 	Log(Logs::Detail, Logs::Tasks,"TaskManager::SaveClientState for character ID %d", characterID);
 
-	if(state->ActiveTaskCount > 0) {
+	if(state->ActiveTaskCount > 0) { // TODO: tasks
 		for(int task=0; task<MAXACTIVEQUESTS; task++) {
 			int taskID = state->ActiveQuests[task].TaskID;
 			if(taskID==TASKSLOTEMPTY)
@@ -302,9 +302,9 @@ bool TaskManager::SaveClientState(Client *c, ClientTaskState *state) {
 
 				Log(Logs::General, Logs::Tasks, "[CLIENTSAVE] TaskManager::SaveClientState for character ID %d, Updating TaskIndex %i TaskID %i", characterID, task, taskID);
 
-				std::string query = StringFormat("REPLACE INTO character_tasks (charid, taskid, slot, acceptedtime) "
-														 "VALUES (%i, %i, %i, %i)",
-												 characterID, taskID, task, state->ActiveQuests[task].AcceptedTime);
+				std::string query = StringFormat("REPLACE INTO character_tasks (charid, taskid, slot, type, acceptedtime) "
+												 "VALUES (%i, %i, %i, %i, %i)",
+												 characterID, taskID, task, static_cast<int>(Tasks[taskID]->type), state->ActiveQuests[task].AcceptedTime);
 				auto results = database.QueryDatabase(query);
 				if (!results.Success()) {
 					Log(Logs::General, Logs::Error, ERR_MYSQLERROR, results.ErrorMessage().c_str());
@@ -316,7 +316,7 @@ bool TaskManager::SaveClientState(Client *c, ClientTaskState *state) {
 			}
 
 			std::string query = "REPLACE INTO character_activities (charid, taskid, activityid, donecount, completed) "
-					"VALUES ";
+								"VALUES ";
 
 			int updatedActivityCount = 0;
 			for(int activityIndex = 0; activityIndex<Tasks[taskID]->ActivityCount; ++activityIndex) {
@@ -365,7 +365,7 @@ bool TaskManager::SaveClientState(Client *c, ClientTaskState *state) {
 	}
 
 	const char* completedTaskQuery = "REPLACE INTO completed_tasks (charid, completedtime, taskid, activityid) "
-			"VALUES (%i, %i, %i, %i)";
+									 "VALUES (%i, %i, %i, %i)";
 
 	for(unsigned int i=state->LastCompletedTaskLoaded; i<state->CompletedTasks.size(); i++) {
 
@@ -448,8 +448,8 @@ bool TaskManager::LoadClientState(Client *c, ClientTaskState *state) {
 	Log(Logs::General, Logs::Tasks, "[CLIENTLOAD] TaskManager::LoadClientState for character ID %d", characterID);
 
 	std::string query = StringFormat("SELECT `taskid`, `slot`, `acceptedtime` "
-											 "FROM `character_tasks` "
-											 "WHERE `charid` = %i ORDER BY acceptedtime", characterID);
+									 "FROM `character_tasks` "
+									 "WHERE `charid` = %i ORDER BY acceptedtime", characterID);
 	auto results = database.QueryDatabase(query);
 	if (!results.Success()) {
 		Log(Logs::General, Logs::Error, "[TASKS]Error in TaskManager::LoadClientState load Tasks: %s", results.ErrorMessage().c_str());
@@ -494,9 +494,9 @@ bool TaskManager::LoadClientState(Client *c, ClientTaskState *state) {
 	Log(Logs::General, Logs::Tasks, "[CLIENTLOAD] LoadClientState. Loading activities for character ID %d", characterID);
 
 	query = StringFormat("SELECT `taskid`, `activityid`, `donecount`, `completed` "
-								 "FROM `character_activities` "
-								 "WHERE `charid` = %i "
-								 "ORDER BY `taskid` ASC, `activityid` ASC", characterID);
+						 "FROM `character_activities` "
+						 "WHERE `charid` = %i "
+						 "ORDER BY `taskid` ASC, `activityid` ASC", characterID);
 	results = database.QueryDatabase(query);
 	if (!results.Success()){
 		Log(Logs::General, Logs::Error, "[TASKS]Error in TaskManager::LoadClientState load Activities: %s", results.ErrorMessage().c_str());
@@ -547,8 +547,8 @@ bool TaskManager::LoadClientState(Client *c, ClientTaskState *state) {
 
 	if(RuleB(TaskSystem, RecordCompletedTasks)) {
 		query = StringFormat("SELECT `taskid`, `activityid`, `completedtime` "
-									 "FROM `completed_tasks` "
-									 "WHERE `charid` = %i ORDER BY completedtime, taskid, activityid",
+							 "FROM `completed_tasks` "
+							 "WHERE `charid` = %i ORDER BY completedtime, taskid, activityid",
 							 characterID);
 		results = database.QueryDatabase(query);
 		if (!results.Success()) {
@@ -615,8 +615,8 @@ bool TaskManager::LoadClientState(Client *c, ClientTaskState *state) {
 	}
 
 	query = StringFormat("SELECT `taskid` FROM character_enabledtasks "
-								 "WHERE `charid` = %i AND `taskid` >0 AND `taskid` < %i "
-								 "ORDER BY `taskid` ASC",
+						 "WHERE `charid` = %i AND `taskid` >0 AND `taskid` < %i "
+						 "ORDER BY `taskid` ASC",
 						 characterID, MAXTASKS);
 	results = database.QueryDatabase(query);
 	if (!results.Success()) {
@@ -638,7 +638,7 @@ bool TaskManager::LoadClientState(Client *c, ClientTaskState *state) {
 		if(taskID==TASKSLOTEMPTY) continue;
 		if(!Tasks[taskID]) {
 			c->Message(13, "Active Task Slot %i, references a task (%i), that does not exist. "
-					"Removing from memory. Contact a GM to resolve this.",i, taskID);
+						   "Removing from memory. Contact a GM to resolve this.",i, taskID);
 
 			Log(Logs::General, Logs::Error, "[TASKS]Character %i has task %i which does not exist.", characterID, taskID);
 			state->ActiveQuests[i].TaskID=TASKSLOTEMPTY;
@@ -649,20 +649,23 @@ bool TaskManager::LoadClientState(Client *c, ClientTaskState *state) {
 
 			if(state->ActiveQuests[i].Activity[j].ActivityID != j) {
 				c->Message(13, "Active Task %i, %s. Activity count does not match expected value."
-								   "Removing from memory. Contact a GM to resolve this.",
+							   "Removing from memory. Contact a GM to resolve this.",
 						   taskID, Tasks[taskID]->Title.c_str());
 
 				Log(Logs::General, Logs::Error, "[TASKS]Fatal error in character %i task state. Activity %i for "
-						"Task %i either missing from client state or from task.", characterID, j, taskID);
+												"Task %i either missing from client state or from task.", characterID, j, taskID);
 				state->ActiveQuests[i].TaskID=TASKSLOTEMPTY;
 				break;
 			}
 		}
 	}
 
-	for(int i=0; i<MAXACTIVEQUESTS; i++)
-		if(state->ActiveQuests[i].TaskID != TASKSLOTEMPTY)
-			state->UnlockActivities(characterID, i);
+	if (state->ActiveTask.TaskID != TASKSLOTEMPTY)
+		state->UnlockActivities(characterID, state->ActiveTask);
+	// TODO: shared
+	for (int i = 0; i < MAXACTIVEQUESTS; i++)
+		if (state->ActiveQuests[i].TaskID != TASKSLOTEMPTY)
+			state->UnlockActivities(characterID, state->ActiveQuests[i]);
 
 	Log(Logs::General, Logs::Tasks, "[CLIENTLOAD] LoadClientState for Character ID %d DONE!", characterID);
 	return true;
@@ -959,7 +962,7 @@ void TaskManager::TaskSetSelector(Client *c, ClientTaskState *state, Mob *mob, i
 	bool all_enabled = false;
 
 	// A TaskID of 0 in a TaskSet indicates that all Tasks in the set are enabled for all players.
-	if(TaskSets[TaskSetID][0] == 0) {
+	if (TaskSets[TaskSetID][0] == 0) {
 		Log(Logs::General, Logs::Tasks, "[UPDATE] TaskSets[%i][0] == 0. All Tasks in Set enabled.", TaskSetID);
 		all_enabled = true;
 	}
@@ -1021,7 +1024,6 @@ void TaskManager::TaskQuestSetSelector(Client *c, ClientTaskState *state, Mob *m
 
 	return;
 }
-
 
 void TaskManager::SendTaskSelector(Client *c, Mob *mob, int TaskCount, int *TaskList) {
 
@@ -1254,7 +1256,7 @@ void TaskManager::SendTaskSelectorNew(Client *c, Mob *mob, int TaskCount, int *T
 		//outapp->WriteString(itoa(Tasks[TaskList[i]]->Activity[ActivityID].ZoneID));
 		outapp->WriteString(StartZone);		// Zone number in ascii max length 64, can be multiple with separated by ;
 		outapp->WriteString("Text3 Test");	// max length 128 -- overrides the automatic descriptions
-		outapp->WriteString(StartZone);			// Zone number in ascii max length 64, probably can be separated by ; too, haven't found it used
+		outapp->WriteString(StartZone);		// Zone number in ascii max length 64, probably can be separated by ; too, haven't found it used
 	}
 
 	c->QueuePacket(outapp);
@@ -1314,10 +1316,14 @@ ClientTaskState::ClientTaskState() {
 	LastCompletedTaskLoaded = 0;
 	CheckedTouchActivities = false;
 
-	for(int i=0; i<MAXACTIVEQUESTS; i++)
+	for (int i = 0; i < MAXACTIVEQUESTS; i++) {
+		ActiveQuests[i].slot = i;
 		ActiveQuests[i].TaskID = TASKSLOTEMPTY;
+	}
 
+	ActiveTask.slot = 0;
 	ActiveTask.TaskID = TASKSLOTEMPTY;
+	// TODO: shared task
 }
 
 ClientTaskState::~ClientTaskState() {
@@ -1346,69 +1352,75 @@ static void DeleteCompletedTaskFromDatabase(int charID, int taskID) {
 	Log(Logs::General, Logs::Tasks, "[UPDATE] Delete query %s", query.c_str());
 }
 
-bool ClientTaskState::UnlockActivities(int CharID, int TaskIndex) {
-
+bool ClientTaskState::UnlockActivities(int CharID, ClientTaskInformation &task_info)
+{
 	bool AllActivitiesComplete = true;
 
-	TaskInformation* Task = taskmanager->Tasks[ActiveQuests[TaskIndex].TaskID];
+	TaskInformation* Task = taskmanager->Tasks[task_info.TaskID];
 
-	if(Task==nullptr) return true;
+	if (Task == nullptr)
+		return true;
 
 	// On loading the client state, all activities that are not completed, are
 	// marked as hidden. For Sequential (non-stepped) mode, we mark the first
 	// activity as active if not complete.
 	Log(Logs::General, Logs::Tasks, "[UPDATE] CharID: %i Task: %i Sequence mode is %i",
-		CharID, ActiveQuests[TaskIndex].TaskID, Task->SequenceMode);
-	if(Task->SequenceMode == ActivitiesSequential) {
+		CharID, task_info.TaskID, Task->SequenceMode);
 
-		if(ActiveQuests[TaskIndex].Activity[0].State != ActivityCompleted)
-			ActiveQuests[TaskIndex].Activity[0].State = ActivityActive;
+	if (Task->SequenceMode == ActivitiesSequential) {
+		if (task_info.Activity[0].State != ActivityCompleted)
+			task_info.Activity[0].State = ActivityActive;
 
 		// Enable the next Hidden task.
-		for(int i=0; i<Task->ActivityCount; i++) {
-			if((ActiveQuests[TaskIndex].Activity[i].State == ActivityActive) &&
-			   (!Task->Activity[i].Optional)) {
+		for (int i = 0; i < Task->ActivityCount; i++) {
+			if ((task_info.Activity[i].State == ActivityActive) &&
+				(!Task->Activity[i].Optional)) {
 				AllActivitiesComplete = false;
 				break;
 			}
-			if(ActiveQuests[TaskIndex].Activity[i].State == ActivityHidden) {
-				ActiveQuests[TaskIndex].Activity[i].State = ActivityActive;
+
+			if (task_info.Activity[i].State == ActivityHidden) {
+				task_info.Activity[i].State = ActivityActive;
 				AllActivitiesComplete = false;
 				break;
 			}
 		}
-		if(AllActivitiesComplete && RuleB(TaskSystem, RecordCompletedTasks)) {
-			if(RuleB(TasksSystem, KeepOneRecordPerCompletedTask)) {
+
+		if (AllActivitiesComplete && RuleB(TaskSystem, RecordCompletedTasks)) {
+			if (RuleB(TasksSystem, KeepOneRecordPerCompletedTask)) {
 				Log(Logs::General, Logs::Tasks, "[UPDATE] KeepOneRecord enabled");
 				auto Iterator = CompletedTasks.begin();
 				int ErasedElements = 0;
-				while(Iterator != CompletedTasks.end()) {
+				while (Iterator != CompletedTasks.end()) {
 					int TaskID = (*Iterator).TaskID;
-					if(TaskID == ActiveQuests[TaskIndex].TaskID) {
+					if (TaskID == task_info.TaskID) {
 						Iterator = CompletedTasks.erase(Iterator);
 						ErasedElements++;
-					}
-					else
+					} else
 						++Iterator;
 				}
-				Log(Logs::General, Logs::Tasks, "[UPDATE] Erased Element count is %i", ErasedElements);
-				if(ErasedElements) {
-					LastCompletedTaskLoaded -= ErasedElements;
-					DeleteCompletedTaskFromDatabase(CharID, ActiveQuests[TaskIndex].TaskID);
-				}
 
+				Log(Logs::General, Logs::Tasks, "[UPDATE] Erased Element count is %i", ErasedElements);
+
+				if (ErasedElements) {
+					LastCompletedTaskLoaded -= ErasedElements;
+					DeleteCompletedTaskFromDatabase(CharID, task_info.TaskID);
+				}
 			}
 
 			CompletedTaskInformation cti;
-			cti.TaskID = ActiveQuests[TaskIndex].TaskID;
+			cti.TaskID = task_info.TaskID;
 			cti.CompletedTime = time(nullptr);
 
-			for(int i=0; i<Task->ActivityCount; i++)
-				cti.ActivityDone[i] = (ActiveQuests[TaskIndex].Activity[i].State == ActivityCompleted);
+			for (int i = 0; i < Task->ActivityCount; i++)
+				cti.ActivityDone[i] = (task_info.Activity[i].State == ActivityCompleted);
 
 			CompletedTasks.push_back(cti);
 		}
-		Log(Logs::General, Logs::Tasks, "[UPDATE] Returning sequential task, AllActivitiesComplete is %i", AllActivitiesComplete);
+
+		Log(Logs::General, Logs::Tasks, "[UPDATE] Returning sequential task, AllActivitiesComplete is %i",
+			AllActivitiesComplete);
+
 		return AllActivitiesComplete;
 	}
 
@@ -1417,66 +1429,69 @@ bool ClientTaskState::UnlockActivities(int CharID, int TaskIndex) {
 
 	bool CurrentStepComplete = true;
 
-	Log(Logs::General, Logs::Tasks, "[UPDATE] Current Step is %i, Last Step is %i", ActiveQuests[TaskIndex].CurrentStep, Task->LastStep);
+	Log(Logs::General, Logs::Tasks, "[UPDATE] Current Step is %i, Last Step is %i", task_info.CurrentStep,
+		Task->LastStep);
 	// If CurrentStep is -1, this is the first call to this method since loading the
 	// client state. Unlock all activities with a step number of 0
-	if(ActiveQuests[TaskIndex].CurrentStep == -1) {
-		for(int i=0; i<Task->ActivityCount; i++) {
 
-			if((Task->Activity[i].StepNumber == 0) &&
-			   (ActiveQuests[TaskIndex].Activity[i].State == ActivityHidden)) {
-				ActiveQuests[TaskIndex].Activity[i].State = ActivityActive;
-				//ActiveQuests[TaskIndex].Activity[i].Updated=true;
+	if (task_info.CurrentStep == -1) {
+		for (int i = 0; i < Task->ActivityCount; i++) {
+			if (Task->Activity[i].StepNumber == 0 && task_info.Activity[i].State == ActivityHidden) {
+				task_info.Activity[i].State = ActivityActive;
+				// task_info.Activity[i].Updated=true;
 			}
 		}
-		ActiveQuests[TaskIndex].CurrentStep = 0;
+		task_info.CurrentStep = 0;
 	}
 
-	for(int Step=ActiveQuests[TaskIndex].CurrentStep; Step<=Task->LastStep; Step++) {
-		for(int Activity=0; Activity<Task->ActivityCount; Activity++) {
-			if(Task->Activity[Activity].StepNumber == (int)ActiveQuests[TaskIndex].CurrentStep) {
-				if((ActiveQuests[TaskIndex].Activity[Activity].State != ActivityCompleted) &&
-				   (!Task->Activity[Activity].Optional)) {
+	for (int Step = task_info.CurrentStep; Step <= Task->LastStep; Step++) {
+		for (int Activity = 0; Activity < Task->ActivityCount; Activity++) {
+			if (Task->Activity[Activity].StepNumber == (int)task_info.CurrentStep) {
+				if ((task_info.Activity[Activity].State != ActivityCompleted) &&
+					(!Task->Activity[Activity].Optional)) {
 					CurrentStepComplete = false;
 					AllActivitiesComplete = false;
 					break;
 				}
 			}
 		}
-		if(!CurrentStepComplete) break;
-		ActiveQuests[TaskIndex].CurrentStep++;
+		if (!CurrentStepComplete)
+			break;
+		task_info.CurrentStep++;
 	}
 
-	if(AllActivitiesComplete) {
-		if(RuleB(TaskSystem, RecordCompletedTasks)) {
+	if (AllActivitiesComplete) {
+		if (RuleB(TaskSystem, RecordCompletedTasks)) {
 			// If we are only keeping one completed record per task, and the player has done
 			// the same task again, erase the previous completed entry for this task.
-			if(RuleB(TasksSystem, KeepOneRecordPerCompletedTask)) {
+			if (RuleB(TasksSystem, KeepOneRecordPerCompletedTask)) {
 				Log(Logs::General, Logs::Tasks, "[UPDATE] KeepOneRecord enabled");
 				auto Iterator = CompletedTasks.begin();
 				int ErasedElements = 0;
-				while(Iterator != CompletedTasks.end()) {
+
+				while (Iterator != CompletedTasks.end()) {
 					int TaskID = (*Iterator).TaskID;
-					if(TaskID == ActiveQuests[TaskIndex].TaskID) {
+					if (TaskID == task_info.TaskID) {
 						Iterator = CompletedTasks.erase(Iterator);
 						ErasedElements++;
-					}
-					else
+					} else
 						++Iterator;
 				}
-				Log(Logs::General, Logs::Tasks, "[UPDATE] Erased Element count is %i", ErasedElements);
-				if(ErasedElements) {
-					LastCompletedTaskLoaded -= ErasedElements;
-					DeleteCompletedTaskFromDatabase(CharID, ActiveQuests[TaskIndex].TaskID);
-				}
 
+				Log(Logs::General, Logs::Tasks, "[UPDATE] Erased Element count is %i", ErasedElements);
+
+				if (ErasedElements) {
+					LastCompletedTaskLoaded -= ErasedElements;
+					DeleteCompletedTaskFromDatabase(CharID, task_info.TaskID);
+				}
 			}
+
 			CompletedTaskInformation cti;
-			cti.TaskID = ActiveQuests[TaskIndex].TaskID;
+			cti.TaskID = task_info.TaskID;
 			cti.CompletedTime = time(nullptr);
 
-			for(int i=0; i<Task->ActivityCount; i++)
-				cti.ActivityDone[i] = (ActiveQuests[TaskIndex].Activity[i].State == ActivityCompleted);
+			for (int i = 0; i < Task->ActivityCount; i++)
+				cti.ActivityDone[i] = (task_info.Activity[i].State == ActivityCompleted);
 
 			CompletedTasks.push_back(cti);
 		}
@@ -1485,18 +1500,16 @@ bool ClientTaskState::UnlockActivities(int CharID, int TaskIndex) {
 
 	// Mark all non-completed tasks in the current step as active
 	//
-	for(int Activity=0; Activity<Task->ActivityCount; Activity++) {
-		if((Task->Activity[Activity].StepNumber == (int)ActiveQuests[TaskIndex].CurrentStep) &&
-		   (ActiveQuests[TaskIndex].Activity[Activity].State == ActivityHidden)) {
-			ActiveQuests[TaskIndex].Activity[Activity].State = ActivityActive;
-			ActiveQuests[TaskIndex].Activity[Activity].Updated=true;
+	for (int Activity = 0; Activity < Task->ActivityCount; Activity++) {
+		if ((Task->Activity[Activity].StepNumber == (int)task_info.CurrentStep) &&
+			(task_info.Activity[Activity].State == ActivityHidden)) {
+			task_info.Activity[Activity].State = ActivityActive;
+			task_info.Activity[Activity].Updated = true;
 		}
 	}
 
 	return false;
-
 }
-
 
 void ClientTaskState::UpdateTasksOnKill(Client *c, int NPCTypeID) {
 
@@ -1870,12 +1883,12 @@ void ClientTaskState::IncrementDoneCount(Client *c, TaskInformation* Task, int T
 		// Flag the activity as complete
 		ActiveQuests[TaskIndex].Activity[ActivityID].State = ActivityCompleted;
 		// Unlock subsequent activities for this task
-		bool TaskComplete = UnlockActivities(c->CharacterID(), TaskIndex);
+		bool TaskComplete = UnlockActivities(c->CharacterID(), ActiveQuests[TaskIndex]); // TODO: fix this function
 		Log(Logs::General, Logs::Tasks, "[UPDATE] TaskCompleted is %i", TaskComplete);
 		// and by the 'Task Stage Completed' message
 		c->SendTaskActivityComplete(ActiveQuests[TaskIndex].TaskID, ActivityID, TaskIndex);
 		// Send the updated task/activity list to the client
-		taskmanager->SendSingleActiveTaskToClient(c, TaskIndex, TaskComplete, false);
+		taskmanager->SendSingleActiveTaskToClient(c, ActiveQuests[TaskIndex], TaskComplete, false);
 		// Inform the client the task has been updated, both by a chat message
 		c->Message(0, "Your task '%s' has been updated.", Task->Title.c_str());
 
@@ -1912,7 +1925,7 @@ void ClientTaskState::IncrementDoneCount(Client *c, TaskInformation* Task, int T
 			c->SendTaskActivityComplete(ActiveQuests[TaskIndex].TaskID, 0, TaskIndex, false);
 			taskmanager->SaveClientState(c, this);
 			//c->SendTaskComplete(TaskIndex);
-			c->CancelTask(TaskIndex);
+			c->CancelTask(TaskIndex, TaskType::Quest); // TODO: fix
 			//if(Task->RewardMethod != METHODQUEST) RewardTask(c, Task);
 			// If Experience and/or cash rewards are set, reward them from the task even if RewardMethod is METHODQUEST
 			RewardTask(c, Task);
@@ -2038,7 +2051,7 @@ bool ClientTaskState::IsTaskActive(int TaskID)
 	if (ActiveTaskCount == 0 || TaskID == 0)
 		return false;
 
-	for(int i=0; i<MAXACTIVEQUESTS; i++) {
+	for (int i = 0; i < MAXACTIVEQUESTS; i++) {
 		if (ActiveQuests[i].TaskID == TaskID)
 			return true;
 	}
@@ -2059,7 +2072,7 @@ void ClientTaskState::FailTask(Client *c, int TaskID) {
 		if(ActiveQuests[i].TaskID==TaskID) {
 			c->SendTaskFailed(ActiveQuests[i].TaskID, i);
 			// Remove the task from the client
-			c->CancelTask(i);
+			c->CancelTask(i, TaskType::Quest); // TODO: fix
 			return;
 		}
 
@@ -2283,7 +2296,7 @@ void ClientTaskState::TaskPeriodicChecks(Client *c) {
 			// Send Red Task Failed Message
 			c->SendTaskFailed(ActiveQuests[i].TaskID, i);
 			// Remove the task from the client
-			c->CancelTask(i);
+			c->CancelTask(i, TaskType::Quest); // TODO: Fix
 			// It is a conscious decision to only fail one task per call to this method,
 			// otherwise the player will not see all the failed messages where multiple
 			// tasks fail at the same time.
@@ -2537,7 +2550,7 @@ void TaskManager::SendTaskActivityShort(Client *c, int TaskID, int ActivityID, i
 	{
 		auto outapp = new EQApplicationPacket(OP_TaskActivity, 25);
 		outapp->WriteUInt32(ClientTaskIndex);
-		outapp->WriteUInt32(2);
+		outapp->WriteUInt32(static_cast<uint32>(Tasks[TaskID]->type));
 		outapp->WriteUInt32(TaskID);
 		outapp->WriteUInt32(ActivityID);
 		outapp->WriteUInt32(0);
@@ -2553,7 +2566,7 @@ void TaskManager::SendTaskActivityShort(Client *c, int TaskID, int ActivityID, i
 	tass = (TaskActivityShort_Struct*)outapp->pBuffer;
 
 	tass->TaskSequenceNumber = ClientTaskIndex;
-	tass->unknown2 = 0x00000002;
+	tass->unknown2 = static_cast<uint32>(Tasks[TaskID]->type);
 	tass->TaskID = TaskID;
 	tass->ActivityID = ActivityID;
 	tass->unknown3 = 0x000000;
@@ -2670,7 +2683,7 @@ void TaskManager::SendTaskActivityNew(Client *c, int TaskID, int ActivityID, int
 	auto outapp = new EQApplicationPacket(OP_TaskActivity, PacketLength);
 
 	outapp->WriteUInt32(ClientTaskIndex);	// TaskSequenceNumber
-	outapp->WriteUInt32(2);		// unknown2
+	outapp->WriteUInt32(static_cast<uint32>(Tasks[TaskID]->type));		// task type
 	outapp->WriteUInt32(TaskID);
 	outapp->WriteUInt32(ActivityID);
 	outapp->WriteUInt32(0);		// unknown3
@@ -2688,7 +2701,7 @@ void TaskManager::SendTaskActivityNew(Client *c, int TaskID, int ActivityID, int
 	// One of these unknown fields maybe related to the 'Use On' activity types
 	outapp->WriteString(Tasks[TaskID]->Activity[ActivityID].Text1.c_str());
 
-	outapp->WriteUInt32(Tasks[TaskID]->Activity[ActivityID].Text2.size() + 1);	// String Length - Add in null terminator
+	outapp->WriteUInt32(Tasks[TaskID]->Activity[ActivityID].Text2.length() + 1);	// String Length - Add in null terminator
 	outapp->WriteString(Tasks[TaskID]->Activity[ActivityID].Text2.c_str());
 
 	// Goal Count
@@ -2731,15 +2744,18 @@ void TaskManager::SendTaskActivityNew(Client *c, int TaskID, int ActivityID, int
 
 }
 
-void TaskManager::SendActiveTasksToClient(Client *c, bool TaskComplete) {
+void TaskManager::SendActiveTasksToClient(Client *c, bool TaskComplete)
+{
+	auto state = c->GetTaskState();
+	if (!state)
+		return;
 
-	//for(int TaskIndex=0; TaskIndex<c->GetActiveTaskCount(); TaskIndex++) {
-	for(int TaskIndex=0; TaskIndex<MAXACTIVEQUESTS; TaskIndex++) {
+	for (int TaskIndex=0; TaskIndex<MAXACTIVEQUESTS; TaskIndex++) {
 		int TaskID = c->GetActiveTaskID(TaskIndex);
 		if((TaskID==0) || (Tasks[TaskID] ==0)) continue;
 		int StartTime = c->GetTaskStartTime(TaskIndex);
 
-		SendActiveTaskDescription(c, TaskID, TaskIndex, StartTime, Tasks[TaskID]->Duration, false);
+		SendActiveTaskDescription(c, TaskID, state->ActiveQuests[TaskIndex], StartTime, Tasks[TaskID]->Duration, false);
 		Log(Logs::General, Logs::Tasks, "[UPDATE] SendActiveTasksToClient: Task %i, Activities: %i", TaskID, GetActivityCount(TaskID));
 
 		int Sequence = 0;
@@ -2765,62 +2781,54 @@ void TaskManager::SendActiveTasksToClient(Client *c, bool TaskComplete) {
 	}
 }
 
+void TaskManager::SendSingleActiveTaskToClient(Client *c, ClientTaskInformation &task_info, bool TaskComplete,
+											   bool BringUpTaskJournal)
+{
+	int TaskID = task_info.TaskID;
 
-void TaskManager::SendSingleActiveTaskToClient(Client *c, int TaskIndex, bool TaskComplete, bool BringUpTaskJournal) {
+	if (TaskID == 0 || Tasks[TaskID] == nullptr)
+		return;
 
-	if((TaskIndex < 0) || (TaskIndex >= MAXACTIVEQUESTS)) return;
-
-	int TaskID = c->GetActiveTaskID(TaskIndex);
-
-	if((TaskID==0) || (Tasks[TaskID] ==0)) return;
-
-	int StartTime = c->GetTaskStartTime(TaskIndex);
-	SendActiveTaskDescription(c, TaskID, TaskIndex, StartTime, Tasks[TaskID]->Duration, BringUpTaskJournal);
+	int StartTime = task_info.AcceptedTime;
+	SendActiveTaskDescription(c, TaskID, task_info, StartTime, Tasks[TaskID]->Duration, BringUpTaskJournal);
 	Log(Logs::General, Logs::Tasks, "[UPDATE] SendSingleActiveTasksToClient: Task %i, Activities: %i", TaskID, GetActivityCount(TaskID));
 
-	int Sequence = 0;
-
-	for(int Activity=0; Activity<GetActivityCount(TaskID); Activity++) {
-		if(c->GetTaskActivityState(TaskIndex, Activity) != ActivityHidden) {
-			Log(Logs::General, Logs::Tasks, "[UPDATE]   Long: %i, %i, %i Complete=%i", TaskID, Activity, TaskIndex, TaskComplete);
-			if(Activity==GetActivityCount(TaskID)-1)
-				SendTaskActivityLong(c, TaskID, Activity, TaskIndex,
+	for (int Activity = 0; Activity < GetActivityCount(TaskID); Activity++) {
+		if(task_info.Activity[Activity].State != ActivityHidden) {
+			Log(Logs::General, Logs::Tasks, "[UPDATE]   Long: %i, %i Complete=%i", TaskID, Activity, TaskComplete);
+			if (Activity == GetActivityCount(TaskID) - 1)
+				SendTaskActivityLong(c, TaskID, Activity, task_info.slot,
 									 Tasks[TaskID]->Activity[Activity].Optional, TaskComplete);
 			else
-				SendTaskActivityLong(c, TaskID, Activity, TaskIndex,
+				SendTaskActivityLong(c, TaskID, Activity, task_info.slot,
 									 Tasks[TaskID]->Activity[Activity].Optional, 0);
+		} else {
+			Log(Logs::General, Logs::Tasks, "[UPDATE]   Short: %i, %i", TaskID, Activity);
+			SendTaskActivityShort(c, TaskID, Activity, task_info.slot);
 		}
-		else {
-			Log(Logs::General, Logs::Tasks, "[UPDATE]   Short: %i, %i, %i", TaskID, Activity, TaskIndex);
-			SendTaskActivityShort(c, TaskID, Activity, TaskIndex);
-		}
-		Sequence++;
 	}
 }
 
-void TaskManager::SendActiveTaskDescription(Client *c, int TaskID, int SequenceNumber, int StartTime, int Duration, bool BringUpTaskJournal)
+void TaskManager::SendActiveTaskDescription(Client *c, int TaskID, ClientTaskInformation &task_info, int StartTime, int Duration, bool BringUpTaskJournal)
 {
 	if ((TaskID < 1) || (TaskID >= MAXTASKS) || !Tasks[TaskID])
 		return;
 
-	int PacketLength = sizeof(TaskDescriptionHeader_Struct) + Tasks[TaskID]->Title.size() + 1
-					   + sizeof(TaskDescriptionData1_Struct) + Tasks[TaskID]->Description.size() + 1
+	int PacketLength = sizeof(TaskDescriptionHeader_Struct) + Tasks[TaskID]->Title.length() + 1
+					   + sizeof(TaskDescriptionData1_Struct) + Tasks[TaskID]->Description.length() + 1
 					   + sizeof(TaskDescriptionData2_Struct) + 1 + sizeof(TaskDescriptionTrailer_Struct);
-
-	std::string reward_text;
-	int ItemID = 0;
 
 	// If there is an item make the Reward text into a link to the item (only the first item if a list
 	// is specified). I have been unable to get multiple item links to work.
 	//
-	if(Tasks[TaskID]->RewardID) {
+	if(Tasks[TaskID]->RewardID && Tasks[TaskID]->item_link.empty()) {
+		int ItemID = 0;
 		// If the reward is a list of items, and the first entry on the list is valid
-		if(Tasks[TaskID]->RewardMethod==METHODSINGLEID) {
+		if (Tasks[TaskID]->RewardMethod == METHODSINGLEID) {
 			ItemID = Tasks[TaskID]->RewardID;
-		}
-		else if(Tasks[TaskID]->RewardMethod==METHODLIST) {
+		} else if (Tasks[TaskID]->RewardMethod == METHODLIST) {
 			ItemID = GoalListManager.GetFirstEntry(Tasks[TaskID]->RewardID);
-			if(ItemID < 0)
+			if (ItemID < 0)
 				ItemID = 0;
 		}
 
@@ -2831,21 +2839,11 @@ void TaskManager::SendActiveTaskDescription(Client *c, int TaskID, int SequenceN
 			linker.SetLinkType(EQEmu::saylink::SayLinkItemData);
 			linker.SetItemData(reward_item);
 			linker.SetTaskUse();
-			if (!Tasks[TaskID]->Reward.empty())
-				linker.SetProxyText(Tasks[TaskID]->Reward.c_str());
-
-			auto reward_link = linker.GenerateLink();
-			reward_text.append(reward_link);
+			Tasks[TaskID]->item_link = linker.GenerateLink();
 		}
-		else {
-			reward_text.append(Tasks[TaskID]->Reward);
-		}
+	}
 
-	}
-	else {
-		reward_text.append(Tasks[TaskID]->Reward);
-	}
-	PacketLength += reward_text.length() + 1;
+	PacketLength += Tasks[TaskID]->Reward.length() + 1 + Tasks[TaskID]->item_link.length() + 1;
 
 	char *Ptr;
 	TaskDescriptionHeader_Struct* tdh;
@@ -2857,60 +2855,57 @@ void TaskManager::SendActiveTaskDescription(Client *c, int TaskID, int SequenceN
 
 	tdh = (TaskDescriptionHeader_Struct*)outapp->pBuffer;
 
-	tdh->SequenceNumber = SequenceNumber;
+	tdh->SequenceNumber = task_info.slot;
 	tdh->TaskID = TaskID;
-
-	if(BringUpTaskJournal)
-		tdh->unknown2 = 0x00000201;
-	else
-		tdh->unknown2 = 0x00000200;
-	//tdh->unknown2 = 0x00000100; // This makes the Task Description have an S instead of Q, but the description doesn't show
-
-	tdh->unknown3 = 0x00000000;
-	tdh->unknown4 = 0x00;
+	tdh->open_window = BringUpTaskJournal;
+	tdh->task_type = static_cast<uint32>(Tasks[TaskID]->type);
+	tdh->reward_type = 0; // TODO: 4 says Radiant Crystals else Ebon Crystals when shared task
 
 	Ptr = (char *) tdh + sizeof(TaskDescriptionHeader_Struct);
 
 	sprintf(Ptr, "%s", Tasks[TaskID]->Title.c_str());
-	Ptr = Ptr + strlen(Ptr) + 1;
+	Ptr += Tasks[TaskID]->Title.length() + 1;
 
 	tdd1 = (TaskDescriptionData1_Struct*)Ptr;
 
 	tdd1->Duration = Duration;
-	tdd1->unknown2 = 0x00000000;
+	tdd1->dur_code = static_cast<uint32>(Tasks[TaskID]->dur_code);
 
 	tdd1->StartTime = StartTime;
 
 	Ptr = (char *) tdd1 + sizeof(TaskDescriptionData1_Struct);
 
 	sprintf(Ptr, "%s", Tasks[TaskID]->Description.c_str());
-	Ptr = Ptr + strlen(Ptr) + 1;
+	Ptr += Tasks[TaskID]->Description.length() + 1;
 
 	tdd2 = (TaskDescriptionData2_Struct*)Ptr;
 
-	// This next field may not be a reward count. It is always 1 in the packets I have seen. Setting it to 2 and trying
-	// to include multiple item links has so far proven futile. Setting it to 0 ends the packet after the next byte.
-	tdd2->RewardCount = 1;
+	// we have this reward stuff!
+	// if we ever don't hardcode this, TaskDescriptionTrailer_Struct will need to be fixed since
+	// "has_reward_selection" is after this bool! Smaller packet when this is 0
+	tdd2->has_rewards = 1;
 
-	if(Tasks[TaskID]->XPReward)
-		tdd2->unknown1 = 0x00000100;
-	else
-		tdd2->unknown1 = 0x00000000;
+	tdd2->coin_reward = Tasks[TaskID]->CashReward;
+	tdd2->xp_reward = Tasks[TaskID]->XPReward ? 1 : 0; // just booled
+	tdd2->unknown3 = 0; // STRONGLY suspect this is faction reward, also just booled to hide details?
 
-	tdd2->unknown2 = 0x00000000;
-	tdd2->unknown3 = 0x0000;
 	Ptr = (char *) tdd2 + sizeof(TaskDescriptionData2_Struct);
 
-	sprintf(Ptr, "%s", reward_text.c_str());
-	Ptr = Ptr + strlen(Ptr) + 1;
+	// we actually have 2 strings here. One is max length 96 and not parsed for item links
+	// We actually skipped past that string incorrectly before, so TODO: fix item link string
+	sprintf(Ptr, "%s", Tasks[TaskID]->Reward.c_str());
+	Ptr += Tasks[TaskID]->Reward.length() + 1;
+
+	// second string is parsed for item links
+	sprintf(Ptr, "%s", Tasks[TaskID]->item_link.c_str());
+	Ptr += Tasks[TaskID]->item_link.length() + 1;
 
 	tdt = (TaskDescriptionTrailer_Struct*)Ptr;
-	tdt->Points = 0x00000000; // Points Count
-
+	tdt->Points = 0x00000000; // Points Count TODO: this does have a visible affect on the client ...
+	tdt->has_reward_selection = 0; // TODO: new rewards window
 
 	c->QueuePacket(outapp);
 	safe_delete(outapp);
-
 }
 
 bool ClientTaskState::IsTaskActivityCompleted(int index, int ActivityID) {
@@ -2962,21 +2957,25 @@ void ClientTaskState::CancelAllTasks(Client *c) {
 	// It removes tasks from the in-game client state ready for them to be
 	// resent to the client, in case an updated task fails to load
 
+	CancelTask(c, 0, TaskType::Task, false);
+	ActiveTask.TaskID = TASKSLOTEMPTY;
+
 	for(int i=0; i<MAXACTIVEQUESTS; i++)
 		if(ActiveQuests[i].TaskID != TASKSLOTEMPTY) {
-			CancelTask(c, i, false);
+			CancelTask(c, i, TaskType::Quest, false);
 			ActiveQuests[i].TaskID = TASKSLOTEMPTY;
 		}
 
-
+	// TODO: shared
 }
-void ClientTaskState::CancelTask(Client *c, int SequenceNumber, bool RemoveFromDB) {
 
+void ClientTaskState::CancelTask(Client *c, int SequenceNumber, TaskType type, bool RemoveFromDB)
+{
 	auto outapp = new EQApplicationPacket(OP_CancelTask, sizeof(CancelTask_Struct));
 
 	CancelTask_Struct* cts = (CancelTask_Struct*)outapp->pBuffer;
 	cts->SequenceNumber = SequenceNumber;
-	cts->unknown4 = 0x00000002;
+	cts->type = static_cast<uint32>(type);
 
 	Log(Logs::General, Logs::Tasks, "[UPDATE] CancelTask");
 
@@ -2984,11 +2983,11 @@ void ClientTaskState::CancelTask(Client *c, int SequenceNumber, bool RemoveFromD
 	safe_delete(outapp);
 
 	if(RemoveFromDB)
-		RemoveTask(c, SequenceNumber);
+		RemoveTask(c, SequenceNumber, type);
 }
 
-void ClientTaskState::RemoveTask(Client *c, int sequenceNumber) {
-
+void ClientTaskState::RemoveTask(Client *c, int sequenceNumber, TaskType type)
+{
 	int characterID = c->CharacterID();
 	Log(Logs::General, Logs::Tasks, "[UPDATE] ClientTaskState Cancel Task %i ", sequenceNumber);
 
@@ -3001,104 +3000,151 @@ void ClientTaskState::RemoveTask(Client *c, int sequenceNumber) {
 	}
 	Log(Logs::General, Logs::Tasks, "[UPDATE] CancelTask: %s", query.c_str());
 
-	query = StringFormat("DELETE FROM character_tasks WHERE charid=%i AND taskid = %i",
-						 characterID, ActiveQuests[sequenceNumber].TaskID);
+	query = StringFormat("DELETE FROM character_tasks WHERE charid=%i AND taskid = %i AND type=%i",
+						 characterID, ActiveQuests[sequenceNumber].TaskID, static_cast<int>(type));
 	results = database.QueryDatabase(query);
 	if(!results.Success())
 		Log(Logs::General, Logs::Error, "[TASKS] Error in CientTaskState::CancelTask %s", results.ErrorMessage().c_str());
 
 	Log(Logs::General, Logs::Tasks, "[UPDATE] CancelTask: %s", query.c_str());
 
-	ActiveQuests[sequenceNumber].TaskID = TASKSLOTEMPTY;
-	ActiveTaskCount--;
+	switch (type) {
+		case TaskType::Task:
+			ActiveTask.TaskID = TASKSLOTEMPTY;
+			break;
+		case TaskType::Shared:
+			break; // TODO: shared tasks
+		case TaskType::Quest:
+			ActiveQuests[sequenceNumber].TaskID = TASKSLOTEMPTY;
+			ActiveTaskCount--;
+			break;
+		default:
+			break;
+	}
 }
 
 
-void ClientTaskState::AcceptNewTask(Client *c, int TaskID, int NPCID, bool enforce_level_requirement) {
-
-	if(!taskmanager || TaskID<0 || TaskID>=MAXTASKS) {
+void ClientTaskState::AcceptNewTask(Client *c, int TaskID, int NPCID, bool enforce_level_requirement)
+{
+	if (!taskmanager || TaskID < 0 || TaskID >= MAXTASKS) {
 		c->Message(13, "Task system not functioning, or TaskID %i out of range.", TaskID);
 		return;
-
 	}
 
-	if(taskmanager->Tasks[TaskID] == nullptr) {
+	auto task = taskmanager->Tasks[TaskID];
+
+	if (task == nullptr) {
 		c->Message(13, "Invalid TaskID %i", TaskID);
 		return;
 	}
 
-	if(ActiveTaskCount==MAXACTIVEQUESTS) {
+	bool max_tasks = false;
+
+	switch (task->type) {
+		case TaskType::Task:
+			if (ActiveTask.TaskID != TASKSLOTEMPTY)
+				max_tasks = true;
+			break;
+		case TaskType::Shared: // TODO: shared tasks
+			// if (something)
+			max_tasks = true;
+			break;
+		case TaskType::Quest:
+			if (ActiveTaskCount == MAXACTIVEQUESTS)
+				max_tasks = true;
+			break;
+		default:
+			break;
+	}
+
+	if (max_tasks) {
 		c->Message(13, "You already have the maximum allowable number of active tasks (%i)", MAXACTIVEQUESTS);
 		return;
 	}
 
-	for(int i=0; i<MAXACTIVEQUESTS; i++) {
-		if(ActiveQuests[i].TaskID==TaskID) {
-			c->Message(13, "You have already been assigned this task.");
-			return;
+	// only Quests can have more than one, so don't need to check others
+	if (task->type == TaskType::Quest) {
+		for (int i = 0; i < MAXACTIVEQUESTS; i++) {
+			if (ActiveQuests[i].TaskID == TaskID) {
+				c->Message(13, "You have already been assigned this task.");
+				return;
+			}
 		}
 	}
 
-	if (enforce_level_requirement && !taskmanager->AppropriateLevel(TaskID, c->GetLevel()))
-	{
+	if (enforce_level_requirement && !taskmanager->AppropriateLevel(TaskID, c->GetLevel())) {
 		c->Message(13, "You are outside the level range of this task.");
 		return;
 	}
 
-	if(!taskmanager->IsTaskRepeatable(TaskID) && IsTaskCompleted(TaskID)) return;
+	if (!taskmanager->IsTaskRepeatable(TaskID) && IsTaskCompleted(TaskID))
+		return;
 
 	// We do it this way, because when the Client cancels a task, it retains the sequence number of the remaining
 	// tasks in it's window, until something causes the TaskDescription packets to be sent again. We could just
 	// resend all the active task data to the client when it cancels a task, but that could be construed as a
 	// waste of bandwidth.
 	//
-	int FreeSlot = -1;
-	for(int i=0; i<MAXACTIVEQUESTS; i++) {
-		Log(Logs::General, Logs::Tasks, "[UPDATE] ClientTaskState Looking for free slot in slot %i, found TaskID of %i",
-			i, ActiveQuests[i].TaskID);
-		if(ActiveQuests[i].TaskID == 0) {
-			FreeSlot = i;
+	ClientTaskInformation *active_slot = nullptr;
+	switch (task->type) {
+		case TaskType::Task:
+			active_slot = &ActiveTask;
 			break;
-		}
+		case TaskType::Shared: // TODO: shared
+			active_slot = nullptr;
+			break;
+		case TaskType::Quest:
+			for (int i = 0; i < MAXACTIVEQUESTS; i++) {
+				Log(Logs::General, Logs::Tasks,
+					"[UPDATE] ClientTaskState Looking for free slot in slot %i, found TaskID of %i", i,
+					ActiveQuests[i].TaskID);
+				if (ActiveQuests[i].TaskID == 0) {
+					active_slot = &ActiveQuests[i];
+					break;
+				}
+			}
+			break;
+		default:
+			break;
 	}
 
 	// This shouldn't happen unless there is a bug in the handling of ActiveTaskCount somewhere
-	if(FreeSlot == -1) {
+	if (active_slot == nullptr) {
 		c->Message(13, "You already have the maximum allowable number of active tasks (%i)", MAXACTIVEQUESTS);
 		return;
 	}
 
+	active_slot->TaskID = TaskID;
+	active_slot->AcceptedTime = time(nullptr);
+	active_slot->Updated = true;
+	active_slot->CurrentStep = -1;
 
-	ActiveQuests[FreeSlot].TaskID = TaskID;
-	ActiveQuests[FreeSlot].AcceptedTime = time(nullptr);
-	ActiveQuests[FreeSlot].Updated = true;
-	ActiveQuests[FreeSlot].CurrentStep = -1;
-
-	for(int i=0; i<taskmanager->Tasks[TaskID]->ActivityCount; i++) {
-		ActiveQuests[FreeSlot].Activity[i].ActivityID = i;
-		ActiveQuests[FreeSlot].Activity[i].DoneCount = 0;
-		ActiveQuests[FreeSlot].Activity[i].State = ActivityHidden;
-		ActiveQuests[FreeSlot].Activity[i].Updated = true;
+	for (int i = 0; i < taskmanager->Tasks[TaskID]->ActivityCount; i++) {
+		active_slot->Activity[i].ActivityID = i;
+		active_slot->Activity[i].DoneCount = 0;
+		active_slot->Activity[i].State = ActivityHidden;
+		active_slot->Activity[i].Updated = true;
 	}
-	UnlockActivities(c->CharacterID(), FreeSlot);
-	ActiveTaskCount++;
-	taskmanager->SendSingleActiveTaskToClient(c, FreeSlot, false, true);
+
+	UnlockActivities(c->CharacterID(), *active_slot);
+
+	if (task->type == TaskType::Quest)
+		ActiveTaskCount++;
+
+	taskmanager->SendSingleActiveTaskToClient(c, *active_slot, false, true);
 	c->Message(0, "You have been assigned the task '%s'.", taskmanager->Tasks[TaskID]->Title.c_str());
 
-	char *buf = 0;
-	MakeAnyLenString(&buf, "%d", TaskID);
+	std::string buf = std::to_string(TaskID);
 
 	NPC *npc = entity_list.GetID(NPCID)->CastToNPC();
 	if(!npc) {
 		c->Message(clientMessageYellow, "Task Giver ID is %i", NPCID);
 		c->Message(clientMessageError, "Unable to find NPC to send EVENT_TASKACCEPTED to. Report this bug.");
-		safe_delete_array(buf);
 		return;
 	}
-	taskmanager->SaveClientState(c, this);
-	parse->EventNPC(EVENT_TASK_ACCEPTED, npc, c, buf, 0);
-	safe_delete_array(buf);
 
+	taskmanager->SaveClientState(c, this);
+	parse->EventNPC(EVENT_TASK_ACCEPTED, npc, c, buf.c_str(), 0);
 }
 
 void ClientTaskState::ProcessTaskProximities(Client *c, float X, float Y, float Z) {
@@ -3121,7 +3167,6 @@ void ClientTaskState::ProcessTaskProximities(Client *c, float X, float Y, float 
 TaskGoalListManager::TaskGoalListManager()
 {
 	NumberOfLists = 0;
-
 }
 
 TaskGoalListManager::~TaskGoalListManager() {}
@@ -3138,8 +3183,8 @@ bool TaskGoalListManager::LoadLists()
 	NumberOfLists = 0;
 
 	std::string query = "SELECT `listid`, COUNT(`entry`) "
-			"FROM `goallists` GROUP by `listid` "
-			"ORDER BY `listid`";
+						"FROM `goallists` GROUP by `listid` "
+						"ORDER BY `listid`";
 	auto results = database.QueryDatabase(query);
 	if (!results.Success()) {
 		return false;
@@ -3152,7 +3197,7 @@ bool TaskGoalListManager::LoadLists()
 
 	int listIndex = 0;
 
-	for(auto row = results.begin(); row != results.end(); ++row) {
+	for (auto row = results.begin(); row != results.end(); ++row) {
 		int listID = atoi(row[0]);
 		int listSize = atoi(row[1]);
 		TaskGoalLists.push_back({listID, 0, 0});
@@ -3162,13 +3207,13 @@ bool TaskGoalListManager::LoadLists()
 		listIndex++;
 	}
 
-	for(int listIndex = 0; listIndex < NumberOfLists; listIndex++) {
+	for (int listIndex = 0; listIndex < NumberOfLists; listIndex++) {
 
 		int listID = TaskGoalLists[listIndex].ListID;
 		auto size = TaskGoalLists[listIndex].GoalItemEntries.capacity(); // this was only done for manual memory management, shouldn't need to do this
 		query = StringFormat("SELECT `entry` from `goallists` "
-									 "WHERE `listid` = %i "
-									 "ORDER BY `entry` ASC LIMIT %i",
+							 "WHERE `listid` = %i "
+							 "ORDER BY `entry` ASC LIMIT %i",
 							 listID, size);
 		results = database.QueryDatabase(query);
 		if (!results.Success()) {
@@ -3179,10 +3224,10 @@ bool TaskGoalListManager::LoadLists()
 
 			int entry = atoi(row[0]);
 
-			if(entry < TaskGoalLists[listIndex].Min)
+			if (entry < TaskGoalLists[listIndex].Min)
 				TaskGoalLists[listIndex].Min = entry;
 
-			if(entry > TaskGoalLists[listIndex].Max)
+			if (entry > TaskGoalLists[listIndex].Max)
 				TaskGoalLists[listIndex].Max = entry;
 
 			TaskGoalLists[listIndex].GoalItemEntries.push_back(entry);
@@ -3239,7 +3284,7 @@ bool TaskGoalListManager::IsInList(int ListID, int Entry)
 	if ((ListIndex < 0) || (ListIndex >= NumberOfLists))
 		return false;
 
-	if((Entry < TaskGoalLists[ListIndex].Min) || (Entry > TaskGoalLists[ListIndex].Max))
+	if ((Entry < TaskGoalLists[ListIndex].Min) || (Entry > TaskGoalLists[ListIndex].Max))
 		return false;
 
 	int FirstEntry = 0;
@@ -3272,9 +3317,9 @@ bool TaskProximityManager::LoadProximities(int zoneID) {
 	TaskProximities.clear();
 
 	std::string query = StringFormat("SELECT `exploreid`, `minx`, `maxx`, "
-											 "`miny`, `maxy`, `minz`, `maxz` "
-											 "FROM `proximities` WHERE `zoneid` = %i "
-											 "ORDER BY `zoneid` ASC", zoneID);
+									 "`miny`, `maxy`, `minz`, `maxz` "
+									 "FROM `proximities` WHERE `zoneid` = %i "
+									 "ORDER BY `zoneid` ASC", zoneID);
 	auto results = database.QueryDatabase(query);
 	if (!results.Success()) {
 		return false;
@@ -3314,4 +3359,3 @@ int TaskProximityManager::CheckProximities(float X, float Y, float Z) {
 
 	return 0;
 }
-

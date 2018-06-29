@@ -3943,6 +3943,7 @@ void Mob::BuffFadeBySlot(int slot, bool iRecalcBonuses)
 			case SE_Mez:
 			{
 				SendAppearancePacket(AT_Anim, ANIM_STAND);	// unfreeze
+				SendPosition();
 				this->mezzed = false;
 				break;
 			}

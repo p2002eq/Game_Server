@@ -272,13 +272,13 @@ struct Spawn_Struct {
 /*0334*/ uint8	gender;			// Gender (0=male, 1=female)
 /*0335*/ uint8	bodytype;		// Bodytype
 /*0336*/ uint8 unknown0336[3];
-union
-{
+	union
+	{
 /*0339*/ uint8 equip_chest2;	// Second place in packet for chest texture (usually 0xFF in live packets)
-								// Not sure why there are 2 of them, but it effects chest texture!
+		// Not sure why there are 2 of them, but it effects chest texture!
 /*0339*/ uint8 mount_color;		// drogmor: 0=white, 1=black, 2=green, 3=red
-								// horse: 0=brown, 1=white, 2=black, 3=tan
-};
+		// horse: 0=brown, 1=white, 2=black, 3=tan
+	};
 /*0340*/ uint32 spawnId;		// Spawn Id
 /*0344*/ float bounding_radius; // used in melee, overrides calc
 /*0347*/ uint8 IsMercenary;
@@ -385,10 +385,10 @@ struct NewZone_Struct {
 **
 */
 struct MemorizeSpell_Struct {
-uint32 slot;		// Spot in the spell book/memorized slot
-uint32 spell_id;	// Spell id (200 or c8 is minor healing, etc)
-uint32 scribing;	// 1 if memorizing a spell, set to 0 if scribing to book, 2 if un-memming
-uint32 reduction;	// lower reuse
+	uint32 slot;		// Spot in the spell book/memorized slot
+	uint32 spell_id;	// Spell id (200 or c8 is minor healing, etc)
+	uint32 scribing;	// 1 if memorizing a spell, set to 0 if scribing to book, 2 if un-memming
+	uint32 reduction;	// lower reuse
 };
 
 /*
@@ -464,8 +464,8 @@ struct CastSpell_Struct
 	uint32	target_id;
 	uint32  cs_unknown1;
 	uint32  cs_unknown2;
- 	float   y_pos;
- 	float   x_pos;
+	float   y_pos;
+	float   x_pos;
 	float   z_pos;
 };
 
@@ -533,7 +533,7 @@ struct BuffRemoveRequest_Struct
 /*00*/ uint32 SlotID;
 /*04*/ uint32 EntityID;
 /*08*/
- };
+};
 
 struct PetBuff_Struct {
 /*000*/ uint32 petid;
@@ -568,9 +568,9 @@ struct ItemNamePacket_Struct {
 // Length: 10
 struct ItemProperties_Struct {
 
-uint8	unknown01[2];
-uint8	charges;
-uint8	unknown02[13];
+	uint8	unknown01[2];
+	uint8	charges;
+	uint8	unknown02[13];
 };
 
 struct GMTrainee_Struct
@@ -815,7 +815,7 @@ struct LeadershipAA_Struct {
 	};
 };
 
- /**
+/**
 * A bind point.
 * Size: 20 Octets
 */
@@ -1250,20 +1250,20 @@ struct Animation_Struct {
 // also causes a buff icon
 struct Action_Struct
 {
- /* 00 */	uint16 target;	// id of target
- /* 02 */	uint16 source;	// id of caster
- /* 04 */	uint16 level; // level of caster for spells, OSX dump says attack rating, guess spells use it for level
- /* 06 */	uint32 instrument_mod; // OSX dump says base damage, spells use it for bard song (different from newer clients)
- /* 10 */	float force;
- /* 14 */	float hit_heading;
- /* 18 */	float hit_pitch;
- /* 22 */	uint8 type;		// 231 (0xE7) for spells, skill
- /* 23 */	uint16 unknown23; // OSX says min_damage
- /* 25 */	uint16 unknown25; // OSX says tohit
- /* 27 */	uint16 spell;	// spell id being cast
- /* 29 */	uint8 spell_level;
+	/* 00 */	uint16 target;	// id of target
+	/* 02 */	uint16 source;	// id of caster
+	/* 04 */	uint16 level; // level of caster for spells, OSX dump says attack rating, guess spells use it for level
+	/* 06 */	uint32 instrument_mod; // OSX dump says base damage, spells use it for bard song (different from newer clients)
+	/* 10 */	float force;
+	/* 14 */	float hit_heading;
+	/* 18 */	float hit_pitch;
+	/* 22 */	uint8 type;		// 231 (0xE7) for spells, skill
+	/* 23 */	uint16 unknown23; // OSX says min_damage
+	/* 25 */	uint16 unknown25; // OSX says tohit
+	/* 27 */	uint16 spell;	// spell id being cast
+	/* 29 */	uint8 spell_level;
 // this field seems to be some sort of success flag, if it's 4
- /* 30 */	uint8 effect_flag;	// if this is 4, a buff icon is made
+	/* 30 */	uint8 effect_flag;	// if this is 4, a buff icon is made
 // newer clients have some data for setting LaunchSpellData when effect_flag & 4
 // /* 31 */	uint8 spell_gem;
 // /* 32 */	uint32 inventory_slot;
@@ -1334,18 +1334,18 @@ struct PlayerPositionUpdateServer_Struct
 {
 /*0000*/ uint16		spawn_id;
 /*0002*/ int32		delta_heading:10,	// change in heading
-					x_pos:19,			// x coord
-					padding0002:3;		// ***Placeholder
+			x_pos:19,			// x coord
+			padding0002:3;		// ***Placeholder
 /*0006*/ int32		y_pos:19,			// y coord
-					animation:10,		// animation
-					padding0006:3;		// ***Placeholder
+			animation:10,		// animation
+			padding0006:3;		// ***Placeholder
 /*0010*/ int32		z_pos:19,			// z coord
-					delta_y:13;			// change in y
+			delta_y:13;			// change in y
 /*0014*/ int32		delta_x:13,			// change in x
-					heading:12,			// heading
-					padding0014:7;		// ***Placeholder
+			heading:12,			// heading
+			padding0014:7;		// ***Placeholder
 /*0018*/ int32		delta_z:13,			// change in z
-					padding0018:19;		// ***Placeholder
+			padding0018:19;		// ***Placeholder
 /*0022*/
 };
 
@@ -1364,12 +1364,12 @@ struct PlayerPositionUpdateClient_Struct
 /*0012*/ float	delta_x;			// Change in x
 /*0016*/ float	delta_y;			// Change in y
 /*0020*/ int32	animation:10,		// animation
-				delta_heading:10,	// change in heading
-				padding0020:12;		// ***Placeholder (mostly 1)
+			delta_heading:10,	// change in heading
+			padding0020:12;		// ***Placeholder (mostly 1)
 /*0024*/ float	x_pos;				// x coord
 /*0028*/ float	z_pos;				// z coord
 /*0032*/ uint16	heading:12,			// Directional heading
-				padding0004:4;		// ***Placeholder
+			padding0004:4;		// ***Placeholder
 /*0034*/ uint8	unknown0006[2];		// ***Placeholder
 /*0036*/
 };
@@ -1771,7 +1771,7 @@ struct GMLastName_Struct {
 	char gmname[64];
 	char lastname[64];
 	uint16 unknown[4];	// 0x00, 0x00
-						// 0x01, 0x00 = Update the clients
+	// 0x01, 0x00 = Update the clients
 };
 
 //Combat Abilities
@@ -1985,7 +1985,7 @@ struct Merchant_Sell_Struct {
 /*000*/	uint32	npcid;			// Merchant NPC's entity id
 /*004*/	uint32	playerid;		// Player's entity id
 /*008*/	uint32	itemslot;
-		uint32	unknown12;
+	uint32	unknown12;
 /*016*/	uint32	quantity;
 /*020*/ uint32	price;
 };
@@ -2158,7 +2158,7 @@ struct Illusion_Struct { //size: 256 - SoF
 
 struct Illusion_Struct_Old {
 /*000*/	uint32	spawnid;
-		char charname[64];
+	char charname[64];
 /**/	uint16	race;
 /**/	char	unknown006[2];
 /**/	uint8	gender;
@@ -2579,7 +2579,7 @@ struct Object_Struct {
 /*84*/	uint32	unknown076;			//
 /*88*/	uint32	object_type;		// Type of object, not directly translated to OP_OpenObject
 /*92*/	uint32	unknown084;			//set to 0xFF
-		uint32	spawn_id;			// Spawn Id of client interacting with object
+	uint32	spawn_id;			// Spawn Id of client interacting with object
 
 };
 // 01 = generic drop, 02 = armor, 19 = weapon
@@ -2951,10 +2951,10 @@ struct BuyerRemoveItem_Struct {
 };
 
 struct ServerSideFilters_Struct {
-uint8	clientattackfilters;	// 0) No, 1) All (players) but self, 2) All (players) but group
-uint8	npcattackfilters;		// 0) No, 1) Ignore NPC misses (all), 2) Ignore NPC Misses + Attacks (all but self), 3) Ignores NPC Misses + Attacks (all but group)
-uint8	clientcastfilters;		// 0) No, 1) Ignore PC Casts (all), 2) Ignore PC Casts (not directed towards self)
-uint8	npccastfilters;			// 0) No, 1) Ignore NPC Casts (all), 2) Ignore NPC Casts (not directed towards self)
+	uint8	clientattackfilters;	// 0) No, 1) All (players) but self, 2) All (players) but group
+	uint8	npcattackfilters;		// 0) No, 1) Ignore NPC misses (all), 2) Ignore NPC Misses + Attacks (all but self), 3) Ignores NPC Misses + Attacks (all but group)
+	uint8	clientcastfilters;		// 0) No, 1) Ignore PC Casts (all), 2) Ignore PC Casts (not directed towards self)
+	uint8	npccastfilters;			// 0) No, 1) Ignore NPC Casts (all), 2) Ignore NPC Casts (not directed towards self)
 };
 
 /*
@@ -3567,8 +3567,8 @@ struct RecipeAutoCombine_Struct {
 	uint32 unknown1;		//echoed in reply
 	uint32 recipe_id;
 	uint32 reply_code;		// 93 64 e1 00 (junk) in request
-								// 00 00 00 00 in successful reply
-								// f5 ff ff ff in 'you dont have all the stuff' reply
+	// 00 00 00 00 in successful reply
+	// f5 ff ff ff in 'you dont have all the stuff' reply
 };
 
 // this is the "value#a" data
@@ -3814,7 +3814,7 @@ struct AcceptNewTask_Struct {
 //was all 0's from client, server replied with same op, all 0's
 struct CancelTask_Struct {
 	uint32 SequenceNumber;
-	uint32 unknown4; // Only seen 0x00000002
+	uint32 type; // Only seen 0x00000002
 };
 
 #if 0
@@ -3868,28 +3868,28 @@ struct AvailableTaskTrailer_Struct {
 struct TaskDescriptionHeader_Struct {
 	uint32	SequenceNumber; // The order the tasks appear in the journal. 0 for first task, 1 for second, etc.
 	uint32	TaskID;
-	uint32	unknown2;
-	uint32	unknown3;
-	uint8	unknown4;
+	uint8	open_window;
+	uint32	task_type;
+	uint32	reward_type; // if this != 4 says Ebon Crystals else Radiant Crystals
 };
 
 struct TaskDescriptionData1_Struct {
 	uint32	Duration;
-	uint32	unknown2;
+	uint32	dur_code; // if Duration == 0
 	uint32	StartTime;
 };
 
 struct TaskDescriptionData2_Struct {
-	uint32	RewardCount; // ??
-	uint32	unknown1;
-	uint32	unknown2;
-	uint16	unknown3;
-	//uint8	unknown4;
+	uint8 	has_rewards;
+	uint32	coin_reward;
+	uint32	xp_reward;
+	uint32	unknown3; // don't see it affecting display, faction maybe
 };
 
 struct TaskDescriptionTrailer_Struct {
 	//uint16	unknown1; // 0x0012
 	uint32	Points;
+	uint8	has_reward_selection; // uses newer reward selection window, not in all clients
 };
 
 struct TaskActivityHeader_Struct {
@@ -4711,7 +4711,7 @@ struct GuildBankWithdrawItem_Struct
 struct GuildBankItemUpdate_Struct
 {
 	void Init(uint32 inAction, uint32 inUnknown004, uint16 inSlotID, uint16 inArea, uint16 inUnknown012, uint32 inItemID, uint32 inIcon, uint32 inQuantity,
-			uint32 inPermissions, uint32 inAllowMerge, bool inUseable)
+			  uint32 inPermissions, uint32 inAllowMerge, bool inUseable)
 	{
 		Action = inAction;
 		Unknown004 = inUnknown004;
@@ -5332,7 +5332,7 @@ struct MercenaryMerchantResponse_Struct {
 struct ServerLootItem_Struct {
 	uint32	item_id;	  // uint32	item_id;
 	int16	equip_slot;	  // int16	equip_slot;
-	uint16	charges;	  // uint8	charges; 
+	uint16	charges;	  // uint8	charges;
 	uint16	lootslot;	  // uint16	lootslot;
 	uint32	aug_1;		  // uint32	aug_1;
 	uint32	aug_2;		  // uint32	aug_2;
@@ -5361,7 +5361,7 @@ struct ClientMarqueeMessage_Struct {
 	uint32 fade_out_time; //The fade out time, in ms
 	uint32 duration; //in ms
 	char msg[1]; //message plus null terminator
-	
+
 };
 
 typedef std::list<ServerLootItem_Struct*> ItemList;
