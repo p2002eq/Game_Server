@@ -121,14 +121,6 @@ void Mob::ProcessFlee()
 		return;
 	}
 
-	/* Old
-	//see if we are still dying, if so, do nothing
-	float fleeratio = GetSpecialAbility(FLEE_PERCENT);
-	fleeratio = fleeratio > 0 ? fleeratio : RuleI(Combat, FleeHPRatio);
-	if (GetHPRatio() < fleeratio)
-		return;
-	*/
-
 	int hpratio = GetIntHPRatio();
 	int fleeratio = GetSpecialAbility(FLEE_PERCENT); // if a special flee_percent exists
 	Mob *hate_top = GetHateTop();
