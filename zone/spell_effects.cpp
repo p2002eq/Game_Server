@@ -620,7 +620,7 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial, int level_ove
 #ifdef SPELL_EFFECT_SPAM
 				snprintf(effect_desc, _EDLEN, "Invisibility to Animals");
 #endif
-				SetInvisible(0, 2);
+				SetInvisible(1, 2);
 				break;
 			}
 
@@ -630,7 +630,7 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial, int level_ove
 #ifdef SPELL_EFFECT_SPAM
 				snprintf(effect_desc, _EDLEN, "Invisibility to Undead");
 #endif
-				SetInvisible(0, 1);
+				SetInvisible(1, 1);
 				break;
 			}
 			case SE_SeeInvis:

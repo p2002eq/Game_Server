@@ -219,9 +219,7 @@ bool IsGroupOnlySpell(uint16 spell_id)
 }
 
 bool IsBeneficialSpell(uint16 spell_id) {
-	Log(Logs::General, Logs::Debug, "[DEBUG] Entered Bene routine");
 	if (!IsValidSpell(spell_id)) {
-		Log(Logs::General, Logs::Debug, "[DEBUG] Returned bene-1");
 		return false;
 	}
 
@@ -232,7 +230,6 @@ bool IsBeneficialSpell(uint16 spell_id) {
 		SpellTargetType tt = spells[spell_id].targettype;
 		if (tt != ST_Self && tt != ST_Pet &&
 			IsEffectInSpell(spell_id, SE_CancelMagic)) {
-			Log(Logs::General, Logs::Debug, "[DEBUG] Returned bene-2");
 			return false;
 		}
 	}

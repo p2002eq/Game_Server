@@ -8208,9 +8208,9 @@ void Client::Handle_OP_Hide(const EQApplicationPacket *app)
 		entity_list.QueueClients(this, outapp, true);
 		safe_delete(outapp);
 		if (spellbonuses.ShroudofStealth || aabonuses.ShroudofStealth || itembonuses.ShroudofStealth) {
-			SetInvisible(0, 4);
+			SetInvisible(1, 4);
 		} else {
-			SetInvisible(0, 3);
+			SetInvisible(1, 3);
 		}
 		tmHidden = Timer::GetCurrentTime();
 	}
