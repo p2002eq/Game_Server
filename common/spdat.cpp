@@ -1294,6 +1294,6 @@ bool IsRacialIllusion(uint16 spell_id)
 		
 		return false;
 	}
-}me
+}
 
 
