@@ -221,21 +221,21 @@ bool IsGroupOnlySpell(uint16 spell_id)
 bool IsBeneficialSpell(uint16 spell_id) {
 	if (!IsValidSpell(spell_id)) {
 		return false;
-  }
+	}
 
 	// You'd think just checking goodEffect flag would be enough?
 	if (spells[spell_id].goodEffect == 1) {
 		// If the target type is ST_Self or ST_Pet and is a SE_CancleMagic spell
 		// it is not Beneficial
 		SpellTargetType tt = spells[spell_id].targettype;
-		if (tt != ST_Self && tt != ST_Pet &&
-			IsEffectInSpell(spell_id, SE_CancelMagic)) {
+		if (tt != ST_Self && tt != ST_Pet && IsEffectInSpell(spell_id, SE_CancelMagic)) {
 			return false;
+		}
 
 		// When our targettype is ST_Target, ST_AETarget, ST_Aniaml, ST_Undead, or ST_Pet
 		// We need to check more things!
 		if (tt == ST_Target || tt == ST_AETarget || tt == ST_Animal ||
-			tt == ST_Undead || tt == ST_Pet) {
+				tt == ST_Undead || tt == ST_Pet) {
 			uint16 sai = spells[spell_id].SpellAffectIndex;
 
 			// If the resisttype is magic and SpellAffectIndex is Calm/memblur/dispell sight
@@ -244,25 +244,24 @@ bool IsBeneficialSpell(uint16 spell_id) {
 				// checking these SAI cause issues with the rng defensive proc line
 				// So I guess instead of fixing it for real, just a quick hack :P
 				if (
-            spells[spell_id].effectid[0] != SE_DefensiveProc &&
-					  (
-              sai == SAI_Calm || sai == SAI_Dispell_Sight || sai == SAI_Memory_Blur ||
-					    sai == SAI_Calm_Song)
-            ) { return false; }
+						spells[spell_id].effectid[0] != SE_DefensiveProc &&
+						(
+						 sai == SAI_Calm || sai == SAI_Dispell_Sight || sai == SAI_Memory_Blur ||
+						 sai == SAI_Calm_Song)
+					 ) { return false; }
 			} else {
 				// If the resisttype is not magic and spell is Bind Sight or Cast Sight or Harmony
 				// It's not beneficial
 				if (
-            sai == SAI_Calm && IsEffectInSpell(spell_id, SE_Harmony)
-					  || (sai == SAI_Calm_Song && IsEffectInSpell(spell_id, SE_BindSight))
-					  || (
-              sai == SAI_Dispell_Sight && spells[spell_id].skill == 18
-					    && !IsEffectInSpell(spell_id, SE_VoiceGraft)
-             )
-						) { return false; }
+						sai == SAI_Calm && IsEffectInSpell(spell_id, SE_Harmony)
+						|| (sai == SAI_Calm_Song && IsEffectInSpell(spell_id, SE_BindSight))
+						|| (
+							sai == SAI_Dispell_Sight && spells[spell_id].skill == 18
+							&& !IsEffectInSpell(spell_id, SE_VoiceGraft)
+							)
+					 ) { return false; }
 			}
 		}
-   }
 	}
 
 	// And finally, if goodEffect is not 0 or if it's a group spell it's beneficial
@@ -1295,5 +1294,6 @@ bool IsRacialIllusion(uint16 spell_id)
 		
 		return false;
 	}
-}
+}me
+
 
