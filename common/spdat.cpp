@@ -221,6 +221,7 @@ bool IsGroupOnlySpell(uint16 spell_id)
 bool IsBeneficialSpell(uint16 spell_id) {
 	if (!IsValidSpell(spell_id)) {
 		return false;
+  }
 
 	// You'd think just checking goodEffect flag would be enough?
 	if (spells[spell_id].goodEffect == 1) {
@@ -242,21 +243,26 @@ bool IsBeneficialSpell(uint16 spell_id) {
 			if (spells[spell_id].resisttype == RESIST_MAGIC) {
 				// checking these SAI cause issues with the rng defensive proc line
 				// So I guess instead of fixing it for real, just a quick hack :P
-				if (spells[spell_id].effectid[0] != SE_DefensiveProc &&
-					(sai == SAI_Calm || sai == SAI_Dispell_Sight || sai == SAI_Memory_Blur ||
-					 sai == SAI_Calm_Song))
-					return false;
+				if (
+            spells[spell_id].effectid[0] != SE_DefensiveProc &&
+					  (
+              sai == SAI_Calm || sai == SAI_Dispell_Sight || sai == SAI_Memory_Blur ||
+					    sai == SAI_Calm_Song)
+            ) { return false; }
 			} else {
 				// If the resisttype is not magic and spell is Bind Sight or Cast Sight or Harmony
 				// It's not beneficial
-				if (sai == SAI_Calm && IsEffectInSpell(spell_id, SE_Harmony)
-					|| (sai == SAI_Calm_Song && IsEffectInSpell(spell_id, SE_BindSight))
-					|| (sai == SAI_Dispell_Sight && spells[spell_id].skill == 18 &&
-						!IsEffectInSpell(spell_id, SE_VoiceGraft))
-						)
-					return false;
+				if (
+            sai == SAI_Calm && IsEffectInSpell(spell_id, SE_Harmony)
+					  || (sai == SAI_Calm_Song && IsEffectInSpell(spell_id, SE_BindSight))
+					  || (
+              sai == SAI_Dispell_Sight && spells[spell_id].skill == 18
+					    && !IsEffectInSpell(spell_id, SE_VoiceGraft)
+             )
+						) { return false; }
 			}
 		}
+   }
 	}
 
 	// And finally, if goodEffect is not 0 or if it's a group spell it's beneficial
@@ -419,8 +425,9 @@ bool IsAERainNukeSpell(uint16 spell_id)
 
 bool IsPartialCapableSpell(uint16 spell_id)
 {
-	if (spells[spell_id].no_partial_resist)
+	if (spells[spell_id].no_partial_resist) {
 		return false;
+  }
 
 	// spell uses 600 (partial) scale if first effect is damage, else it uses 200 scale.
 	// this includes DoTs.  no_partial_resist excludes spells like necro snares
