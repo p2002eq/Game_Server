@@ -145,6 +145,7 @@ NPC::NPC(const NPCType* d, Spawn2* in_respawn, const glm::vec4& position, int if
 	gold = 0;
 	platinum = 0;
 	max_dmg = d->max_dmg;
+  dbmax_dmg = d->max_dmg;
 	min_dmg = d->min_dmg;
 	attack_count = d->attack_count;
 	grid = 0;

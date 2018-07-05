@@ -105,6 +105,7 @@ void Mob::CheckFlee() {
 
 	// If we got here we are allowed to roll on flee chance if there is not other hated NPC's in the area.
 	if(zone->random.Roll(flee_chance) && entity_list.GetHatedCount(hate_top, this, true) == 0) {
+		currently_fleeing = true;
 		StartFleeing();
 	}
 }
@@ -120,11 +121,21 @@ void Mob::ProcessFlee()
 		return;
 	}
 
-	//see if we are still dying, if so, do nothing
-	float fleeratio = GetSpecialAbility(FLEE_PERCENT);
-	fleeratio = fleeratio > 0 ? fleeratio : RuleI(Combat, FleeHPRatio);
-	if (GetHPRatio() < fleeratio)
+	int hpratio = GetIntHPRatio();
+	int fleeratio = GetSpecialAbility(FLEE_PERCENT); // if a special flee_percent exists
+	Mob *hate_top = GetHateTop();
+
+	// If no special flee_percent check for Green or Other con rates
+	if(GetLevelCon(hate_top->GetLevel(), GetLevel()) == CON_GREEN && fleeratio == 0) {
+		fleeratio = RuleI(Combat, FleeGreenHPRatio);
+	} else if(fleeratio == 0) {
+		fleeratio = RuleI(Combat, FleeHPRatio );
+	}
+
+	// Mob is still too low. Keep Running
+	if(hpratio < fleeratio) {
 		return;
+	}
 
 	//we are not dying anymore... see what we do next
 

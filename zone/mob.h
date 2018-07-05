@@ -1606,6 +1606,7 @@ protected:
 	void AddItemFactionBonus(uint32 pFactionID,int32 bonus);
 	int32 GetItemFactionBonus(uint32 pFactionID);
 	void ClearItemFactionBonuses();
+	Timer hate_list_cleanup_timer;
 
 	void CalculateFearPosition();
 

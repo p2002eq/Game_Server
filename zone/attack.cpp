@@ -2114,27 +2114,28 @@ void NPC::Damage(Mob* other, int32 damage, uint16 spell_id, EQEmu::skills::Skill
 	}
 	attacked_timer.Start(CombatEventTimer_expire);
 
-	if (!IsEngaged())
+	if (!IsEngaged()) {
 		zone->AddAggroMob();
+  }
 
-	if (GetClass() == LDON_TREASURE)
-	{
-		if (IsLDoNLocked() && GetLDoNLockedSkill() != LDoNTypeMechanical)
-		{
-			damage = -5;
-		}
-		else
-		{
-			if (IsLDoNTrapped())
-			{
-				Message_StringID(13, LDON_ACCIDENT_SETOFF2);
-				SpellFinished(GetLDoNTrapSpellID(), other, EQEmu::CastingSlot::Item, 0, -1, spells[GetLDoNTrapSpellID()].ResistDiff, false);
-				SetLDoNTrapSpellID(0);
-				SetLDoNTrapped(false);
-				SetLDoNTrapDetected(false);
-			}
-		}
-	}
+	//if (GetClass() == LDON_TREASURE)
+	//{
+		//if (IsLDoNLocked() && GetLDoNLockedSkill() != LDoNTypeMechanical)
+		//{
+			//damage = -5;
+		//}
+		//else
+		//{
+			//if (IsLDoNTrapped())
+			//{
+				//Message_StringID(13, LDON_ACCIDENT_SETOFF2);
+				//SpellFinished(GetLDoNTrapSpellID(), other, EQEmu::CastingSlot::Item, 0, -1, spells[GetLDoNTrapSpellID()].ResistDiff, false);
+				//SetLDoNTrapSpellID(0);
+				//SetLDoNTrapped(false);
+				//SetLDoNTrapDetected(false);
+			//}
+		//}
+	//}
 
 	//do a majority of the work...
 	CommonDamage(other, damage, spell_id, attack_skill, avoidable, buffslot, iBuffTic, special);
@@ -3805,10 +3806,22 @@ void Mob::CommonDamage(Mob* attacker, int &damage, const uint16 spell_id, const 
 		}
 
 		//send an HP update if we are hurt
-		if (GetHP() < GetMaxHP())
+		if (GetHP() < GetMaxHP()) {
 			SendHPUpdate();
+    }
 	}	//end `if damage was done`
 
+//clamp damage to max npc damage
+  if (
+      spell_id == SPELL_UNKNOWN &&
+      attacker->IsNPC()
+     )
+  {
+      
+      if (damage > attacker->CastToNPC()->GetDBMaxDamage()) {
+        damage = attacker->CastToNPC()->GetDBMaxDamage();
+      }
+  }
 	//send damage packet...
 	if (!iBuffTic) { //buff ticks do not send damage, instead they just call SendHPUpdate(), which is done above
 		auto outapp = new EQApplicationPacket(OP_Damage, sizeof(CombatDamage_Struct));

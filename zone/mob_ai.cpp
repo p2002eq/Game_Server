@@ -506,6 +506,10 @@ void Mob::AI_Start(uint32 iMoveDelay) {
 	AI_feign_remember_timer = std::unique_ptr<Timer>(new Timer(AIfeignremember_delay));
 	AI_scan_door_open_timer = std::unique_ptr<Timer>(new Timer(AI_scan_door_open_interval));
 
+	if(!RuleB(Aggro, NPCAggroMaxDistanceEnabled)) {
+		hate_list_cleanup_timer.Disable();
+	}
+
 	if (CastToNPC()->WillAggroNPCs())
 		AI_scan_area_timer = std::unique_ptr<Timer>(new Timer(RandomTimer(RuleI(NPC, NPCToNPCAggroTimerMin), RuleI(NPC, NPCToNPCAggroTimerMax))));
 
@@ -1176,8 +1180,23 @@ void Mob::AI_Process() {
 				}
 			}
 		}
-		if (!(m_PlayerState & static_cast<uint32>(PlayerState::Aggressive)))
+		if (!(m_PlayerState & static_cast<uint32>(PlayerState::Aggressive))) {
 			SendAddPlayerState(PlayerState::Aggressive);
+		}
+
+		// NPCs will forget people after 10 mins of not interacting with them or out of range
+		// both of these maybe zone specific, hardcoded for now
+		if (hate_list_cleanup_timer.Check()) {
+			hate_list.RemoveStaleEntries(600000, 600.0f);
+
+			if (hate_list.IsHateListEmpty()) {
+				AI_Event_NoLongerEngaged();
+				zone->DelAggroMob();
+				if (IsNPC() && !RuleB(Aggro, AllowTickPulling))
+					ResetAssistCap();
+			}
+		}
+
 		// we are prevented from getting here if we are blind and don't have a target in range
 		// from above, so no extra blind checks needed
 		if ((IsRooted() && !GetSpecialAbility(IGNORE_ROOT_AGGRO_RULES)) || IsBlind())
