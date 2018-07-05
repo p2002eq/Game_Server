@@ -634,10 +634,13 @@ int HateList::AreaRampage(Mob *caster, Mob *target, int count, ExtraAttackOption
 	std::vector<uint16> id_list;
 	for (auto &h : list) {
 		if (h->entity_on_hatelist && h->entity_on_hatelist != caster &&
-		    caster->CombatRange(h->entity_on_hatelist))
+		    caster->CombatRange(h->entity_on_hatelist)) {
 			id_list.push_back(h->entity_on_hatelist->GetID());
-		if (count != -1 && id_list.size() > count)
+		}
+
+		if (count != -1 && id_list.size() > count) {
 			break;
+		}
 	}
 
 	for (auto &id : id_list) {
