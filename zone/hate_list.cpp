@@ -240,8 +240,9 @@ void HateList::AddEntToHateList(Mob *in_entity, int32 in_hate, int32 in_damage, 
 			in_entity->CastToClient()->IncrementAggroCount();
 		}
 	}
-	uint32 = Timer::GetCurrentTime();
-	if (currentTime)
+	uint32 current_time = Timer::GetCurrentTime();
+	if (current_time)
+  {
 		entity->last_modified = current_time;
 	}
 }
