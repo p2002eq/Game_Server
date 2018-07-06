@@ -244,6 +244,8 @@ void HateList::AddEntToHateList(Mob *in_entity, int32 in_hate, int32 in_damage, 
 	if (current_time)
   {
 		entity->last_modified = current_time;
+	} else {
+		entity->last_modified = 0;
 	}
 }
 
