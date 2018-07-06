@@ -626,7 +626,7 @@ void HateList::PrintHateListToClient(Client *c)
 	}
 }
 
-/* int HateList::AreaRampage(Mob *caster, Mob *target, int count, ExtraAttackOptions *opts)
+int HateList::AreaRampage(Mob *caster, Mob *target, int count, ExtraAttackOptions *opts)
 {
 	if (!target || !caster)
 		return 0;
@@ -637,7 +637,7 @@ void HateList::PrintHateListToClient(Client *c)
 	std::vector<uint16> id_list;
 	for (auto &h : list) {
 		if (h->entity_on_hatelist && h->entity_on_hatelist != caster &&
-		    caster->CombatRange(h->entity_on_hatelist)) {
+		    caster->CombatRange(h->entity_on_hatelist, 1.0, true)) {
 			id_list.push_back(h->entity_on_hatelist->GetID());
 		}
 
@@ -648,16 +648,18 @@ void HateList::PrintHateListToClient(Client *c)
 
 	for (auto &id : id_list) {
 		auto mob = entity_list.GetMobID(id);
-		if (mob) {
+    bool tank = caster->GetHateTop()->GetID() == mob->GetID();
+		if (mob && !tank) {
 			++hit_count;
 			caster->ProcessAttackRounds(mob, opts);
+			caster->Shout("Hitting: %s",mob->CastToNPC()->GetName());
 		}
 	}
 
 	return hit_count;
-} */
+}
 
-int HateList::AreaRampage(Mob *caster, Mob *target, int count, ExtraAttackOptions *opts)
+/* int HateList::AreaRampage(Mob *caster, Mob *target, int count, ExtraAttackOptions *opts)
 {
 	if(!target || !caster)
 		return 0;
@@ -696,7 +698,7 @@ int HateList::AreaRampage(Mob *caster, Mob *target, int count, ExtraAttackOption
 	}
 
 	return ret;
-}
+} */
 
 void HateList::SpellCast(Mob *caster, uint32 spell_id, float range, Mob* ae_center)
 {
