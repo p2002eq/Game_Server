@@ -863,7 +863,7 @@ bool Mob::IsBeneficialAllowed(Mob *target)
 	return false;
 }
 
-bool Mob::CombatRange(Mob* other, float fixed_size_mod)
+bool Mob::CombatRange(Mob* other, float fixed_size_mod, bool aeRampage)
 {
 	if(!other)
 		return(false);
@@ -904,6 +904,10 @@ bool Mob::CombatRange(Mob* other, float fixed_size_mod)
 	{
 		size_mod *= 2.25;
 	}
+	//if (other->GetRace() == 284) // Fennin
+	//{
+		//size_mod *= 1.5;
+	//}
 	size_mod *= RuleR(Combat,HitBoxMod);		// used for testing sizemods on different races.
 	size_mod *= fixed_size_mod;					// used to extend the size_mod
 
@@ -938,6 +942,15 @@ bool Mob::CombatRange(Mob* other, float fixed_size_mod)
 			SetPseudoRoot(true);
 		else
 			SetPseudoRoot(false);
+	}
+	if(aeRampage) {
+		if (_DistNoRoot <= (size_mod * RuleR(Combat, AERampageSafeZone))) {
+			//other->Say("Im in ramp range! %d : %d", _DistNoRoot, size_mod);
+			return true;
+		} else {
+			//other->Say("Im not ramp range! %d : %d", _DistNoRoot, size_mod);
+			return false;
+		}
 	}
 
 	if (_DistNoRoot <= size_mod)

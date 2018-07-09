@@ -230,7 +230,6 @@ void HateList::AddEntToHateList(Mob *in_entity, int32 in_hate, int32 in_damage, 
 		entity->hatelist_damage = (in_damage >= 0) ? in_damage : 0;
 		entity->stored_hate_amount = in_hate;
 		entity->is_entity_frenzy = in_is_entity_frenzied;
-		list.push_back(entity);
 		parse->EventNPC(EVENT_HATE_LIST, hate_owner->CastToNPC(), in_entity, "1", 0);
 
 		if (in_entity->IsClient()) {
@@ -240,7 +239,17 @@ void HateList::AddEntToHateList(Mob *in_entity, int32 in_hate, int32 in_damage, 
 			in_entity->CastToClient()->IncrementAggroCount();
 		}
 	}
-	entity->last_modified = Timer::GetCurrentTime();
+
+	entity->last_modified = 0;
+	auto current_time = Timer::GetCurrentTime();
+	if (current_time)
+  {
+		entity->last_modified = current_time;
+	}
+
+	if (iAddIfNotExist) {
+		list.push_back(entity);
+	}
 }
 
 bool HateList::RemoveEntFromHateList(Mob *in_entity)
@@ -634,22 +643,71 @@ int HateList::AreaRampage(Mob *caster, Mob *target, int count, ExtraAttackOption
 	std::vector<uint16> id_list;
 	for (auto &h : list) {
 		if (h->entity_on_hatelist && h->entity_on_hatelist != caster &&
-		    caster->CombatRange(h->entity_on_hatelist))
+		    caster->CombatRange(h->entity_on_hatelist, 1.0, true)) {
 			id_list.push_back(h->entity_on_hatelist->GetID());
-		if (count != -1 && id_list.size() > count)
+		}
+
+		if (count != -1 && id_list.size() > count) {
 			break;
+		}
 	}
 
 	for (auto &id : id_list) {
 		auto mob = entity_list.GetMobID(id);
-		if (mob) {
+    bool tank = caster->GetHateTop()->GetID() == mob->GetID();
+    if (tank) {
+      return 0;
+    }
+		if (mob && !tank) {
 			++hit_count;
 			caster->ProcessAttackRounds(mob, opts);
+			//caster->Shout("Hitting: %s",mob->CastToNPC()->GetName());
 		}
 	}
 
 	return hit_count;
 }
+
+/* int HateList::AreaRampage(Mob *caster, Mob *target, int count, ExtraAttackOptions *opts)
+{
+	if(!target || !caster)
+		return 0;
+
+	int ret = 0;
+	std::list<uint32> id_list;
+	auto iterator = list.begin();
+	while (iterator != list.end())
+	{
+		struct_HateList *h = (*iterator);
+		++iterator;
+		if(h && h->entity_on_hatelist && h->entity_on_hatelist != caster)
+		{
+			if(caster->CombatRange(h->entity_on_hatelist))
+			{
+				id_list.push_back(h->entity_on_hatelist->GetID());
+				++ret;
+			}
+		}
+	}
+
+	std::list<uint32>::iterator iter = id_list.begin();
+	Mob *hate_top = target->GetHateMost();
+	while(iter != id_list.end())
+	{
+		Mob *cur = entity_list.GetMobID((*iter));
+		if(cur)
+		{
+			for(int i = 0; i < count; ++i) {
+				if(!hate_top) {
+					caster->ProcessAttackRounds(cur, opts);
+				}
+			}
+		}
+		iter++;
+	}
+
+	return ret;
+} */
 
 void HateList::SpellCast(Mob *caster, uint32 spell_id, float range, Mob* ae_center)
 {

@@ -2287,7 +2287,7 @@ void Mob::AreaRampage(ExtraAttackOptions *opts)
 
 	if(index_hit == 0)
 		ProcessAttackRounds(GetTarget(), opts);
-	m_specialattacks = eSpecialAttacks::None;
+  	m_specialattacks = eSpecialAttacks::None;
 }
 
 uint8 Mob::GetLevelForClientCon(uint8 mylevel, uint8 iOtherLevel) {
