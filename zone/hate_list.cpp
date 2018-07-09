@@ -223,6 +223,7 @@ void HateList::AddEntToHateList(Mob *in_entity, int32 in_hate, int32 in_damage, 
 		entity->hatelist_damage += (in_damage >= 0) ? in_damage : 0;
 		entity->stored_hate_amount += in_hate;
 		entity->is_entity_frenzy = in_is_entity_frenzied;
+	  entity->last_modified = Timer::GetCurrentTime();
 	}
 	else if (iAddIfNotExist) {
 		entity = new struct_HateList;
@@ -230,6 +231,8 @@ void HateList::AddEntToHateList(Mob *in_entity, int32 in_hate, int32 in_damage, 
 		entity->hatelist_damage = (in_damage >= 0) ? in_damage : 0;
 		entity->stored_hate_amount = in_hate;
 		entity->is_entity_frenzy = in_is_entity_frenzied;
+	  entity->last_modified = Timer::GetCurrentTime();
+		list.push_back(entity);
 		parse->EventNPC(EVENT_HATE_LIST, hate_owner->CastToNPC(), in_entity, "1", 0);
 
 		if (in_entity->IsClient()) {
@@ -238,17 +241,6 @@ void HateList::AddEntToHateList(Mob *in_entity, int32 in_hate, int32 in_damage, 
 			}
 			in_entity->CastToClient()->IncrementAggroCount();
 		}
-	}
-
-	entity->last_modified = 0;
-	auto current_time = Timer::GetCurrentTime();
-	if (current_time)
-  {
-		entity->last_modified = current_time;
-	}
-
-	if (iAddIfNotExist) {
-		list.push_back(entity);
 	}
 }
 
