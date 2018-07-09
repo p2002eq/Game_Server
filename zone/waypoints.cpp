@@ -418,7 +418,6 @@ void NPC::SaveGuardSpot(bool iClearGuardSpot) {
 }
 
 void NPC::NextGuardPosition() {
-	if (!m_Position) {return false; }
 	if (!CalculateNewPosition(m_GuardPoint.x, m_GuardPoint.y, m_GuardPoint.z, GetMovespeed())) {
 		SetHeading(m_GuardPoint.w);
 		Log(Logs::Detail, Logs::AI, "Unable to move to next guard position. Probably rooted.");
@@ -434,12 +433,10 @@ void NPC::NextGuardPosition() {
 }
 
 float Mob::CalculateDistance(float x, float y, float z) {
-	if (!m_Position) { return 0.0; }
 	return (float)sqrtf(((m_Position.x - x)*(m_Position.x - x)) + ((m_Position.y - y)*(m_Position.y - y)) + ((m_Position.z - z)*(m_Position.z - z)));
 }
 
 bool Mob::MakeNewPositionAndSendUpdate(float x, float y, float z, int speed, bool checkZ, bool calcHeading) {
-	if (!m_Position) {return false; }
 	if (GetID() == 0)
 		return true;
 
