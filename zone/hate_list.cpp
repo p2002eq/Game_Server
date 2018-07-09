@@ -106,10 +106,14 @@ void HateList::SetHateAmountOnEnt(Mob* other, uint32 in_hate, uint32 in_damage)
 	struct_HateList *entity = Find(other);
 	if (entity)
 	{
-		if (in_damage > 0)
+		if (in_damage > 0) {
 			entity->hatelist_damage = in_damage;
-		if (in_hate > 0)
+		}
+
+		if (in_hate > 0) {
 			entity->stored_hate_amount = in_hate;
+		}
+		entity->last_modified = Timer::GetCurrentTime();
 	}
 }
 
@@ -201,14 +205,17 @@ int HateList::GetClientAggroCount()
 
 void HateList::AddEntToHateList(Mob *in_entity, int32 in_hate, int32 in_damage, bool in_is_entity_frenzied, bool iAddIfNotExist)
 {
-	if (!in_entity)
+	if (!in_entity) {
 		return;
+	}
 
-	if (in_entity->IsCorpse())
+	if (in_entity->IsCorpse()) {
 		return;
+	}
 
-	if (in_entity->IsClient() && in_entity->CastToClient()->IsDead())
+	if (in_entity->IsClient() && in_entity->CastToClient()->IsDead()) {
 		return;
+	}
 
 	struct_HateList *entity = Find(in_entity);
 	if (entity)
@@ -226,10 +233,22 @@ void HateList::AddEntToHateList(Mob *in_entity, int32 in_hate, int32 in_damage, 
 		parse->EventNPC(EVENT_HATE_LIST, hate_owner->CastToNPC(), in_entity, "1", 0);
 
 		if (in_entity->IsClient()) {
-			if (hate_owner->CastToNPC()->IsRaidTarget())
+			if (hate_owner->CastToNPC()->IsRaidTarget()) {
 				in_entity->CastToClient()->SetEngagedRaidTarget(true);
+			}
 			in_entity->CastToClient()->IncrementAggroCount();
 		}
+	}
+
+	entity->last_modified = 0;
+	auto current_time = Timer::GetCurrentTime();
+	if (current_time)
+  {
+		entity->last_modified = current_time;
+	}
+
+	if (iAddIfNotExist) {
+		list.push_back(entity);
 	}
 }
 
@@ -772,5 +791,32 @@ void HateList::OnDeathTrigger()
 			}
 		} */
 		++iterator;
+	}
+}
+
+void HateList::RemoveStaleEntries(int time_ms, float dist)
+{
+	auto it = list.begin();
+
+	auto cur_time = Timer::GetCurrentTime();
+
+	while (it != list.end()) {
+		auto m = (*it)->entity_on_hatelist;
+		if (m) {
+			// 10 mins or distance
+			if ((cur_time - (*it)->last_modified > time_ms) || hate_owner->CalculateDistance(m->GetX(), m->GetY(), m->GetZ()) > dist) {
+				parse->EventNPC(EVENT_HATE_LIST, hate_owner->CastToNPC(), m, "0", 0);
+
+				if (m->IsClient()) {
+					m->CastToClient()->DecrementAggroCount();
+					m->CastToClient()->RemoveXTarget(hate_owner, true);
+				}
+
+				delete (*it);
+				it = list.erase(it);
+				continue;
+			}
+		}
+		++it;
 	}
 }
