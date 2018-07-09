@@ -944,11 +944,11 @@ bool Mob::CombatRange(Mob* other, float fixed_size_mod, bool aeRampage)
 			SetPseudoRoot(false);
 	}
 	if(aeRampage) {
-		if ((_DistNoRoot - RuleR(Combat, AERampageSafeZone)) <= size_mod) {
-			other->Message(0, "Im in ramp range! %d : %d", _DistNoRoot, size_mod);
+		if ((_DistNoRoot <= (size_mod * 0.9)) {
+			other->Say("Im in ramp range! %d : %d", _DistNoRoot, size_mod);
 			return true;
 		} else {
-			other->Message(0, "Im not ramp range! %d : %d", _DistNoRoot, size_mod);
+			other->Say("Im not ramp range! %d : %d", _DistNoRoot, size_mod);
 			return false;
 		}
 	}
