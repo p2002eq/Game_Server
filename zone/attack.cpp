@@ -3814,7 +3814,9 @@ void Mob::CommonDamage(Mob* attacker, int &damage, const uint16 spell_id, const 
 //clamp damage to max npc damage
   if (
       spell_id == SPELL_UNKNOWN &&
-      attacker->IsNPC()
+      attacker->IsNPC() &&
+			!attacker->IsPet() &&
+			skill_used != EQEmu::skills::SkillBackstab
      )
   {
       
