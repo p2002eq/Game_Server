@@ -4899,6 +4899,7 @@ float Mob::ResistSpell(uint8 resist_type, uint16 spell_id, Mob *caster, bool use
 	else
 	{
 		if (caster->IsClient() && IsAERainNukeSpell(spell_id)) {
+			caster->Say("skipping partial resist_chance since we are below the cutoff - roll: %i chance: %i", roll, resist_chance);
 			if (roll <= static_cast<int> (RuleR(Spells, AERainResistChance) * 200.0f)) {
 				allow_partial_resist = false;
 			}
