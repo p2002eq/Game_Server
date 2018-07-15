@@ -4888,8 +4888,6 @@ float Mob::ResistSpell(uint8 resist_type, uint16 spell_id, Mob *caster, bool use
 	}
 		
 
-	bool allow_partial_resist = true;
-
 	//Finally our roll
 	int roll = zone->random.Int(0, 200);
 	if(roll > resist_chance)
@@ -4899,14 +4897,14 @@ float Mob::ResistSpell(uint8 resist_type, uint16 spell_id, Mob *caster, bool use
 	else
 	{
 		if (caster->IsClient() && IsAERainNukeSpell(spell_id)) {
-			caster->Say("skipping partial resist_chance since we are below the cutoff - roll: %i chance: %i", roll, resist_chance);
 			if (roll <= static_cast<int> (RuleR(Spells, AERainResistChance) * 200.0f)) {
-				allow_partial_resist = false;
+				caster->Say("skipping partial resist_chance since we are below the cutoff - roll: %i chance: %i", roll, resist_chance);
+				return 0;
 			}
 		}
 		//This is confusing but it's basically right
 		//It skews partial resists up over 100 more often than not
-		if(!IsPartialCapableSpell(spell_id) && !allow_partial_resist)
+		if(!IsPartialCapableSpell(spell_id))
 		{
 			return 0;
 		}
