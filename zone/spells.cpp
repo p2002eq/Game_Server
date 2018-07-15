@@ -4876,8 +4876,8 @@ float Mob::ResistSpell(uint8 resist_type, uint16 spell_id, Mob *caster, bool use
 if(caster->IsClient() && IsAERainNukeSpell(spell_id)) {
 	int rain_resist_chance = static_cast<int> (RuleR(Spells, AERainResistChance) * 200);
 	if (resist_chance < rain_resist_chance){
+		caster->Say("ITS RAINING MEN rc: %i rrc: %i", resist_adjust, rain_resist_chance);
 		resist_chance = rain_resist_chance;
-		caster->Say("ITS RAINING MEN");
 	}
 }
 
