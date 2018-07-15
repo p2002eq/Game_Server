@@ -4894,15 +4894,15 @@ float Mob::ResistSpell(uint8 resist_type, uint16 spell_id, Mob *caster, bool use
 	int roll = zone->random.Int(0, 200);
 	if(roll > resist_chance)
 	{
+		return 100;
+	}
+	else
+	{
 		if (caster->IsClient() && IsAERainNukeSpell(spell_id)) {
 			if (roll <= static_cast<int> (RuleR(Spells, AERainResistChance) * 200.0f)) {
 				allow_partial_resist = false;
 			}
 		}
-		return 100;
-	}
-	else
-	{
 		//This is confusing but it's basically right
 		//It skews partial resists up over 100 more often than not
 		if(!IsPartialCapableSpell(spell_id) && !allow_partial_resist)
