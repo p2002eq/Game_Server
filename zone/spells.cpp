@@ -4871,17 +4871,22 @@ float Mob::ResistSpell(uint8 resist_type, uint16 spell_id, Mob *caster, bool use
 			resist_chance = min_rootbreakchance;
 	}
 
+	// AE Rain spells have a global 22% resist chance
+// https://www.graffes.com/forums/showthread.php?3478-Rains-and-Resists-The-statistics-are-in-(with-debuffs)&s=6fd272ba22b5e11172d15f7d4cd282d6
+if(caster->IsClient() && IsAERainNukeSpell(spell_id)) {
+	int rain_resist_chance = static_cast<int> (RuleR(Spells, AERainResistChance) * 200);
+	if (resist_chance < rain_resist_chance){
+		resist_chance = rain_resist_chance;
+		caster->Say("ITS RAINING MEN");
+	}
+}
+
 	if (IsNPC()) {
 		resist_chance += RuleI(Spells, NPCResistMod);
 		if (IsDamageSpell(spell_id))
 			resist_chance += RuleI(Spells, NPCResistModDamage);
 	}
 		
-// AE Rain spells have a global 22% resist chance
-// https://www.graffes.com/forums/showthread.php?3478-Rains-and-Resists-The-statistics-are-in-(with-debuffs)&s=6fd272ba22b5e11172d15f7d4cd282d6
-if(caster->IsClient() && IsAERainNukeSpell(spell_id)) {
-	resist_chance = (RuleR(Spells, AERainResistChance) * 200);
-}
 
 	//Finally our roll
 	int roll = zone->random.Int(0, 200);
