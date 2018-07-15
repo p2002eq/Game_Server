@@ -4881,6 +4881,14 @@ float Mob::ResistSpell(uint8 resist_type, uint16 spell_id, Mob *caster, bool use
 	int roll = zone->random.Int(0, 200);
 	if(roll > resist_chance)
 	{
+		// AE Rain spells have a global 22% resist chance
+		// https://www.graffes.com/forums/showthread.php?3478-Rains-and-Resists-The-statistics-are-in-(with-debuffs)&s=6fd272ba22b5e11172d15f7d4cd282d6
+		if(IsAERainNukeSpell(spell_id)) {
+			if (zone->random.Int(0, 100) < 22) {
+				return 0;
+			}
+		}
+
 		return 100;
 	}
 	else
