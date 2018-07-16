@@ -411,7 +411,7 @@ RULE_BOOL(Spells, NPCSpellPush, true) // enable spell push on NPCs
 RULE_CATEGORY_END()
 
 RULE_CATEGORY(Combat)
-RULE_REAL(Combat, AERampageSafeZone, 0.95) // max hit ae ramp reduction range
+RULE_REAL(Combat, AERampageSafeZone, 0.018) // max hit ae ramp reduction range
 RULE_INT(Combat, PetBaseCritChance, 0) // Pet Base crit chance
 RULE_INT(Combat, NPCBashKickLevel, 6) //The level that npcs can KICK/BASH
 RULE_INT(Combat, NPCBashKickStunChance, 15) //Percent chance that a bash/kick will stun
