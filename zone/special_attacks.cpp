@@ -1609,14 +1609,16 @@ void NPC::DoClassAttacks(Mob *target) {
 		int knightreuse = 1000; //lets give it a small cooldown actually.
 		switch(GetClass()){
 			case SHADOWKNIGHT: case SHADOWKNIGHTGM:{
-				CastSpell(SPELL_NPC_HARM_TOUCH, target->GetID());
-				knightreuse = HarmTouchReuseTime * 1000 - (GetAA(aaTouchoftheWicked) * 720);
+				if (CastSpell(SPELL_NPC_HARM_TOUCH, target->GetID())) {
+					knightreuse = HarmTouchReuseTime * 1000 - (GetAA(aaTouchoftheWicked) * 720);
+				}
 				break;
 			}
 			case PALADIN: case PALADINGM:{
 				if(GetHPRatio() < 20) {
-					CastSpell(SPELL_LAY_ON_HANDS, GetID());
-					knightreuse = LayOnHandsReuseTime * 1000 - (GetAA(aaFervrentBlessing) * 720);
+					if(CastSpell(SPELL_LAY_ON_HANDS, GetID())) {
+						knightreuse = LayOnHandsReuseTime * 1000 - (GetAA(aaFervrentBlessing) * 720);
+					}
 				} else {
 					knightreuse = 2000; //Check again in two seconds.
 				}
