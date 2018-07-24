@@ -636,7 +636,11 @@ int HateList::AreaRampage(Mob *caster, Mob *target, int count, ExtraAttackOption
 	for (auto &h : list) {
 		if (h->entity_on_hatelist && h->entity_on_hatelist != caster &&
 		    caster->CombatRange(h->entity_on_hatelist, 1.0, true)) {
-			id_list.push_back(h->entity_on_hatelist->GetID());
+			if(caster->GetHateTop()->GetID() != h->entity_on_hatelist->GetID() || caster->GetTarget()->GetID() != h->entity_on_hatelist->GetID()) {
+				id_list.push_back(h->entity_on_hatelist->GetID());
+			} else {
+				caster->Shout("Excludingi: %s", h->entity_on_hatelist->GetName());
+			}
 		}
 
 		if (count != -1 && id_list.size() > count) {
