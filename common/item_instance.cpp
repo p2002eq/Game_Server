@@ -206,6 +206,23 @@ EQEmu::ItemInstance::~ItemInstance()
 	safe_delete(m_evolveInfo);
 }
 
+
+uint32 EQEmu::ItemInstance::GetID() const {
+	if (m_item && m_item->ID) {
+		return m_item->ID;
+	} 
+
+	return 0;
+}
+
+uint32 EQEmu::ItemInstance::GetItemScriptID() const {
+	if (m_item && m_item->ScriptFileID) {
+		return m_item->ScriptFileID;
+	}
+
+	return 0;
+}
+
 // Query item type
 bool EQEmu::ItemInstance::IsType(item::ItemClass item_class) const
 {

@@ -324,6 +324,7 @@ RULE_REAL(Watermap, FishingLineStepSize, 1)		// Basic step size for fishing calc
 RULE_CATEGORY_END()
 
 RULE_CATEGORY(Spells)
+RULE_REAL(Spells, AERainResistChance, 0.22)
 RULE_REAL(Spells, ResistChance, 2.0) //chance to resist given no resists and same level
 RULE_INT(Spells, NPCResistMod, 0) // skew total NPC resists, resist += this
 RULE_INT(Spells, NPCResistModDamage, 0) // skew NPC resists for damage spells, resist += this
@@ -410,7 +411,7 @@ RULE_BOOL(Spells, NPCSpellPush, true) // enable spell push on NPCs
 RULE_CATEGORY_END()
 
 RULE_CATEGORY(Combat)
-RULE_REAL(Combat, AERampageSafeZone, 0.95) // max hit ae ramp reduction range
+RULE_REAL(Combat, AERampageSafeZone, 0.018) // max hit ae ramp reduction range
 RULE_INT(Combat, PetBaseCritChance, 0) // Pet Base crit chance
 RULE_INT(Combat, NPCBashKickLevel, 6) //The level that npcs can KICK/BASH
 RULE_INT(Combat, NPCBashKickStunChance, 15) //Percent chance that a bash/kick will stun
