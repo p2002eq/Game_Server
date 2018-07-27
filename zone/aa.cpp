@@ -63,7 +63,6 @@ void Mob::TemporaryPets(uint16 spell_id, Mob *targ, const char *name_override, u
 		Message(13, "Unable to find data for pet %s", spells[spell_id].teleport_zone);
 		return;
 	}
-	bool untargetable = false;
 	SwarmPet_Struct pet;
 	pet.count = 1;
 	pet.duration = 1;
@@ -80,7 +79,6 @@ void Mob::TemporaryPets(uint16 spell_id, Mob *targ, const char *name_override, u
 		{
 			pet.count = spells[spell_id].base[x];
 			pet.duration = spells[spell_id].max[x];
-			untargetable = true;
 		}
 	}
 
@@ -165,9 +163,6 @@ void Mob::TemporaryPets(uint16 spell_id, Mob *targ, const char *name_override, u
 		//we allocated a new NPC type object, give the NPC ownership of that memory
 		if (npc_dup != nullptr) {
 			swarm_pet_npc->GiveNPCTypeData(npc_dup);
-		}
-		if(untargetable) {
-			swarm_pet_npc->SetUntargetable();
 		}
 
 		entity_list.AddNPC(swarm_pet_npc, true, true);
