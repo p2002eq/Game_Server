@@ -2002,7 +2002,7 @@ void NPC::PetOnSpawn(NewSpawn_Struct* ns)
 		{
 			ns->spawn.bodytype = 11;
 			if(!IsCharmed() && swarmOwner->IsClient())
-				sprintf(ns->spawn.lastName, "%s's Pet", swarmOwner->GetName());
+				//sprintf(ns->spawn.lastName, "%s's Pet", swarmOwner->GetName());
 		}
 	}
 	else if(GetOwnerID())
