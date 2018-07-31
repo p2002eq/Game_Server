@@ -1,9 +1,7 @@
-version: '2'
+version: '3'
 services:
   eqemu:
     build: .
-    links:
-      - db
     volumes:
       - .:/eqemu:cached
     hostname: 'eqemu-server-dev'
@@ -20,6 +18,12 @@ services:
       - '127.0.0.1:9000:9000'
       - '127.0.0.1:9000:9000/udp'
       - '127.0.0.1:9080:9080'
+    #tmpfs:
+      #- /build:size=1G
+    #deploy:
+      #resources:
+        #reservations:
+          #memory: 6G
   db:
     image: mariadb:5.5
     hostname: 'eqemu-database-dev'

@@ -2001,8 +2001,8 @@ void NPC::PetOnSpawn(NewSpawn_Struct* ns)
 		if (RuleB(Pets, UnTargetableSwarmPet))
 		{
 			ns->spawn.bodytype = 11;
-			if(!IsCharmed() && swarmOwner->IsClient())
-				sprintf(ns->spawn.lastName, "%s's Pet", swarmOwner->GetName());
+			//if(!IsCharmed() && swarmOwner->IsClient())
+				//sprintf(ns->spawn.lastName, "%s's Pet", swarmOwner->GetName());
 		}
 	}
 	else if(GetOwnerID())

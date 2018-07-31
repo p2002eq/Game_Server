@@ -545,6 +545,7 @@ public:
 	void TempName(const char *newname = nullptr);
 	void SetTargetable(bool on);
 	bool IsTargetable() const { return m_targetable; }
+	void SetUntargetable() { m_targetable = false;}
 	bool HasShieldEquiped() const { return has_shieldequiped; }
 	inline void SetShieldEquiped(bool val) { has_shieldequiped = val; }
 	bool HasTwoHandBluntEquiped() const { return has_twohandbluntequiped; }
