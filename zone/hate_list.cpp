@@ -650,8 +650,7 @@ int HateList::AreaRampage(Mob *caster, Mob *target, int count, ExtraAttackOption
 
 	for (auto &id : id_list) {
 		auto mob = entity_list.GetMobID(id);
-    bool tank = caster->GetHateTop()->GetID() == mob->GetID();
-		if (mob && !tank) {
+		if (mob) {
 			++hit_count;
 			caster->ProcessAttackRounds(mob, opts);
 			//caster->Shout("Hitting: %s",mob->CastToNPC()->GetName());
