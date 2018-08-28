@@ -2257,133 +2257,11 @@ bool NPC::Death(Mob* killer_mob, int32 damage, uint16 spell, EQEmu::skills::Skil
 		respawn2->DeathReset(1);
 	}
 
-//Create a dps log entry.
-	float cur_dps;
-	float cur_hps_taken;
-	float cur_hps_dealt;
-	int cur_engage_duration = 1;
-
-	int my_hp_self_loss_net;
-	int my_hp_target_loss_net;
 	std::string adminMessage = "";
-
-	if (DPS().size() > 0) { //don't need to dps report an empty dps mob
-		//Generate a unique id for fight.
-		std::string fight_id = zone->CreateSessionHash();
-		//First, verify a client participated in some capacity to the fight
-		bool isClientParticipating = false;
-		for (auto &&d : DPS()) {
-			if (d.acct_id == 0) continue;
-			if (engage_duration < time(nullptr) - d.engage_start) cur_engage_duration = time(nullptr) - d.engage_start;
-			isClientParticipating = true;
-			break;
-		}
-		if (cur_engage_duration < 1) cur_engage_duration = 1;
-		if (isClientParticipating) {
-			for (auto &&d : DPS()) {
-				int is_dying = 0;
-				if (d.ent_id == GetID()) {
-					my_hp_self_loss_net = d.hp_self_loss_net;
-					my_hp_target_loss_net = d.hp_target_loss_net;
-				}
-				if (d.ent_id == GetID()) is_dying = 1;
-
-				std::string query = StringFormat(
-						"INSERT INTO dps_log (fight_id,  time, acct_id, name, class_name, item_score, hp_self_gain_total, hp_self_gain_net, hp_self_loss_total, hp_self_loss_net, hp_target_gain_total, hp_target_gain_net, hp_target_loss_total, hp_target_loss_net, mana_self_gain_total, mana_self_gain_net, mana_self_loss_total, mana_self_loss_net, mana_target_gain_total, mana_target_gain_net, mana_target_loss_total, mana_target_loss_net, class, level, tier, aggro_count, is_dying, type_id) VALUES(\"%s\", %i, %i, \"%s\", \"%s\", %i, %i, %i, %i, %i, %i, %i, %i, %i, %i, %i, %i, %i, %i, %i, %i, %i, %i, %i, %i, %i, %i, %i);",
-						fight_id.c_str(), //fight_id
-						engage_duration, //uint32 engage_start,
-						d.acct_id, //acct_id,
-						d.character_name.c_str(), //std::string character_name,
-						d.class_name.c_str(),
-						d.item_score,
-						d.hp_self_gain_total, //int hp_self_gain_total,
-						d.hp_self_gain_net, //hp_self_gain_net
-						d.hp_self_loss_total, //hp_self_loss_total
-						d.hp_self_loss_net, //hp_self_loss_net
-						d.hp_target_gain_total, //hp_target_gain_total
-						d.hp_target_gain_net, //hp_target_gain_net
-						d.hp_target_loss_total, //hp_target_loss_total
-						d.hp_target_loss_net, //hp_target_loss_net
-						d.mana_self_gain_total, //mana_self_gain_total
-						d.mana_self_gain_net, //mana_self_gain_net
-						d.mana_self_loss_total, //mana_self_loss_total
-						d.mana_self_loss_net, //mana_self_loss_net
-						d.mana_target_gain_total, //mana_target_gain_total
-						d.mana_target_gain_net, //mana_target_gain_net
-						d.mana_target_loss_total, //mana_target_loss_total
-						d.mana_target_loss_net, //mana_target_loss_net
-						d.class_id, //class_id
-						d.level, //level
-						d.tier, //tier
-						d.aggro_count, //aggro_count
-						is_dying,  //is_dying
-						d.type_id //type_id
-				);
-				auto results = database.QueryDatabase(query);
-			}
-		}
+	adminMessage.append(StringFormat("Raidmob: %s has died", GetName()));
+	if (IsRaidTarget() && IsNPC()) {
+		nats.SendAdminMessage(adminMessage);
 	}
-	engage_duration = cur_engage_duration;
-	//Give DPS report to people with value toggled.
-	auto iterator = hate_list.GetHateList().begin();
-	while (iterator != hate_list.GetHateList().end()) {
-		if (DPS().size() < 1) { //don't need to dps report an empty dps mob
-			break;
-		}
-
-		struct_HateList *h = (*iterator);
-		if (!h) {
-			++iterator;
-			continue;
-		}
-		if (h->entity_on_hatelist == nullptr ||  //if it doesn't exist
-			!h->entity_on_hatelist->IsClient() || //if it's not a client
-			(!h->entity_on_hatelist->CastToClient()->GetEPP().use_self_dps &&
-			 !h->entity_on_hatelist->CastToClient()->GetEPP().use_full_dps)) { //if they don't have the dps flags on
-			++iterator;
-			continue;
-		}
-
-		cur_dps = 0;
-
-		Client *c = h->entity_on_hatelist->CastToClient();
-		if (c == nullptr) {
-			++iterator;
-			continue;
-		}
-
-		float my_dps_loss = (float) ((float) my_hp_self_loss_net / cur_engage_duration);
-		float my_dps_target_loss = (float) ((float) my_hp_target_loss_net / cur_engage_duration);
-
-		adminMessage.append(StringFormat("%s DPS Report %d seconds, killed in %s\n", GetCleanName(),
-										 cur_engage_duration, database.GetZoneName(zone->GetZoneID())));
-		adminMessage.append(StringFormat("- dealt %i damage (%.1f DPS)\n", my_hp_self_loss_net, my_dps_loss));
-		adminMessage.append(StringFormat("- took %i damage (%.1f DPS)\n", my_hp_target_loss_net, my_dps_target_loss));
-		adminMessage.append(StringFormat("------ Participants ----------\n"));
-
-		c->Message(MT_OtherDeath, "------ %s DPS Report %d seconds ----------", GetCleanName(), cur_engage_duration);
-		c->Message(MT_OtherDeath, "- dealt %i damage (%.1f DPS)", my_hp_self_loss_net, my_dps_loss);
-		c->Message(MT_OtherDeath, "- took %i damage (%.1f DPS)", my_hp_target_loss_net, my_dps_target_loss);
-		c->Message(MT_OtherDeath, "------ Participants ----------");
-		for (auto &&d : DPS()) {
-			if (d.ent_id == GetID()) { //if it's me
-				continue;
-			}
-
-			cur_dps = (float) ((float) d.hp_target_loss_net / cur_engage_duration);
-			cur_hps_taken = (float) ((float) d.hp_self_gain_net / cur_engage_duration);
-			cur_hps_dealt = (float) ((float) d.hp_target_gain_net / cur_engage_duration);
-
-			if (!c->GetEPP().use_full_dps && c->GetID() != d.ent_id) continue; //Don't show DPS if self only is flagged
-			c->Message(MT_OtherDeath, "- %s: %i damage (%.1f DPS)", d.character_name.c_str(), d.hp_target_loss_net,
-					   cur_dps);
-			adminMessage.append(
-					StringFormat("- %s: %i damage (%.1f DPS)\n", d.character_name.c_str(), d.hp_target_loss_net,
-								 cur_dps));
-		}
-		++iterator;
-	}
-	if (IsRaidTarget() && IsNPC()) nats.SendAdminMessage(adminMessage);
 	if (killer_mob && GetClass() != LDON_TREASURE)
 		hate_list.AddEntToHateList(killer_mob, damage);
 
@@ -2609,9 +2487,6 @@ bool NPC::Death(Mob* killer_mob, int32 damage, uint16 spell, EQEmu::skills::Skil
 		if (corpse) {
 			entity_list.LimitRemoveNPC(this);
 			entity_list.AddCorpse(corpse, GetID());
-
-			corpse->CastToMob()->dps = dps; //copy dps from mob
-			corpse->CastToMob()->engage_duration = cur_engage_duration; //transfer over fight duration
 
 			entity_list.UnMarkNPC(GetID());
 			entity_list.RemoveNPC(GetID());
@@ -3413,7 +3288,6 @@ int32 Mob::ReduceAllDamage(int32 damage)
 		int32 mana_reduced = damage * spellbonuses.ManaAbsorbPercentDamage[0] / 100;
 		if (GetMana() >= mana_reduced) {
 			damage -= mana_reduced;
-			entity_list.LogManaEvent(this, this, -mana_reduced);
 			SetMana(GetMana() - mana_reduced);
 			TryTriggerOnValueAmount(false, true);
 		}
@@ -3686,7 +3560,6 @@ void Mob::CommonDamage(Mob* attacker, int &damage, const uint16 spell_id, const 
 		if(attacker->IsClient()) {
 			player_damage += damage;
 		}
-		entity_list.LogHPEvent(attacker, this, -damage);
 		pre_hit_hp = GetHP();
 		SetHP(GetHP() - damage);
 
@@ -4052,7 +3925,6 @@ void Mob::HealDamage(uint32 amount, Mob *caster, uint16 spell_id)
 		}
 	}
 
-	entity_list.LogHPEvent(caster, this, amount);
 	if (curhp < maxhp) {
 		if ((curhp + amount) > maxhp)
 			curhp = maxhp;

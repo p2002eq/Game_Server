@@ -67,9 +67,6 @@ void AdventureManager::Process()
 		Save();
 	}
 
-	if (itemscore_timer->Check()) {
-		RefreshItemScore();
-	}
 }
 
 void AdventureManager::CalculateAdventureRequestReply(const char *data)
@@ -1562,501 +1559,502 @@ void AdventureManager::DoLeaderboardRequestWinsMir(const char* player)
 
 void AdventureManager::DoLeaderboardRequestPercentageMir(const char* player)
 {
-	ClientListEntry *pc = client_list.FindCharacter(player);
-	if(pc)
-	{
-		auto pack = new ServerPacket(ServerOP_AdventureLeaderboard, 64 + sizeof(AdventureLeaderboard_Struct));
-		AdventureLeaderboard_Struct *al = (AdventureLeaderboard_Struct*)(pack->pBuffer + 64);
-		strcpy((char*)pack->pBuffer, player);
+	//ClientListEntry *pc = client_list.FindCharacter(player);
+	//if(pc)
+	//{
+		//auto pack = new ServerPacket(ServerOP_AdventureLeaderboard, 64 + sizeof(AdventureLeaderboard_Struct));
+		//AdventureLeaderboard_Struct *al = (AdventureLeaderboard_Struct*)(pack->pBuffer + 64);
+		//strcpy((char*)pack->pBuffer, player);
 
-		int place = -1;
-		int our_successes = 0;
-		int our_failures = 0;
-		int i = 0;
-		auto iter = leaderboard_info_percentage_mir.begin();
-		while(i < 100 && iter != leaderboard_info_percentage_mir.end())
-		{
-			LeaderboardInfo li = (*iter);
-			if(li.name.compare(player) == 0)
-			{
-				place = i;
-				our_successes = li.mir_wins;
-				our_failures = li.mir_losses;
-			}
+		//int place = -1;
+		//int our_successes = 0;
+		//int our_failures = 0;
+		//int i = 0;
+		//auto iter = leaderboard_info_percentage_mir.begin();
+		//while(i < 100 && iter != leaderboard_info_percentage_mir.end())
+		//{
+			//LeaderboardInfo li = (*iter);
+			//if(li.name.compare(player) == 0)
+			//{
+				//place = i;
+				//our_successes = li.mir_wins;
+				//our_failures = li.mir_losses;
+			//}
 
-			al->entries[i].success = li.mir_wins;
-			al->entries[i].failure = li.mir_losses;
-			strcpy(al->entries[i].name, li.name.c_str());
-			i++;
-			++iter;
-		}
+			//al->entries[i].success = li.mir_wins;
+			//al->entries[i].failure = li.mir_losses;
+			//strcpy(al->entries[i].name, li.name.c_str());
+			//i++;
+			//++iter;
+		//}
 
-		if(place == -1 && iter != leaderboard_info_percentage_mir.end())
-		{
-			while(iter != leaderboard_info_percentage_mir.end())
-			{
-				LeaderboardInfo li = (*iter);
-				if(li.name.compare(player) == 0)
-				{
-					place = i;
-					our_successes = li.mir_wins;
-					our_failures = li.mir_losses;
-					break;
-				}
-				i++;
-				++iter;
-			}
-		}
+		//if(place == -1 && iter != leaderboard_info_percentage_mir.end())
+		//{
+			//while(iter != leaderboard_info_percentage_mir.end())
+			//{
+				//LeaderboardInfo li = (*iter);
+				//if(li.name.compare(player) == 0)
+				//{
+					//place = i;
+					//our_successes = li.mir_wins;
+					//our_failures = li.mir_losses;
+					//break;
+				//}
+				//i++;
+				//++iter;
+			//}
+		//}
 
-		if(place == -1)
-		{
-			al->our_rank = leaderboard_info_percentage_mir.size() + 1;
-			al->success = 0;
-			al->failure = 0;
-		}
-		else
-		{
-			al->our_rank = place;
-			al->success = our_successes;
-			al->failure = our_failures;
-		}
+		//if(place == -1)
+		//{
+			//al->our_rank = leaderboard_info_percentage_mir.size() + 1;
+			//al->success = 0;
+			//al->failure = 0;
+		//}
+		//else
+		//{
+			//al->our_rank = place;
+			//al->success = our_successes;
+			//al->failure = our_failures;
+		//}
 
-		zoneserver_list.SendPacket(pc->zone(), pc->instance(), pack);
-		delete pack;
-	}
+		//zoneserver_list.SendPacket(pc->zone(), pc->instance(), pack);
+		//delete pack;
+	//}
 }
 
 void AdventureManager::DoLeaderboardRequestWinsMmc(const char* player)
 {
-	ClientListEntry *pc = client_list.FindCharacter(player);
-	if(pc)
-	{
-		auto pack = new ServerPacket(ServerOP_AdventureLeaderboard, 64 + sizeof(AdventureLeaderboard_Struct));
-		AdventureLeaderboard_Struct *al = (AdventureLeaderboard_Struct*)(pack->pBuffer + 64);
-		strcpy((char*)pack->pBuffer, player);
+	//ClientListEntry *pc = client_list.FindCharacter(player);
+	//if(pc)
+	//{
+		//auto pack = new ServerPacket(ServerOP_AdventureLeaderboard, 64 + sizeof(AdventureLeaderboard_Struct));
+		//AdventureLeaderboard_Struct *al = (AdventureLeaderboard_Struct*)(pack->pBuffer + 64);
+		//strcpy((char*)pack->pBuffer, player);
 
-		int place = -1;
-		int our_successes = 0;
-		int our_failures = 0;
-		int i = 0;
-		auto iter = leaderboard_info_wins_mmc.begin();
-		while(i < 100 && iter != leaderboard_info_wins_mmc.end())
-		{
-			LeaderboardInfo li = (*iter);
-			if(li.name.compare(player) == 0)
-			{
-				place = i;
-				our_successes = li.mmc_wins;
-				our_failures = li.mmc_losses;
-			}
+		//int place = -1;
+		//int our_successes = 0;
+		//int our_failures = 0;
+		//int i = 0;
+		//auto iter = leaderboard_info_wins_mmc.begin();
+		//while(i < 100 && iter != leaderboard_info_wins_mmc.end())
+		//{
+			//LeaderboardInfo li = (*iter);
+			//if(li.name.compare(player) == 0)
+			//{
+				//place = i;
+				//our_successes = li.mmc_wins;
+				//our_failures = li.mmc_losses;
+			//}
 
-			al->entries[i].success = li.mmc_wins;
-			al->entries[i].failure = li.mmc_losses;
-			strcpy(al->entries[i].name, li.name.c_str());
-			i++;
-			++iter;
-		}
+			//al->entries[i].success = li.mmc_wins;
+			//al->entries[i].failure = li.mmc_losses;
+			//strcpy(al->entries[i].name, li.name.c_str());
+			//i++;
+			//++iter;
+		//}
 
-		if(place == -1 && iter != leaderboard_info_wins_mmc.end())
-		{
-			while(iter != leaderboard_info_wins_mmc.end())
-			{
-				LeaderboardInfo li = (*iter);
-				if(li.name.compare(player) == 0)
-				{
-					place = i;
-					our_successes = li.mmc_wins;
-					our_failures = li.mmc_losses;
-					break;
-				}
-				i++;
-				++iter;
-			}
-		}
+		//if(place == -1 && iter != leaderboard_info_wins_mmc.end())
+		//{
+			//while(iter != leaderboard_info_wins_mmc.end())
+			//{
+				//LeaderboardInfo li = (*iter);
+				//if(li.name.compare(player) == 0)
+				//{
+					//place = i;
+					//our_successes = li.mmc_wins;
+					//our_failures = li.mmc_losses;
+					//break;
+				//}
+				//i++;
+				//++iter;
+			//}
+		//}
 
-		if(place == -1)
-		{
-			al->our_rank = leaderboard_info_wins_mmc.size() + 1;
-			al->success = 0;
-			al->failure = 0;
-		}
-		else
-		{
-			al->our_rank = place;
-			al->success = our_successes;
-			al->failure = our_failures;
-		}
+		//if(place == -1)
+		//{
+			//al->our_rank = leaderboard_info_wins_mmc.size() + 1;
+			//al->success = 0;
+			//al->failure = 0;
+		//}
+		//else
+		//{
+			//al->our_rank = place;
+			//al->success = our_successes;
+			//al->failure = our_failures;
+		//}
 
-		zoneserver_list.SendPacket(pc->zone(), pc->instance(), pack);
-		delete pack;
-	}
+		//zoneserver_list.SendPacket(pc->zone(), pc->instance(), pack);
+		//delete pack;
+	//}
 }
 
 void AdventureManager::DoLeaderboardRequestPercentageMmc(const char* player)
 {
-	ClientListEntry *pc = client_list.FindCharacter(player);
-	if(pc)
-	{
-		auto pack = new ServerPacket(ServerOP_AdventureLeaderboard, 64 + sizeof(AdventureLeaderboard_Struct));
-		AdventureLeaderboard_Struct *al = (AdventureLeaderboard_Struct*)(pack->pBuffer + 64);
-		strcpy((char*)pack->pBuffer, player);
+	//ClientListEntry *pc = client_list.FindCharacter(player);
+	//if(pc)
+	//{
+		//auto pack = new ServerPacket(ServerOP_AdventureLeaderboard, 64 + sizeof(AdventureLeaderboard_Struct));
+		//AdventureLeaderboard_Struct *al = (AdventureLeaderboard_Struct*)(pack->pBuffer + 64);
+		//strcpy((char*)pack->pBuffer, player);
 
-		int place = -1;
-		int our_successes = 0;
-		int our_failures = 0;
-		int i = 0;
-		auto iter = leaderboard_info_percentage_mmc.begin();
-		while(i < 100 && iter != leaderboard_info_percentage_mmc.end())
-		{
-			LeaderboardInfo li = (*iter);
-			if(li.name.compare(player) == 0)
-			{
-				place = i;
-				our_successes = li.mmc_wins;
-				our_failures = li.mmc_losses;
-			}
+		//int place = -1;
+		//int our_successes = 0;
+		//int our_failures = 0;
+		//int i = 0;
+		//auto iter = leaderboard_info_percentage_mmc.begin();
+		//while(i < 100 && iter != leaderboard_info_percentage_mmc.end())
+		//{
+			//LeaderboardInfo li = (*iter);
+			//if(li.name.compare(player) == 0)
+			//{
+				//place = i;
+				//our_successes = li.mmc_wins;
+				//our_failures = li.mmc_losses;
+			//}
 
-			al->entries[i].success = li.mmc_wins;
-			al->entries[i].failure = li.mmc_losses;
-			strcpy(al->entries[i].name, li.name.c_str());
-			i++;
-			++iter;
-		}
+			//al->entries[i].success = li.mmc_wins;
+			//al->entries[i].failure = li.mmc_losses;
+			//strcpy(al->entries[i].name, li.name.c_str());
+			//i++;
+			//++iter;
+		//}
 
-		if(place == -1 && iter != leaderboard_info_percentage_mmc.end())
-		{
-			while(iter != leaderboard_info_percentage_mmc.end())
-			{
-				LeaderboardInfo li = (*iter);
-				if(li.name.compare(player) == 0)
-				{
-					place = i;
-					our_successes = li.mmc_wins;
-					our_failures = li.mmc_losses;
-					break;
-				}
-				i++;
-				++iter;
-			}
-		}
+		//if(place == -1 && iter != leaderboard_info_percentage_mmc.end())
+		//{
+			//while(iter != leaderboard_info_percentage_mmc.end())
+			//{
+				//LeaderboardInfo li = (*iter);
+				//if(li.name.compare(player) == 0)
+				//{
+					//place = i;
+					//our_successes = li.mmc_wins;
+					//our_failures = li.mmc_losses;
+					//break;
+				//}
+				//i++;
+				//++iter;
+			//}
+		//}
 
-		if(place == -1)
-		{
-			al->our_rank = leaderboard_info_percentage_mmc.size() + 1;
-			al->success = 0;
-			al->failure = 0;
-		}
-		else
-		{
-			al->our_rank = place;
-			al->success = our_successes;
-			al->failure = our_failures;
-		}
+		//if(place == -1)
+		//{
+			//al->our_rank = leaderboard_info_percentage_mmc.size() + 1;
+			//al->success = 0;
+			//al->failure = 0;
+		//}
+		//else
+		//{
+			//al->our_rank = place;
+			//al->success = our_successes;
+			//al->failure = our_failures;
+		//}
 
-		zoneserver_list.SendPacket(pc->zone(), pc->instance(), pack);
-		delete pack;
-	}
+		//zoneserver_list.SendPacket(pc->zone(), pc->instance(), pack);
+		//delete pack;
+	//}
 }
 
 void AdventureManager::DoLeaderboardRequestWinsRuj(const char* player)
 {
-	ClientListEntry *pc = client_list.FindCharacter(player);
-	if(pc)
-	{
-		auto pack = new ServerPacket(ServerOP_AdventureLeaderboard, 64 + sizeof(AdventureLeaderboard_Struct));
-		AdventureLeaderboard_Struct *al = (AdventureLeaderboard_Struct*)(pack->pBuffer + 64);
-		strcpy((char*)pack->pBuffer, player);
+	//ClientListEntry *pc = client_list.FindCharacter(player);
+	//if(pc)
+	//{
+		//auto pack = new ServerPacket(ServerOP_AdventureLeaderboard, 64 + sizeof(AdventureLeaderboard_Struct));
+		//AdventureLeaderboard_Struct *al = (AdventureLeaderboard_Struct*)(pack->pBuffer + 64);
+		//strcpy((char*)pack->pBuffer, player);
 
-		int place = -1;
-		int our_successes = 0;
-		int our_failures = 0;
-		int i = 0;
-		auto iter = leaderboard_info_wins_ruj.begin();
-		while(i < 100 && iter != leaderboard_info_wins_ruj.end())
-		{
-			LeaderboardInfo li = (*iter);
-			if(li.name.compare(player) == 0)
-			{
-				place = i;
-				our_successes = li.ruj_wins;
-				our_failures = li.ruj_losses;
-			}
+		//int place = -1;
+		//int our_successes = 0;
+		//int our_failures = 0;
+		//int i = 0;
+		//auto iter = leaderboard_info_wins_ruj.begin();
+		//while(i < 100 && iter != leaderboard_info_wins_ruj.end())
+		//{
+			//LeaderboardInfo li = (*iter);
+			//if(li.name.compare(player) == 0)
+			//{
+				//place = i;
+				//our_successes = li.ruj_wins;
+				//our_failures = li.ruj_losses;
+			//}
 
-			al->entries[i].success = li.ruj_wins;
-			al->entries[i].failure = li.ruj_losses;
-			strcpy(al->entries[i].name, li.name.c_str());
-			i++;
-			++iter;
-		}
+			//al->entries[i].success = li.ruj_wins;
+			//al->entries[i].failure = li.ruj_losses;
+			//strcpy(al->entries[i].name, li.name.c_str());
+			//i++;
+			//++iter;
+		//}
 
-		if(place == -1 && iter != leaderboard_info_wins_ruj.end())
-		{
-			while(iter != leaderboard_info_wins_ruj.end())
-			{
-				LeaderboardInfo li = (*iter);
-				if(li.name.compare(player) == 0)
-				{
-					place = i;
-					our_successes = li.ruj_wins;
-					our_failures = li.ruj_losses;
-					break;
-				}
-				i++;
-				++iter;
-			}
-		}
+		//if(place == -1 && iter != leaderboard_info_wins_ruj.end())
+		//{
+			//while(iter != leaderboard_info_wins_ruj.end())
+			//{
+				//LeaderboardInfo li = (*iter);
+				//if(li.name.compare(player) == 0)
+				//{
+					//place = i;
+					//our_successes = li.ruj_wins;
+					//our_failures = li.ruj_losses;
+					//break;
+				//}
+				//i++;
+				//++iter;
+			//}
+		//}
 
-		if(place == -1)
-		{
-			al->our_rank = leaderboard_info_wins_ruj.size() + 1;
-			al->success = 0;
-			al->failure = 0;
-		}
-		else
-		{
-			al->our_rank = place;
-			al->success = our_successes;
-			al->failure = our_failures;
-		}
+		//if(place == -1)
+		//{
+			//al->our_rank = leaderboard_info_wins_ruj.size() + 1;
+			//al->success = 0;
+			//al->failure = 0;
+		//}
+		//else
+		//{
+			//al->our_rank = place;
+			//al->success = our_successes;
+			//al->failure = our_failures;
+		//}
 
-		zoneserver_list.SendPacket(pc->zone(), pc->instance(), pack);
-		delete pack;
-	}
+		//zoneserver_list.SendPacket(pc->zone(), pc->instance(), pack);
+		//delete pack;
+	//}
 }
 
 void AdventureManager::DoLeaderboardRequestPercentageRuj(const char* player)
 {
-	ClientListEntry *pc = client_list.FindCharacter(player);
-	if(pc)
-	{
-		auto pack = new ServerPacket(ServerOP_AdventureLeaderboard, 64 + sizeof(AdventureLeaderboard_Struct));
-		AdventureLeaderboard_Struct *al = (AdventureLeaderboard_Struct*)(pack->pBuffer + 64);
-		strcpy((char*)pack->pBuffer, player);
+	//ClientListEntry *pc = client_list.FindCharacter(player);
+	//if(pc)
+	//{
+		//auto pack = new ServerPacket(ServerOP_AdventureLeaderboard, 64 + sizeof(AdventureLeaderboard_Struct));
+		//AdventureLeaderboard_Struct *al = (AdventureLeaderboard_Struct*)(pack->pBuffer + 64);
+		//strcpy((char*)pack->pBuffer, player);
 
-		int place = -1;
-		int our_successes = 0;
-		int our_failures = 0;
-		int i = 0;
-		auto iter = leaderboard_info_percentage_ruj.begin();
-		while(i < 100 && iter != leaderboard_info_percentage_ruj.end())
-		{
-			LeaderboardInfo li = (*iter);
-			if(li.name.compare(player) == 0)
-			{
-				place = i;
-				our_successes = li.ruj_wins;
-				our_failures = li.ruj_losses;
-			}
+		//int place = -1;
+		//int our_successes = 0;
+		//int our_failures = 0;
+		//int i = 0;
+		//auto iter = leaderboard_info_percentage_ruj.begin();
+		//while(i < 100 && iter != leaderboard_info_percentage_ruj.end())
+		//{
+			//LeaderboardInfo li = (*iter);
+			//if(li.name.compare(player) == 0)
+			//{
+				//place = i;
+				//our_successes = li.ruj_wins;
+				//our_failures = li.ruj_losses;
+			//}
 
-			al->entries[i].success = li.ruj_wins;
-			al->entries[i].failure = li.ruj_losses;
-			strcpy(al->entries[i].name, li.name.c_str());
-			i++;
-			++iter;
-		}
+			//al->entries[i].success = li.ruj_wins;
+			//al->entries[i].failure = li.ruj_losses;
+			//strcpy(al->entries[i].name, li.name.c_str());
+			//i++;
+			//++iter;
+		//}
 
-		if(place == -1 && iter != leaderboard_info_percentage_ruj.end())
-		{
-			while(iter != leaderboard_info_percentage_ruj.end())
-			{
-				LeaderboardInfo li = (*iter);
-				if(li.name.compare(player) == 0)
-				{
-					place = i;
-					our_successes = li.ruj_wins;
-					our_failures = li.ruj_losses;
-					break;
-				}
-				i++;
-				++iter;
-			}
-		}
+		//if(place == -1 && iter != leaderboard_info_percentage_ruj.end())
+		//{
+			//while(iter != leaderboard_info_percentage_ruj.end())
+			//{
+				//LeaderboardInfo li = (*iter);
+				//if(li.name.compare(player) == 0)
+				//{
+					//place = i;
+					//our_successes = li.ruj_wins;
+					//our_failures = li.ruj_losses;
+					//break;
+				//}
+				//i++;
+				//++iter;
+			//}
+		//}
 
-		if(place == -1)
-		{
-			al->our_rank = leaderboard_info_percentage_ruj.size() + 1;
-			al->success = 0;
-			al->failure = 0;
-		}
-		else
-		{
-			al->our_rank = place;
-			al->success = our_successes;
-			al->failure = our_failures;
-		}
+		//if(place == -1)
+		//{
+			//al->our_rank = leaderboard_info_percentage_ruj.size() + 1;
+			//al->success = 0;
+			//al->failure = 0;
+		//}
+		//else
+		//{
+			//al->our_rank = place;
+			//al->success = our_successes;
+			//al->failure = our_failures;
+		//}
 
-		zoneserver_list.SendPacket(pc->zone(), pc->instance(), pack);
-		delete pack;
-	}
+		//zoneserver_list.SendPacket(pc->zone(), pc->instance(), pack);
+		//delete pack;
+	//}
 }
 
 void AdventureManager::DoLeaderboardRequestWinsTak(const char* player)
 {
-	ClientListEntry *pc = client_list.FindCharacter(player);
-	if(pc)
-	{
-		auto pack = new ServerPacket(ServerOP_AdventureLeaderboard, 64 + sizeof(AdventureLeaderboard_Struct));
-		AdventureLeaderboard_Struct *al = (AdventureLeaderboard_Struct*)(pack->pBuffer + 64);
-		strcpy((char*)pack->pBuffer, player);
+	//ClientListEntry *pc = client_list.FindCharacter(player);
+	//if(pc)
+	//{
+		//auto pack = new ServerPacket(ServerOP_AdventureLeaderboard, 64 + sizeof(AdventureLeaderboard_Struct));
+		//AdventureLeaderboard_Struct *al = (AdventureLeaderboard_Struct*)(pack->pBuffer + 64);
+		//strcpy((char*)pack->pBuffer, player);
 
-		int place = -1;
-		int our_successes = 0;
-		int our_failures = 0;
-		int i = 0;
-		auto iter = leaderboard_info_wins_ruj.begin();
-		while(i < 100 && iter != leaderboard_info_wins_ruj.end())
-		{
-			LeaderboardInfo li = (*iter);
-			if(li.name.compare(player) == 0)
-			{
-				place = i;
-				our_successes = li.tak_wins;
-				our_failures = li.tak_losses;
-			}
+		//int place = -1;
+		//int our_successes = 0;
+		//int our_failures = 0;
+		//int i = 0;
+		//auto iter = leaderboard_info_wins_ruj.begin();
+		//while(i < 100 && iter != leaderboard_info_wins_ruj.end())
+		//{
+			//LeaderboardInfo li = (*iter);
+			//if(li.name.compare(player) == 0)
+			//{
+				//place = i;
+				//our_successes = li.tak_wins;
+				//our_failures = li.tak_losses;
+			//}
 
-			al->entries[i].success = li.tak_wins;
-			al->entries[i].failure = li.tak_losses;
-			strcpy(al->entries[i].name, li.name.c_str());
-			i++;
-			++iter;
-		}
+			//al->entries[i].success = li.tak_wins;
+			//al->entries[i].failure = li.tak_losses;
+			//strcpy(al->entries[i].name, li.name.c_str());
+			//i++;
+			//++iter;
+		//}
 
-		if(place == -1 && iter != leaderboard_info_wins_ruj.end())
-		{
-			while(iter != leaderboard_info_wins_ruj.end())
-			{
-				LeaderboardInfo li = (*iter);
-				if(li.name.compare(player) == 0)
-				{
-					place = i;
-					our_successes = li.tak_wins;
-					our_failures = li.tak_losses;
-					break;
-				}
-				i++;
-				++iter;
-			}
-		}
+		//if(place == -1 && iter != leaderboard_info_wins_ruj.end())
+		//{
+			//while(iter != leaderboard_info_wins_ruj.end())
+			//{
+				//LeaderboardInfo li = (*iter);
+				//if(li.name.compare(player) == 0)
+				//{
+					//place = i;
+					//our_successes = li.tak_wins;
+					//our_failures = li.tak_losses;
+					//break;
+				//}
+				//i++;
+				//++iter;
+			//}
+		//}
 
-		if(place == -1)
-		{
-			al->our_rank = leaderboard_info_wins_ruj.size() + 1;
-			al->success = 0;
-			al->failure = 0;
-		}
-		else
-		{
-			al->our_rank = place;
-			al->success = our_successes;
-			al->failure = our_failures;
-		}
+		//if(place == -1)
+		//{
+			//al->our_rank = leaderboard_info_wins_ruj.size() + 1;
+			//al->success = 0;
+			//al->failure = 0;
+		//}
+		//else
+		//{
+			//al->our_rank = place;
+			//al->success = our_successes;
+			//al->failure = our_failures;
+		//}
 
-		zoneserver_list.SendPacket(pc->zone(), pc->instance(), pack);
-		delete pack;
-	}
+		//zoneserver_list.SendPacket(pc->zone(), pc->instance(), pack);
+		//delete pack;
+	//}
 }
 
 void AdventureManager::DoLeaderboardRequestPercentageTak(const char* player)
 {
-	ClientListEntry *pc = client_list.FindCharacter(player);
-	if(pc)
-	{
-		auto pack = new ServerPacket(ServerOP_AdventureLeaderboard, 64 + sizeof(AdventureLeaderboard_Struct));
-		AdventureLeaderboard_Struct *al = (AdventureLeaderboard_Struct*)(pack->pBuffer + 64);
-		strcpy((char*)pack->pBuffer, player);
+	//ClientListEntry *pc = client_list.FindCharacter(player);
+	//if(pc)
+	//{
+		//auto pack = new ServerPacket(ServerOP_AdventureLeaderboard, 64 + sizeof(AdventureLeaderboard_Struct));
+		//AdventureLeaderboard_Struct *al = (AdventureLeaderboard_Struct*)(pack->pBuffer + 64);
+		//strcpy((char*)pack->pBuffer, player);
 
-		int place = -1;
-		int our_successes = 0;
-		int our_failures = 0;
-		int i = 0;
-		auto iter = leaderboard_info_percentage_tak.begin();
-		while(i < 100 && iter != leaderboard_info_percentage_tak.end())
-		{
-			LeaderboardInfo li = (*iter);
-			if(li.name.compare(player) == 0)
-			{
-				place = i;
-				our_successes = li.tak_wins;
-				our_failures = li.tak_losses;
-			}
+		//int place = -1;
+		//int our_successes = 0;
+		//int our_failures = 0;
+		//int i = 0;
+		//auto iter = leaderboard_info_percentage_tak.begin();
+		//while(i < 100 && iter != leaderboard_info_percentage_tak.end())
+		//{
+			//LeaderboardInfo li = (*iter);
+			//if(li.name.compare(player) == 0)
+			//{
+				//place = i;
+				//our_successes = li.tak_wins;
+				//our_failures = li.tak_losses;
+			//}
 
-			al->entries[i].success = li.tak_wins;
-			al->entries[i].failure = li.tak_losses;
-			strcpy(al->entries[i].name, li.name.c_str());
-			i++;
-			++iter;
-		}
+			//al->entries[i].success = li.tak_wins;
+			//al->entries[i].failure = li.tak_losses;
+			//strcpy(al->entries[i].name, li.name.c_str());
+			//i++;
+			//++iter;
+		//}
 
-		if(place == -1 && iter != leaderboard_info_percentage_tak.end())
-		{
-			while(iter != leaderboard_info_percentage_tak.end())
-			{
-				LeaderboardInfo li = (*iter);
-				if(li.name.compare(player) == 0)
-				{
-					place = i;
-					our_successes = li.tak_wins;
-					our_failures = li.tak_losses;
-					break;
-				}
-				i++;
-				++iter;
-			}
-		}
+		//if(place == -1 && iter != leaderboard_info_percentage_tak.end())
+		//{
+			//while(iter != leaderboard_info_percentage_tak.end())
+			//{
+				//LeaderboardInfo li = (*iter);
+				//if(li.name.compare(player) == 0)
+				//{
+					//place = i;
+					//our_successes = li.tak_wins;
+					//our_failures = li.tak_losses;
+					//break;
+				//}
+				//i++;
+				//++iter;
+			//}
+		//}
 
-		if(place == -1)
-		{
-			al->our_rank = leaderboard_info_percentage_tak.size() + 1;
-			al->success = 0;
-			al->failure = 0;
-		}
-		else
-		{
-			al->our_rank = place;
-			al->success = our_successes;
-			al->failure = our_failures;
-		}
+		//if(place == -1)
+		//{
+			//al->our_rank = leaderboard_info_percentage_tak.size() + 1;
+			//al->success = 0;
+			//al->failure = 0;
+		//}
+		//else
+		//{
+			//al->our_rank = place;
+			//al->success = our_successes;
+			//al->failure = our_failures;
+		//}
 
-		zoneserver_list.SendPacket(pc->zone(), pc->instance(), pack);
-		delete pack;
-	}
+		//zoneserver_list.SendPacket(pc->zone(), pc->instance(), pack);
+		//delete pack;
+	//}
 }
 
 bool AdventureManager::PopFinishedEvent(const char *name, AdventureFinishEvent &fe)
 {
-	auto iter = finished_list.begin();
-	while(iter != finished_list.end())
-	{
-		if((*iter).name.compare(name) == 0)
-		{
-			fe.name = (*iter).name;
-			fe.points = (*iter).points;
-			fe.theme = (*iter).theme;
-			fe.win = (*iter).win;
-			finished_list.erase(iter);
-			Save();
-			return true;
-		}
-		++iter;
-	}
+	//auto iter = finished_list.begin();
+	//while(iter != finished_list.end())
+	//{
+		//if((*iter).name.compare(name) == 0)
+		//{
+			//fe.name = (*iter).name;
+			//fe.points = (*iter).points;
+			//fe.theme = (*iter).theme;
+			//fe.win = (*iter).win;
+			//finished_list.erase(iter);
+			//Save();
+			//return true;
+		//}
+		//++iter;
+	//}
 	return false;
 }
 
 void AdventureManager::SendAdventureFinish(AdventureFinishEvent fe)
 {
-	ClientListEntry *pc = client_list.FindCharacter(fe.name.c_str());
-	if(pc)
-	{
-		auto pack = new ServerPacket(ServerOP_AdventureFinish, sizeof(ServerAdventureFinish_Struct));
-		ServerAdventureFinish_Struct *af = (ServerAdventureFinish_Struct*)pack->pBuffer;
-		strcpy(af->player, fe.name.c_str());
-		af->theme = fe.theme;
-		af->win = fe.win;
-		af->points = fe.points;
+	return;
+	//ClientListEntry *pc = client_list.FindCharacter(fe.name.c_str());
+	//if(pc)
+	//{
+		//auto pack = new ServerPacket(ServerOP_AdventureFinish, sizeof(ServerAdventureFinish_Struct));
+		//ServerAdventureFinish_Struct *af = (ServerAdventureFinish_Struct*)pack->pBuffer;
+		//strcpy(af->player, fe.name.c_str());
+		//af->theme = fe.theme;
+		//af->win = fe.win;
+		//af->points = fe.points;
 
-		zoneserver_list.SendPacket(pc->zone(), pc->instance(), pack);
-		delete pack;
-	}
+		//zoneserver_list.SendPacket(pc->zone(), pc->instance(), pack);
+		//delete pack;
+	//}
 }
 
 void AdventureManager::Save()
@@ -2064,234 +2062,74 @@ void AdventureManager::Save()
 	//disabled for now
 	return;
 
-	std::stringstream ss(std::stringstream::in | std::stringstream::out);
+	//std::stringstream ss(std::stringstream::in | std::stringstream::out);
 
-	int number_of_elements = adventure_list.size();
-	ss.write((const char*)&number_of_elements, sizeof(int));
+	//int number_of_elements = adventure_list.size();
+	//ss.write((const char*)&number_of_elements, sizeof(int));
 
-	char null_term = 0;
-	auto a_iter = adventure_list.begin();
-	while(a_iter != adventure_list.end())
-	{
-		int cur = (*a_iter)->GetCount();
-		ss.write((const char*)&cur, sizeof(int));
+	//char null_term = 0;
+	//auto a_iter = adventure_list.begin();
+	//while(a_iter != adventure_list.end())
+	//{
+		//int cur = (*a_iter)->GetCount();
+		//ss.write((const char*)&cur, sizeof(int));
 
-		cur = (*a_iter)->GetAssassinationCount();
-		ss.write((const char*)&cur, sizeof(int));
+		//cur = (*a_iter)->GetAssassinationCount();
+		//ss.write((const char*)&cur, sizeof(int));
 
-		cur = (*a_iter)->GetTemplate()->id;
-		ss.write((const char*)&cur, sizeof(int));
+		//cur = (*a_iter)->GetTemplate()->id;
+		//ss.write((const char*)&cur, sizeof(int));
 
-		cur = (int)(*a_iter)->GetStatus();
-		ss.write((const char*)&cur, sizeof(int));
+		//cur = (int)(*a_iter)->GetStatus();
+		//ss.write((const char*)&cur, sizeof(int));
 
-		cur = (*a_iter)->GetInstanceID();
-		ss.write((const char*)&cur, sizeof(int));
+		//cur = (*a_iter)->GetInstanceID();
+		//ss.write((const char*)&cur, sizeof(int));
 
-		cur = (*a_iter)->GetRemainingTime();
-		ss.write((const char*)&cur, sizeof(int));
+		//cur = (*a_iter)->GetRemainingTime();
+		//ss.write((const char*)&cur, sizeof(int));
 
-		std::list<std::string> players = (*a_iter)->GetPlayers();
-		cur = players.size();
-		ss.write((const char*)&cur, sizeof(int));
+		//std::list<std::string> players = (*a_iter)->GetPlayers();
+		//cur = players.size();
+		//ss.write((const char*)&cur, sizeof(int));
 
-		auto s_iter = players.begin();
-		while(s_iter != players.end())
-		{
-			ss.write((const char*)(*s_iter).c_str(), (*s_iter).size());
-			ss.write((const char*)&null_term, sizeof(char));
-			s_iter++;
-		}
+		//auto s_iter = players.begin();
+		//while(s_iter != players.end())
+		//{
+			//ss.write((const char*)(*s_iter).c_str(), (*s_iter).size());
+			//ss.write((const char*)&null_term, sizeof(char));
+			//s_iter++;
+		//}
 
-		a_iter++;
-	}
+		//a_iter++;
+	//}
 
-	number_of_elements = finished_list.size();
-	ss.write((const char*)&number_of_elements, sizeof(int));
-	auto f_iter = finished_list.begin();
-	while(f_iter != finished_list.end())
-	{
-		ss.write((const char*)&(*f_iter).win, sizeof(bool));
-		ss.write((const char*)&(*f_iter).points, sizeof(int));
-		ss.write((const char*)&(*f_iter).theme, sizeof(int));
-		ss.write((const char*)(*f_iter).name.c_str(), (*f_iter).name.size());
-		ss.write((const char*)&null_term, sizeof(char));
-		f_iter++;
-	}
+	//number_of_elements = finished_list.size();
+	//ss.write((const char*)&number_of_elements, sizeof(int));
+	//auto f_iter = finished_list.begin();
+	//while(f_iter != finished_list.end())
+	//{
+		//ss.write((const char*)&(*f_iter).win, sizeof(bool));
+		//ss.write((const char*)&(*f_iter).points, sizeof(int));
+		//ss.write((const char*)&(*f_iter).theme, sizeof(int));
+		//ss.write((const char*)(*f_iter).name.c_str(), (*f_iter).name.size());
+		//ss.write((const char*)&null_term, sizeof(char));
+		//f_iter++;
+	//}
 
-	FILE *f = fopen("adventure_state.dat", "w");
-	if(f)
-	{
-		fwrite(ss.str().c_str(), ss.str().size(), 1, f);
-		fclose(f);
-	}
+	//FILE *f = fopen("adventure_state.dat", "w");
+	//if(f)
+	//{
+		//fwrite(ss.str().c_str(), ss.str().size(), 1, f);
+		//fclose(f);
+	//}
 }
 
 void AdventureManager::Load()
 {
-	RefreshItemScore();
-	//disabled for now
 	return;
-
-	char *data = nullptr;
-	FILE *f = fopen("adventure_state.dat", "r");
-	if(f)
-	{
-		fseek(f, 0, SEEK_END);
-		long length = ftell(f);
-		if(length > 0)
-		{
-			data = new char[length];
-			fseek(f, 0, SEEK_SET);
-			fread(data, length, 1, f);
-		}
-		fclose(f);
-	}
-
-	if(data)
-	{
-		char *ptr = data;
-
-		int number_of_adventures = *((int*)ptr);
-		ptr += sizeof(int);
-
-		for(int i = 0; i < number_of_adventures; ++i)
-		{
-			int count = *((int*)ptr);
-			ptr += sizeof(int);
-
-			int a_count = *((int*)ptr);
-			ptr += sizeof(int);
-
-			int template_id = *((int*)ptr);
-			ptr += sizeof(int);
-
-			int status = *((int*)ptr);
-			ptr += sizeof(int);
-
-			int instance_id = *((int*)ptr);
-			ptr += sizeof(int);
-
-			int rem_time = *((int*)ptr);
-			ptr += sizeof(int);
-
-			int num_players = *((int*)ptr);
-			ptr += sizeof(int);
-
-			AdventureTemplate *t = GetAdventureTemplate(template_id);
-			if(t)
-			{
-				auto adv =
-				    new Adventure(t, count, a_count, (AdventureStatus)status, instance_id, rem_time);
-				for(int j = 0; j < num_players; ++j)
-				{
-					adv->AddPlayer((const char*)ptr, false);
-					ptr += strlen((const char*)ptr);
-					ptr += 1;
-				}
-				adventure_list.push_back(adv);
-			}
-			else
-			{
-				for(int j = 0; j < num_players; ++j)
-				{
-					ptr += strlen((const char*)ptr);
-					ptr += 1;
-				}
-			}
-		}
-
-		int number_of_finished = *((int*)ptr);
-		ptr += sizeof(int);
-
-		for(int k = 0; k < number_of_finished; ++k)
-		{
-			AdventureFinishEvent afe;
-			afe.win = *((bool*)ptr);
-			ptr += sizeof(bool);
-
-			afe.points = *((int*)ptr);
-			ptr += sizeof(int);
-
-			afe.theme = *((int*)ptr);
-			ptr += sizeof(int);
-
-			afe.name = (const char*)ptr;
-			ptr += strlen((const char*)ptr);
-			ptr += 1;
-
-			finished_list.push_back(afe);
-		}
-
-		safe_delete_array(data);
-	}
 }
 
 void AdventureManager::RefreshItemScore() {
-	Log(Logs::General, Logs::World_Server, "Refreshing Itemscores...");
-	std::vector<CharData_Struct *> chars;
-	std::map<int, int> itemScores;
-	if (!database.GetAllCharacters(chars)) {
-		//This errors inside method
-		//Log(Logs::General, Logs::Error, "WorldDatabase::GetAllCharacterIDs: %s", results.ErrorMessage().c_str());
-		return;
-	}
-
-	const EQEmu::ItemInstance *item = nullptr;
-	int itemScore = 0;
-	int x;
-	int classId = 0;
-	EQEmu::InventoryProfile inv;
-
-
-	//Create a table if it doesn't already exist for storing top charts.
-	std::string query = StringFormat(
-			"CREATE TABLE IF NOT EXISTS `itemscore` (`charid` int(11) NOT NULL, `itemscore` int(11) NOT NULL, `update` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, `classid` int(11) NOT NULL, UNIQUE KEY `classid` (`classid`)) ENGINE = InnoDB DEFAULT CHARSET = utf8");
-	auto results = database.QueryDatabase(query);
-
-	//iterate characters
-	for (CharData_Struct *charData : chars) {
-		if (!database.GetInventory(charData->ID, &inv)) {
-			continue;
-		}
-		itemScore = 0;
-
-		//iterate worn
-		for (x = EQEmu::legacy::EQUIPMENT_BEGIN; x < EQEmu::legacy::EQUIPMENT_END; x++) {
-			item = inv.GetItem(x);
-			if (!item) continue;
-
-			itemScore += item->GetItemScore();
-		}
-
-		if (itemScores.find(charData->classID) == itemScores.end()) {
-			itemScores.insert(std::pair<int, int>(charData->classID, itemScore));
-		}
-
-		if (itemScore > itemScores[charData->classID]) {
-			itemScores[charData->classID] = itemScore;
-			std::string query = StringFormat("REPLACE INTO itemscore (charid, itemscore, classid) VALUES (%d, %d, %d)",
-											 charData->ID, itemScore, charData->classID);
-			auto results = database.QueryDatabase(query);
-		}
-	}
-
-	for (std::map<int, int>::iterator it = itemScores.begin(); it != itemScores.end(); it++) {
-		if (!RuleManager::Instance()->SetRule(StringFormat("ItemScore::Class%i", it->first).c_str(),
-											  StringFormat("%i", it->second).c_str())) {
-			//todo: error it failed?
-		}
-
-		std::string query = StringFormat("REPLACE INTO rule_values "
-										 "(ruleset_id, rule_name, rule_value) "
-										 " VALUES(%d, '%s', '%s')",
-										 1, StringFormat("ItemScore:Class%i", it->first).c_str(),
-										 StringFormat("%i", it->second).c_str());
-		auto results = database.QueryDatabase(query);
-	}
-
-	//Tell all zones to reloadrules
-	auto pack = new ServerPacket(ServerOP_ReloadRules, 0);
-	zoneserver_list.SendPacket(pack);
-	safe_delete(pack);
+	return;
 }

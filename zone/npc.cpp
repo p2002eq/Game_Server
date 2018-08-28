@@ -648,7 +648,6 @@ bool NPC::Process()
 			SetHP(GetHP() + GetHPRegen());
 		}
 		// mana regen
-		entity_list.LogManaEvent(this, this, GetManaRegen());
 		if (GetMana() < GetMaxMana()) {
 			SetMana(GetMana() + GetManaRegen());
 		}
