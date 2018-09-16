@@ -1152,8 +1152,8 @@ int32 Mob::CheckAggroAmount(uint16 spell_id, Mob *target, bool isproc)
 		}
 	}
 
-	if (IsBardSong(spell_id) && AggroAmount > 40)
-		AggroAmount = 40; // bard songs seem to cap to 40 for most of their spells?
+	if (IsBardSong(spell_id) && AggroAmount > RuleI(Aggro, BardAggroCap))
+		AggroAmount = RuleI(Aggro, BardAggroCap);
 
 	if (dispel && target && target->GetHateAmount(this) < 100)
 		AggroAmount += 50;
