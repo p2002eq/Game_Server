@@ -1853,7 +1853,6 @@ void Client::OPGMSummon(const EQApplicationPacket *app)
 }
 
 void Client::DoHPRegen() {
-	entity_list.LogHPEvent(this, this, RestRegenHP);
 	SetHP(GetHP() + CalcHPRegen() + RestRegenHP);
 	SendHPUpdate();
 }
