@@ -562,6 +562,7 @@ RULE_REAL(Aggro, CharmedPetAggroRadiusMod, 5.0) // 5x combat distance check for 
 RULE_REAL(Aggro, YellForHelpZIndex, 10.0)
 RULE_INT(Aggro, InitialPetAggroBonus, 135)
 RULE_BOOL(Aggro, NPCAggroMaxDistanceEnabled, false) /* If enabled, NPC's will drop aggro beyond 600 units or what is defined at the zone level */
+RULE_INT(Aggro, BardAggroCap, 100) // bards generate less aggro, rule setup to set it to whatever is best.
 RULE_CATEGORY_END()
 
 RULE_CATEGORY(TaskSystem)
