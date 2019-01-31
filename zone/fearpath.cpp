@@ -112,30 +112,37 @@ void Mob::CheckFlee() {
 void Mob::ProcessFlee()
 {
 
-	//Stop fleeing if effect is applied after they start to run.
-	//When ImmuneToFlee effect fades it will turn fear back on and check if it can still flee.
-	if (flee_mode && (GetSpecialAbility(IMMUNE_FLEEING) || spellbonuses.ImmuneToFlee) &&
-			!spellbonuses.IsFeared && !spellbonuses.IsBlind) {
-		currently_fleeing = false;
-		return;
-	}
+    //Stop fleeing if effect is applied after they start to run.
+    //When ImmuneToFlee effect fades it will turn fear back on and check if it can still flee.
+    if (flee_mode && (GetSpecialAbility(IMMUNE_FLEEING) || spellbonuses.ImmuneToFlee) &&
+        !spellbonuses.IsFeared && !spellbonuses.IsBlind) {
+        currently_fleeing = false;
+        return;
+    }
 
-	//see if we are still dying, if so, do nothing
-	float fleeratio = GetSpecialAbility(FLEE_PERCENT);
-	fleeratio = fleeratio > 0 ? fleeratio : RuleI(Combat, FleeHPRatio);
-	if (GetHPRatio() < fleeratio)
-		return;
+    //see if we are still dying, if so, do nothing
+    // If no special flee_percent check for Green or Other con rates
+    int fleeratio = GetSpecialAbility(FLEE_PERCENT); // if a special flee_percent exists
 
-	//we are not dying anymore... see what we do next
+    if(target != nullptr && GetLevelCon(target->GetLevel(), GetLevel())  == CON_GREEN && fleeratio == 0) {
+        fleeratio = RuleI(Combat, FleeGreenHPRatio);
+    } else if(fleeratio == 0) {
+        fleeratio = RuleI(Combat, FleeHPRatio );
+    }
 
-	flee_mode = false;
+    if (GetHPRatio() < fleeratio) {
+        return;
+    }
 
-	//see if we are legitimately feared or blind now
-	if (!spellbonuses.IsFeared && !spellbonuses.IsBlind) {
-		//not feared or blind... were done...
-		currently_fleeing = false;
-		return;
-	}
+    //we are not dying anymore... see what we do next
+    flee_mode = false;
+
+    //see if we are legitimately feared or blind now
+    if (!spellbonuses.IsFeared && !spellbonuses.IsBlind) {
+        //not feared or blind... were done...
+        currently_fleeing = false;
+        return;
+    }
 }
 
 void Mob::CalculateNewFearpoint()
