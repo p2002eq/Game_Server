@@ -1531,7 +1531,7 @@ bool Mob::SpellEffect(Mob* caster, uint16 spell_id, float partial, int level_ove
 					((GetLevel() > max_level)
 					&& caster && (!caster->IsNPC() || (caster->IsNPC() && !RuleB(Spells, NPCIgnoreBaseImmunity)))))
 				{
-					if (caster)
+					if (caster && spell_id != 1101) //spin the bottle
 						caster->Message_StringID(MT_Shout, IMMUNE_STUN);
 				}
 				else
