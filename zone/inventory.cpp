@@ -1702,7 +1702,7 @@ bool Client::SwapItem(MoveItem_Struct* move_in) {
 
 	// Check for No Drop Hacks
 	Mob* with = trade->With();
-	if (((with && with->IsClient() && dst_slot_id >= EQEmu::legacy::TRADE_BEGIN && dst_slot_id <= EQEmu::legacy::TRADE_END) ||
+	if (((with && with->IsClient() && !with->CastToClient()->IsBecomeNPC() && dst_slot_id >= EQEmu::legacy::TRADE_BEGIN && dst_slot_id <= EQEmu::legacy::TRADE_END) ||
 		(dst_slot_id >= EQEmu::legacy::SHARED_BANK_BEGIN && dst_slot_id <= EQEmu::legacy::SHARED_BANK_BAGS_END))
 	&& GetInv().CheckNoDrop(src_slot_id)
 	&& RuleI(World, FVNoDropFlag) == 0 || RuleI(Character, MinStatusForNoDropExemptions) < Admin() && RuleI(World, FVNoDropFlag) == 2) {
