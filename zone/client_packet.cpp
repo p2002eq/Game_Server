@@ -10201,7 +10201,7 @@ void Client::Handle_OP_PetCommands(const EQApplicationPacket *app)
 			}
 
 			if ((mypet->GetPetType() == petAnimation && aabonuses.PetCommands[PetCommand]) || mypet->GetPetType() != petAnimation) {
-				if (target != this && DistanceSquaredNoZ(mypet->GetPosition(), target->GetPosition()) <= (RuleR(Pets, AttackCommandRange)*RuleR(Pets, AttackCommandRange))) {
+				if (target != this && DistanceSquared(mypet->GetPosition(), target->GetPosition()) <= (RuleR(Pets, AttackCommandRange)*RuleR(Pets, AttackCommandRange))) {
 					if (mypet->IsPetStop()) {
 						mypet->SetPetStop(false);
 						SetPetCommandState(PET_BUTTON_STOP, 0);
