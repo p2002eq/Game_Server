@@ -3304,15 +3304,18 @@ void Client::SetHideMe(bool flag)
 		CreateDespawnPacket(&app, false);
 		entity_list.RemoveFromTargets(this);
 		trackable = false;
+        tellsoff = true;
 	}
 	else
 	{
 		database.SetHideMe(AccountID(),false);
 		CreateSpawnPacket(&app);
 		trackable = true;
+        tellsoff = false;
 	}
 
 	entity_list.QueueClientsStatus(this, &app, true, 0, Admin()-1);
+    UpdateWho();
 }
 
 void Client::SetLanguageSkill(int langid, int value)
@@ -7160,6 +7163,7 @@ void Client::SendStatsWindow(Client* client, bool use_window)
 	client->Message(0, " compute_defense: %i TotalDefense: %i", compute_defense(), GetTotalDefense());
 	client->Message(0, " offense: %i mitigation ac: %i", offense(skill), GetMitigationAC());
 	client->Message(0, " base_size: %f base_texture: %i", GetBaseSize(), GetBaseTexture());
+    client->Message(0, " AFK: %i LFG: %i Anon: %i PVP: %i GM: %i Flymode: %i GMSpeed: %i Hideme: %i GMInvul: %d LD: %i ClientVersion: %i TellsOff: %i", AFK, LFG, GetAnon(), GetPVP(), GetGM(), flymode, GetGMSpeed(), GetHideMe(), GetGMInvul(), IsLD(), ClientVersionBit(), tellsoff);
 	if(CalcMaxMana() > 0)
 		client->Message(0, " Mana: %i/%i  Mana Regen: %i/%i", GetMana(), GetMaxMana(), CalcManaRegen(), CalcManaRegenCap());
 	client->Message(0, " End.: %i/%i  End. Regen: %i/%i",GetEndurance(), GetMaxEndurance(), CalcEnduranceRegen(), CalcEnduranceRegenCap());
