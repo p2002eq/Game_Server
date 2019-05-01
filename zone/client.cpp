@@ -5843,23 +5843,25 @@ void Client::SuspendMinion()
 	if(GetLevel() < 62)
 		return;
 
-	if(!CurrentPet)
-	{
-		if(m_suspendedminion.SpellID > 0)
-		{
+	if(!CurrentPet) {
+		if (m_suspendedminion.SpellID > 0) {
+			if (m_suspendedminion.SpellID >= SPDAT_RECORDS) {
+				Message(13, "Invalid suspended minion spell id (%u).", m_suspendedminion.SpellID);
+				memset(&m_suspendedminion, 0, sizeof(PetInfo));
+				return;
+			}
+
 			MakePoweredPet(m_suspendedminion.SpellID, spells[m_suspendedminion.SpellID].teleport_zone,
-				m_suspendedminion.petpower, m_suspendedminion.Name, m_suspendedminion.size);
+						   m_suspendedminion.petpower, m_suspendedminion.Name, m_suspendedminion.size);
 
 			CurrentPet = GetPet()->CastToNPC();
 
-			if(!CurrentPet)
-			{
+			if (!CurrentPet) {
 				Message(13, "Failed to recall suspended minion.");
 				return;
 			}
 
-			if(AALevel >= 2)
-			{
+			if (AALevel >= 2) {
 				CurrentPet->SetPetState(m_suspendedminion.Buffs, m_suspendedminion.Items);
 
 				CurrentPet->SendPetBuffsToClient();
@@ -5887,8 +5889,7 @@ void Client::SuspendMinion()
 				SetPetCommandState(PET_BUTTON_FOCUS, 0);
 				SetPetCommandState(PET_BUTTON_SPELLHOLD, 0);
 			}
-		}
-		else
+		} else
 			return;
 
 	}
