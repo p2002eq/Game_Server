@@ -2738,6 +2738,32 @@ XS(XS_Client_UntrainDiscAll)
 	XSRETURN_EMPTY;
 }
 
+XS(XS_Client_IsStanding); /* prototype to pass -Wmissing-prototypes */
+XS(XS_Client_IsStanding)
+{
+    dXSARGS;
+    if (items != 1)
+        Perl_croak(aTHX_ "Usage: Client::IsStanding(THIS)");
+    {
+        Client *		THIS;
+        bool		RETVAL;
+
+        if (sv_derived_from(ST(0), "Client")) {
+            IV tmp = SvIV((SV*)SvRV(ST(0)));
+            THIS = INT2PTR(Client *,tmp);
+        }
+        else
+            Perl_croak(aTHX_ "THIS is not of type Client");
+        if(THIS == nullptr)
+            Perl_croak(aTHX_ "THIS is nullptr, avoiding crash.");
+
+        RETVAL = THIS->IsStanding();
+        ST(0) = boolSV(RETVAL);
+        sv_2mortal(ST(0));
+    }
+    XSRETURN(1);
+}
+
 XS(XS_Client_IsSitting); /* prototype to pass -Wmissing-prototypes */
 XS(XS_Client_IsSitting)
 {
@@ -2758,6 +2784,32 @@ XS(XS_Client_IsSitting)
 			Perl_croak(aTHX_ "THIS is nullptr, avoiding crash.");
 
 		RETVAL = THIS->IsSitting();
+		ST(0) = boolSV(RETVAL);
+		sv_2mortal(ST(0));
+	}
+	XSRETURN(1);
+}
+
+XS(XS_Client_IsCrouching); /* prototype to pass -Wmissing-prototypes */
+XS(XS_Client_IsCrouching)
+{
+	dXSARGS;
+	if (items != 1)
+		Perl_croak(aTHX_ "Usage: Client::IsCrouching(THIS)");
+	{
+		Client *		THIS;
+		bool		RETVAL;
+
+		if (sv_derived_from(ST(0), "Client")) {
+			IV tmp = SvIV((SV*)SvRV(ST(0)));
+			THIS = INT2PTR(Client *,tmp);
+		}
+		else
+			Perl_croak(aTHX_ "THIS is not of type Client");
+		if(THIS == nullptr)
+			Perl_croak(aTHX_ "THIS is nullptr, avoiding crash.");
+
+		RETVAL = THIS->IsCrouching();
 		ST(0) = boolSV(RETVAL);
 		sv_2mortal(ST(0));
 	}
@@ -6533,7 +6585,9 @@ XS(boot_Client)
 		newXSproto(strcpy(buf, "GetDiscSlotBySpellID"), XS_Client_GetDiscSlotBySpellID, file, "$$");
 		newXSproto(strcpy(buf, "UntrainDisc"), XS_Client_UntrainDisc, file, "$$;$");
 		newXSproto(strcpy(buf, "UntrainDiscAll"), XS_Client_UntrainDiscAll, file, "$;$");
+        newXSproto(strcpy(buf, "IsStanding"), XS_Client_IsStanding, file, "$");
 		newXSproto(strcpy(buf, "IsSitting"), XS_Client_IsSitting, file, "$");
+		newXSproto(strcpy(buf, "IsCrouching"), XS_Client_IsCrouching, file, "$");
 		newXSproto(strcpy(buf, "IsBecomeNPC"), XS_Client_IsBecomeNPC, file, "$");
 		newXSproto(strcpy(buf, "GetBecomeNPCLevel"), XS_Client_GetBecomeNPCLevel, file, "$");
 		newXSproto(strcpy(buf, "SetBecomeNPC"), XS_Client_SetBecomeNPC, file, "$$");

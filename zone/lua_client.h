@@ -149,7 +149,9 @@ public:
 	void UntrainDisc(int slot, bool update_client);
 	void UntrainDiscAll();
 	void UntrainDiscAll(bool update_client);
+    bool IsStanding();
 	bool IsSitting();
+	bool IsCrouching();
 	void SetFeigned(bool v);
 	bool GetFeigned();
 	bool AutoSplitEnabled();
