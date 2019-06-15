@@ -82,7 +82,8 @@ public:
     void SetInvisible(int state);
 	bool FindBuff(int spell_id);
 	uint16 FindBuffBySlot(int slot);
-	uint32 BuffCount();
+	uint32 GetDetBuffCount();
+	uint32 GetBeneBuffCount();
     bool FindType(int type);
 	bool FindType(int type, bool offensive);
 	bool FindType(int type, bool offensive, int threshold);

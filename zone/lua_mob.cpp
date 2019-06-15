@@ -323,9 +323,14 @@ uint16 Lua_Mob::FindBuffBySlot(int slot) {
 	return self->FindBuffBySlot(slot);
 }
 
-uint32 Lua_Mob::BuffCount() {
-	Lua_Safe_Call_Int();
-	return self->BuffCount();
+uint32 Lua_Mob::GetDetBuffCount() {
+    Lua_Safe_Call_Int();
+    return self->GetDetBuffCount();
+}
+
+uint32 Lua_Mob::GetBeneBuffCount() {
+    Lua_Safe_Call_Int();
+    return self->GetBeneBuffCount();
 }
 
 bool Lua_Mob::FindType(int type) {
@@ -2150,7 +2155,8 @@ luabind::scope lua_register_mob() {
 		.def("SetInvisible", &Lua_Mob::SetInvisible)
 		.def("FindBuff", &Lua_Mob::FindBuff)
 		.def("FindBuffBySlot", (uint16(Lua_Mob::*)(int))&Lua_Mob::FindBuffBySlot)
-		.def("BuffCount", &Lua_Mob::BuffCount)
+		.def("GetDetBuffCount", &Lua_Mob::GetDetBuffCount)
+        .def("GetBeneBuffCount", &Lua_Mob::GetBeneBuffCount)
 		.def("FindType", (bool(Lua_Mob::*)(int))&Lua_Mob::FindType)
 		.def("FindType", (bool(Lua_Mob::*)(int,bool))&Lua_Mob::FindType)
 		.def("FindType", (bool(Lua_Mob::*)(int,bool,int))&Lua_Mob::FindType)
