@@ -318,11 +318,6 @@ bool Lua_Mob::FindBuff(int spell_id) {
 	return self->FindBuff(spell_id);
 }
 
-bool Lua_Mob::HasBeneficialBuffs() {
-	Lua_Safe_Call_Bool();
-	return self->HasBeneficialBuffs();
-}
-
 bool Lua_Mob::FindType(int type) {
 	Lua_Safe_Call_Bool();
 	return self->FindType(type);

@@ -1706,26 +1706,6 @@ void Mob::ShowBuffList(Client* client) {
 	}
 }
 
-bool Mob::HasBeneficialBuffs() {
-	if(SPDAT_RECORDS <= 0)
-		return false;
-
-	uint32 i;
-	uint32 counter = 0;
-	uint32 buff_count = GetMaxTotalSlots();
-	for (i = 0; i < buff_count; i++) {
-		if (buffs[i].spellid != SPELL_UNKNOWN && !IsDetrimentalSpell(buffs[i].spellid)) {
-			counter++;
-		}
-	}
-	
-	if(counter == 0) {
-		return false;
-	} else {
-		return true;
-	}
-}
-
 void Mob::GMMove(float x, float y, float z, float heading, bool SendUpdate) {
 
 	Route.clear();
