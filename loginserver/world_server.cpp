@@ -181,7 +181,10 @@ void WorldServer::ProcessUsertoWorldResp(uint16_t opcode, const EQ::Net::Packet 
 			per->Message = 303;
 			break;
 		case -4:
-			per->Message = 111;
+			per->Message = 302;
+			break;
+		case -5:
+			per->Message = 198;
 			break;
 		}
 
