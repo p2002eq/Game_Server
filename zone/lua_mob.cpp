@@ -2106,6 +2106,11 @@ void Lua_Mob::CheckNumHitsRemaining(int type, int32 buff_slot, uint16 spell_id)
 	self->CheckNumHitsRemaining((NumHit)type, buff_slot, spell_id);
 }
 
+int Lua_Mob::GetItemStat(uint32 itemid, const char* identifier) {
+	Lua_Safe_Call_Int();
+	return self->GetItemStat(itemid, identifier);
+}
+
 luabind::scope lua_register_mob() {
 	return luabind::class_<Lua_Mob, Lua_Entity>("Mob")
 		.def(luabind::constructor<>())
@@ -2473,7 +2478,8 @@ luabind::scope lua_register_mob() {
 		.def("TryFinishingBlow", &Lua_Mob::TryFinishingBlow)
 		.def("GetBodyType", &Lua_Mob::GetBodyType)
 		.def("GetOrigBodyType", &Lua_Mob::GetOrigBodyType)
-		.def("CheckNumHitsRemaining", &Lua_Mob::CheckNumHitsRemaining);
+		.def("CheckNumHitsRemaining", &Lua_Mob::CheckNumHitsRemaining)
+		.def("GetItemStat", (int32(Lua_Mob::*)(int,const char*))&Lua_Mob::GetItemStat);
 }
 
 luabind::scope lua_register_special_abilities() {

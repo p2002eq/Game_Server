@@ -405,6 +405,7 @@ public:
 	int GetBodyType();
 	int GetOrigBodyType();
 	void CheckNumHitsRemaining(int type, int32 buff_slot, uint16 spell_id);
+	int GetItemStat(uint32 itemid, const char* identifier);
 };
 
 #endif
