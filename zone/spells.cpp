@@ -4234,6 +4234,35 @@ bool Mob::FindBuff(uint16 spellid)
 	return false;
 }
 
+uint16 Mob::FindBuffBySlot(int slot) {
+	if (buffs[slot].spellid != SPELL_UNKNOWN)
+		return buffs[slot].spellid;
+
+	return 0;
+}
+
+uint32 Mob::GetDetBuffCount() {
+	uint32 active_buff_count = 0;
+	int buff_count = GetMaxTotalSlots();
+	for (int i = 0; i < buff_count; i++)
+		if (buffs[i].spellid != SPELL_UNKNOWN && IsDetrimentalSpell(buffs[i].spellid)) {
+            active_buff_count++;
+        }
+
+	return active_buff_count;
+}
+
+uint32 Mob::GetBeneBuffCount() {
+    uint32 active_buff_count = 0;
+    int buff_count = GetMaxTotalSlots();
+    for (int i = 0; i < buff_count; i++)
+        if (buffs[i].spellid != SPELL_UNKNOWN && !IsDetrimentalSpell(buffs[i].spellid)) {
+            active_buff_count++;
+        }
+
+    return active_buff_count;
+}
+
 // removes all buffs
 void Mob::BuffFadeAll()
 {
@@ -5296,6 +5325,22 @@ void Client::UnmemSpellAll(bool update_client)
 	for(i = 0; i < MAX_PP_MEMSPELL; i++)
 		if(m_pp.mem_spells[i] != 0xFFFFFFFF)
 			UnmemSpell(i, update_client);
+}
+
+uint16 Client::FindMemmedSpellBySlot(int slot) {
+	if (m_pp.mem_spells[slot] != 0xFFFFFFFF)
+		return m_pp.mem_spells[slot];
+
+	return 0;
+}
+
+int Client::MemmedCount() {
+	int memmed_count = 0;
+	for (int i = 0; i < MAX_PP_REF_MEMSPELL; i++)
+		if (m_pp.mem_spells[i] != 0xFFFFFFFF)
+			memmed_count++;
+
+	return memmed_count;
 }
 
 void Client::ScribeSpell(uint16 spell_id, int slot, bool update_client)

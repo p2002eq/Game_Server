@@ -318,6 +318,21 @@ bool Lua_Mob::FindBuff(int spell_id) {
 	return self->FindBuff(spell_id);
 }
 
+uint16 Lua_Mob::FindBuffBySlot(int slot) {
+	Lua_Safe_Call_Int();
+	return self->FindBuffBySlot(slot);
+}
+
+uint32 Lua_Mob::GetDetBuffCount() {
+    Lua_Safe_Call_Int();
+    return self->GetDetBuffCount();
+}
+
+uint32 Lua_Mob::GetBeneBuffCount() {
+    Lua_Safe_Call_Int();
+    return self->GetBeneBuffCount();
+}
+
 bool Lua_Mob::FindType(int type) {
 	Lua_Safe_Call_Bool();
 	return self->FindType(type);
@@ -2091,6 +2106,11 @@ void Lua_Mob::CheckNumHitsRemaining(int type, int32 buff_slot, uint16 spell_id)
 	self->CheckNumHitsRemaining((NumHit)type, buff_slot, spell_id);
 }
 
+int Lua_Mob::GetItemStat(uint32 itemid, const char* identifier) {
+	Lua_Safe_Call_Int();
+	return self->GetItemStat(itemid, identifier);
+}
+
 luabind::scope lua_register_mob() {
 	return luabind::class_<Lua_Mob, Lua_Entity>("Mob")
 		.def(luabind::constructor<>())
@@ -2139,6 +2159,9 @@ luabind::scope lua_register_mob() {
 		.def("IsInvisible", (bool(Lua_Mob::*)(Lua_Mob))&Lua_Mob::IsInvisible)
 		.def("SetInvisible", &Lua_Mob::SetInvisible)
 		.def("FindBuff", &Lua_Mob::FindBuff)
+		.def("FindBuffBySlot", (uint16(Lua_Mob::*)(int))&Lua_Mob::FindBuffBySlot)
+		.def("GetDetBuffCount", &Lua_Mob::GetDetBuffCount)
+        .def("GetBeneBuffCount", &Lua_Mob::GetBeneBuffCount)
 		.def("FindType", (bool(Lua_Mob::*)(int))&Lua_Mob::FindType)
 		.def("FindType", (bool(Lua_Mob::*)(int,bool))&Lua_Mob::FindType)
 		.def("FindType", (bool(Lua_Mob::*)(int,bool,int))&Lua_Mob::FindType)
@@ -2455,7 +2478,8 @@ luabind::scope lua_register_mob() {
 		.def("TryFinishingBlow", &Lua_Mob::TryFinishingBlow)
 		.def("GetBodyType", &Lua_Mob::GetBodyType)
 		.def("GetOrigBodyType", &Lua_Mob::GetOrigBodyType)
-		.def("CheckNumHitsRemaining", &Lua_Mob::CheckNumHitsRemaining);
+		.def("CheckNumHitsRemaining", &Lua_Mob::CheckNumHitsRemaining)
+		.def("GetItemStat", (int32(Lua_Mob::*)(int,const char*))&Lua_Mob::GetItemStat);
 }
 
 luabind::scope lua_register_special_abilities() {
