@@ -479,19 +479,31 @@ void Database::BuryCorpsesInInstance(uint16 instance_id) {
 void Database::DeleteInstance(uint16 instance_id)
 {
 
-	std::string query = StringFormat("DELETE FROM instance_list WHERE id=%u", instance_id);
-	QueryDatabase(query);
+    MoveCharOutInstance(instance_id);
 
-	query = StringFormat("DELETE FROM instance_list_player WHERE id=%u", instance_id);
-	QueryDatabase(query);
+    std::string query = StringFormat("DELETE FROM instance_list WHERE id=%u", instance_id);
+    QueryDatabase(query);
 
-	query = StringFormat("DELETE FROM respawn_times WHERE instance_id=%u", instance_id);
-	QueryDatabase(query);
+    query = StringFormat("DELETE FROM instance_list_player WHERE id=%u", instance_id);
+    QueryDatabase(query);
 
-	query = StringFormat("DELETE FROM spawn_condition_values WHERE instance_id=%u", instance_id);
-	QueryDatabase(query);
+    query = StringFormat("DELETE FROM respawn_times WHERE instance_id=%u", instance_id);
+    QueryDatabase(query);
 
-	BuryCorpsesInInstance(instance_id);
+    query = StringFormat("DELETE FROM spawn_condition_values WHERE instance_id=%u", instance_id);
+    QueryDatabase(query);
+
+    BuryCorpsesInInstance(instance_id);
+}
+
+void Database::MoveCharOutInstance(uint16 instance_id)
+{
+
+	std::string query = StringFormat("UPDATE character_data"
+                                     "INNER JOIN zone ON character_data.zone_id = zone.zoneidnumber"
+                                     "SET character_data.x = zone.safe_x, character_data.y = zone.safe_y, character_data.z = zone.safe_z, character_data.zone_instance = '0'"
+                                     "WHERE character_data.zone_instance = %u;", instance_id);
+	QueryDatabase(query);
 }
 
 void Database::FlagInstanceByGroupLeader(uint32 zone, int16 version, uint32 charid, uint32 gid)
