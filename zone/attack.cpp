@@ -2082,24 +2082,22 @@ bool NPC::Attack(Mob* other, int Hand, bool bRiposte, bool IsStrikethrough, bool
 	if (!GetTarget())
 		return true; //We killed them
 
-	if (!bRiposte && !other->HasDied()) {
-		TryWeaponProc(nullptr, weapon, other, Hand);	//no weapon
+	bool hasHit = my_hit.damage_done > 0;
+	if (hasHit && !bRiposte && !other->HasDied())
+	{
+		TryWeaponProc(nullptr, weapon, other, Hand);
 
 		if (!other->HasDied())
 			TrySpellProc(nullptr, weapon, other, Hand);
 
-		if (my_hit.damage_done > 0 && HasSkillProcSuccess() && !other->HasDied())
+		if (HasSkillProcSuccess() && !other->HasDied())
 			TrySkillProc(other, my_hit.skill, 0, true, Hand);
 	}
 
 	if (GetHP() > 0 && !other->HasDied())
 		TriggerDefensiveProcs(other, Hand, true, my_hit.damage_done);
 
-	if (my_hit.damage_done > 0)
-		return true;
-
-	else
-		return false;
+	return hasHit;
 }
 
 void NPC::Damage(Mob* other, int32 damage, uint16 spell_id, EQEmu::skills::SkillType attack_skill, bool avoidable, int8 buffslot, bool iBuffTic, eSpecialAttacks special) {
